@@ -2,20 +2,17 @@ package org.mvss.karta.framework.core;
 
 import java.io.Serializable;
 
-import lombok.extern.log4j.Log4j;
-
-@Log4j
 public interface TestCase extends Serializable
 {
    default void beforeTest()
    {
-
+      System.out.println( this.getClass().getCanonicalName() + ": Before test " );
    }
 
    void runTest();
 
    default void afterTest()
    {
-
+      System.out.println( this.getClass().getCanonicalName() + ": After test " );
    }
 }

@@ -13,4 +13,11 @@ public interface ReliTestCase extends TestCase
    {
 
    }
+
+   default void runTest()
+   {
+      beforeIteration();
+      runIteration();
+      afterIteration();
+   }
 }
