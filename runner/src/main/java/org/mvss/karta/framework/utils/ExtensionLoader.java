@@ -9,12 +9,13 @@ import java.net.URLClassLoader;
 public class ExtensionLoader<C>
 {
 
-   public Class<? extends C> LoadClass( File jarFile, String className, Class<C> parentClass )
+   @SuppressWarnings( "unchecked" )
+   public Class<? extends C> LoadClass( File jarFile, String className )
             throws ClassNotFoundException, MalformedURLException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
    {
       ClassLoader loader = URLClassLoader.newInstance( new URL[] {jarFile.toURI().toURL()}, getClass().getClassLoader() );
-      Class<?> clazz = Class.forName( className, true, loader );
-      Class<? extends C> newClass = clazz.asSubclass( parentClass );
-      return newClass;
+      Class<? extends C> clazz = (Class<? extends C>) Class.forName( className, true, loader );
+      return clazz;
+      // Class<? extends C> newClass = clazz.asSubclass( parentClass );
    }
 }

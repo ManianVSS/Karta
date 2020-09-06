@@ -37,7 +37,7 @@ public class TestRunner implements Runnable
    {
       try
       {
-         Class<? extends TestCase> testCaseClass = StringUtils.isNotBlank( jarFile ) ? testCaseLoader.LoadClass( new File( jarFile ), className, TestCase.class ) : (Class<? extends TestCase>) Class.forName( className );
+         Class<? extends TestCase> testCaseClass = StringUtils.isNotBlank( jarFile ) ? testCaseLoader.LoadClass( new File( jarFile ), className ) : (Class<? extends TestCase>) Class.forName( className );
          testCaseClass.newInstance().runTest();
       }
       catch ( ClassNotFoundException cnfe )
