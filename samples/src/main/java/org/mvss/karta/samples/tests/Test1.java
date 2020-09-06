@@ -17,7 +17,6 @@ public class Test1 implements ReliTestCase
    public void runIteration()
    {
       log.info( "Test iteration" );
-
    }
 
 }

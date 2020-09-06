@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,6 +21,7 @@ import lombok.extern.log4j.Log4j2;
 @AllArgsConstructor
 @Log4j2
 @JsonInclude( value = Include.NON_ABSENT, content = Include.NON_ABSENT )
+@Builder
 public class TestRunner implements Runnable
 {
    public static final String                     RUN_PROPERTIES_FILE = "Run.properties";
@@ -37,6 +39,10 @@ public class TestRunner implements Runnable
       {
          Class<? extends TestCase> testCaseClass = StringUtils.isNotBlank( jarFile ) ? testCaseLoader.LoadClass( new File( jarFile ), className, TestCase.class ) : (Class<? extends TestCase>) Class.forName( className );
          testCaseClass.newInstance().runTest();
+      }
+      catch ( ClassNotFoundException cnfe )
+      {
+         log.error( "class " + className + " could not be loaded" );
       }
       catch ( Throwable t )
       {

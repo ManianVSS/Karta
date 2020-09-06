@@ -14,7 +14,6 @@ import lombok.Setter;
 @PropertySource( "classpath:run.properties" )
 public class RunConfig
 {
-   private String name;
-   private String author;
    private String className;
+   private String jarFile;
 }
