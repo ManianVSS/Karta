@@ -1,8 +1,8 @@
-package org.mvss.karta.api;
+package org.mvss.karta.runner.api;
 
 import java.util.HashMap;
 
-import org.mvss.karta.framework.core.TestRunner;
+import org.mvss.karta.runner.core.JavaTestRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,7 +25,7 @@ public class RunController
    @RequestMapping( method = RequestMethod.POST, value = RUNURL )
    public boolean startRun( @RequestBody HashMap<String, Object> runConfiguration )
    {
-      TestRunner testRunner = objectMapper.convertValue( runConfiguration, TestRunner.class );
+      JavaTestRunner testRunner = objectMapper.convertValue( runConfiguration, JavaTestRunner.class );
       new Thread( testRunner ).run();
       return true;
    }

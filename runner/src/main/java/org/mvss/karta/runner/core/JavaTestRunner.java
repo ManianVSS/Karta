@@ -1,8 +1,9 @@
-package org.mvss.karta.framework.core;
+package org.mvss.karta.runner.core;
 
 import java.io.File;
 
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.core.JavaTestCase;
 import org.mvss.karta.framework.utils.ExtensionLoader;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -22,14 +23,14 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @JsonInclude( value = Include.NON_ABSENT, content = Include.NON_ABSENT )
 @Builder
-public class TestRunner implements Runnable
+public class JavaTestRunner implements Runnable
 {
-   public static final String                     RUN_PROPERTIES_FILE = "Run.properties";
+   public static final String                         RUN_PROPERTIES_FILE = "Run.properties";
 
-   private static final ExtensionLoader<TestCase> testCaseLoader      = new ExtensionLoader<TestCase>();
+   private static final ExtensionLoader<JavaTestCase> testCaseLoader      = new ExtensionLoader<JavaTestCase>();
 
-   private String                                 className;
-   private String                                 jarFile;
+   private String                                     className;
+   private String                                     jarFile;
 
    @SuppressWarnings( "unchecked" )
    @Override
@@ -37,8 +38,8 @@ public class TestRunner implements Runnable
    {
       try
       {
-         Class<? extends TestCase> testCaseClass = StringUtils.isNotBlank( jarFile ) ? testCaseLoader.LoadClass( new File( jarFile ), className ) : (Class<? extends TestCase>) Class.forName( className );
-         TestCase testCase = testCaseClass.newInstance();
+         Class<? extends JavaTestCase> testCaseClass = StringUtils.isNotBlank( jarFile ) ? testCaseLoader.LoadClass( new File( jarFile ), className ) : (Class<? extends JavaTestCase>) Class.forName( className );
+         JavaTestCase testCase = testCaseClass.newInstance();
 
          testCase.beforeTest();
          testCase.runTest();

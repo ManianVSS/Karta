@@ -1,4 +1,4 @@
-package org.mvss.karta.framework.beans;
+package org.mvss.karta.runner.beans;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
