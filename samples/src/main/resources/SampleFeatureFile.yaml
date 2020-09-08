@@ -1,0 +1,47 @@
+---
+name: CalculatorTest
+description: This is a sample YAML format feature file testing a calculator's function
+testSetupSteps:
+  - conjunction: Given
+    identifier: the calculator is powered on
+
+scenarioSetupSteps:
+  - conjunction: When
+    identifier: the all clear button is pressed
+  - conjunction: Then
+    identifier: the calculator should display "0"
+
+testScenarios:
+  - name: Scenario1
+    scenarioExecutionSteps:
+      - conjunction: When
+        identifier: the button "1" is pressed
+      - conjunction: And
+        identifier: the button "+" is pressed
+      - conjunction: And
+        identifier: the button "2" is pressed
+      - conjunction: And
+        identifier: the button "=" is pressed
+      - conjunction: And
+        identifier: the calculator should display "3"
+
+  - name: Scenario2
+    scenarioExecutionSteps:
+      - conjunction: When
+        identifier: the button "2" is pressed
+      - conjunction: And
+        identifier: the button "-" is pressed
+      - conjunction: And
+        identifier: the button "3" is pressed
+      - conjunction: And
+        identifier: the button "=" is pressed
+      - conjunction: And
+        identifier: the calculator should display "-1"
+
+scenarioTearDownSteps:
+  - identifier: dummy teardown step
+  
+testTearDownSteps:
+  - conjunction: Then
+    identifier: the calculator is powered off
+  

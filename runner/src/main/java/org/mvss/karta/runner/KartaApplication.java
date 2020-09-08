@@ -1,4 +1,4 @@
-package org.mvss.karta;
+package org.mvss.karta.runner;
 
 import javax.annotation.PreDestroy;
 
@@ -8,7 +8,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.MissingArgumentException;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.UnrecognizedOptionException;
-import org.mvss.karta.framework.core.TestRunner;
+import org.mvss.karta.runner.core.JavaTestRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -56,7 +56,7 @@ public class KartaApplication
 
             String className = cmd.getOptionValue( RUN_CLASS );
             String jarFile = cmd.hasOption( JAR_FILE ) ? cmd.getOptionValue( JAR_FILE ) : null;
-            TestRunner testRunner = TestRunner.builder().className( className ).jarFile( jarFile ).build();
+            JavaTestRunner testRunner = JavaTestRunner.builder().className( className ).jarFile( jarFile ).build();
             testRunner.run();
             System.exit( 0 );
          }

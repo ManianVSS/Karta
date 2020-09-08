@@ -1,4 +1,4 @@
-package org.mvss.karta.framework.config;
+package org.mvss.karta.runner.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
