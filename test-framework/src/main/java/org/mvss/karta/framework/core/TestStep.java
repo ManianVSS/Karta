@@ -2,11 +2,15 @@ package org.mvss.karta.framework.core;
 
 import java.io.Serializable;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TestStep implements Serializable
 {
    /**
@@ -24,5 +28,5 @@ public class TestStep implements Serializable
     * The step definition identifier.
     * e.g. For Gherkin - Words following the conjunction like Given the plate is full of &quotalmond&quot cookies
     */
-   private String            stepDefReference;
+   private String            identifier;
 }

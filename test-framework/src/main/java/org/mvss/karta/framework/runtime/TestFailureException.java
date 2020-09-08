@@ -1,6 +1,6 @@
 package org.mvss.karta.framework.runtime;
 
-import org.mvss.karta.framework.core.JavaTestCase;
+import org.mvss.karta.framework.core.TestFeature;
 
 public class TestFailureException extends Exception
 {
@@ -10,6 +10,6 @@ public class TestFailureException extends Exception
     */
    private static final long serialVersionUID = 1L;
 
-   JavaTestCase                  failedTest;
+   TestFeature               testFeature;
 
 }

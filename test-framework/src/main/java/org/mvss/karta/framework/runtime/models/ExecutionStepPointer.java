@@ -13,7 +13,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class TestExecutionStepPointer implements Serializable
+public class ExecutionStepPointer implements Serializable
 {
 
    /**
@@ -21,9 +21,9 @@ public class TestExecutionStepPointer implements Serializable
     */
    private static final long serialVersionUID = 1L;
 
-   private String            testReference;
-   private String            scenarioReference;
-   private String            stepReference;
+   private String            testName;
+   private String            scenarioName;
+   private String            stepDefinition;
 
    private long              iterationIndex;
    private long              stepIndex;

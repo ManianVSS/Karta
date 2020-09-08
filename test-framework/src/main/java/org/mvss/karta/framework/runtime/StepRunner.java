@@ -7,12 +7,7 @@ import org.mvss.karta.framework.core.TestStep;
 
 public interface StepRunner
 {
-   void initStepRepository( HashMap<String, Serializable> testProperties ) throws Throwable;
+   void initStepRepository( HashMap<String, Serializable> properties ) throws Throwable;
 
    boolean runStep( TestStep testStep, TestExecutionContext testExecutionContext ) throws TestFailureException;
-
-   // boolean runFeature( TestFeature testFeature, HashMap<String, Serializable> testProperties ) throws TestFailureException;
-   //
-   // boolean runScenario( TestScenario testStep, TestExecutionContext testExecutionContext ) throws TestFailureException;
-
 }
