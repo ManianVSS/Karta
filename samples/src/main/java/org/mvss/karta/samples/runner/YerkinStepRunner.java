@@ -4,9 +4,12 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.runtime.StepRunner;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
@@ -19,8 +22,14 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class YerkinStepRunner implements StepRunner
 {
-   private HashMap<String, Method> stepMap      = new HashMap<String, Method>();
-   private ObjectMapper            objectMapper = new ObjectMapper();
+   private HashMap<String, MutablePair<Object, Method>> stepMap                                = new HashMap<String, MutablePair<Object, Method>>();
+
+   private ObjectMapper                                 objectMapper                           = new ObjectMapper();
+
+   public static final String                           INLINE_STEP_DEF_PARAM_INDICATOR_STRING = "\"\"";
+   public static final String                           WORD_FETCH_REGEX                       = "\\W+";
+
+   public static final List<String>                     conjunctions                           = Arrays.asList( "Given", "When", "Then", "And", "But" );
 
    @Override
    public void initStepRepository( HashMap<String, Serializable> testProperties ) throws Throwable
@@ -31,53 +40,71 @@ public class YerkinStepRunner implements StepRunner
 
       for ( String stepDefinitionClassName : stepDefinitionClassNames )
       {
-         Class<?> stepDefinitionClass = Class.forName( stepDefinitionClassName );
-
-         for ( Method candidateStepDefinitionMethod : stepDefinitionClass.getMethods() )
+         try
          {
-            if ( Modifier.isPublic( candidateStepDefinitionMethod.getModifiers() ) && Modifier.isStatic( candidateStepDefinitionMethod.getModifiers() ) )
+            Class<?> stepDefinitionClass = Class.forName( stepDefinitionClassName );
+
+            Object stepDefinitionClassObj = stepDefinitionClass.newInstance();
+
+            for ( Method candidateStepDefinitionMethod : stepDefinitionClass.getMethods() )
             {
-               for ( StepDefinition stepDefinition : candidateStepDefinitionMethod.getAnnotationsByType( StepDefinition.class ) )
+               if ( Modifier.isPublic( candidateStepDefinitionMethod.getModifiers() ) )// && Modifier.isStatic( candidateStepDefinitionMethod.getModifiers() ) )
                {
-                  String methodDescription = candidateStepDefinitionMethod.toString();
-                  String stepDefString = stepDefinition.value();
-                  int expectedParameterCount = StringUtils.countMatches( stepDefString, "\"\"" );
-
-                  if ( candidateStepDefinitionMethod.getParameterCount() != expectedParameterCount )
+                  for ( StepDefinition stepDefinition : candidateStepDefinitionMethod.getAnnotationsByType( StepDefinition.class ) )
                   {
-                     log.error( "Step definition method " + methodDescription + " does not match the expected number of parameters as per step definition" );
-                     continue;
+                     String methodDescription = candidateStepDefinitionMethod.toString();
+                     String stepDefString = stepDefinition.value();
+                     Class<?>[] params = candidateStepDefinitionMethod.getParameterTypes();
+
+                     if ( !( ( ( params.length == 1 ) && ( HashMap.class.isAssignableFrom( params[0] ) ) ) || ( params.length == StringUtils.countMatches( stepDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) ) ) )
+                     {
+                        log.error( "Step definition method " + methodDescription + " neither accepts a HashMap data object nor matches the expected number of parameters as per step definition" );
+                        continue;
+                     }
+
+                     log.info( "Mapping stepdef " + stepDefString + " to " + methodDescription );
+                     stepMap.put( stepDefString, new MutablePair<Object, Method>( stepDefinitionClassObj, candidateStepDefinitionMethod ) );
+
                   }
-
-                  // for ( Class<?> paramType : candidateStepDefinitionMethod.getParameterTypes() )
-                  // {
-                  // if ( !paramType.getName().equals( String.class.getName() ) )
-                  // {
-                  // log.error( "Step definition method " + methodDescription + " should contain only String parameters" );
-                  // continue;
-                  // }
-                  // }
-
-                  log.info( "Mapping stepdef " + stepDefString + " to " + methodDescription );
-                  stepMap.put( stepDefString, candidateStepDefinitionMethod );
                }
             }
+         }
+         catch ( Throwable t )
+         {
+            log.error( "Exception while parsing step definition class " + stepDefinitionClassName, t );
+            continue;
          }
       }
 
    }
 
+   @SuppressWarnings( "unchecked" )
    @Override
    public boolean runStep( TestStep testStep, TestExecutionContext testExecutionContext ) throws TestFailureException
    {
       log.debug( "Step run" + testStep + " with context " + testExecutionContext );
 
-      // String conjuction = testStep.getConjunction();
-      String stepRef = testStep.getIdentifier();
+      String stepIdentifier = testStep.getIdentifier().trim();
 
-      stepRef = stepRef.replaceAll( YerkinTestDataSource.INLINE_TEST_DATA_PATTERN, "\"\"" );
+      if ( StringUtils.isAllEmpty( stepIdentifier ) )
+      {
+         log.error( "Empty step definition identifier for step " + testStep );
+         return false;
+      }
 
-      if ( !stepMap.containsKey( stepRef ) )
+      String words[] = stepIdentifier.split( WORD_FETCH_REGEX );
+
+      String conjuctionUsed = null;
+
+      if ( conjunctions.contains( words[0] ) )
+      {
+         conjuctionUsed = words[0];
+         stepIdentifier = stepIdentifier.substring( conjuctionUsed.length() ).trim();
+      }
+
+      stepIdentifier = stepIdentifier.replaceAll( YerkinTestDataSource.INLINE_TEST_DATA_PATTERN, INLINE_STEP_DEF_PARAM_INDICATOR_STRING );
+
+      if ( !stepMap.containsKey( stepIdentifier ) )
       {
          return false;
       }
@@ -85,24 +112,31 @@ public class YerkinStepRunner implements StepRunner
       try
       {
          HashMap<String, Serializable> testData = testExecutionContext.getTestData();
+
          ArrayList<Object> values = new ArrayList<Object>();
 
-         Class<?>[] parameters = stepMap.get( stepRef ).getParameterTypes();
+         MutablePair<Object, Method> stepDefObjectMethodPairToInvoke = stepMap.get( stepIdentifier );
 
-         for ( int i = 0; i < testData.values().size(); i++ )
-         {
-            String stringValue = (String) testData.get( "param[" + i + "]" );
-            Object value = objectMapper.readValue( stringValue, parameters[i] );
-            values.add( value );
-         }
+         Object stepDefObject = stepDefObjectMethodPairToInvoke.getLeft();
+         Method stepDefMethodToInvoke = stepDefObjectMethodPairToInvoke.getRight();
 
-         if ( values.isEmpty() )
+         Class<?>[] params = stepDefMethodToInvoke.getParameterTypes();
+
+         if ( ( ( params.length == 1 ) && ( HashMap.class.isAssignableFrom( params[0] ) ) ) )
          {
-            stepMap.get( stepRef ).invoke( null );
+            stepDefMethodToInvoke.invoke( stepDefObject, testData );
          }
          else
          {
-            stepMap.get( stepRef ).invoke( null, values.toArray() );
+            Class<?>[] parameters = stepDefMethodToInvoke.getParameterTypes();
+
+            int i = 0;
+            for ( String positionalParam : (ArrayList<String>) testData.get( YerkinTestDataSource.INLINE_STEP_DEF_PARAMTERS ) )
+            {
+               values.add( objectMapper.readValue( positionalParam, parameters[i++] ) );
+            }
+
+            stepDefMethodToInvoke.invoke( stepDefObject, values.isEmpty() ? null : values.toArray() );
          }
       }
       catch ( Throwable t )
@@ -112,20 +146,4 @@ public class YerkinStepRunner implements StepRunner
 
       return true;
    }
-
-   void step1() throws Throwable
-   {
-      log.info( "Running step1" );
-   }
-
-   void step2() throws Throwable
-   {
-      log.info( "Running step2" );
-   }
-
-   void step3() throws Throwable
-   {
-      log.info( "Running step3" );
-   }
-
 }

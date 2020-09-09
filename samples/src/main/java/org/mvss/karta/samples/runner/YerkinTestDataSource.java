@@ -1,18 +1,21 @@
 package org.mvss.karta.samples.runner;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.runtime.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 
 public class YerkinTestDataSource implements TestDataSource
 {
-   public static final String INLINE_TEST_DATA_PATTERN = "\"(?:[^\\\\\"]+|\\\\.|\\\\\\\\)*\"";
+   public static final String INLINE_TEST_DATA_PATTERN  = "\"(?:[^\\\\\"]+|\\\\.|\\\\\\\\)*\"";
+   public static final String INLINE_STEP_DEF_PARAMTERS = "inlineStepDefinitionParameters";
 
-   private Pattern            testDataPattern          = Pattern.compile( INLINE_TEST_DATA_PATTERN );
+   private Pattern            testDataPattern           = Pattern.compile( INLINE_TEST_DATA_PATTERN );
 
    @Override
    public void close() throws Exception
@@ -31,18 +34,26 @@ public class YerkinTestDataSource implements TestDataSource
    public HashMap<String, Serializable> getData( ExecutionStepPointer executionStepPointer ) throws Throwable
    {
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
+      ArrayList<String> inlineStepDefinitionParameters = new ArrayList<String>();
 
-      String stepDefinition = executionStepPointer.getStepDefinition();
+      TestStep testStep = executionStepPointer.getTestStep();
+
+      HashMap<String, Serializable> inStepTestData = testStep.getTestData();
+
+      if ( inStepTestData != null )
+      {
+         inStepTestData.forEach( ( dataKey, data ) -> testData.put( dataKey, data ) );
+      }
+
+      String stepDefinition = testStep.getIdentifier();
       Matcher matcher = testDataPattern.matcher( stepDefinition );
-
-      int i = 0;
 
       while ( matcher.find() )
       {
-         // String valueEnclosedInQuotes = matcher.group().substring( 1 );
-         // valueEnclosedInQuotes = valueEnclosedInQuotes.substring( 0, valueEnclosedInQuotes.length() - 1 );
-         testData.put( "param[" + i + "]", matcher.group() );
+         inlineStepDefinitionParameters.add( matcher.group() );
       }
+
+      testData.put( INLINE_STEP_DEF_PARAMTERS, inlineStepDefinitionParameters );
 
       return testData;
    }

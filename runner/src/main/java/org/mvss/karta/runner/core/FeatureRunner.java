@@ -87,7 +87,7 @@ public class FeatureRunner implements Runnable
 
          for ( TestStep step : testFeature.getTestSetupSteps() )
          {
-            testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), null, step.getIdentifier(), iterationIndex, stepIndex++ ) );
+            testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), null, step, iterationIndex, stepIndex++ ) );
             log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setTestData( testData );
 
@@ -106,7 +106,7 @@ public class FeatureRunner implements Runnable
 
             for ( TestStep step : testFeature.getScenarioSetupSteps() )
             {
-               testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step.getIdentifier(), iterationIndex, stepIndex++ ) );
+               testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
                log.debug( "Step test data is " + testData.toString() );
                testExecutionContext.setTestData( testData );
 
@@ -119,7 +119,7 @@ public class FeatureRunner implements Runnable
 
             for ( TestStep step : testScenario.getScenarioExecutionSteps() )
             {
-               testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step.getIdentifier(), iterationIndex, stepIndex++ ) );
+               testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
                log.debug( "Step test data is " + testData.toString() );
                testExecutionContext.setTestData( testData );
 
@@ -132,7 +132,7 @@ public class FeatureRunner implements Runnable
 
             for ( TestStep step : testFeature.getScenarioTearDownSteps() )
             {
-               testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step.getIdentifier(), iterationIndex, stepIndex++ ) );
+               testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
                log.debug( "Step test data is " + testData.toString() );
                testExecutionContext.setTestData( testData );
 
@@ -146,7 +146,7 @@ public class FeatureRunner implements Runnable
 
          for ( TestStep step : testFeature.getTestTearDownSteps() )
          {
-            testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), null, step.getIdentifier(), iterationIndex, stepIndex++ ) );
+            testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), null, step, iterationIndex, stepIndex++ ) );
             log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setTestData( testData );
 
