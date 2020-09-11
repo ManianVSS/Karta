@@ -1,4 +1,4 @@
-package org.mvss.karta.runner.core;
+package org.mvss.karta.framework.runtime;
 
 import java.io.File;
 import java.io.Serializable;
@@ -10,10 +10,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
-import org.mvss.karta.framework.runtime.FeatureSourceParser;
-import org.mvss.karta.framework.runtime.StepRunner;
-import org.mvss.karta.framework.runtime.TestDataSource;
-import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.utils.ExtensionLoader;
 
@@ -36,20 +32,18 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class FeatureRunner implements Runnable
 {
-   public static final String                                RUN_PROPERTIES_FILE       = "Run.properties";
-
    private static final ExtensionLoader<FeatureSourceParser> featureParserClassLoader  = new ExtensionLoader<FeatureSourceParser>();
-   private String                                            featureParserClassName;
-   private String                                            featureParserJarFile;
+   private String                                            featureSourceParser;
+   private String                                            featureSourceParserJarFile;
    private HashMap<String, Serializable>                     featureParserProperties;
 
    private static final ExtensionLoader<StepRunner>          stepRunnerClassLoader     = new ExtensionLoader<StepRunner>();
-   private String                                            stepRunnerClassName;
+   private String                                            stepRunner;
    private String                                            stepRunnerJarFile;
    private HashMap<String, Serializable>                     stepRunnerProperties;
 
    private static final ExtensionLoader<TestDataSource>      testDataSourceClassLoader = new ExtensionLoader<TestDataSource>();
-   private String                                            testDataSourceClassName;
+   private String                                            testDataSource;
    private String                                            testDataSourceJarFile;
    private HashMap<String, Serializable>                     testDataSourceProperties;
 
@@ -61,17 +55,17 @@ public class FeatureRunner implements Runnable
    {
       try
       {
-         Class<? extends FeatureSourceParser> featureParserClass = StringUtils.isNotBlank( featureParserJarFile ) ? featureParserClassLoader.LoadClass( new File( featureParserJarFile ), featureParserClassName )
-                  : (Class<? extends FeatureSourceParser>) Class.forName( featureParserClassName );
+         Class<? extends FeatureSourceParser> featureParserClass = StringUtils.isNotBlank( featureSourceParserJarFile ) ? featureParserClassLoader.LoadClass( new File( featureSourceParserJarFile ), featureSourceParser )
+                  : (Class<? extends FeatureSourceParser>) Class.forName( featureSourceParser );
          FeatureSourceParser featureParser = featureParserClass.newInstance();
          featureParser.initFeatureParser( featureParserProperties );
 
-         Class<? extends TestDataSource> testDataSourceClass = StringUtils.isNotBlank( testDataSourceJarFile ) ? testDataSourceClassLoader.LoadClass( new File( testDataSourceJarFile ), testDataSourceClassName )
-                  : (Class<? extends TestDataSource>) Class.forName( testDataSourceClassName );
+         Class<? extends TestDataSource> testDataSourceClass = StringUtils.isNotBlank( testDataSourceJarFile ) ? testDataSourceClassLoader.LoadClass( new File( testDataSourceJarFile ), testDataSource )
+                  : (Class<? extends TestDataSource>) Class.forName( testDataSource );
          TestDataSource testDataSource = testDataSourceClass.newInstance();
          testDataSource.initDataSource( testDataSourceProperties );
 
-         Class<? extends StepRunner> stepRunnerClass = StringUtils.isNotBlank( stepRunnerJarFile ) ? stepRunnerClassLoader.LoadClass( new File( stepRunnerJarFile ), stepRunnerClassName ) : (Class<? extends StepRunner>) Class.forName( stepRunnerClassName );
+         Class<? extends StepRunner> stepRunnerClass = StringUtils.isNotBlank( stepRunnerJarFile ) ? stepRunnerClassLoader.LoadClass( new File( stepRunnerJarFile ), stepRunner ) : (Class<? extends StepRunner>) Class.forName( stepRunner );
          StepRunner stepRunner = stepRunnerClass.newInstance();
          stepRunner.initStepRepository( stepRunnerProperties );
 
@@ -104,42 +98,51 @@ public class FeatureRunner implements Runnable
          {
             log.debug( "Running Scenario: " + testScenario );
 
-            for ( TestStep step : testFeature.getScenarioSetupSteps() )
+            try
             {
-               testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
-               log.debug( "Step test data is " + testData.toString() );
-               testExecutionContext.setTestData( testData );
-
-               if ( !stepRunner.runStep( step, testExecutionContext ) )
+               for ( TestStep step : testFeature.getScenarioSetupSteps() )
                {
-                  log.error( "Scenario " + testScenario + " failed at setup step " + step );
-                  continue nextScenario;
+                  testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
+                  log.debug( "Step test data is " + testData.toString() );
+                  testExecutionContext.setTestData( testData );
+
+                  if ( !stepRunner.runStep( step, testExecutionContext ) )
+                  {
+                     log.error( "Scenario " + testScenario + " failed at setup step " + step );
+                     continue nextScenario;
+                  }
+               }
+
+               for ( TestStep step : testScenario.getScenarioExecutionSteps() )
+               {
+                  testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
+                  log.debug( "Step test data is " + testData.toString() );
+                  testExecutionContext.setTestData( testData );
+
+                  if ( !stepRunner.runStep( step, testExecutionContext ) )
+                  {
+                     log.error( "Scenario " + testScenario + " failed at step " + step );
+                     continue nextScenario;
+                  }
                }
             }
-
-            for ( TestStep step : testScenario.getScenarioExecutionSteps() )
+            catch ( Throwable t )
             {
-               testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
-               log.debug( "Step test data is " + testData.toString() );
-               testExecutionContext.setTestData( testData );
 
-               if ( !stepRunner.runStep( step, testExecutionContext ) )
-               {
-                  log.error( "Scenario " + testScenario + " failed at step " + step );
-                  continue nextScenario;
-               }
             }
-
-            for ( TestStep step : testFeature.getScenarioTearDownSteps() )
+            finally
             {
-               testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
-               log.debug( "Step test data is " + testData.toString() );
-               testExecutionContext.setTestData( testData );
-
-               if ( !stepRunner.runStep( step, testExecutionContext ) )
+               for ( TestStep step : testFeature.getScenarioTearDownSteps() )
                {
-                  log.error( "Scenario " + testScenario + " failed at teardown step " + step );
-                  // break;
+                  testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
+                  log.debug( "Step test data is " + testData.toString() );
+                  testExecutionContext.setTestData( testData );
+
+                  if ( !stepRunner.runStep( step, testExecutionContext ) )
+                  {
+                     log.error( "Scenario " + testScenario + " failed at teardown step " + step );
+                     // break;
+                  }
                }
             }
          }
@@ -159,7 +162,7 @@ public class FeatureRunner implements Runnable
       }
       catch ( ClassNotFoundException cnfe )
       {
-         log.error( "class " + stepRunnerClassName + " could not be loaded" );
+         log.error( "class " + stepRunner + " could not be loaded" );
       }
       catch ( Throwable t )
       {

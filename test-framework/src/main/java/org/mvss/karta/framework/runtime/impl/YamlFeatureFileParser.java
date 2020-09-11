@@ -1,4 +1,4 @@
-package org.mvss.karta.samples.runner;
+package org.mvss.karta.framework.runtime.impl;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -9,7 +9,7 @@ import org.mvss.karta.framework.runtime.FeatureSourceParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-public class JSONFeatureFileParser implements FeatureSourceParser
+public class YamlFeatureFileParser implements FeatureSourceParser
 {
 
    @Override

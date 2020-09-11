@@ -1,4 +1,4 @@
-package org.mvss.karta.runner.core;
+package org.mvss.karta.framework.runtime;
 
 import java.io.File;
 
@@ -29,8 +29,8 @@ public class JavaTestRunner implements Runnable
 
    private static final ExtensionLoader<JavaTestCase> testCaseLoader      = new ExtensionLoader<JavaTestCase>();
 
-   private String                                     className;
-   private String                                     jarFile;
+   private String                                     javaTest;
+   private String                                     javaTestJarFile;
 
    @SuppressWarnings( "unchecked" )
    @Override
@@ -38,7 +38,7 @@ public class JavaTestRunner implements Runnable
    {
       try
       {
-         Class<? extends JavaTestCase> testCaseClass = StringUtils.isNotBlank( jarFile ) ? testCaseLoader.LoadClass( new File( jarFile ), className ) : (Class<? extends JavaTestCase>) Class.forName( className );
+         Class<? extends JavaTestCase> testCaseClass = StringUtils.isNotBlank( javaTestJarFile ) ? testCaseLoader.LoadClass( new File( javaTestJarFile ), javaTest ) : (Class<? extends JavaTestCase>) Class.forName( javaTest );
          JavaTestCase testCase = testCaseClass.newInstance();
 
          testCase.beforeTest();
@@ -47,7 +47,7 @@ public class JavaTestRunner implements Runnable
       }
       catch ( ClassNotFoundException cnfe )
       {
-         log.error( "class " + className + " could not be loaded" );
+         log.error( "class " + javaTest + " could not be loaded" );
       }
       catch ( Throwable t )
       {

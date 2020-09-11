@@ -2,8 +2,8 @@ package org.mvss.karta.runner.api;
 
 import java.util.HashMap;
 
-import org.mvss.karta.runner.core.FeatureRunner;
-import org.mvss.karta.runner.core.JavaTestRunner;
+import org.mvss.karta.framework.runtime.FeatureRunner;
+import org.mvss.karta.framework.runtime.JavaTestRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
