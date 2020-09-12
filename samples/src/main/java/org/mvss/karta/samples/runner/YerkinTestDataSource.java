@@ -7,7 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.mvss.karta.framework.core.TestStep;
-import org.mvss.karta.framework.runtime.TestDataSource;
+import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 
 public class YerkinTestDataSource implements TestDataSource

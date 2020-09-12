@@ -23,7 +23,7 @@
 	<dependencies>	
 		<dependency>
 			<groupId>org.mvss.karta</groupId>
-			<artifactId>test-framework</artifactId>
+			<artifactId>framework</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>

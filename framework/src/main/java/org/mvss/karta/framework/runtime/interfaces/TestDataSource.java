@@ -1,4 +1,4 @@
-package org.mvss.karta.framework.runtime;
+package org.mvss.karta.framework.runtime.interfaces;
 
 import java.io.Serializable;
 import java.util.HashMap;

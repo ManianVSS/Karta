@@ -2,15 +2,17 @@ package org.mvss.karta.framework.runtime;
 
 import java.io.File;
 import java.io.Serializable;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
+import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
+import org.mvss.karta.framework.runtime.interfaces.StepRunner;
+import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
+import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.ExtensionLoader;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -69,7 +71,8 @@ public class FeatureRunner implements Runnable
          StepRunner stepRunner = stepRunnerClass.newInstance();
          stepRunner.initStepRepository( stepRunnerProperties );
 
-         TestFeature testFeature = featureParser.parseFeatureSource( FileUtils.readFileToString( new File( featureFile ), Charset.defaultCharset() ) );
+         String featureFileSourceString = ClassPathLoaderUtils.readAllText( featureFile );
+         TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
 
          HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();

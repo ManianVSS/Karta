@@ -11,9 +11,9 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.mvss.karta.framework.core.TestStep;
-import org.mvss.karta.framework.runtime.StepRunner;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.TestFailureException;
+import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

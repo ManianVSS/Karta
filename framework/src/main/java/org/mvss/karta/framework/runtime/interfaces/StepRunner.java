@@ -1,9 +1,11 @@
-package org.mvss.karta.framework.runtime;
+package org.mvss.karta.framework.runtime.interfaces;
 
 import java.io.Serializable;
 import java.util.HashMap;
 
 import org.mvss.karta.framework.core.TestStep;
+import org.mvss.karta.framework.runtime.TestExecutionContext;
+import org.mvss.karta.framework.runtime.TestFailureException;
 
 public interface StepRunner
 {

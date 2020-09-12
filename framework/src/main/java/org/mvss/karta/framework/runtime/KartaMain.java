@@ -161,8 +161,6 @@ public class KartaMain
                runConfiguration.setTestDataSourceJarFile( cmd.getOptionValue( TEST_DATA_SOURCE_JAR ) );
             }
 
-            Runtime.getRuntime().addShutdownHook( new Thread( () -> jvmExitHook() ) );
-
             runFeatureFile = StringUtils.isNotBlank( runConfiguration.getFeatureFile() );
             runJavaTest = StringUtils.isNotBlank( runConfiguration.getJavaTest() );
 
@@ -173,6 +171,8 @@ public class KartaMain
             }
             else
             {
+               Runtime.getRuntime().addShutdownHook( new Thread( () -> jvmExitHook() ) );
+
                if ( runFeatureFile )
                {
                   FeatureRunner featureRunner = objectMapper.convertValue( runConfiguration, FeatureRunner.class );
