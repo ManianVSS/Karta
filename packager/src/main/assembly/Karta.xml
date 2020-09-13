@@ -17,7 +17,7 @@
 			<outputDirectory>lib/</outputDirectory>
 			<outputFileNameMapping>framework.jar</outputFileNameMapping>
 		</dependencySet>
-		
+
 		<dependencySet>
 			<useTransitiveDependencies>false</useTransitiveDependencies>
 			<includes>
@@ -44,14 +44,10 @@
 			<outputDirectory>bin/</outputDirectory>
 			<outputFileNameMapping>server.jar</outputFileNameMapping>
 		</dependencySet>
-	
+
 		<dependencySet>
 			<unpack>false</unpack>
 			<scope>runtime</scope>
-			<!-- <includes> <include>org.projectlombok:lombok</include> <include>org.apache.logging.log4j:log4j-core</include> 
-				<include>commons-io:commons-io</include> <include>org.apache.commons:commons-lang3</include> 
-				<include>com.fasterxml.jackson.core:jackson-databind</include> <include>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml</include> 
-				<include>commons-cli:commons-cli</include> </includes> -->
 			<excludes>
 				<exclude>${artifact}</exclude>
 				<exclude>org.mvss.karta:framework</exclude>

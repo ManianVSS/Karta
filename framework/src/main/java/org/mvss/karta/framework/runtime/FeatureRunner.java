@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.configuration.PluginClassConfig;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
@@ -35,19 +36,13 @@ import lombok.extern.log4j.Log4j2;
 public class FeatureRunner implements Runnable
 {
    private static final ExtensionLoader<FeatureSourceParser> featureParserClassLoader  = new ExtensionLoader<FeatureSourceParser>();
-   private String                                            featureSourceParser;
-   private String                                            featureSourceParserJarFile;
-   private HashMap<String, Serializable>                     featureParserProperties;
+   private PluginClassConfig                                 featureSourceParserConfig;
 
    private static final ExtensionLoader<StepRunner>          stepRunnerClassLoader     = new ExtensionLoader<StepRunner>();
-   private String                                            stepRunner;
-   private String                                            stepRunnerJarFile;
-   private HashMap<String, Serializable>                     stepRunnerProperties;
+   private PluginClassConfig                                 stepRunnerConfig;
 
    private static final ExtensionLoader<TestDataSource>      testDataSourceClassLoader = new ExtensionLoader<TestDataSource>();
-   private String                                            testDataSource;
-   private String                                            testDataSourceJarFile;
-   private HashMap<String, Serializable>                     testDataSourceProperties;
+   private PluginClassConfig                                 testDataSourceConfig;
 
    private String                                            featureFile;
 
@@ -57,19 +52,21 @@ public class FeatureRunner implements Runnable
    {
       try
       {
-         Class<? extends FeatureSourceParser> featureParserClass = StringUtils.isNotBlank( featureSourceParserJarFile ) ? featureParserClassLoader.LoadClass( new File( featureSourceParserJarFile ), featureSourceParser )
-                  : (Class<? extends FeatureSourceParser>) Class.forName( featureSourceParser );
+         Class<? extends FeatureSourceParser> featureParserClass = StringUtils.isNotBlank( featureSourceParserConfig.getJarFile() )
+                  ? featureParserClassLoader.LoadClass( new File( featureSourceParserConfig.getJarFile() ), featureSourceParserConfig.getClassName() )
+                  : (Class<? extends FeatureSourceParser>) Class.forName( featureSourceParserConfig.getClassName() );
          FeatureSourceParser featureParser = featureParserClass.newInstance();
-         featureParser.initFeatureParser( featureParserProperties );
+         featureParser.initFeatureParser( featureSourceParserConfig.getProperties() );
 
-         Class<? extends TestDataSource> testDataSourceClass = StringUtils.isNotBlank( testDataSourceJarFile ) ? testDataSourceClassLoader.LoadClass( new File( testDataSourceJarFile ), testDataSource )
-                  : (Class<? extends TestDataSource>) Class.forName( testDataSource );
+         Class<? extends TestDataSource> testDataSourceClass = StringUtils.isNotBlank( testDataSourceConfig.getJarFile() ) ? testDataSourceClassLoader.LoadClass( new File( testDataSourceConfig.getJarFile() ), testDataSourceConfig.getClassName() )
+                  : (Class<? extends TestDataSource>) Class.forName( testDataSourceConfig.getClassName() );
          TestDataSource testDataSource = testDataSourceClass.newInstance();
-         testDataSource.initDataSource( testDataSourceProperties );
+         testDataSource.initDataSource( testDataSourceConfig.getProperties() );
 
-         Class<? extends StepRunner> stepRunnerClass = StringUtils.isNotBlank( stepRunnerJarFile ) ? stepRunnerClassLoader.LoadClass( new File( stepRunnerJarFile ), stepRunner ) : (Class<? extends StepRunner>) Class.forName( stepRunner );
+         Class<? extends StepRunner> stepRunnerClass = StringUtils.isNotBlank( stepRunnerConfig.getJarFile() ) ? stepRunnerClassLoader.LoadClass( new File( stepRunnerConfig.getJarFile() ), stepRunnerConfig.getClassName() )
+                  : (Class<? extends StepRunner>) Class.forName( stepRunnerConfig.getClassName() );
          StepRunner stepRunner = stepRunnerClass.newInstance();
-         stepRunner.initStepRepository( stepRunnerProperties );
+         stepRunner.initStepRepository( stepRunnerConfig.getProperties() );
 
          String featureFileSourceString = ClassPathLoaderUtils.readAllText( featureFile );
          TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
@@ -77,7 +74,7 @@ public class FeatureRunner implements Runnable
          HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
-         TestExecutionContext testExecutionContext = new TestExecutionContext( stepRunnerProperties, testData, variables );
+         TestExecutionContext testExecutionContext = new TestExecutionContext( stepRunnerConfig.getProperties(), testData, variables );
 
          long iterationIndex = -1;
          long stepIndex = 0;
@@ -165,7 +162,7 @@ public class FeatureRunner implements Runnable
       }
       catch ( ClassNotFoundException cnfe )
       {
-         log.error( "class " + stepRunner + " could not be loaded" );
+         log.error( "Plugin class load exception", cnfe );
       }
       catch ( Throwable t )
       {
