@@ -85,10 +85,29 @@ public class FeatureRunner implements Runnable
             log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setTestData( testData );
 
-            if ( !stepRunner.runStep( step, testExecutionContext ) )
+            // if ( !stepRunner.runStep( step, testExecutionContext ) )
+            // {
+            // log.error( "Feature setup failed at step " + step );
+            // return;
+            // }
+
+            boolean stepResult = false;
+
+            try
             {
-               log.error( "Feature setup failed at step " + step );
-               return;
+               stepResult = stepRunner.runStep( step, testExecutionContext );
+            }
+            catch ( TestFailureException tfe )
+            {
+               log.error( "Exception in test failure ", tfe );
+            }
+            finally
+            {
+               if ( !stepResult )
+               {
+                  log.error( "Feature " + testFeature + " failed at setup step " + step );
+                  return;
+               }
             }
          }
 
@@ -138,10 +157,19 @@ public class FeatureRunner implements Runnable
                   log.debug( "Step test data is " + testData.toString() );
                   testExecutionContext.setTestData( testData );
 
-                  if ( !stepRunner.runStep( step, testExecutionContext ) )
+                  try
                   {
-                     log.error( "Scenario " + testScenario + " failed at teardown step " + step );
-                     // break;
+                     if ( !stepRunner.runStep( step, testExecutionContext ) )
+                     {
+                        log.error( "Scenario " + testScenario + " failed at teardown step " + step );
+                        // break;
+                     }
+                  }
+                  catch ( Throwable t )
+                  {
+                     // TODO: Ignore teardown failure and continue to next scenario
+                     log.error( t );
+                     continue nextScenario;
                   }
                }
             }

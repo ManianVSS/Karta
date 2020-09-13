@@ -11,17 +11,17 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 public class YamlFeatureSourceParser implements FeatureSourceParser
 {
+   ObjectMapper objectMapper;
 
    @Override
    public void initFeatureParser( HashMap<String, Serializable> testProperties ) throws Throwable
    {
-      // Nothing to do as of now
+      objectMapper = new ObjectMapper( new YAMLFactory() );
    }
 
    @Override
    public TestFeature parseFeatureSource( String sourceCode ) throws Throwable
    {
-      ObjectMapper objectMapper = new ObjectMapper( new YAMLFactory() );
       return objectMapper.readValue( sourceCode, TestFeature.class );
    }
 

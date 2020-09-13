@@ -3,7 +3,6 @@ package org.mvss.karta.framework.runtime;
 import java.util.HashMap;
 
 import org.mvss.karta.configuration.KartaConfiguration;
-import org.mvss.karta.configuration.PluginClassConfig;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
@@ -23,16 +22,16 @@ public class PnPRegistry
 
    public PnPRegistry( KartaConfiguration kartaConfiguration )
    {
-      HashMap<String, PluginClassConfig> featureSourceParserMap = kartaConfiguration.getFeatureSourceParserConfig();
-
-      if ( featureSourceParserMap != null )
-      {
-         for ( String featureSourcePluginName : featureSourceParserMap.keySet() )
-         {
-            PluginClassConfig featureSourcePlugin = featureSourceParserMap.get( featureSourcePluginName );
-            // featureSourceParserRegistry.put( featureSourcePluginName, );
-         }
-      }
+      // HashMap<String, PluginClassConfig> featureSourceParserMap = kartaConfiguration.getFeatureSourceParserConfig();
+      //
+      // if ( featureSourceParserMap != null )
+      // {
+      // for ( String featureSourcePluginName : featureSourceParserMap.keySet() )
+      // {
+      //// PluginClassConfig featureSourcePlugin = featureSourceParserMap.get( featureSourcePluginName );
+      // // featureSourceParserRegistry.put( featureSourcePluginName, );
+      // }
+      // }
    }
 
    public FeatureSourceParser getFeatureSourceParser( String name )
