@@ -1,11 +1,9 @@
 package org.mvss.karta.framework.runtime;
 
-import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.apache.commons.lang3.StringUtils;
-import org.mvss.karta.configuration.PluginClassConfig;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
@@ -14,7 +12,6 @@ import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
-import org.mvss.karta.framework.utils.ExtensionLoader;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -33,63 +30,59 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @JsonInclude( value = Include.NON_ABSENT, content = Include.NON_ABSENT )
 @Builder
-public class FeatureRunner implements Runnable
+public class FeatureRunner
 {
-   private static final ExtensionLoader<FeatureSourceParser> featureParserClassLoader  = new ExtensionLoader<FeatureSourceParser>();
-   private PluginClassConfig                                 featureSourceParserConfig;
+   private String                        featureSourceParserPlugin;
+   private String                        stepRunnerPlugin;
+   private ArrayList<String>             testDataSourcePlugins;
 
-   private static final ExtensionLoader<StepRunner>          stepRunnerClassLoader     = new ExtensionLoader<StepRunner>();
-   private PluginClassConfig                                 stepRunnerConfig;
+   private HashMap<String, Serializable> testProperties;
 
-   private static final ExtensionLoader<TestDataSource>      testDataSourceClassLoader = new ExtensionLoader<TestDataSource>();
-   private PluginClassConfig                                 testDataSourceConfig;
+   public HashMap<String, Serializable> getMergedTestData( ArrayList<TestDataSource> testDataSources, ExecutionStepPointer executionStepPointer ) throws Throwable
+   {
+      HashMap<String, Serializable> mergedTestData = new HashMap<String, Serializable>();
 
-   private String                                            featureFile;
+      for ( TestDataSource tds : testDataSources )
+      {
+         HashMap<String, Serializable> testData = tds.getData( executionStepPointer );
+         testData.forEach( ( key, value ) -> mergedTestData.put( key, value ) );
+      }
 
-   @SuppressWarnings( "unchecked" )
-   @Override
-   public void run()
+      return mergedTestData;
+   }
+
+   public boolean run( String featureFileName )
    {
       try
       {
-         Class<? extends FeatureSourceParser> featureParserClass = StringUtils.isNotBlank( featureSourceParserConfig.getJarFile() )
-                  ? featureParserClassLoader.LoadClass( new File( featureSourceParserConfig.getJarFile() ), featureSourceParserConfig.getClassName() )
-                  : (Class<? extends FeatureSourceParser>) Class.forName( featureSourceParserConfig.getClassName() );
-         FeatureSourceParser featureParser = featureParserClass.newInstance();
-         featureParser.initFeatureParser( featureSourceParserConfig.getProperties() );
+         FeatureSourceParser featureParser = (FeatureSourceParser) PnPRegistry.getPlugin( featureSourceParserPlugin, FeatureSourceParser.class );
+         StepRunner stepRunner = (StepRunner) PnPRegistry.getPlugin( stepRunnerPlugin, StepRunner.class );
 
-         Class<? extends TestDataSource> testDataSourceClass = StringUtils.isNotBlank( testDataSourceConfig.getJarFile() ) ? testDataSourceClassLoader.LoadClass( new File( testDataSourceConfig.getJarFile() ), testDataSourceConfig.getClassName() )
-                  : (Class<? extends TestDataSource>) Class.forName( testDataSourceConfig.getClassName() );
-         TestDataSource testDataSource = testDataSourceClass.newInstance();
-         testDataSource.initDataSource( testDataSourceConfig.getProperties() );
+         ArrayList<TestDataSource> testDataSources = new ArrayList<TestDataSource>();
 
-         Class<? extends StepRunner> stepRunnerClass = StringUtils.isNotBlank( stepRunnerConfig.getJarFile() ) ? stepRunnerClassLoader.LoadClass( new File( stepRunnerConfig.getJarFile() ), stepRunnerConfig.getClassName() )
-                  : (Class<? extends StepRunner>) Class.forName( stepRunnerConfig.getClassName() );
-         StepRunner stepRunner = stepRunnerClass.newInstance();
-         stepRunner.initStepRepository( stepRunnerConfig.getProperties() );
+         for ( String testDataSourcePlugin : testDataSourcePlugins )
+         {
+            TestDataSource testDataSource = (TestDataSource) PnPRegistry.getPlugin( testDataSourcePlugin, TestDataSource.class );
+            testDataSources.add( testDataSource );
+         }
 
-         String featureFileSourceString = ClassPathLoaderUtils.readAllText( featureFile );
+         // TODO: Handle IO Exception
+         String featureFileSourceString = ClassPathLoaderUtils.readAllText( featureFileName );
          TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
 
          HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
-         TestExecutionContext testExecutionContext = new TestExecutionContext( stepRunnerConfig.getProperties(), testData, variables );
+         TestExecutionContext testExecutionContext = new TestExecutionContext( testProperties, testData, variables );
 
          long iterationIndex = -1;
          long stepIndex = 0;
 
          for ( TestStep step : testFeature.getTestSetupSteps() )
          {
-            testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), null, step, iterationIndex, stepIndex++ ) );
-            log.debug( "Step test data is " + testData.toString() );
+            testData = getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), null, step, iterationIndex, stepIndex++ ) );
+            // log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setTestData( testData );
-
-            // if ( !stepRunner.runStep( step, testExecutionContext ) )
-            // {
-            // log.error( "Feature setup failed at step " + step );
-            // return;
-            // }
 
             boolean stepResult = false;
 
@@ -105,8 +98,8 @@ public class FeatureRunner implements Runnable
             {
                if ( !stepResult )
                {
-                  log.error( "Feature " + testFeature + " failed at setup step " + step );
-                  return;
+                  log.error( "Feature \"" + testFeature.getName() + "\" failed at setup step " + step );
+                  return true;
                }
             }
          }
@@ -121,26 +114,26 @@ public class FeatureRunner implements Runnable
             {
                for ( TestStep step : testFeature.getScenarioSetupSteps() )
                {
-                  testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
-                  log.debug( "Step test data is " + testData.toString() );
+                  testData = getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
+                  // log.debug( "Step test data is " + testData.toString() );
                   testExecutionContext.setTestData( testData );
 
                   if ( !stepRunner.runStep( step, testExecutionContext ) )
                   {
-                     log.error( "Scenario " + testScenario + " failed at setup step " + step );
+                     log.error( "Scenario \"" + testScenario.getName() + "\" failed at setup step " + step );
                      continue nextScenario;
                   }
                }
 
                for ( TestStep step : testScenario.getScenarioExecutionSteps() )
                {
-                  testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
-                  log.debug( "Step test data is " + testData.toString() );
+                  testData = getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
+                  // log.debug( "Step test data is " + testData.toString() );
                   testExecutionContext.setTestData( testData );
 
                   if ( !stepRunner.runStep( step, testExecutionContext ) )
                   {
-                     log.error( "Scenario " + testScenario + " failed at step " + step );
+                     log.error( "Scenario \"" + testScenario.getName() + "\" failed at step " + step );
                      continue nextScenario;
                   }
                }
@@ -153,15 +146,15 @@ public class FeatureRunner implements Runnable
             {
                for ( TestStep step : testFeature.getScenarioTearDownSteps() )
                {
-                  testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
-                  log.debug( "Step test data is " + testData.toString() );
+                  testData = getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
+                  // log.debug( "Step test data is " + testData.toString() );
                   testExecutionContext.setTestData( testData );
 
                   try
                   {
                      if ( !stepRunner.runStep( step, testExecutionContext ) )
                      {
-                        log.error( "Scenario " + testScenario + " failed at teardown step " + step );
+                        log.error( "Scenario \"" + testScenario.getName() + "\" failed at teardown step " + step );
                         // break;
                      }
                   }
@@ -177,24 +170,40 @@ public class FeatureRunner implements Runnable
 
          for ( TestStep step : testFeature.getTestTearDownSteps() )
          {
-            testData = testDataSource.getData( new ExecutionStepPointer( testFeature.getName(), null, step, iterationIndex, stepIndex++ ) );
-            log.debug( "Step test data is " + testData.toString() );
+            testData = getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), null, step, iterationIndex, stepIndex++ ) );
+            // log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setTestData( testData );
 
-            if ( !stepRunner.runStep( step, testExecutionContext ) )
+            boolean stepResult = false;
+
+            try
             {
-               log.error( "Feature setup teardown failed at step " + step );
-               // return;
+               stepResult = stepRunner.runStep( step, testExecutionContext );
+            }
+            catch ( TestFailureException tfe )
+            {
+               log.error( "Exception in test failure ", tfe );
+            }
+            finally
+            {
+               if ( !stepResult )
+               {
+                  log.error( "Feature \"" + testFeature.getName() + "\" failed at downdown " + step );
+                  continue;
+               }
             }
          }
       }
       catch ( ClassNotFoundException cnfe )
       {
          log.error( "Plugin class load exception", cnfe );
+         return false;
       }
       catch ( Throwable t )
       {
          log.error( "Exception occured when trying to run test", t );
+         return false;
       }
+      return true;
    }
 }

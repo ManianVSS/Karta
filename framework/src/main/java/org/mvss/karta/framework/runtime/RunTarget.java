@@ -1,6 +1,4 @@
-package org.mvss.karta.configuration;
-
-import java.util.ArrayList;
+package org.mvss.karta.framework.runtime;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +9,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class KartaConfiguration
+public class RunTarget
 {
-   private ArrayList<PluginConfig> pluginConfigs;
+
+   private String featureFile;
+
+   private String javaTest;
+   private String javaTestJarFile;
+
 }

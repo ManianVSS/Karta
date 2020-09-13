@@ -1,9 +1,10 @@
-package org.mvss.karta.runner.api;
+package org.mvss.karta.server.api;
 
-import java.util.HashMap;
+import java.lang.reflect.InvocationTargetException;
 
 import org.mvss.karta.framework.runtime.FeatureRunner;
 import org.mvss.karta.framework.runtime.JavaTestRunner;
+import org.mvss.karta.framework.runtime.RunTarget;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,8 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 public class RunController
@@ -22,23 +21,22 @@ public class RunController
    private static final String FEATURE_TEST_RUN_URL = RUNURL + "FeatureTestCase";
 
    @Autowired
-   ObjectMapper                objectMapper;
+   private JavaTestRunner      testRunner;
+
+   @Autowired
+   private FeatureRunner       featureRunner;
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = JAVA_TEST_RUN_URL )
-   public boolean startJavaTestRun( @RequestBody HashMap<String, Object> runConfiguration )
+   public boolean startJavaTestRun( @RequestBody RunTarget runTarget ) throws IllegalAccessException, InvocationTargetException
    {
-      JavaTestRunner testRunner = objectMapper.convertValue( runConfiguration, JavaTestRunner.class );
-      new Thread( testRunner ).run();
-      return true;
+      return testRunner.run( runTarget.getJavaTest(), runTarget.getJavaTestJarFile() );
    }
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = FEATURE_TEST_RUN_URL )
-   public boolean startFeatureRun( @RequestBody HashMap<String, Object> runConfiguration )
+   public boolean startFeatureRun( @RequestBody RunTarget runTarget ) throws IllegalAccessException, InvocationTargetException
    {
-      FeatureRunner featureRunner = objectMapper.convertValue( runConfiguration, FeatureRunner.class );
-      new Thread( featureRunner ).run();
-      return true;
+      return featureRunner.run( runTarget.getFeatureFile() );
    }
 }

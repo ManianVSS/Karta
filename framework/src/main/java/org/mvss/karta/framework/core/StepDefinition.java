@@ -1,4 +1,4 @@
-package org.mvss.karta.samples.runner;
+package org.mvss.karta.framework.core;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,43 +1,61 @@
 package org.mvss.karta.framework.utils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 public class ClassPathLoaderUtils
 {
-   public static InputStream loadClassPathResourceFile( File jarFile, String fileName ) throws MalformedURLException
-   {
-      ClassLoader loader = URLClassLoader.newInstance( new URL[] {jarFile.toURI().toURL()}, ClassPathLoaderUtils.class.getClassLoader() );
-      return loader.getResourceAsStream( fileName );
-   }
-
-   public static String readAllText( String fileName ) throws IOException, URISyntaxException
+   public static URI getFileOrResourceURI( String fileName ) throws URISyntaxException
    {
       File fileToLoad = new File( fileName );
 
       if ( fileToLoad.exists() )
       {
-         return FileUtils.readFileToString( fileToLoad, Charset.defaultCharset() );
+         return fileToLoad.toURI();
       }
 
-      URL url = ClassPathLoaderUtils.class.getResource( fileName );
+      URL url = ClassPathLoaderUtils.class.getResource( "/" + fileName );
 
-      if ( url != null )
+      return ( url == null ) ? null : url.toURI();
+   }
+
+   public static InputStream getFileStream( String fileName ) throws IOException, URISyntaxException
+   {
+      File fileToLoad = new File( fileName );
+
+      if ( fileToLoad.exists() )
       {
-         return new String( Files.readAllBytes( Paths.get( url.toURI() ) ) );
+         return new FileInputStream( fileToLoad );
       }
 
-      throw new IOException( "File or resource not found: " + fileName );
+      return ClassPathLoaderUtils.class.getResourceAsStream( "/" + fileName );
+   }
+
+   public static String readAllText( String fileName ) throws IOException, URISyntaxException
+   {
+      return IOUtils.toString( getFileStream( fileName ), Charset.defaultCharset() );
+   }
+
+   public static InputStream loadClassPathResourceFile( String jarFileName, String fileName ) throws URISyntaxException, IOException
+   {
+      URI uri = getFileOrResourceURI( jarFileName );
+
+      if ( uri == null )
+      {
+         throw new IOException( "Jar file/resource not found " );
+      }
+
+      ClassLoader loader = URLClassLoader.newInstance( new URL[] {uri.toURL()}, ClassPathLoaderUtils.class.getClassLoader() );
+      return loader.getResourceAsStream( fileName );
    }
 
 }

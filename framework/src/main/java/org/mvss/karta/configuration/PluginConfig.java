@@ -1,7 +1,6 @@
 package org.mvss.karta.configuration;
 
-import java.io.Serializable;
-import java.util.HashMap;
+import java.util.ArrayList;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,9 +11,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PluginClassConfig
+public class PluginConfig
 {
-   private String                className;
-   private String                jarFile;
-   HashMap<String, Serializable> properties;
+   private String            pluginName;
+   private ArrayList<String> pluginTypes;
+   private String            className;
+   private String            jarFile;
 }

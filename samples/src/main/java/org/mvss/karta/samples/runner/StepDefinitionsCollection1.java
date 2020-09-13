@@ -1,5 +1,7 @@
 package org.mvss.karta.samples.runner;
 
+import org.mvss.karta.framework.core.StepDefinition;
+
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 

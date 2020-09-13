@@ -16,6 +16,7 @@
 			</includes>
 			<outputDirectory>lib/</outputDirectory>
 			<outputFileNameMapping>framework.jar</outputFileNameMapping>
+			<useProjectArtifact>false</useProjectArtifact>
 		</dependencySet>
 
 		<dependencySet>
@@ -25,6 +26,7 @@
 			</includes>
 			<outputDirectory>bin/</outputDirectory>
 			<outputFileNameMapping>karta-cli.jar</outputFileNameMapping>
+			<useProjectArtifact>false</useProjectArtifact>
 		</dependencySet>
 
 		<dependencySet>
@@ -32,8 +34,9 @@
 			<includes>
 				<include>org.mvss.karta:samples</include>
 			</includes>
-			<outputDirectory>samples/</outputDirectory>
+			<outputDirectory>plugins/</outputDirectory>
 			<outputFileNameMapping>samples.jar</outputFileNameMapping>
+			<useProjectArtifact>false</useProjectArtifact>
 		</dependencySet>
 
 		<dependencySet>
@@ -43,22 +46,20 @@
 			</includes>
 			<outputDirectory>bin/</outputDirectory>
 			<outputFileNameMapping>server.jar</outputFileNameMapping>
+			<useProjectArtifact>false</useProjectArtifact>
 		</dependencySet>
 
 		<dependencySet>
 			<unpack>false</unpack>
 			<scope>runtime</scope>
-			<excludes>
-				<exclude>${artifact}</exclude>
-				<exclude>org.mvss.karta:framework</exclude>
-				<exclude>org.mvss.karta:cli</exclude>
-				<exclude>org.mvss.karta:samples</exclude>
-				<exclude>org.mvss.karta:server</exclude>
-			</excludes>
+			<useTransitiveDependencies>true</useTransitiveDependencies>
+			<includes>
+				<include>org.mvss.karta:framework</include>
+			</includes>
 			<outputDirectory>lib/</outputDirectory>
 			<useProjectArtifact>false</useProjectArtifact>
+			<useTransitiveFiltering>true</useTransitiveFiltering>
 		</dependencySet>
-
 	</dependencySets>
 	<fileSets>
 		<fileSet>
@@ -69,9 +70,9 @@
 			<directoryMode>0755</directoryMode>
 		</fileSet>
 		<fileSet>
-			<directory>${basedir}/src/main/resources/conf
+			<directory>${basedir}/src/main/resources/plugins
 			</directory>
-			<outputDirectory>conf/</outputDirectory>
+			<outputDirectory>plugins/</outputDirectory>
 			<fileMode>0755</fileMode>
 			<directoryMode>0755</directoryMode>
 		</fileSet>
