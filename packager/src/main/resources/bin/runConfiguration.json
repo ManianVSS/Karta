@@ -1,0 +1,15 @@
+{
+	"featureSourceParserPlugin": "Yerkin",
+	"stepRunnerPlugin": "Yerkin",
+	"testDataSourcePlugins": [
+		"Yerkin"
+	],
+	"pluginConfiguration": {
+		"Yerkin": {
+			"stepDefinitionClassNames": [
+				"org.mvss.karta.samples.runner.StepDefinitionsCollection1",
+				"org.mvss.karta.samples.runner.StepDefinitionsCollection2"
+			]
+		}
+	}
+}
