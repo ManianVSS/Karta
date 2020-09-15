@@ -51,24 +51,67 @@ public class FeatureRunner
       return mergedTestData;
    }
 
-   public boolean run( String featureFileName )
+   public boolean runFeatureFile( String featureFileName )
+   {
+      try
+      {
+         return runFeatureSource( ClassPathLoaderUtils.readAllText( featureFileName ) );
+      }
+      catch ( Throwable t )
+      {
+         log.error( t );
+         return false;
+      }
+   }
+
+   public boolean runFeatureSource( String featureFileSourceString )
    {
       try
       {
          FeatureSourceParser featureParser = (FeatureSourceParser) PnPRegistry.getPlugin( featureSourceParserPlugin, FeatureSourceParser.class );
+
+         if ( featureParser == null )
+         {
+            log.error( "Failed to get a feature source parser of type: " + featureSourceParserPlugin );
+            return false;
+         }
+         TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
+
+         return run( testFeature );
+      }
+      catch ( Throwable t )
+      {
+         log.error( t );
+         return false;
+      }
+   }
+
+   public boolean run( TestFeature testFeature )
+   {
+      try
+      {
          StepRunner stepRunner = (StepRunner) PnPRegistry.getPlugin( stepRunnerPlugin, StepRunner.class );
+
+         if ( stepRunner == null )
+         {
+            log.error( "Failed to get a step runner of type: " + stepRunnerPlugin );
+            return false;
+         }
 
          ArrayList<TestDataSource> testDataSources = new ArrayList<TestDataSource>();
 
          for ( String testDataSourcePlugin : testDataSourcePlugins )
          {
             TestDataSource testDataSource = (TestDataSource) PnPRegistry.getPlugin( testDataSourcePlugin, TestDataSource.class );
+
+            if ( testDataSource == null )
+            {
+               log.error( "Failed to get a test data source of type: " + testDataSourcePlugin );
+               return false;
+            }
+
             testDataSources.add( testDataSource );
          }
-
-         // TODO: Handle IO Exception
-         String featureFileSourceString = ClassPathLoaderUtils.readAllText( featureFileName );
-         TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
 
          HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();

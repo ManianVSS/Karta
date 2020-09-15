@@ -1,4 +1,4 @@
-package org.mvss.karta.samples.runner;
+package org.mvss.karta.samples.stepdefinitions;
 
 import java.io.Serializable;
 import java.util.HashMap;

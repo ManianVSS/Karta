@@ -3,6 +3,7 @@ package org.mvss.karta.server.beans;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.RuntimeConfiguration;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,13 +12,14 @@ import org.springframework.context.annotation.Configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
 @Configuration
 public class ConfigBeans
 {
-   private static final String RUN_CONFIGURATION_FILE_NAME = "runConfiguration.json";
-
    @Autowired
-   private ObjectMapper        objectMapper;
+   private ObjectMapper objectMapper;
 
    @Bean
    public RuntimeConfiguration getRunConfiguration()
@@ -25,13 +27,11 @@ public class ConfigBeans
       RuntimeConfiguration runtimeConfiguration = null;
       try
       {
-         // TODO: Handle IO Exception
-         runtimeConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( RUN_CONFIGURATION_FILE_NAME ), RuntimeConfiguration.class );
+         runtimeConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.RUN_CONFIGURATION_FILE_NAME ), RuntimeConfiguration.class );
       }
       catch ( IOException | URISyntaxException e )
       {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         log.error( e );
       }
       return runtimeConfiguration;
    }

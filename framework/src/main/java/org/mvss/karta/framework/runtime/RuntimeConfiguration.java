@@ -22,5 +22,4 @@ public class RuntimeConfiguration
    private ArrayList<String>                              testDataSourcePlugins;    // = new ArrayList<String>( Arrays.asList( "Yerkin" ) );
 
    private HashMap<String, HashMap<String, Serializable>> pluginConfiguration;      // = new HashMap<String, HashMap<String, Serializable>>();
-
 }

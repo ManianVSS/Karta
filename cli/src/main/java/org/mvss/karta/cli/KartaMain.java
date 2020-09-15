@@ -1,5 +1,6 @@
 package org.mvss.karta.cli;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -12,14 +13,15 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.configuration.KartaConfiguration;
+import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.FeatureRunner;
 import org.mvss.karta.framework.runtime.JavaTestRunner;
 import org.mvss.karta.framework.runtime.PnPRegistry;
-import org.mvss.karta.framework.runtime.RuntimeConfiguration;
 import org.mvss.karta.framework.runtime.RunTarget;
+import org.mvss.karta.framework.runtime.RuntimeConfiguration;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
+import org.mvss.karta.framework.utils.ParserUtils;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.log4j.Log4j2;
@@ -27,18 +29,16 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class KartaMain
 {
-   private static final String  KARTA                       = "Karta";
+   private static final String  KARTA         = "Karta";
 
-   private static final String  HELP                        = "help";
+   private static final String  HELP          = "help";
 
-   private static final String  FEATURE_FILE                = "featureFile";
+   private static final String  FEATURE_FILE  = "featureFile";
 
-   private static final String  JAVA_TEST                   = "javaTest";
-   private static final String  JAVA_TEST_JAR               = "javaTestJar";
+   private static final String  JAVA_TEST     = "javaTest";
+   private static final String  JAVA_TEST_JAR = "javaTestJar";
 
-   private static final String  RUN_CONFIGURATION_FILE_NAME = "runConfiguration.json";
-
-   public static List<Runnable> exitHooks                   = Collections.synchronizedList( new ArrayList<Runnable>() );
+   public static List<Runnable> exitHooks     = Collections.synchronizedList( new ArrayList<Runnable>() );
 
    private static void jvmExitHook()
    {
@@ -111,17 +111,16 @@ public class KartaMain
             }
             else
             {
-               ObjectMapper objectMapper = new ObjectMapper();
-               objectMapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
+               ObjectMapper objectMapper = ParserUtils.getObjectMapper();
 
                // TODO: Handle IO Exception
-               KartaConfiguration kartaConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( "KartaConfig.json" ), KartaConfiguration.class );
-               PnPRegistry.addConfiguration( kartaConfiguration );
-
+               KartaConfiguration kartaConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_CONFIG_FILE ), KartaConfiguration.class );
+               PnPRegistry.addPluginConfiguration( kartaConfiguration.getPluginConfigs() );
+               PnPRegistry.loadPlugins( new File( Constants.PLUGINS_DIRECTORY ) );
                RuntimeConfiguration runtimeConfiguration = new RuntimeConfiguration();
 
                // TODO: Handle IO Exception
-               runtimeConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( RUN_CONFIGURATION_FILE_NAME ), RuntimeConfiguration.class );
+               runtimeConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.RUN_CONFIGURATION_FILE_NAME ), RuntimeConfiguration.class );
 
                PnPRegistry.initializePlugins( runtimeConfiguration.getPluginConfiguration() );
                Runtime.getRuntime().addShutdownHook( new Thread( () -> jvmExitHook() ) );
@@ -129,7 +128,7 @@ public class KartaMain
                if ( runFeatureFile )
                {
                   FeatureRunner featureRunner = objectMapper.convertValue( runtimeConfiguration, FeatureRunner.class );
-                  if ( !featureRunner.run( runTarget.getFeatureFile() ) )
+                  if ( !featureRunner.runFeatureFile( runTarget.getFeatureFile() ) )
                   {
                      System.exit( 1 );
                   }

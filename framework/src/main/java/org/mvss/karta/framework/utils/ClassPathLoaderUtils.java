@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 
 import org.apache.commons.io.IOUtils;
@@ -42,20 +41,13 @@ public class ClassPathLoaderUtils
 
    public static String readAllText( String fileName ) throws IOException, URISyntaxException
    {
-      return IOUtils.toString( getFileStream( fileName ), Charset.defaultCharset() );
-   }
+      InputStream fileInputStream = getFileStream( fileName );
 
-   public static InputStream loadClassPathResourceFile( String jarFileName, String fileName ) throws URISyntaxException, IOException
-   {
-      URI uri = getFileOrResourceURI( jarFileName );
-
-      if ( uri == null )
+      if ( fileInputStream == null )
       {
-         throw new IOException( "Jar file/resource not found " );
+         throw new IOException( "Resource " + fileName + " not found" );
       }
-
-      ClassLoader loader = URLClassLoader.newInstance( new URL[] {uri.toURL()}, ClassPathLoaderUtils.class.getClassLoader() );
-      return loader.getResourceAsStream( fileName );
+      return IOUtils.toString( fileInputStream, Charset.defaultCharset() );
    }
 
 }

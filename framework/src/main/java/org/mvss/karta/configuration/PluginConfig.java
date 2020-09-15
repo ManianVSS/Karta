@@ -16,5 +16,4 @@ public class PluginConfig
    private String            pluginName;
    private ArrayList<String> pluginTypes;
    private String            className;
-   private String            jarFile;
 }

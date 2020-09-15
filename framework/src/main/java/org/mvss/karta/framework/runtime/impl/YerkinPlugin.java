@@ -1,5 +1,6 @@
 package org.mvss.karta.framework.runtime.impl;
 
+import java.io.File;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -21,10 +22,8 @@ import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
-
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.mvss.karta.framework.utils.DynamicClassLoader;
+import org.mvss.karta.framework.utils.ParserUtils;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -36,9 +35,6 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
    private final String                                 pluginName                             = "Yerkin";
 
    private HashMap<String, MutablePair<Object, Method>> stepMap                                = new HashMap<String, MutablePair<Object, Method>>();
-
-   private ObjectMapper                                 objectMapper;
-   private ObjectMapper                                 yamlObjectMapper;
 
    public static final String                           INLINE_STEP_DEF_PARAM_INDICATOR_STRING = "\"\"";
    public static final String                           WORD_FETCH_REGEX                       = "\\W+";
@@ -62,20 +58,17 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
 
       log.debug( "Initializing Yerkin plugin with " + properties );
 
-      objectMapper = new ObjectMapper();
-      yamlObjectMapper = new ObjectMapper( new YAMLFactory() );
-      objectMapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
-      yamlObjectMapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
+      String stepDefinitionJar = (String) properties.get( "stepDefinitionJar" );
 
       @SuppressWarnings( "unchecked" )
       ArrayList<String> stepDefinitionClassNames = (ArrayList<String>) properties.get( "stepDefinitionClassNames" );
 
-      for ( String stepDefinitionClassName : stepDefinitionClassNames )
+      ArrayList<Class<?>> stepDefClasses = StringUtils.isNotBlank( stepDefinitionJar ) ? DynamicClassLoader.LoadClasses( new File( stepDefinitionJar ), stepDefinitionClassNames ) : DynamicClassLoader.LoadClasses( stepDefinitionClassNames );
+
+      for ( Class<?> stepDefinitionClass : stepDefClasses )
       {
          try
          {
-            Class<?> stepDefinitionClass = Class.forName( stepDefinitionClassName );
-
             Object stepDefinitionClassObj = stepDefinitionClass.newInstance();
 
             for ( Method candidateStepDefinitionMethod : stepDefinitionClass.getMethods() )
@@ -96,14 +89,13 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
 
                      log.debug( "Mapping stepdef " + stepDefString + " to " + methodDescription );
                      stepMap.put( stepDefString, new MutablePair<Object, Method>( stepDefinitionClassObj, candidateStepDefinitionMethod ) );
-
                   }
                }
             }
          }
          catch ( Throwable t )
          {
-            log.error( "Exception while parsing step definition class " + stepDefinitionClassName, t );
+            log.error( "Exception while parsing step definition class " + stepDefinitionClass.getName(), t );
          }
       }
       initialized = true;
@@ -113,7 +105,7 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
    @Override
    public TestFeature parseFeatureSource( String sourceString ) throws Throwable
    {
-      return yamlObjectMapper.readValue( sourceString, TestFeature.class );
+      return ParserUtils.getYamlObjectMapper().readValue( sourceString, TestFeature.class );
    }
 
    @SuppressWarnings( "unchecked" )
@@ -171,7 +163,7 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
             int i = 0;
             for ( String positionalParam : (ArrayList<String>) testData.get( INLINE_STEP_DEF_PARAMTERS ) )
             {
-               values.add( objectMapper.readValue( positionalParam, parameters[i++] ) );
+               values.add( ParserUtils.getObjectMapper().readValue( positionalParam, parameters[i++] ) );
             }
 
             stepDefMethodToInvoke.invoke( stepDefObject, values.isEmpty() ? null : values.toArray() );

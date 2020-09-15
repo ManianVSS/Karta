@@ -1,4 +1,4 @@
-package org.mvss.karta.samples.runner;
+package org.mvss.karta.samples.stepdefinitions;
 
 import org.mvss.karta.framework.core.StepDefinition;
 

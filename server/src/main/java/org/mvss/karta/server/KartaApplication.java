@@ -1,5 +1,6 @@
 package org.mvss.karta.server;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -7,6 +8,7 @@ import java.util.List;
 import javax.annotation.PreDestroy;
 
 import org.mvss.karta.configuration.KartaConfiguration;
+import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.PnPRegistry;
 import org.mvss.karta.framework.runtime.RuntimeConfiguration;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
@@ -24,7 +26,7 @@ import lombok.extern.log4j.Log4j2;
 public class KartaApplication implements CommandLineRunner
 {
    @Autowired
-   private ObjectMapper     objectMapper;
+   private ObjectMapper         objectMapper;
 
    @Autowired
    private RuntimeConfiguration runtimeConfiguration;
@@ -43,8 +45,9 @@ public class KartaApplication implements CommandLineRunner
       log.info( "******************** Starting Karta Server *********************" );
 
       // TODO: Handle IO Exception
-      KartaConfiguration kartaConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( "KartaConfig.json" ), KartaConfiguration.class );
-      PnPRegistry.addConfiguration( kartaConfiguration );
+      KartaConfiguration kartaConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_CONFIG_FILE ), KartaConfiguration.class );
+      PnPRegistry.addPluginConfiguration( kartaConfiguration.getPluginConfigs() );
+      PnPRegistry.loadPlugins( new File( Constants.PLUGINS_DIRECTORY ) );
       try
       {
          PnPRegistry.initializePlugins( runtimeConfiguration.getPluginConfiguration() );

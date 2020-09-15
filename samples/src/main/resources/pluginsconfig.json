@@ -1,0 +1,9 @@
+[
+	{
+		"pluginName": "RandomTestDataSource",
+		"pluginTypes": [
+			"org.mvss.karta.framework.runtime.interfaces.TestDataSource"
+		],
+		"className": "org.mvss.karta.samples.plugins.RandomTestDataSource"
+	}
+]

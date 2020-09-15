@@ -2,14 +2,19 @@
 	"featureSourceParserPlugin": "Yerkin",
 	"stepRunnerPlugin": "Yerkin",
 	"testDataSourcePlugins": [
-		"Yerkin"
+		"Yerkin",
+		"RandomTestDataSource"
 	],
 	"pluginConfiguration": {
 		"Yerkin": {
+			"stepDefinitionJar": "../plugins/samples.jar",
 			"stepDefinitionClassNames": [
-				"org.mvss.karta.samples.runner.StepDefinitionsCollection1",
-				"org.mvss.karta.samples.runner.StepDefinitionsCollection2"
+				"org.mvss.karta.samples.stepdefinitions.StepDefinitionsCollection1",
+				"org.mvss.karta.samples.stepdefinitions.StepDefinitionsCollection2"
 			]
+		},
+		"RandomTestDataSource": {
+			"seed": 1723
 		}
 	}
 }
