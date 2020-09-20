@@ -13,6 +13,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.configuration.KartaConfiguration;
+import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.FeatureRunner;
 import org.mvss.karta.framework.runtime.JavaTestRunner;
@@ -121,6 +122,14 @@ public class KartaMain
 
                // TODO: Handle IO Exception
                runtimeConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.RUN_CONFIGURATION_FILE_NAME ), RuntimeConfiguration.class );
+
+               ArrayList<String> propertiesFileList = runtimeConfiguration.getPropertyFiles();
+               if ( ( propertiesFileList != null ) && !propertiesFileList.isEmpty() )
+               {
+                  String[] propertyFilesToLoad = new String[propertiesFileList.size()];
+                  propertiesFileList.toArray( propertyFilesToLoad );
+                  Configurator.MergePropertiesFiles( propertyFilesToLoad );
+               }
 
                PnPRegistry.initializePlugins( runtimeConfiguration.getPluginConfiguration() );
                Runtime.getRuntime().addShutdownHook( new Thread( () -> jvmExitHook() ) );

@@ -18,6 +18,7 @@
 		}
 	},
 	"propertyFiles": [
-		"runProperties.json"
+		"SampleRunProperties.json",
+		"SampleRunProperties2.json"
 	]
 }

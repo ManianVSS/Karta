@@ -1,0 +1,13 @@
+{
+	"groupName": {
+		"variable1": "Configured",
+		"variable2": {
+			"v2v1": "v2v1Value",
+			"v2v2": [
+				"abc",
+				"def",
+				"ghi"
+			]
+		}
+	}
+}
