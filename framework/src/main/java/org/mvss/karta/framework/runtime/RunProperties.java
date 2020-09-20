@@ -1,7 +1,6 @@
-package org.mvss.karta.configuration;
+package org.mvss.karta.framework.runtime;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,14 +11,14 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PluginConfig implements Serializable
+public class RunProperties implements Serializable
 {
    /**
     * 
     */
    private static final long serialVersionUID = 1L;
 
-   private String            pluginName;
-   private ArrayList<String> pluginTypes;
-   private String            className;
+   private String            name;
+   private String            testBed;
+   private long              numberOfIterations;
 }

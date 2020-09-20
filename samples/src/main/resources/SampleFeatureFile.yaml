@@ -1,6 +1,10 @@
 ---
 name: CalculatorTest
 description: This is a sample YAML format feature file testing a calculator's function
+tags:
+  - tag1
+    tag2
+    tag3
 testSetupSteps:
   - identifier: Given the calculator is powered on
 
@@ -10,6 +14,10 @@ scenarioSetupSteps:
 
 testScenarios:
   - name: Scenario1
+    tags:
+      - tags1
+        tags2
+        tags3
     scenarioExecutionSteps:
       - identifier: When the button "1" is pressed
       - identifier: And the button "+" is pressed

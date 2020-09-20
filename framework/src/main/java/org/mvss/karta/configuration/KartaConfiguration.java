@@ -1,5 +1,6 @@
 package org.mvss.karta.configuration;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import lombok.AllArgsConstructor;
@@ -11,7 +12,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class KartaConfiguration
+public class KartaConfiguration implements Serializable
 {
+   /**
+    * 
+    */
+   private static final long       serialVersionUID = 1L;
+
    private ArrayList<PluginConfig> pluginConfigs;
 }

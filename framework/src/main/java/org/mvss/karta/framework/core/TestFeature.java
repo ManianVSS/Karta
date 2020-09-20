@@ -18,7 +18,8 @@ public class TestFeature
    private String                  name;
    private String                  description;
 
-   private long                    numberOfIterations;
+   @Builder.Default
+   private ArrayList<String>       tags                  = new ArrayList<String>();
 
    @Builder.Default
    private ScenarioRunPolicy       scenarioRunPolicy     = ScenarioRunPolicy.RUN_ALL_EVERY_ITERATION;

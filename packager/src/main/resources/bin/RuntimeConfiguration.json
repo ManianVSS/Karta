@@ -16,5 +16,8 @@
 		"RandomTestDataSource": {
 			"seed": 1723
 		}
-	}
+	},
+	"propertyFiles": [
+		"runProperties.json"
+	]
 }

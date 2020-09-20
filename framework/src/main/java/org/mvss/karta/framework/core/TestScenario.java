@@ -24,6 +24,9 @@ public class TestScenario implements Serializable
    @Builder.Default
    private int                 probabilityOfOccurrence = 100;
 
+   @Builder.Default
+   private ArrayList<String>   tags                    = new ArrayList<String>();
+
    // @Builder.Default
    // private ArrayList<TestStep> scenarioSetupSteps = new ArrayList<TestStep>();
 
