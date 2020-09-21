@@ -1,0 +1,9 @@
+{
+	"Karta": {
+		"RunProperties": {
+			"name": "SampleTestRun",
+			"testBed": "Some valid test bed",
+			"numberOfIterations": 10
+		}
+	}
+}

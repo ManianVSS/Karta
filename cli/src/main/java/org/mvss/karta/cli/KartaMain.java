@@ -1,6 +1,5 @@
 package org.mvss.karta.cli;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -12,15 +11,12 @@ import org.apache.commons.cli.MissingArgumentException;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.apache.commons.lang3.StringUtils;
-import org.mvss.karta.configuration.KartaConfiguration;
 import org.mvss.karta.framework.runtime.Configurator;
-import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.FeatureRunner;
 import org.mvss.karta.framework.runtime.JavaTestRunner;
-import org.mvss.karta.framework.runtime.PnPRegistry;
+import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunTarget;
 import org.mvss.karta.framework.runtime.RuntimeConfiguration;
-import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -114,29 +110,16 @@ public class KartaMain
             {
                ObjectMapper objectMapper = ParserUtils.getObjectMapper();
 
-               // TODO: Handle IO Exception
-               KartaConfiguration kartaConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_CONFIG_FILE ), KartaConfiguration.class );
-               PnPRegistry.addPluginConfiguration( kartaConfiguration.getPluginConfigs() );
-               PnPRegistry.loadPlugins( new File( Constants.PLUGINS_DIRECTORY ) );
-               RuntimeConfiguration runtimeConfiguration = new RuntimeConfiguration();
+               KartaRuntime kartaRuntime = KartaRuntime.getInstance();
+               RuntimeConfiguration runtimeConfiguration = kartaRuntime.getRuntimeConfiguration();
+               Configurator configurator = kartaRuntime.getConfigurator();
 
-               // TODO: Handle IO Exception
-               runtimeConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.RUN_CONFIGURATION_FILE_NAME ), RuntimeConfiguration.class );
-
-               ArrayList<String> propertiesFileList = runtimeConfiguration.getPropertyFiles();
-               if ( ( propertiesFileList != null ) && !propertiesFileList.isEmpty() )
-               {
-                  String[] propertyFilesToLoad = new String[propertiesFileList.size()];
-                  propertiesFileList.toArray( propertyFilesToLoad );
-                  Configurator.MergePropertiesFiles( propertyFilesToLoad );
-               }
-
-               PnPRegistry.initializePlugins( runtimeConfiguration.getPluginConfiguration() );
                Runtime.getRuntime().addShutdownHook( new Thread( () -> jvmExitHook() ) );
 
                if ( runFeatureFile )
                {
                   FeatureRunner featureRunner = objectMapper.convertValue( runtimeConfiguration, FeatureRunner.class );
+                  featureRunner.setTestProperties( configurator.getPropertiesStore() );
                   if ( !featureRunner.runFeatureFile( runTarget.getFeatureFile() ) )
                   {
                      System.exit( 1 );
@@ -144,7 +127,8 @@ public class KartaMain
                }
                else if ( runJavaTest )
                {
-                  JavaTestRunner testRunner = objectMapper.convertValue( runtimeConfiguration, JavaTestRunner.class );;
+                  JavaTestRunner testRunner = objectMapper.convertValue( runtimeConfiguration, JavaTestRunner.class );
+                  testRunner.setTestProperties( configurator.getPropertiesStore() );
                   if ( !testRunner.run( runTarget.getJavaTest(), runTarget.getJavaTestJarFile() ) )
                   {
                      System.exit( 1 );

@@ -12,10 +12,7 @@ import java.util.HashMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.mvss.karta.configuration.PluginConfig;
-import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.framework.runtime.interfaces.Plugin;
-import org.mvss.karta.framework.runtime.interfaces.StepRunner;
-import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
 
@@ -26,28 +23,21 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class PnPRegistry
 {
-   private static HashMap<Class<? extends Plugin>, HashMap<String, Plugin>> pluginMap                 = new HashMap<Class<? extends Plugin>, HashMap<String, Plugin>>();
-   private static HashMap<String, Plugin>                                   registeredPlugins         = new HashMap<String, Plugin>();
+   private static TypeReference<ArrayList<PluginConfig>>             pluginConfigArrayListType = new TypeReference<ArrayList<PluginConfig>>()
+                                                                                               {
+                                                                                               };
 
-   private static ArrayList<Class<? extends Plugin>>                        pluginTypes               = new ArrayList<Class<? extends Plugin>>();
+   private HashMap<Class<? extends Plugin>, HashMap<String, Plugin>> pluginMap                 = new HashMap<Class<? extends Plugin>, HashMap<String, Plugin>>();
+   private HashMap<String, Plugin>                                   registeredPlugins         = new HashMap<String, Plugin>();
 
-   private static TypeReference<ArrayList<PluginConfig>>                    pluginConfigArrayListType = new TypeReference<ArrayList<PluginConfig>>()
-                                                                                                      {
-                                                                                                      };
+   private ArrayList<Class<? extends Plugin>>                        pluginTypes               = new ArrayList<Class<? extends Plugin>>();
 
-   static
-   {
-      pluginTypes.add( FeatureSourceParser.class );
-      pluginTypes.add( StepRunner.class );
-      pluginTypes.add( TestDataSource.class );
-   }
-
-   public static void addPluginType( Class<? extends Plugin> pluginType )
+   public void addPluginType( Class<? extends Plugin> pluginType )
    {
       pluginTypes.add( pluginType );
    }
 
-   public static boolean registerPlugin( File jarFile, PluginConfig pluginConfig ) throws Throwable
+   public boolean registerPlugin( File jarFile, PluginConfig pluginConfig ) throws Throwable
    {
       log.debug( "Registering plugin " + pluginConfig );
 
@@ -93,7 +83,7 @@ public class PnPRegistry
       return isRegisteredPluginType;
    }
 
-   public static void addPluginConfiguration( File jarFile, ArrayList<PluginConfig> pluginConfigs )
+   public void addPluginConfiguration( File jarFile, ArrayList<PluginConfig> pluginConfigs )
    {
       for ( PluginConfig pluginConfig : pluginConfigs )
       {
@@ -111,19 +101,19 @@ public class PnPRegistry
       }
    }
 
-   public static void addPluginConfiguration( ArrayList<PluginConfig> pluginConfigs )
+   public void addPluginConfiguration( ArrayList<PluginConfig> pluginConfigs )
    {
       addPluginConfiguration( null, pluginConfigs );
    }
 
-   public static void loadPluginJar( File jarFile ) throws MalformedURLException, IOException, URISyntaxException
+   public void loadPluginJar( File jarFile ) throws MalformedURLException, IOException, URISyntaxException
    {
       String fileText = IOUtils.toString( DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, "pluginsconfig.json" ), Charset.defaultCharset() );
       ArrayList<PluginConfig> pluginConfigs = ParserUtils.getObjectMapper().readValue( fileText, pluginConfigArrayListType );
       addPluginConfiguration( jarFile, pluginConfigs );
    }
 
-   public static void loadPlugins( File pluginsDirectory )
+   public void loadPlugins( File pluginsDirectory )
    {
       String[] extensions = {"jar"};
 
@@ -140,7 +130,7 @@ public class PnPRegistry
       }
    }
 
-   public static void initializePlugins( HashMap<String, HashMap<String, Serializable>> pluginProperties )
+   public void initializePlugins( HashMap<String, HashMap<String, Serializable>> pluginProperties )
    {
       for ( Plugin plugin : registeredPlugins.values() )
       {
@@ -158,7 +148,7 @@ public class PnPRegistry
       }
    }
 
-   public static Plugin getPlugin( String name, Class<? extends Plugin> pluginType )
+   public Plugin getPlugin( String name, Class<? extends Plugin> pluginType )
    {
       return pluginMap.containsKey( pluginType ) ? pluginMap.get( pluginType ).get( name ) : null;
    }

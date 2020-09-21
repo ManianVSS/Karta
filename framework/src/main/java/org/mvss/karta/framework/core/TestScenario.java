@@ -22,17 +22,20 @@ public class TestScenario implements Serializable
    private String              name;
 
    @Builder.Default
-   private int                 probabilityOfOccurrence = 100;
+   private Integer             probabilityOfOccurrence = 100;
+
+   @Builder.Default
+   private Long                numberOfIterations      = 1l;
 
    @Builder.Default
    private ArrayList<String>   tags                    = new ArrayList<String>();
 
-   // @Builder.Default
-   // private ArrayList<TestStep> scenarioSetupSteps = new ArrayList<TestStep>();
+   @Builder.Default
+   private ArrayList<TestStep> scenarioSetupSteps      = new ArrayList<TestStep>();
 
    @Builder.Default
    private ArrayList<TestStep> scenarioExecutionSteps  = new ArrayList<TestStep>();
 
-   // @Builder.Default
-   // private ArrayList<TestStep> scenarioTearDownSteps = new ArrayList<TestStep>();
+   @Builder.Default
+   private ArrayList<TestStep> scenarioTearDownSteps   = new ArrayList<TestStep>();
 }

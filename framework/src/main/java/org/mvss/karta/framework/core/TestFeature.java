@@ -19,6 +19,9 @@ public class TestFeature
    private String                  description;
 
    @Builder.Default
+   private Long                    numberOfIterations    = 1l;
+
+   @Builder.Default
    private ArrayList<String>       tags                  = new ArrayList<String>();
 
    @Builder.Default

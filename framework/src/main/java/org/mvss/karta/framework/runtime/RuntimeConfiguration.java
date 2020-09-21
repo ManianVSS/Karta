@@ -1,8 +1,8 @@
 package org.mvss.karta.framework.runtime;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,13 +20,13 @@ public class RuntimeConfiguration implements Serializable
     */
    private static final long                              serialVersionUID = 1L;
 
-   private String                                         featureSourceParserPlugin;
+   private String                                         defaultFeatureSourceParserPlugin;
 
-   private String                                         stepRunnerPlugin;
+   private String                                         defaultStepRunnerPlugin;
 
-   private ArrayList<String>                              testDataSourcePlugins;    // = new ArrayList<String>( Arrays.asList( "Yerkin" ) );
+   private HashSet<String>                                defaultTestDataSourcePlugins;
 
-   private HashMap<String, HashMap<String, Serializable>> pluginConfiguration;      // = new HashMap<String, HashMap<String, Serializable>>();
+   private HashMap<String, HashMap<String, Serializable>> pluginConfiguration;
 
-   private ArrayList<String>                              propertyFiles;
+   private HashSet<String>                                propertyFiles;
 }

@@ -20,4 +20,7 @@ public class KartaConfiguration implements Serializable
    private static final long       serialVersionUID = 1L;
 
    private ArrayList<PluginConfig> pluginConfigs;
+
+   private String                  pluginsDirectory;
+
 }

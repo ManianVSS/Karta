@@ -9,5 +9,6 @@
 			],
 			"className": "org.mvss.karta.framework.runtime.impl.YerkinPlugin"
 		}
-	]
+	],
+	"pluginsDirectory": "../plugins/"
 }

@@ -16,6 +16,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.Getter;
 import lombok.Setter;
 
 public class Configurator
@@ -26,18 +27,19 @@ public class Configurator
 
    private static ObjectMapper                                                       objectMapper                      = ParserUtils.getObjectMapper();
 
-   private static HashMap<String, HashMap<String, Serializable>>                     propertiesStore                   = new HashMap<String, HashMap<String, Serializable>>();
+   @Getter
+   private HashMap<String, HashMap<String, Serializable>>                            propertiesStore                   = new HashMap<String, HashMap<String, Serializable>>();
 
    @Setter
-   private static boolean                                                            useSystemProperties               = true;
+   private boolean                                                                   useSystemProperties               = true;
 
    @Setter
-   private static boolean                                                            useEnvironmentProperties          = true;
+   private boolean                                                                   useEnvironmentProperties          = true;
 
    @Setter
-   private static boolean                                                            envPropertiesPreceedsOverSysProps = true;
+   private boolean                                                                   envPropertiesPreceedsOverSysProps = true;
 
-   public static void MergeProperties( HashMap<String, HashMap<String, Serializable>> propertiesToMerge )
+   public void mergeProperties( HashMap<String, HashMap<String, Serializable>> propertiesToMerge )
    {
       for ( String propertyGroupToMerge : propertiesToMerge.keySet() )
       {
@@ -56,29 +58,28 @@ public class Configurator
       }
    }
 
-   public static void MergePropertiesString( String propertiesDataString ) throws IOException, URISyntaxException
+   public void mergePropertiesString( String propertiesDataString ) throws IOException, URISyntaxException
    {
       HashMap<String, HashMap<String, Serializable>> propertiesToMerge = objectMapper.readValue( propertiesDataString, propertiesType );
-      MergeProperties( propertiesToMerge );
+      mergeProperties( propertiesToMerge );
    }
 
-   public static void MergePropertiesFiles( String... propertyFiles ) throws IOException, URISyntaxException
+   public void mergePropertiesFiles( String... propertyFiles ) throws IOException, URISyntaxException
    {
       for ( String propertyFile : propertyFiles )
       {
-         MergePropertiesString( ClassPathLoaderUtils.readAllText( propertyFile ) );
+         mergePropertiesString( ClassPathLoaderUtils.readAllText( propertyFile ) );
       }
    }
 
-   public static String getEnv( String key, String defaultValue )
+   public String getEnv( String key, String defaultValue )
    {
       String envValue = System.getenv( key );
       return ( envValue == null ) ? defaultValue : envValue;
    }
 
-   public static Serializable getPropertyValue( String group, String name )
+   public Serializable getPropertyValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, String group, String name )
    {
-
       String propertyFromEnvOrSys = null;
 
       String keyForEnvOrSys = group + "." + name;
@@ -113,7 +114,12 @@ public class Configurator
       return ( groupStore == null ) ? null : groupStore.get( name );
    }
 
-   public static void setFieldValue( Object object, Field field ) throws IllegalArgumentException, IllegalAccessException
+   public Serializable getPropertyValue( String group, String name )
+   {
+      return getPropertyValue( propertiesStore, group, name );
+   }
+
+   public void setFieldValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object, Field field ) throws IllegalArgumentException, IllegalAccessException
    {
       field.setAccessible( true );
 
@@ -142,44 +148,59 @@ public class Configurator
       }
    }
 
-   public static void LoadProperties( Object... objects ) throws IllegalArgumentException, IllegalAccessException
+   public void setFieldValue( Object object, Field field ) throws IllegalArgumentException, IllegalAccessException
+   {
+      setFieldValue( propertiesStore, object, field );
+   }
+
+   public void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object ) throws IllegalArgumentException, IllegalAccessException
+   {
+      Class<?> theClassOfObject = object.getClass();
+
+      if ( theClassOfObject == Object.class )
+      {
+         return;
+      }
+
+      for ( Field fieldOfClass : theClassOfObject.getDeclaredFields() )
+      {
+         setFieldValue( object, fieldOfClass );
+      }
+
+      Class<?> superClassOfObject = theClassOfObject.getSuperclass();
+
+      if ( superClassOfObject == Object.class )
+      {
+         return;
+      }
+
+      loadProperties( propertiesStore, superClassOfObject.cast( object ) );
+   }
+
+   public void loadProperties( Object... objects ) throws IllegalArgumentException, IllegalAccessException
    {
       for ( Object object : objects )
       {
-         Class<?> theClassOfObject = object.getClass();
-
-         if ( theClassOfObject == Object.class )
-         {
-            continue;
-         }
-
-         for ( Field fieldOfClass : theClassOfObject.getDeclaredFields() )
-         {
-            setFieldValue( object, fieldOfClass );
-         }
-
-         Class<?> superClassOfObject = theClassOfObject.getSuperclass();
-
-         if ( superClassOfObject == Object.class )
-         {
-            continue;
-         }
-
-         LoadProperties( superClassOfObject.cast( object ) );
+         loadProperties( propertiesStore, object );
       }
    }
 
-   public static void LoadStaticProperties( Class<?>... classesToLoadPropertiesWith ) throws IllegalArgumentException, IllegalAccessException
+   public void loadStaticProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Class<?> classToLoadPropertiesWith ) throws IllegalArgumentException, IllegalAccessException
+   {
+      for ( Field fieldOfClass : classToLoadPropertiesWith.getDeclaredFields() )
+      {
+         if ( Modifier.isStatic( fieldOfClass.getModifiers() ) )
+         {
+            setFieldValue( null, fieldOfClass );
+         }
+      }
+   }
+
+   public void loadStaticProperties( Class<?>... classesToLoadPropertiesWith ) throws IllegalArgumentException, IllegalAccessException
    {
       for ( Class<?> classToLoadPropertiesWith : classesToLoadPropertiesWith )
       {
-         for ( Field fieldOfClass : classToLoadPropertiesWith.getDeclaredFields() )
-         {
-            if ( Modifier.isStatic( fieldOfClass.getModifiers() ) )
-            {
-               setFieldValue( null, fieldOfClass );
-            }
-         }
+         loadStaticProperties( propertiesStore, classToLoadPropertiesWith );
       }
    }
 

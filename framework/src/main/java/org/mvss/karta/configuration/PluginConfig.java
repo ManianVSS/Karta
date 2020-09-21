@@ -1,7 +1,7 @@
 package org.mvss.karta.configuration;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.HashSet;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +20,6 @@ public class PluginConfig implements Serializable
    private static final long serialVersionUID = 1L;
 
    private String            pluginName;
-   private ArrayList<String> pluginTypes;
+   private HashSet<String>   pluginTypes;
    private String            className;
 }

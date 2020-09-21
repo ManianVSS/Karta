@@ -1,5 +1,6 @@
 package org.mvss.karta.server.beans;
 
+import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.FeatureRunner;
 import org.mvss.karta.framework.runtime.JavaTestRunner;
 import org.mvss.karta.framework.runtime.RuntimeConfiguration;
@@ -13,15 +14,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class RunnerBeans
 {
    @Autowired
-   private ObjectMapper     objectMapper;
+   private ObjectMapper         objectMapper;
 
    @Autowired
    private RuntimeConfiguration runtimeConfiguration;
+
+   @Autowired
+   private Configurator         configurator;
 
    @Bean
    public JavaTestRunner getJavaTestRunner()
    {
       JavaTestRunner testRunner = objectMapper.convertValue( runtimeConfiguration, JavaTestRunner.class );
+      testRunner.setTestProperties( configurator.getPropertiesStore() );
       return testRunner;
    }
 
@@ -29,6 +34,7 @@ public class RunnerBeans
    public FeatureRunner getFeatureRunner()
    {
       FeatureRunner featureRunner = objectMapper.convertValue( runtimeConfiguration, FeatureRunner.class );
+      featureRunner.setTestProperties( configurator.getPropertiesStore() );
       return featureRunner;
    }
 }

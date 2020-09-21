@@ -11,7 +11,7 @@ public @interface PropertyMapping
 {
    public String propertyName();
 
-   public String group() default "run";
+   public String group() default "Karta";
 
    public Class<?> type() default Object.class;
 }

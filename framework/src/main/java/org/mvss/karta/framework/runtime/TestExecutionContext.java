@@ -16,13 +16,9 @@ public class TestExecutionContext implements Serializable
    /**
     * 
     */
-   private static final long             serialVersionUID = 1L;
+   private static final long                              serialVersionUID = 1L;
 
-   // private TestExecutionStepPointer testExecutionStepPointer;
-
-   // private String sourceCode;
-
-   private HashMap<String, Serializable> testProperties   = null;
-   private HashMap<String, Serializable> testData         = null;
-   private HashMap<String, Serializable> runtimeVariables = new HashMap<String, Serializable>();
+   private HashMap<String, HashMap<String, Serializable>> testProperties   = null;
+   private HashMap<String, Serializable>                  testData         = null;
+   private HashMap<String, Serializable>                  runtimeVariables = new HashMap<String, Serializable>();
 }

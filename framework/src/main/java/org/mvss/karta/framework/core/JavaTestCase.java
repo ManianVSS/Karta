@@ -1,32 +1,44 @@
 package org.mvss.karta.framework.core;
 
+import org.mvss.karta.framework.runtime.KartaRuntime;
+import org.mvss.karta.framework.runtime.TestExecutionContext;
+
 public interface JavaTestCase
 {
-   default void beforeTest()
+   default void beforeTest( TestExecutionContext testExecutionContext )
    {
       System.out.println( this.getClass().getCanonicalName() + ": Before test " );
+
+      try
+      {
+         KartaRuntime.getInstance().getConfigurator().loadProperties( testExecutionContext.getTestProperties(), this );
+      }
+      catch ( Throwable t )
+      {
+         t.printStackTrace( System.err );
+      }
    }
 
-   default void beforeIteration()
+   default void beforeIteration( TestExecutionContext testExecutionContext )
    {
 
    }
 
-   void runIteration();
+   void runIteration( TestExecutionContext testExecutionContext );
 
-   default void afterIteration()
+   default void afterIteration( TestExecutionContext testExecutionContext )
    {
 
    }
 
-   default void runTest()
+   default void runTest( TestExecutionContext testExecutionContext )
    {
-      beforeIteration();
-      runIteration();
-      afterIteration();
+      beforeIteration( testExecutionContext );
+      runIteration( testExecutionContext );
+      afterIteration( testExecutionContext );
    }
 
-   default void afterTest()
+   default void afterTest( TestExecutionContext testExecutionContext )
    {
       System.out.println( this.getClass().getCanonicalName() + ": After test " );
    }
