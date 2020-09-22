@@ -2,6 +2,7 @@ package org.mvss.karta.framework.core;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,7 +29,7 @@ public class TestScenario implements Serializable
    private Long                numberOfIterations      = 1l;
 
    @Builder.Default
-   private ArrayList<String>   tags                    = new ArrayList<String>();
+   private HashSet<String>     tags                    = new HashSet<String>();
 
    @Builder.Default
    private ArrayList<TestStep> scenarioSetupSteps      = new ArrayList<TestStep>();

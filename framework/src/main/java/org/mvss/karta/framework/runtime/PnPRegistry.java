@@ -42,7 +42,7 @@ public class PnPRegistry
       log.debug( "Registering plugin " + pluginConfig );
 
       @SuppressWarnings( "unchecked" )
-      Class<? extends Plugin> pluginClass = ( jarFile != null ) ? (Class<? extends Plugin>) DynamicClassLoader.LoadClass( jarFile, pluginConfig.getClassName() ) : (Class<? extends Plugin>) Class.forName( pluginConfig.getClassName() );
+      Class<? extends Plugin> pluginClass = ( jarFile != null ) ? (Class<? extends Plugin>) DynamicClassLoader.loadClass( jarFile, pluginConfig.getClassName() ) : (Class<? extends Plugin>) Class.forName( pluginConfig.getClassName() );
 
       boolean isRegisteredPluginType = false;
 
@@ -108,16 +108,14 @@ public class PnPRegistry
 
    public void loadPluginJar( File jarFile ) throws MalformedURLException, IOException, URISyntaxException
    {
-      String fileText = IOUtils.toString( DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, "pluginsconfig.json" ), Charset.defaultCharset() );
+      String fileText = IOUtils.toString( DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.PLUGINS_CONFIG_FILE_NAME ), Charset.defaultCharset() );
       ArrayList<PluginConfig> pluginConfigs = ParserUtils.getObjectMapper().readValue( fileText, pluginConfigArrayListType );
       addPluginConfiguration( jarFile, pluginConfigs );
    }
 
    public void loadPlugins( File pluginsDirectory )
    {
-      String[] extensions = {"jar"};
-
-      for ( File jarFile : FileUtils.listFiles( pluginsDirectory, extensions, true ) )
+      for ( File jarFile : FileUtils.listFiles( pluginsDirectory, Constants.jarExtention, true ) )
       {
          try
          {

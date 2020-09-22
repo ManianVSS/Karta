@@ -20,7 +20,7 @@ public class ClassLoaderTest
 
       try
       {
-         Class<?> classToLoad = DynamicClassLoader.LoadClass( new File( args[0] ), args[1] );
+         Class<?> classToLoad = DynamicClassLoader.loadClass( new File( args[0] ), args[1] );
 
          System.out.println( "Loaded class: " + classToLoad );
          for ( Method method : classToLoad.getDeclaredMethods() )

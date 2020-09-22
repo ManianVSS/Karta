@@ -4,25 +4,69 @@ import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+
+import lombok.Getter;
 
 public class DynamicClassLoader
 {
-   public static ClassLoader getClassLoaderForJar( String jarFileName ) throws MalformedURLException, URISyntaxException
+   @Getter
+   private static HashMap<String, ClassLoader> fileNameToLoaderMap = new HashMap<String, ClassLoader>();
+
+   @Getter
+   private static HashMap<File, ClassLoader>   fileToLoaderMap     = new HashMap<File, ClassLoader>();
+
+   public static synchronized ClassLoader getClassLoaderForJar( String jarFileName ) throws MalformedURLException, URISyntaxException
    {
-      return URLClassLoader.newInstance( new URL[] {ClassPathLoaderUtils.getFileOrResourceURI( jarFileName ).toURL()}, DynamicClassLoader.class.getClassLoader() );
+      ClassLoader loaderToReturn = fileNameToLoaderMap.get( jarFileName );
+
+      if ( loaderToReturn == null )
+      {
+         URI jarFileURI = ClassPathLoaderUtils.getFileOrResourceURI( jarFileName );
+
+         if ( jarFileURI == null )
+         {
+            return null;
+         }
+
+         loaderToReturn = URLClassLoader.newInstance( new URL[] {jarFileURI.toURL()}, DynamicClassLoader.class.getClassLoader() );
+         if ( loaderToReturn != null )
+         {
+            fileNameToLoaderMap.put( jarFileName, loaderToReturn );
+         }
+      }
+
+      return loaderToReturn;
    }
 
    public static ClassLoader getClassLoaderForJar( File jarFile ) throws MalformedURLException, URISyntaxException
    {
-      return URLClassLoader.newInstance( new URL[] {jarFile.toURI().toURL()}, DynamicClassLoader.class.getClassLoader() );
+      if ( jarFile == null )
+      {
+         return null;
+      }
+
+      ClassLoader loaderToReturn = fileToLoaderMap.get( jarFile );
+
+      if ( loaderToReturn == null )
+      {
+         loaderToReturn = URLClassLoader.newInstance( new URL[] {jarFile.toURI().toURL()}, DynamicClassLoader.class.getClassLoader() );
+         if ( loaderToReturn != null )
+         {
+            fileToLoaderMap.put( jarFile, loaderToReturn );
+         }
+      }
+
+      return loaderToReturn;
    }
 
-   public static Class<?> LoadClass( File jarFile, String className )
+   public static Class<?> loadClass( File jarFile, String className )
             throws ClassNotFoundException, MalformedURLException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, URISyntaxException
    {
       ClassLoader loader = getClassLoaderForJar( jarFile );
@@ -30,7 +74,7 @@ public class DynamicClassLoader
       return clazz;
    }
 
-   public static ArrayList<Class<?>> LoadClasses( List<String> classNames )
+   public static ArrayList<Class<?>> loadClasses( List<String> classNames )
             throws ClassNotFoundException, MalformedURLException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, URISyntaxException
    {
       ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
@@ -41,7 +85,7 @@ public class DynamicClassLoader
       return classes;
    }
 
-   public static ArrayList<Class<?>> LoadClasses( File jarFile, List<String> classNames )
+   public static ArrayList<Class<?>> loadClasses( File jarFile, List<String> classNames )
             throws ClassNotFoundException, MalformedURLException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, URISyntaxException
    {
       ClassLoader loader = getClassLoaderForJar( jarFile );
@@ -53,7 +97,7 @@ public class DynamicClassLoader
       return classes;
    }
 
-   public static Class<?> LoadClass( String jarFileName, String className )
+   public static Class<?> loadClass( String jarFileName, String className )
             throws ClassNotFoundException, MalformedURLException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, URISyntaxException
    {
       ClassLoader loader = getClassLoaderForJar( jarFileName );

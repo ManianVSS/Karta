@@ -1,7 +1,6 @@
 package org.mvss.karta.server.beans;
 
 import org.mvss.karta.framework.runtime.Configurator;
-import org.mvss.karta.framework.runtime.FeatureRunner;
 import org.mvss.karta.framework.runtime.JavaTestRunner;
 import org.mvss.karta.framework.runtime.RuntimeConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +29,11 @@ public class RunnerBeans
       return testRunner;
    }
 
-   @Bean
-   public FeatureRunner getFeatureRunner()
-   {
-      FeatureRunner featureRunner = objectMapper.convertValue( runtimeConfiguration, FeatureRunner.class );
-      featureRunner.setTestProperties( configurator.getPropertiesStore() );
-      return featureRunner;
-   }
+   // @Bean
+   // public FeatureRunner getFeatureRunner()
+   // {
+   // FeatureRunner featureRunner = objectMapper.convertValue( runtimeConfiguration, FeatureRunner.class );
+   // featureRunner.setTestProperties( configurator.getPropertiesStore() );
+   // return featureRunner;
+   // }
 }

@@ -1,0 +1,14 @@
+{
+	"name": "",
+	"description": "root of the test catalog",
+	"tags": [
+		"_karta_all"
+	],
+	"featureSourceParserPlugin": "Yerkin",
+	"stepRunnerPlugin": "Yerkin",
+	"testDataSourcePlugins": [
+		"Yerkin"
+	],
+	"tests": [],
+	"subCategories": []
+}

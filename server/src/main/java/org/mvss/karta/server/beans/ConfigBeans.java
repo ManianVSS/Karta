@@ -6,24 +6,54 @@ import org.mvss.karta.framework.runtime.RuntimeConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
 @Configuration
 public class ConfigBeans
 {
    @Bean
    public KartaRuntime getKartaRuntime()
    {
-      return KartaRuntime.getInstance();
+      try
+      {
+         return KartaRuntime.getInstance();
+      }
+      catch ( Throwable e )
+      {
+         log.error( e );
+         System.exit( 1 );
+      }
+      return null;
    }
 
    @Bean
    public RuntimeConfiguration getRunConfiguration()
    {
-      return KartaRuntime.getInstance().getRuntimeConfiguration();
+      try
+      {
+         return KartaRuntime.getInstance().getRuntimeConfiguration();
+      }
+      catch ( Throwable e )
+      {
+         log.error( e );
+         System.exit( 1 );
+      }
+      return null;
    }
 
    @Bean
    public Configurator getConfigurator()
    {
-      return KartaRuntime.getInstance().getConfigurator();
+      try
+      {
+         return KartaRuntime.getInstance().getConfigurator();
+      }
+      catch ( Throwable e )
+      {
+         log.error( e );
+         System.exit( 1 );
+      }
+      return null;
    }
 }

@@ -12,7 +12,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.runtime.Configurator;
-import org.mvss.karta.framework.runtime.FeatureRunner;
 import org.mvss.karta.framework.runtime.JavaTestRunner;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunTarget;
@@ -118,9 +117,9 @@ public class KartaMain
 
                if ( runFeatureFile )
                {
-                  FeatureRunner featureRunner = objectMapper.convertValue( runtimeConfiguration, FeatureRunner.class );
-                  featureRunner.setTestProperties( configurator.getPropertiesStore() );
-                  if ( !featureRunner.runFeatureFile( runTarget.getFeatureFile() ) )
+                  // FeatureRunner featureRunner = objectMapper.convertValue( runtimeConfiguration, FeatureRunner.class );
+                  // featureRunner.setTestProperties( configurator.getPropertiesStore() );
+                  if ( !kartaRuntime.runFeatureFile( runTarget.getFeatureFile() ) )
                   {
                      System.exit( 1 );
                   }

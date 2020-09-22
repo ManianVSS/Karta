@@ -13,6 +13,13 @@
 				"org.mvss.karta.samples.stepdefinitions.StepDefinitionsCollection2"
 			]
 		},
+		"YerkinExt": {
+			"stepDefinitionJar": "../plugins/samples.jar",
+			"stepDefinitionClassNames": [
+				"org.mvss.karta.samples.stepdefinitions.StepDefinitionsCollection1",
+				"org.mvss.karta.samples.stepdefinitions.StepDefinitionsCollection2"
+			]
+		},
 		"RandomTestDataSource": {
 			"seed": 1723
 		}
@@ -21,5 +28,12 @@
 		"KartaProperties.json",
 		"SampleRunProperties.json",
 		"SampleRunProperties2.json"
+	],
+	"testRepositorydirectories": [
+		"../repository/",
+		"../plugins/"
+	],
+	"testCatalogFiles": [
+		"../repository/KartaTestCatalog.json"
 	]
 }

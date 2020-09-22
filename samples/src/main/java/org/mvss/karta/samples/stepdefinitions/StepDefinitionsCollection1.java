@@ -1,7 +1,6 @@
 package org.mvss.karta.samples.stepdefinitions;
 
 import org.mvss.karta.framework.core.StepDefinition;
-import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 
@@ -11,16 +10,14 @@ import lombok.extern.log4j.Log4j2;
 public class StepDefinitionsCollection1
 {
    @PropertyMapping( group = "groupName", propertyName = "variable1" )
-   private String              username     = "default";
+   private String             username = "default";
 
    @PropertyMapping( group = "groupName", propertyName = "variable2" )
-   private SamplePropertyType  variable2;
+   private SamplePropertyType variable2;
 
-   private static Configurator configurator = KartaRuntime.getInstance().getConfigurator();
-
-   public StepDefinitionsCollection1() throws IllegalArgumentException, IllegalAccessException
+   public StepDefinitionsCollection1() throws Throwable
    {
-      configurator.loadProperties( this );
+      KartaRuntime.getInstance().getConfigurator().loadProperties( this );
    }
 
    @StepDefinition( "the calculator is powered on" )

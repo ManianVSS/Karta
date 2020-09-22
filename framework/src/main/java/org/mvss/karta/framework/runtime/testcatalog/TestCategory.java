@@ -53,27 +53,33 @@ public class TestCategory implements Serializable
       return null;
    }
 
-   public void filterTestsByTag( String tag, ArrayList<Test> outputFilteredTests )
+   public void filterTestsByTag( ArrayList<Test> outputFilteredTests, String... tags )
    {
-      if ( tags.contains( tag ) )
+      for ( String tag : tags )
       {
-         addAllTestsToList( outputFilteredTests );
+         if ( this.tags.contains( tag ) )
+         {
+            addAllTestsToList( outputFilteredTests );
+            return;
+         }
       }
-      else
+
+      for ( Test test : tests )
       {
-         for ( Test test : tests )
+         for ( String tag : tags )
          {
             if ( test.getTags().contains( tag ) )
             {
                outputFilteredTests.add( test );
             }
          }
-
-         for ( TestCategory subCategory : subCategories )
-         {
-            subCategory.filterTestsByTag( tag, outputFilteredTests );
-         }
       }
+
+      for ( TestCategory subCategory : subCategories )
+      {
+         subCategory.filterTestsByTag( outputFilteredTests, tags );
+      }
+
    }
 
    public void addAllTestsToList( ArrayList<Test> outputTests )

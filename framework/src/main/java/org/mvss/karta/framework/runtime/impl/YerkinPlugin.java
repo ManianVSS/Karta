@@ -25,14 +25,16 @@ import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
 
-import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSource
 {
-   @Getter
-   private final String                                 pluginName                             = "Yerkin";
+   @Override
+   public String getPluginName()
+   {
+      return "Yerkin";
+   }
 
    private HashMap<String, MutablePair<Object, Method>> stepMap                                = new HashMap<String, MutablePair<Object, Method>>();
 
@@ -63,7 +65,7 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
       @SuppressWarnings( "unchecked" )
       ArrayList<String> stepDefinitionClassNames = (ArrayList<String>) properties.get( "stepDefinitionClassNames" );
 
-      ArrayList<Class<?>> stepDefClasses = StringUtils.isNotBlank( stepDefinitionJar ) ? DynamicClassLoader.LoadClasses( new File( stepDefinitionJar ), stepDefinitionClassNames ) : DynamicClassLoader.LoadClasses( stepDefinitionClassNames );
+      ArrayList<Class<?>> stepDefClasses = StringUtils.isNotBlank( stepDefinitionJar ) ? DynamicClassLoader.loadClasses( new File( stepDefinitionJar ), stepDefinitionClassNames ) : DynamicClassLoader.loadClasses( stepDefinitionClassNames );
 
       for ( Class<?> stepDefinitionClass : stepDefClasses )
       {

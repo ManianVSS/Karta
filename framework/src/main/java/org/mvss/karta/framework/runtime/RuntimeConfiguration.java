@@ -29,4 +29,8 @@ public class RuntimeConfiguration implements Serializable
    private HashMap<String, HashMap<String, Serializable>> pluginConfiguration;
 
    private HashSet<String>                                propertyFiles;
+
+   private HashSet<String>                                testRepositorydirectories;
+
+   private HashSet<String>                                testCatalogFiles;
 }

@@ -22,7 +22,8 @@ public class Test implements Serializable
     */
    private static final long serialVersionUID      = 1L;
 
-   private TestType          testType;
+   @Builder.Default
+   private TestType          testType              = TestType.FEATURE;
 
    private String            name;
    private String            description;

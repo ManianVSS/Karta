@@ -3,19 +3,16 @@ package org.mvss.karta.framework.runtime;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
-import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
-import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -40,89 +37,14 @@ public class FeatureRunner
    @PropertyMapping( propertyName = "RunProperties" )
    private RunProperties                                  runProperties = new RunProperties();
 
-   private String                                         defaultFeatureSourceParserPlugin;
-   private String                                         defaultStepRunnerPlugin;
-   private HashSet<String>                                defaultTestDataSourcePlugins;
-
+   private StepRunner                                     stepRunner;
+   private ArrayList<TestDataSource>                      testDataSources;
    private HashMap<String, HashMap<String, Serializable>> testProperties;
-
-   private static PnPRegistry                             pnpRegistry   = KartaRuntime.getInstance().getPnPRegistry();
-
-   public HashMap<String, Serializable> getMergedTestData( ArrayList<TestDataSource> testDataSources, ExecutionStepPointer executionStepPointer ) throws Throwable
-   {
-      HashMap<String, Serializable> mergedTestData = new HashMap<String, Serializable>();
-
-      for ( TestDataSource tds : testDataSources )
-      {
-         HashMap<String, Serializable> testData = tds.getData( executionStepPointer );
-         testData.forEach( ( key, value ) -> mergedTestData.put( key, value ) );
-      }
-
-      return mergedTestData;
-   }
-
-   public boolean runFeatureFile( String featureFileName )
-   {
-      try
-      {
-         return runFeatureSource( ClassPathLoaderUtils.readAllText( featureFileName ) );
-      }
-      catch ( Throwable t )
-      {
-         log.error( t );
-         return false;
-      }
-   }
-
-   public boolean runFeatureSource( String featureFileSourceString )
-   {
-      try
-      {
-         FeatureSourceParser featureParser = (FeatureSourceParser) pnpRegistry.getPlugin( defaultFeatureSourceParserPlugin, FeatureSourceParser.class );
-
-         if ( featureParser == null )
-         {
-            log.error( "Failed to get a feature source parser of type: " + defaultFeatureSourceParserPlugin );
-            return false;
-         }
-         TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
-
-         return run( testFeature );
-      }
-      catch ( Throwable t )
-      {
-         log.error( t );
-         return false;
-      }
-   }
 
    public boolean run( TestFeature testFeature )
    {
       try
       {
-         StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( defaultStepRunnerPlugin, StepRunner.class );
-
-         if ( stepRunner == null )
-         {
-            log.error( "Failed to get a step runner of type: " + defaultStepRunnerPlugin );
-            return false;
-         }
-
-         ArrayList<TestDataSource> testDataSources = new ArrayList<TestDataSource>();
-
-         for ( String testDataSourcePlugin : defaultTestDataSourcePlugins )
-         {
-            TestDataSource testDataSource = (TestDataSource) pnpRegistry.getPlugin( testDataSourcePlugin, TestDataSource.class );
-
-            if ( testDataSource == null )
-            {
-               log.error( "Failed to get a test data source of type: " + testDataSourcePlugin );
-               return false;
-            }
-
-            testDataSources.add( testDataSource );
-         }
-
          HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
@@ -133,7 +55,7 @@ public class FeatureRunner
 
          for ( TestStep step : testFeature.getTestSetupSteps() )
          {
-            testData = getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), null, step, iterationIndex, stepIndex++ ) );
+            testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), null, step, iterationIndex, stepIndex++ ) );
             // log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setTestData( testData );
 
@@ -167,7 +89,7 @@ public class FeatureRunner
             {
                for ( TestStep step : Stream.concat( testFeature.getScenarioSetupSteps().stream(), testScenario.getScenarioSetupSteps().stream() ).collect( Collectors.toList() ) )
                {
-                  testData = getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
+                  testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
                   // log.debug( "Step test data is " + testData.toString() );
                   testExecutionContext.setTestData( testData );
 
@@ -180,7 +102,7 @@ public class FeatureRunner
 
                for ( TestStep step : testScenario.getScenarioExecutionSteps() )
                {
-                  testData = getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
+                  testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
                   // log.debug( "Step test data is " + testData.toString() );
                   testExecutionContext.setTestData( testData );
 
@@ -199,7 +121,7 @@ public class FeatureRunner
             {
                for ( TestStep step : Stream.concat( testFeature.getScenarioTearDownSteps().stream(), testScenario.getScenarioTearDownSteps().stream() ).collect( Collectors.toList() ) )
                {
-                  testData = getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
+                  testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
                   // log.debug( "Step test data is " + testData.toString() );
                   testExecutionContext.setTestData( testData );
 
@@ -223,7 +145,7 @@ public class FeatureRunner
 
          for ( TestStep step : testFeature.getTestTearDownSteps() )
          {
-            testData = getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), null, step, iterationIndex, stepIndex++ ) );
+            testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), null, step, iterationIndex, stepIndex++ ) );
             // log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setTestData( testData );
 
