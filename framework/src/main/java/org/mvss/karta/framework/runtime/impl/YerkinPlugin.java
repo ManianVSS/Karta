@@ -16,9 +16,11 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestStep;
+import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.TestFailureException;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
+import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
@@ -30,13 +32,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSource
 {
-   @Override
-   public String getPluginName()
-   {
-      return "Yerkin";
-   }
-
-   private HashMap<String, MutablePair<Object, Method>> stepMap                                = new HashMap<String, MutablePair<Object, Method>>();
+   public static final String                           PLUGIN_NAME                            = "Yerkin";
 
    public static final String                           INLINE_STEP_DEF_PARAM_INDICATOR_STRING = "\"\"";
    public static final String                           WORD_FETCH_REGEX                       = "\\W+";
@@ -44,26 +40,37 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
    public static final String                           INLINE_TEST_DATA_PATTERN               = "\"(?:[^\\\\\"]+|\\\\.|\\\\\\\\)*\"";
    public static final String                           INLINE_STEP_DEF_PARAMTERS              = "inlineStepDefinitionParameters";
 
+   private HashMap<String, MutablePair<Object, Method>> stepMap                                = new HashMap<String, MutablePair<Object, Method>>();
+
    private static Pattern                               testDataPattern                        = Pattern.compile( INLINE_TEST_DATA_PATTERN );
 
    public static final List<String>                     conjunctions                           = Arrays.asList( "Given", "When", "Then", "And", "But" );
 
    private boolean                                      initialized                            = false;
 
+   @PropertyMapping( group = PLUGIN_NAME, propertyName = "stepDefinitionJar" )
+   private String                                       stepDefinitionJar                      = null;
+
+   @PropertyMapping( group = PLUGIN_NAME, propertyName = "stepDefinitionClassNames" )
+   private ArrayList<String>                            stepDefinitionClassNames               = new ArrayList<String>();
+
    @Override
-   public boolean initialize( HashMap<String, Serializable> properties ) throws Throwable
+   public String getPluginName()
+   {
+      return PLUGIN_NAME;
+   }
+
+   @Override
+   public boolean initialize( HashMap<String, HashMap<String, Serializable>> properties ) throws Throwable
    {
       if ( initialized )
       {
          return true;
       }
 
+      Configurator.loadProperties( properties, this );
+
       log.debug( "Initializing Yerkin plugin with " + properties );
-
-      String stepDefinitionJar = (String) properties.get( "stepDefinitionJar" );
-
-      @SuppressWarnings( "unchecked" )
-      ArrayList<String> stepDefinitionClassNames = (ArrayList<String>) properties.get( "stepDefinitionClassNames" );
 
       ArrayList<Class<?>> stepDefClasses = StringUtils.isNotBlank( stepDefinitionJar ) ? DynamicClassLoader.loadClasses( new File( stepDefinitionJar ), stepDefinitionClassNames ) : DynamicClassLoader.loadClasses( stepDefinitionClassNames );
 
@@ -72,6 +79,7 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
          try
          {
             Object stepDefinitionClassObj = stepDefinitionClass.newInstance();
+            Configurator.loadProperties( properties, stepDefinitionClassObj );
 
             for ( Method candidateStepDefinitionMethod : stepDefinitionClass.getMethods() )
             {

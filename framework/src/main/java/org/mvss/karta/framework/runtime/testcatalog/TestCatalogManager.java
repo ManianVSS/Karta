@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -82,7 +83,7 @@ public class TestCatalogManager
       testCatalog.addTest( testToMerge );
    }
 
-   public ArrayList<Test> filterTestsByTag( String... tags )
+   public ArrayList<Test> filterTestsByTag( HashSet<String> tags )
    {
       ArrayList<Test> outputFilteredTests = new ArrayList<Test>();
       testCatalog.filterTestsByTag( outputFilteredTests, tags );

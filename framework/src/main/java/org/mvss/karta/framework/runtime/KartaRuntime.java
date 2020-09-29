@@ -11,7 +11,7 @@ import java.util.HashSet;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.mvss.karta.configuration.KartaConfiguration;
+import org.mvss.karta.configuration.KartaBaseConfiguration;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
@@ -37,19 +37,21 @@ import lombok.extern.log4j.Log4j2;
 public class KartaRuntime
 {
    @Getter
-   private KartaConfiguration   kartaConfiguration;
+   private KartaBaseConfiguration    kartaBaseConfiguration;
 
    @Getter
-   private RuntimeConfiguration runtimeConfiguration;
+   private KartaRuntimeConfiguration kartaRuntimeConfiguration;
 
    @Getter
-   private PnPRegistry          pnpRegistry;
+   private PnPRegistry               pnpRegistry;
 
    @Getter
-   private Configurator         configurator;
+   private Configurator              configurator;
 
    @Getter
-   private TestCatalogManager   testCatalogManager;
+   private TestCatalogManager        testCatalogManager;
+
+   private static ObjectMapper       objectMapper = ParserUtils.getObjectMapper();
 
    public void initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException
    {
@@ -57,7 +59,14 @@ public class KartaRuntime
 
       // if ( kartaConfiguration == null )
       // {
-      kartaConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_CONFIG_FILE_NAME ), KartaConfiguration.class );
+      kartaBaseConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_BASE_CONFIG_JSON ), KartaBaseConfiguration.class );
+      // }
+
+      // Configurator should be setup before plugin initialization
+
+      // if ( configurator == null )
+      // {
+      configurator = new Configurator();
       // }
 
       // if ( pnPRegistry == null )
@@ -70,28 +79,21 @@ public class KartaRuntime
       pnpRegistry.addPluginType( TestDataSource.class );
       // }
 
-      pnpRegistry.addPluginConfiguration( kartaConfiguration.getPluginConfigs() );
+      pnpRegistry.addPluginConfiguration( kartaBaseConfiguration.getPluginConfigs() );
 
-      String pluginsDirectory = kartaConfiguration.getPluginsDirectory();
+      String pluginsDirectory = kartaBaseConfiguration.getPluginsDirectory();
 
       if ( StringUtils.isNotEmpty( pluginsDirectory ) )
       {
-         pnpRegistry.loadPlugins( new File( pluginsDirectory ) );
+         pnpRegistry.loadPlugins( configurator, new File( pluginsDirectory ) );
       }
 
       // if ( runtimeConfiguration == null )
       // {
-      runtimeConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.RUN_CONFIGURATION_FILE_NAME ), RuntimeConfiguration.class );
+      kartaRuntimeConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_RUNTIME_CONFIGURATION_JSON ), KartaRuntimeConfiguration.class );
       // }
 
-      // Configurator should be setup before plugin initialization
-
-      // if ( configurator == null )
-      // {
-      configurator = new Configurator();
-      // }
-
-      HashSet<String> propertiesFileList = runtimeConfiguration.getPropertyFiles();
+      HashSet<String> propertiesFileList = kartaRuntimeConfiguration.getPropertyFiles();
       if ( ( propertiesFileList != null ) && !propertiesFileList.isEmpty() )
       {
          String[] propertyFilesToLoad = new String[propertiesFileList.size()];
@@ -99,11 +101,11 @@ public class KartaRuntime
          configurator.mergePropertiesFiles( propertyFilesToLoad );
       }
 
-      pnpRegistry.initializePlugins( runtimeConfiguration.getPluginConfiguration() );
+      pnpRegistry.initializePlugins( configurator.getPropertiesStore() );
 
       testCatalogManager = new TestCatalogManager();
 
-      HashSet<String> testCatalogFiles = runtimeConfiguration.getTestCatalogFiles();
+      HashSet<String> testCatalogFiles = kartaRuntimeConfiguration.getTestCatalogFiles();
 
       if ( ( testCatalogFiles != null ) && !testCatalogFiles.isEmpty() )
       {
@@ -114,7 +116,7 @@ public class KartaRuntime
          }
       }
 
-      HashSet<String> repoDirNames = runtimeConfiguration.getTestRepositorydirectories();
+      HashSet<String> repoDirNames = kartaRuntimeConfiguration.getTestRepositorydirectories();
 
       if ( repoDirNames != null )
       {
@@ -184,11 +186,11 @@ public class KartaRuntime
    {
       try
       {
-         FeatureSourceParser featureParser = (FeatureSourceParser) pnpRegistry.getPlugin( runtimeConfiguration.getDefaultFeatureSourceParserPlugin(), FeatureSourceParser.class );
+         FeatureSourceParser featureParser = (FeatureSourceParser) pnpRegistry.getPlugin( kartaRuntimeConfiguration.getDefaultFeatureSourceParserPlugin(), FeatureSourceParser.class );
 
          if ( featureParser == null )
          {
-            log.error( "Failed to get a feature source parser of type: " + runtimeConfiguration.getDefaultFeatureSourceParserPlugin() );
+            log.error( "Failed to get a feature source parser of type: " + kartaRuntimeConfiguration.getDefaultFeatureSourceParserPlugin() );
             return false;
          }
          TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
@@ -204,17 +206,17 @@ public class KartaRuntime
 
    public boolean run( TestFeature feature )
    {
-      StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( runtimeConfiguration.getDefaultStepRunnerPlugin(), StepRunner.class );
+      StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( kartaRuntimeConfiguration.getDefaultStepRunnerPlugin(), StepRunner.class );
 
       if ( stepRunner == null )
       {
-         log.error( "Failed to get a step runner of type: " + runtimeConfiguration.getDefaultStepRunnerPlugin() );
+         log.error( "Failed to get a step runner of type: " + kartaRuntimeConfiguration.getDefaultStepRunnerPlugin() );
          return false;
       }
 
       ArrayList<TestDataSource> testDataSources = new ArrayList<TestDataSource>();
 
-      for ( String testDataSourcePlugin : runtimeConfiguration.getDefaultTestDataSourcePlugins() )
+      for ( String testDataSourcePlugin : kartaRuntimeConfiguration.getDefaultTestDataSourcePlugins() )
       {
          TestDataSource testDataSource = (TestDataSource) pnpRegistry.getPlugin( testDataSourcePlugin, TestDataSource.class );
 
@@ -242,7 +244,29 @@ public class KartaRuntime
 
    // TODO: Move running based on run target here
 
-   public boolean runTestsWithTags( String... tags )
+   public boolean runTestTarget( RunTarget runTarget )
+   {
+      if ( StringUtils.isNotBlank( runTarget.getFeatureFile() ) )
+      {
+         return runFeatureFile( runTarget.getFeatureFile() );
+      }
+      else if ( StringUtils.isNotBlank( runTarget.getJavaTest() ) )
+      {
+         JavaTestRunner testRunner = objectMapper.convertValue( kartaRuntimeConfiguration, JavaTestRunner.class );
+         testRunner.setTestProperties( configurator.getPropertiesStore() );
+         return testRunner.run( runTarget.getJavaTest(), runTarget.getJavaTestJarFile() );
+      }
+      else if ( ( runTarget.getTags() != null && !runTarget.getTags().isEmpty() ) )
+      {
+         return runTestsWithTags( runTarget.getTags() );
+      }
+      else
+      {
+         return false;
+      }
+   }
+
+   public boolean runTestsWithTags( HashSet<String> tags )
    {
       try
       {

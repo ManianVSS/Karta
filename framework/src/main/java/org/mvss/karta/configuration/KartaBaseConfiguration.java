@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class KartaConfiguration implements Serializable
+public class KartaBaseConfiguration implements Serializable
 {
    /**
     * 

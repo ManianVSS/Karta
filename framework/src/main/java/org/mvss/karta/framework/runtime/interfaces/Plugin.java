@@ -7,5 +7,5 @@ public interface Plugin
 {
    String getPluginName();
 
-   boolean initialize( HashMap<String, Serializable> properties ) throws Throwable;
+   boolean initialize( HashMap<String, HashMap<String, Serializable>> runProperties ) throws Throwable;
 }

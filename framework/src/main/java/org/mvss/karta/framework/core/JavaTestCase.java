@@ -1,6 +1,5 @@
 package org.mvss.karta.framework.core;
 
-import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 
 public interface JavaTestCase
@@ -8,15 +7,6 @@ public interface JavaTestCase
    default void beforeTest( TestExecutionContext testExecutionContext )
    {
       System.out.println( this.getClass().getCanonicalName() + ": Before test " );
-
-      try
-      {
-         KartaRuntime.getInstance().getConfigurator().loadProperties( testExecutionContext.getTestProperties(), this );
-      }
-      catch ( Throwable t )
-      {
-         t.printStackTrace( System.err );
-      }
    }
 
    default void beforeIteration( TestExecutionContext testExecutionContext )

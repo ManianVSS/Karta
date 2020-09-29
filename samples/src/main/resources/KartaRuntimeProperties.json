@@ -1,0 +1,12 @@
+{
+	"Yerkin": {
+		"stepDefinitionJar": "../plugins/samples.jar",
+		"stepDefinitionClassNames": [
+			"org.mvss.karta.samples.stepdefinitions.StepDefinitionsCollection1",
+			"org.mvss.karta.samples.stepdefinitions.StepDefinitionsCollection2"
+		]
+	},
+	"RandomTestDataSource": {
+		"seed": 1723
+	}
+}

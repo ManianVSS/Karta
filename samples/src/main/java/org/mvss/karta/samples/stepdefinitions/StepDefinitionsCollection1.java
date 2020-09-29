@@ -1,7 +1,6 @@
 package org.mvss.karta.samples.stepdefinitions;
 
 import org.mvss.karta.framework.core.StepDefinition;
-import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 
 import lombok.extern.log4j.Log4j2;
@@ -14,11 +13,6 @@ public class StepDefinitionsCollection1
 
    @PropertyMapping( group = "groupName", propertyName = "variable2" )
    private SamplePropertyType variable2;
-
-   public StepDefinitionsCollection1() throws Throwable
-   {
-      KartaRuntime.getInstance().getConfigurator().loadProperties( this );
-   }
 
    @StepDefinition( "the calculator is powered on" )
    public void the_calculator_is_powered_on() throws Throwable

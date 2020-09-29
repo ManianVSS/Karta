@@ -2,7 +2,7 @@ package org.mvss.karta.server.beans;
 
 import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.KartaRuntime;
-import org.mvss.karta.framework.runtime.RuntimeConfiguration;
+import org.mvss.karta.framework.runtime.KartaRuntimeConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -28,11 +28,11 @@ public class ConfigBeans
    }
 
    @Bean
-   public RuntimeConfiguration getRunConfiguration()
+   public KartaRuntimeConfiguration getRunConfiguration()
    {
       try
       {
-         return KartaRuntime.getInstance().getRuntimeConfiguration();
+         return KartaRuntime.getInstance().getKartaRuntimeConfiguration();
       }
       catch ( Throwable e )
       {

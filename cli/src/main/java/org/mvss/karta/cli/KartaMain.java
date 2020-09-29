@@ -2,6 +2,7 @@ package org.mvss.karta.cli;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
@@ -11,14 +12,8 @@ import org.apache.commons.cli.MissingArgumentException;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.apache.commons.lang3.StringUtils;
-import org.mvss.karta.framework.runtime.Configurator;
-import org.mvss.karta.framework.runtime.JavaTestRunner;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunTarget;
-import org.mvss.karta.framework.runtime.RuntimeConfiguration;
-import org.mvss.karta.framework.utils.ParserUtils;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -28,6 +23,8 @@ public class KartaMain
    private static final String  KARTA         = "Karta";
 
    private static final String  HELP          = "help";
+
+   private static final String  TAGS          = "tags";
 
    private static final String  FEATURE_FILE  = "featureFile";
 
@@ -54,6 +51,8 @@ public class KartaMain
       HelpFormatter formatter = new HelpFormatter();
       DefaultParser parser = new DefaultParser();
 
+      options.addOption( "t", TAGS, true, "tags to run" );
+
       options.addOption( "f", FEATURE_FILE, true, "feature file to run" );
 
       options.addOption( "j", JAVA_TEST, true, "test case class to run" );
@@ -74,8 +73,7 @@ public class KartaMain
          {
 
             boolean optionMissing = true;
-            boolean runFeatureFile = false;
-            boolean runJavaTest = false;
+            boolean runTargetAvailable = false;
 
             RunTarget runTarget = new RunTarget();
 
@@ -97,45 +95,36 @@ public class KartaMain
                runTarget.setFeatureFile( cmd.getOptionValue( FEATURE_FILE ) );
             }
 
-            runFeatureFile = StringUtils.isNotBlank( runTarget.getFeatureFile() );
-            runJavaTest = StringUtils.isNotBlank( runTarget.getJavaTest() );
-
-            if ( !( runJavaTest || runFeatureFile ) || optionMissing )
+            if ( cmd.hasOption( TAGS ) )
             {
-               formatter.printHelp( KARTA, options );
-               System.exit( -1 );
+               optionMissing = false;
+               HashSet<String> tags = new HashSet<String>();
+               for ( String tag : cmd.getOptionValue( TAGS ).split( "," ) )
+               {
+                  tags.add( tag );
+               }
+               runTarget.setTags( tags );
+            }
+
+            Runtime.getRuntime().addShutdownHook( new Thread( () -> jvmExitHook() ) );
+
+            runTargetAvailable = runTargetAvailable || StringUtils.isNotBlank( runTarget.getFeatureFile() );
+            runTargetAvailable = runTargetAvailable || StringUtils.isNotBlank( runTarget.getJavaTest() );
+            runTargetAvailable = runTargetAvailable || ( runTarget.getTags() != null && !runTarget.getTags().isEmpty() );
+
+            if ( runTargetAvailable )
+            {
+
+               KartaRuntime kartaRuntime = KartaRuntime.getInstance();
+               if ( !kartaRuntime.runTestTarget( runTarget ) )
+               {
+                  System.exit( 1 );
+               }
             }
             else
             {
-               ObjectMapper objectMapper = ParserUtils.getObjectMapper();
-
-               KartaRuntime kartaRuntime = KartaRuntime.getInstance();
-               RuntimeConfiguration runtimeConfiguration = kartaRuntime.getRuntimeConfiguration();
-               Configurator configurator = kartaRuntime.getConfigurator();
-
-               Runtime.getRuntime().addShutdownHook( new Thread( () -> jvmExitHook() ) );
-
-               if ( runFeatureFile )
+               if ( optionMissing )
                {
-                  // FeatureRunner featureRunner = objectMapper.convertValue( runtimeConfiguration, FeatureRunner.class );
-                  // featureRunner.setTestProperties( configurator.getPropertiesStore() );
-                  if ( !kartaRuntime.runFeatureFile( runTarget.getFeatureFile() ) )
-                  {
-                     System.exit( 1 );
-                  }
-               }
-               else if ( runJavaTest )
-               {
-                  JavaTestRunner testRunner = objectMapper.convertValue( runtimeConfiguration, JavaTestRunner.class );
-                  testRunner.setTestProperties( configurator.getPropertiesStore() );
-                  if ( !testRunner.run( runTarget.getJavaTest(), runTarget.getJavaTestJarFile() ) )
-                  {
-                     System.exit( 1 );
-                  }
-               }
-               else
-               {
-                  // Something wrong
                   formatter.printHelp( KARTA, options );
                   System.exit( -1 );
                }

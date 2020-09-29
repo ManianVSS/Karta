@@ -40,6 +40,7 @@ public class JavaTestRunner
       {
          Class<? extends JavaTestCase> testCaseClass = StringUtils.isNotBlank( javaTestJarFile ) ? (Class<? extends JavaTestCase>) DynamicClassLoader.loadClass( javaTestJarFile, javaTest ) : (Class<? extends JavaTestCase>) Class.forName( javaTest );
          JavaTestCase testCase = testCaseClass.newInstance();
+         Configurator.loadProperties( testProperties, testCase );
 
          HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();

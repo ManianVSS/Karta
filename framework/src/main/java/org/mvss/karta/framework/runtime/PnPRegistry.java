@@ -2,6 +2,7 @@ package org.mvss.karta.framework.runtime;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -106,20 +107,29 @@ public class PnPRegistry
       addPluginConfiguration( null, pluginConfigs );
    }
 
-   public void loadPluginJar( File jarFile ) throws MalformedURLException, IOException, URISyntaxException
+   public void loadPluginJar( Configurator configurator, File jarFile ) throws MalformedURLException, IOException, URISyntaxException
    {
-      String fileText = IOUtils.toString( DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.PLUGINS_CONFIG_FILE_NAME ), Charset.defaultCharset() );
-      ArrayList<PluginConfig> pluginConfigs = ParserUtils.getObjectMapper().readValue( fileText, pluginConfigArrayListType );
+      String pluginConfigStr = IOUtils.toString( DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_PLUGINS_CONFIG_JSON ), Charset.defaultCharset() );
+      ArrayList<PluginConfig> pluginConfigs = ParserUtils.getObjectMapper().readValue( pluginConfigStr, pluginConfigArrayListType );
       addPluginConfiguration( jarFile, pluginConfigs );
+
+      InputStream runtimePropertiesInputStream = DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_RUNTIME_PROPERTIES_JSON );
+
+      if ( ( configurator != null ) && ( runtimePropertiesInputStream != null ) )
+      {
+         String runtimePropertiesStr = IOUtils.toString( runtimePropertiesInputStream, Charset.defaultCharset() );
+         HashMap<String, HashMap<String, Serializable>> runtimeProperties = Configurator.readPropertiesFromString( runtimePropertiesStr );
+         configurator.mergeProperties( runtimeProperties );
+      }
    }
 
-   public void loadPlugins( File pluginsDirectory )
+   public void loadPlugins( Configurator configurator, File pluginsDirectory )
    {
       for ( File jarFile : FileUtils.listFiles( pluginsDirectory, Constants.jarExtention, true ) )
       {
          try
          {
-            loadPluginJar( jarFile );
+            loadPluginJar( configurator, jarFile );
          }
          catch ( Throwable t )
          {
@@ -128,20 +138,17 @@ public class PnPRegistry
       }
    }
 
-   public void initializePlugins( HashMap<String, HashMap<String, Serializable>> pluginProperties )
+   public void initializePlugins( HashMap<String, HashMap<String, Serializable>> runProperties )
    {
       for ( Plugin plugin : registeredPlugins.values() )
       {
-         if ( pluginProperties.containsKey( plugin.getPluginName() ) )
+         try
          {
-            try
-            {
-               plugin.initialize( pluginProperties.get( plugin.getPluginName() ) );
-            }
-            catch ( Throwable t )
-            {
-               log.error( "Plugin failed to initialize: " + plugin.getPluginName(), t );
-            }
+            plugin.initialize( runProperties );
+         }
+         catch ( Throwable t )
+         {
+            log.error( "Plugin failed to initialize: " + plugin.getPluginName(), t );
          }
       }
    }

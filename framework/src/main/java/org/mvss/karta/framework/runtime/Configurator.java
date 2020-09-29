@@ -31,13 +31,13 @@ public class Configurator
    private HashMap<String, HashMap<String, Serializable>>                            propertiesStore                   = new HashMap<String, HashMap<String, Serializable>>();
 
    @Setter
-   private boolean                                                                   useSystemProperties               = true;
+   private static boolean                                                            useSystemProperties               = true;
 
    @Setter
-   private boolean                                                                   useEnvironmentProperties          = true;
+   private static boolean                                                            useEnvironmentProperties          = true;
 
    @Setter
-   private boolean                                                                   envPropertiesPreceedsOverSysProps = true;
+   private static boolean                                                            envPropertiesPreceedsOverSysProps = true;
 
    public void mergeProperties( HashMap<String, HashMap<String, Serializable>> propertiesToMerge )
    {
@@ -58,9 +58,14 @@ public class Configurator
       }
    }
 
+   public static HashMap<String, HashMap<String, Serializable>> readPropertiesFromString( String propertiesDataString ) throws JsonMappingException, JsonProcessingException
+   {
+      return objectMapper.readValue( propertiesDataString, propertiesType );
+   }
+
    public void mergePropertiesString( String propertiesDataString ) throws IOException, URISyntaxException
    {
-      HashMap<String, HashMap<String, Serializable>> propertiesToMerge = objectMapper.readValue( propertiesDataString, propertiesType );
+      HashMap<String, HashMap<String, Serializable>> propertiesToMerge = readPropertiesFromString( propertiesDataString );
       mergeProperties( propertiesToMerge );
    }
 
@@ -72,13 +77,13 @@ public class Configurator
       }
    }
 
-   public String getEnv( String key, String defaultValue )
+   public static String getEnv( String key, String defaultValue )
    {
       String envValue = System.getenv( key );
       return ( envValue == null ) ? defaultValue : envValue;
    }
 
-   public Serializable getPropertyValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, String group, String name )
+   public static Serializable getPropertyValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, String group, String name )
    {
       String propertyFromEnvOrSys = null;
 
@@ -119,7 +124,7 @@ public class Configurator
       return getPropertyValue( propertiesStore, group, name );
    }
 
-   public void setFieldValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object, Field field ) throws IllegalArgumentException, IllegalAccessException
+   public static void setFieldValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object, Field field ) throws IllegalArgumentException, IllegalAccessException
    {
       field.setAccessible( true );
 
@@ -130,7 +135,7 @@ public class Configurator
          String propertyGroup = propertyMapping.group();
          String propertyName = propertyMapping.propertyName();
 
-         Serializable propertyValue = getPropertyValue( propertyGroup, propertyName );
+         Serializable propertyValue = getPropertyValue( propertiesStore, propertyGroup, propertyName );
 
          if ( propertyValue != null )
          {
@@ -153,28 +158,32 @@ public class Configurator
       setFieldValue( propertiesStore, object, field );
    }
 
-   public void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object ) throws IllegalArgumentException, IllegalAccessException
+   public static void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object ) throws IllegalArgumentException, IllegalAccessException
    {
-      Class<?> theClassOfObject = object.getClass();
+      loadProperties( propertiesStore, object, object.getClass() );
+   }
 
-      if ( theClassOfObject == Object.class )
+   public static void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object, Class<?> theClassOfObject ) throws IllegalArgumentException, IllegalAccessException
+   {
+      if ( ( object == null ) || ( theClassOfObject == null ) || theClassOfObject.getName().equals( Object.class.getName() ) || !theClassOfObject.isAssignableFrom( object.getClass() ) )
       {
          return;
       }
 
       for ( Field fieldOfClass : theClassOfObject.getDeclaredFields() )
       {
-         setFieldValue( object, fieldOfClass );
+         setFieldValue( propertiesStore, object, fieldOfClass );
       }
 
-      Class<?> superClassOfObject = theClassOfObject.getSuperclass();
-
-      if ( superClassOfObject == Object.class )
+      Class<?> superClass = theClassOfObject.getSuperclass();
+      if ( superClass.getName().equals( Object.class.getName() ) )
       {
          return;
       }
-
-      loadProperties( propertiesStore, superClassOfObject.cast( object ) );
+      else
+      {
+         loadProperties( propertiesStore, object, superClass );
+      }
    }
 
    public void loadProperties( Object... objects ) throws IllegalArgumentException, IllegalAccessException

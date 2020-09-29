@@ -2,7 +2,7 @@ package org.mvss.karta.server.beans;
 
 import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.JavaTestRunner;
-import org.mvss.karta.framework.runtime.RuntimeConfiguration;
+import org.mvss.karta.framework.runtime.KartaRuntimeConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +16,7 @@ public class RunnerBeans
    private ObjectMapper         objectMapper;
 
    @Autowired
-   private RuntimeConfiguration runtimeConfiguration;
+   private KartaRuntimeConfiguration runtimeConfiguration;
 
    @Autowired
    private Configurator         configurator;

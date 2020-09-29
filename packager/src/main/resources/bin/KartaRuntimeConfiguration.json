@@ -1,0 +1,20 @@
+{
+	"defaultFeatureSourceParserPlugin": "Yerkin",
+	"defaultStepRunnerPlugin": "Yerkin",
+	"defaultTestDataSourcePlugins": [
+		"Yerkin",
+		"RandomTestDataSource"
+	],
+	"propertyFiles": [
+		"KartaRuntimeProperties.json",
+		"SampleRunProperties.json",
+		"SampleRunProperties2.json"
+	],
+	"testRepositorydirectories": [
+		"../repository/",
+		"../plugins/"
+	],
+	"testCatalogFiles": [
+		"../repository/KartaTestCatalog.json"
+	]
+}

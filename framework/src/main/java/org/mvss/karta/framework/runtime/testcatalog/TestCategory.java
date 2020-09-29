@@ -53,7 +53,7 @@ public class TestCategory implements Serializable
       return null;
    }
 
-   public void filterTestsByTag( ArrayList<Test> outputFilteredTests, String... tags )
+   public void filterTestsByTag( ArrayList<Test> outputFilteredTests, HashSet<String> tags )
    {
       for ( String tag : tags )
       {
