@@ -6,6 +6,8 @@ import java.util.List;
 
 import javax.annotation.PreDestroy;
 
+import org.mvss.karta.framework.runtime.KartaRuntime;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -16,6 +18,9 @@ import lombok.extern.log4j.Log4j2;
 @SpringBootApplication
 public class KartaApplication implements CommandLineRunner
 {
+   @Autowired
+   KartaRuntime kartaRuntime;
+
    public static void main( String[] args )
    {
       // Spring boot start
@@ -28,6 +33,7 @@ public class KartaApplication implements CommandLineRunner
    public void run( String... args ) throws Exception
    {
       log.info( "******************** Starting Karta Server *********************" );
+      exitHooks.add( () -> kartaRuntime.stopRuntime() );
    }
 
    @PreDestroy

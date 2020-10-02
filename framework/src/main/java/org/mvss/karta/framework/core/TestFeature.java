@@ -1,8 +1,7 @@
 package org.mvss.karta.framework.core;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-
-import org.mvss.karta.framework.enums.ScenarioRunPolicy;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,26 +12,34 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TestFeature
+public class TestFeature implements Serializable
 {
+   /**
+    * 
+    */
+   private static final long       serialVersionUID              = 1L;
+
    private String                  name;
    private String                  description;
 
    @Builder.Default
-   private ScenarioRunPolicy       scenarioRunPolicy     = ScenarioRunPolicy.RUN_ALL_EVERY_ITERATION;
+   private Boolean                 chanceBasedScenarioExecution  = false;
 
    @Builder.Default
-   private ArrayList<TestStep>     testSetupSteps        = new ArrayList<TestStep>();
+   private Boolean                 exclusiveScenarioPerIteration = false;
 
    @Builder.Default
-   private ArrayList<TestStep>     scenarioSetupSteps    = new ArrayList<TestStep>();
+   private ArrayList<TestStep>     setupSteps                = new ArrayList<TestStep>();
 
    @Builder.Default
-   private ArrayList<TestScenario> testScenarios         = new ArrayList<TestScenario>();
+   private ArrayList<TestStep>     scenarioSetupSteps            = new ArrayList<TestStep>();
 
    @Builder.Default
-   private ArrayList<TestStep>     scenarioTearDownSteps = new ArrayList<TestStep>();
+   private ArrayList<TestScenario> testScenarios                 = new ArrayList<TestScenario>();
 
    @Builder.Default
-   private ArrayList<TestStep>     testTearDownSteps     = new ArrayList<TestStep>();
+   private ArrayList<TestStep>     scenarioTearDownSteps         = new ArrayList<TestStep>();
+
+   @Builder.Default
+   private ArrayList<TestStep>     tearDownSteps             = new ArrayList<TestStep>();
 }

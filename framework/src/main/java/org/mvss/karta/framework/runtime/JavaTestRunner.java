@@ -5,7 +5,6 @@ import java.util.HashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.JavaTestCase;
-import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,10 +26,6 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class JavaTestRunner
 {
-   @Builder.Default
-   @PropertyMapping( propertyName = "RunProperties" )
-   private RunProperties                                  runProperties = new RunProperties();
-
    private HashMap<String, HashMap<String, Serializable>> testProperties;
 
    @SuppressWarnings( "unchecked" )

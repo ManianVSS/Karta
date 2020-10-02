@@ -35,7 +35,7 @@ public class VariableParameter implements Serializable
    private String                       variableName;
 
    @Builder.Default
-   private ParameterType                parameterType               = ParameterType.Long;
+   private ParameterType                parameterType               = ParameterType.OBJECT;
 
    @Builder.Default
    private DistributionType             distributionType            = DistributionType.RANDOM;
@@ -47,7 +47,7 @@ public class VariableParameter implements Serializable
    private Object[]                     possibleValues;
 
    @Builder.Default
-   private int                          probabilityOfOccurence      = 100;
+   private int                          probabilityOfOccurrence     = 100;
 
    @Builder.Default
    private ArrayList<VariableParameter> variableSetParams           = new ArrayList<VariableParameter>();
@@ -177,7 +177,7 @@ public class VariableParameter implements Serializable
             return false;
          }
 
-         int probabilityOfOccrence = variableParam.getProbabilityOfOccurence();
+         int probabilityOfOccrence = variableParam.getProbabilityOfOccurrence();
 
          if ( ( probabilityOfOccrence <= 0 ) || ( probabilityOfOccrence > 100 ) )
          {
@@ -278,7 +278,7 @@ public class VariableParameter implements Serializable
       return this;
    }
 
-   private HashMap<String, Object> generateNextComposition()
+   public HashMap<String, Object> generateNextComposition()
    {
       HashMap<String, Object> variableMap = new HashMap<String, Object>();
 
@@ -286,7 +286,7 @@ public class VariableParameter implements Serializable
       {
          for ( VariableParameter variableParam : variableSetParams )
          {
-            int probabilityOfOccurance = variableParam.getProbabilityOfOccurence();
+            int probabilityOfOccurance = variableParam.getProbabilityOfOccurrence();
 
             if ( ( probabilityOfOccurance <= 0 ) || ( probabilityOfOccurance > 100 ) )
             {
@@ -301,7 +301,7 @@ public class VariableParameter implements Serializable
       return variableMap;
    }
 
-   private HashMap<String, Object> generateNextMutexComposition()
+   public HashMap<String, Object> generateNextMutexComposition()
    {
       HashMap<String, Object> variableMap = new HashMap<String, Object>();
 
@@ -309,7 +309,7 @@ public class VariableParameter implements Serializable
 
       for ( VariableParameter variableParam : variableSetParams )
       {
-         mutexVarSetProbDist.add( new ProbableData( variableParam.getProbabilityOfOccurence(), variableParam ) );
+         mutexVarSetProbDist.add( new ProbableData( variableParam.getProbabilityOfOccurrence(), variableParam ) );
       }
 
       VariableParameter variableParam = (VariableParameter) selectRandomlyFromProbabilityDistribution( mutexVarSetProbDist );

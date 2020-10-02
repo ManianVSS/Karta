@@ -133,7 +133,7 @@ public class Configurator
       if ( propertyMapping != null )
       {
          String propertyGroup = propertyMapping.group();
-         String propertyName = propertyMapping.propertyName();
+         String propertyName = propertyMapping.value();
 
          Serializable propertyValue = getPropertyValue( propertiesStore, propertyGroup, propertyName );
 

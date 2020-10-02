@@ -8,6 +8,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
@@ -113,13 +114,16 @@ public class PnPRegistry
       ArrayList<PluginConfig> pluginConfigs = ParserUtils.getObjectMapper().readValue( pluginConfigStr, pluginConfigArrayListType );
       addPluginConfiguration( jarFile, pluginConfigs );
 
-      InputStream runtimePropertiesInputStream = DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_RUNTIME_PROPERTIES_JSON );
-
-      if ( ( configurator != null ) && ( runtimePropertiesInputStream != null ) )
+      if ( configurator != null )
       {
-         String runtimePropertiesStr = IOUtils.toString( runtimePropertiesInputStream, Charset.defaultCharset() );
-         HashMap<String, HashMap<String, Serializable>> runtimeProperties = Configurator.readPropertiesFromString( runtimePropertiesStr );
-         configurator.mergeProperties( runtimeProperties );
+         InputStream runtimePropertiesInputStream = DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_RUNTIME_PROPERTIES_JSON );
+
+         if ( runtimePropertiesInputStream != null )
+         {
+            String runtimePropertiesStr = IOUtils.toString( runtimePropertiesInputStream, Charset.defaultCharset() );
+            HashMap<String, HashMap<String, Serializable>> runtimeProperties = Configurator.readPropertiesFromString( runtimePropertiesStr );
+            configurator.mergeProperties( runtimeProperties );
+         }
       }
    }
 
@@ -140,15 +144,15 @@ public class PnPRegistry
 
    public void initializePlugins( HashMap<String, HashMap<String, Serializable>> runProperties )
    {
-      for ( Plugin plugin : registeredPlugins.values() )
+      for ( String pluginName : registeredPlugins.keySet() )
       {
          try
          {
-            plugin.initialize( runProperties );
+            registeredPlugins.get( pluginName ).initialize( runProperties );
          }
          catch ( Throwable t )
          {
-            log.error( "Plugin failed to initialize: " + plugin.getPluginName(), t );
+            log.error( "Plugin failed to initialize: " + pluginName, t );
          }
       }
    }
@@ -158,4 +162,8 @@ public class PnPRegistry
       return pluginMap.containsKey( pluginType ) ? pluginMap.get( pluginType ).get( name ) : null;
    }
 
+   public Collection<Plugin> getPluginsOfType( Class<? extends Plugin> pluginType )
+   {
+      return pluginMap.get( pluginType ).values();
+   }
 }

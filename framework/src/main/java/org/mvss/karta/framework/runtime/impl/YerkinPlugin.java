@@ -48,17 +48,11 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
 
    private boolean                                      initialized                            = false;
 
-   @PropertyMapping( group = PLUGIN_NAME, propertyName = "stepDefinitionJar" )
+   @PropertyMapping( group = PLUGIN_NAME, value = "stepDefinitionJar" )
    private String                                       stepDefinitionJar                      = null;
 
-   @PropertyMapping( group = PLUGIN_NAME, propertyName = "stepDefinitionClassNames" )
+   @PropertyMapping( group = PLUGIN_NAME, value = "stepDefinitionClassNames" )
    private ArrayList<String>                            stepDefinitionClassNames               = new ArrayList<String>();
-
-   @Override
-   public String getPluginName()
-   {
-      return PLUGIN_NAME;
-   }
 
    @Override
    public boolean initialize( HashMap<String, HashMap<String, Serializable>> properties ) throws Throwable
@@ -91,9 +85,15 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
                      String stepDefString = stepDefinition.value();
                      Class<?>[] params = candidateStepDefinitionMethod.getParameterTypes();
 
-                     if ( !( ( ( params.length == 1 ) && ( HashMap.class.isAssignableFrom( params[0] ) ) ) || ( params.length == StringUtils.countMatches( stepDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) ) ) )
+                     if ( !( ( params.length >= 1 ) && ( TestExecutionContext.class == params[0] ) ) )
                      {
-                        log.error( "Step definition method " + methodDescription + " neither accepts a HashMap data object nor matches the expected number of parameters as per step definition" );
+                        log.error( "Step definition method " + methodDescription + " should have the first parameter type as TestExecutionContext" );
+                        continue;
+                     }
+
+                     if ( ( params.length > 1 ) && !( params.length == StringUtils.countMatches( stepDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) + 1 ) )
+                     {
+                        log.error( "Step definition method " + methodDescription + " does not match the argument count as per the identifier" );
                         continue;
                      }
 
@@ -151,7 +151,7 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
 
       try
       {
-         HashMap<String, Serializable> testData = testExecutionContext.getTestData();
+         HashMap<String, Serializable> testData = testExecutionContext.getData();
 
          ArrayList<Object> values = new ArrayList<Object>();
 
@@ -162,22 +162,21 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
 
          Class<?>[] params = stepDefMethodToInvoke.getParameterTypes();
 
-         if ( ( ( params.length == 1 ) && ( HashMap.class.isAssignableFrom( params[0] ) ) ) )
-         {
-            stepDefMethodToInvoke.invoke( stepDefObject, testData );
-         }
-         else
-         {
-            Class<?>[] parameters = stepDefMethodToInvoke.getParameterTypes();
+         Class<?>[] parameters = stepDefMethodToInvoke.getParameterTypes();
 
-            int i = 0;
+         values.add( testExecutionContext );
+         int i = 1;
+
+         if ( params.length > 1 )
+         {
             for ( String positionalParam : (ArrayList<String>) testData.get( INLINE_STEP_DEF_PARAMTERS ) )
             {
                values.add( ParserUtils.getObjectMapper().readValue( positionalParam, parameters[i++] ) );
             }
-
-            stepDefMethodToInvoke.invoke( stepDefObject, values.isEmpty() ? null : values.toArray() );
          }
+
+         stepDefMethodToInvoke.invoke( stepDefObject, values.toArray() );
+
       }
       catch ( Throwable t )
       {

@@ -16,9 +16,11 @@ public class RunProperties implements Serializable
    /**
     * 
     */
-   private static final long serialVersionUID = 1L;
+   private static final long serialVersionUID   = 1L;
 
    private String            name;
    private String            testBed;
-   private long              numberOfIterations;
+
+   @Builder.Default
+   private long              numberOfIterations = 1;
 }

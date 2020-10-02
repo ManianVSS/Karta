@@ -32,4 +32,5 @@ public class KartaRuntimeConfiguration implements Serializable
    private HashSet<String>   testRepositorydirectories;
 
    private HashSet<String>   testCatalogFiles;
+
 }

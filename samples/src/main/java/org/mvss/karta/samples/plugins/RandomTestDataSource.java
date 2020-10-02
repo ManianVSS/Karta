@@ -16,18 +16,12 @@ public class RandomTestDataSource implements TestDataSource
    @Getter
    private static final String PLUGIN_NAME = "RandomTestDataSource";
 
-   @PropertyMapping( group = PLUGIN_NAME, propertyName = "seed" )
+   @PropertyMapping( group = PLUGIN_NAME, value = "seed" )
    private Integer             seed        = null;
 
    private Random              random;
 
    private boolean             initialized = false;
-
-   @Override
-   public String getPluginName()
-   {
-      return PLUGIN_NAME;
-   }
 
    @Override
    public boolean initialize( HashMap<String, HashMap<String, Serializable>> properties ) throws Throwable

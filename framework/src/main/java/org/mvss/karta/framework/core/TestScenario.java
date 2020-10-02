@@ -3,6 +3,8 @@ package org.mvss.karta.framework.core;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import org.mvss.karta.framework.randomization.ObjectWithChance;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TestScenario implements Serializable
+public class TestScenario implements Serializable, ObjectWithChance
 {
    /**
     * 
@@ -21,11 +23,7 @@ public class TestScenario implements Serializable
 
    private String              name;
 
-   // @Builder.Default
-   // private Integer probabilityOfOccurrence = 100;
-   //
-   // @Builder.Default
-   // private HashSet<String> tags = new HashSet<String>();
+   private Integer             probability;
 
    @Builder.Default
    private ArrayList<TestStep> scenarioSetupSteps     = new ArrayList<TestStep>();
@@ -35,4 +33,14 @@ public class TestScenario implements Serializable
 
    @Builder.Default
    private ArrayList<TestStep> scenarioTearDownSteps  = new ArrayList<TestStep>();
+
+   @Override
+   public int getProbabilityOfOccurrence()
+   {
+      return probability == null ? 100 : probability;
+   }
+
+   //
+   // @Builder.Default
+   // private HashSet<String> tags = new HashSet<String>();
 }

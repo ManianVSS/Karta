@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 @Retention( RetentionPolicy.RUNTIME )
 public @interface PropertyMapping
 {
-   public String propertyName();
+   public String value();
 
    public String group() default "Karta";
 

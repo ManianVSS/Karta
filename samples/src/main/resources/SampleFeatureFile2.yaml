@@ -1,7 +1,9 @@
 ---
-name: CalculatorTest
-description: This is a sample YAML format feature file testing a calculator's function
-setupSteps:
+name: CalculatorTest2
+description: This is a sample 2 YAML format feature file testing a calculator's function
+chanceBasedScenarioExecution: true
+exclusiveScenarioPerIteration: true
+testSetupSteps:
   - identifier: Given the calculator is powered on
 
 scenarioSetupSteps:
@@ -10,21 +12,23 @@ scenarioSetupSteps:
 
 testScenarios:
   - name: Scenario1
+    probability: 50
     scenarioExecutionSteps:
-      - identifier: When the button "1" is pressed
+      - identifier: When the button "2" is pressed
       - identifier: And the button "+" is pressed
-      - identifier: And the button "2" is pressed
+      - identifier: And the button "3" is pressed
       - identifier: And the button "=" is pressed
-      - identifier: And the calculator should display "3"
+      - identifier: And the calculator should display "5"
 
   - name: Scenario2
+    probability: 50  
     scenarioExecutionSteps:
       - identifier: When a binary operation is perfomed on the calculator
         testData:
-          operand1: 100
+          operand1: 200
           operation: "/"
-          operand2: 200
-      - identifier: And the calculator should display "0.5"
+          operand2: 800
+      - identifier: And the calculator should display "0.25"
 
 scenarioTearDownSteps:
   - identifier: Then dummy teardown step

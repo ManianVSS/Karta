@@ -14,4 +14,6 @@ public class Constants
    public static final String   JAR                              = "jar";
 
    public static final String[] jarExtention                     = {JAR};
+
+   public static final String   UNNAMED                          = "Unnamed";
 }

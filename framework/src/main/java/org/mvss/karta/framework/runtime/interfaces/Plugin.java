@@ -5,7 +5,5 @@ import java.util.HashMap;
 
 public interface Plugin
 {
-   String getPluginName();
-
-   boolean initialize( HashMap<String, HashMap<String, Serializable>> runProperties ) throws Throwable;
+   boolean initialize( HashMap<String, HashMap<String, Serializable>> properties ) throws Throwable;
 }

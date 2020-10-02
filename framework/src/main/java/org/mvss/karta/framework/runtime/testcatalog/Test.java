@@ -46,6 +46,12 @@ public class Test implements Serializable
 
    private HashMap<String, Serializable> testProperties;
 
+   @Builder.Default
+   private long                          numberOfIterations    = 1;
+
+   @Builder.Default
+   private int                           numberOfThreads       = 1;
+
    public void propogateSourceArchive( String sa, String fspp, String srp, HashSet<String> tdsp )
    {
       if ( StringUtils.isEmpty( featureSourceParserPlugin ) && StringUtils.isNotEmpty( fspp ) )

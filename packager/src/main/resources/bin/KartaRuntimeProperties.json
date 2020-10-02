@@ -4,6 +4,8 @@
 			"name": "SampleTestRun",
 			"testBed": "Some valid test bed",
 			"numberOfIterations": 10
-		}
+		},
+		"EventProcessor.numberOfThread": 10,
+		"EventProcessor.maxEventQueueSize": 100
 	}
 }

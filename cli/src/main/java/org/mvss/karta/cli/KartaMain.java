@@ -12,6 +12,7 @@ import org.apache.commons.cli.MissingArgumentException;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunTarget;
 
@@ -30,6 +31,8 @@ public class KartaMain
 
    private static final String  JAVA_TEST     = "javaTest";
    private static final String  JAVA_TEST_JAR = "javaTestJar";
+
+   private static final String  RUN_NAME      = "runName";
 
    public static List<Runnable> exitHooks     = Collections.synchronizedList( new ArrayList<Runnable>() );
 
@@ -58,6 +61,8 @@ public class KartaMain
       options.addOption( "j", JAVA_TEST, true, "test case class to run" );
       options.addOption( JAVA_TEST_JAR, true, "jar file which contains the test" );
 
+      options.addOption( RUN_NAME, true, "the name of this test run" );
+
       options.addOption( null, HELP, false, "prints this help message" );
 
       try
@@ -74,6 +79,8 @@ public class KartaMain
 
             boolean optionMissing = true;
             boolean runTargetAvailable = false;
+
+            String runName = Constants.UNNAMED;
 
             RunTarget runTarget = new RunTarget();
 
@@ -106,6 +113,15 @@ public class KartaMain
                runTarget.setTags( tags );
             }
 
+            if ( cmd.hasOption( RUN_NAME ) )
+            {
+               runName = cmd.getOptionValue( RUN_NAME );
+            }
+            else
+            {
+               runName = runName + "-" + System.currentTimeMillis();
+            }
+
             Runtime.getRuntime().addShutdownHook( new Thread( () -> jvmExitHook() ) );
 
             runTargetAvailable = runTargetAvailable || StringUtils.isNotBlank( runTarget.getFeatureFile() );
@@ -116,10 +132,11 @@ public class KartaMain
             {
 
                KartaRuntime kartaRuntime = KartaRuntime.getInstance();
-               if ( !kartaRuntime.runTestTarget( runTarget ) )
+               if ( !kartaRuntime.runTestTarget( runName, runTarget ) )
                {
                   System.exit( 1 );
                }
+               kartaRuntime.stopRuntime();
             }
             else
             {

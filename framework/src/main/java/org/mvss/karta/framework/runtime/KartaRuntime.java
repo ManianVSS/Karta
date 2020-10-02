@@ -13,9 +13,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.configuration.KartaBaseConfiguration;
 import org.mvss.karta.framework.core.TestFeature;
+import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
+import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.runtime.testcatalog.Test;
 import org.mvss.karta.framework.runtime.testcatalog.TestCatalogManager;
@@ -51,9 +53,12 @@ public class KartaRuntime
    @Getter
    private TestCatalogManager        testCatalogManager;
 
+   @Getter
+   private EventProcessor            eventProcessor;
+
    private static ObjectMapper       objectMapper = ParserUtils.getObjectMapper();
 
-   public void initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException
+   public void initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException
    {
       ObjectMapper objectMapper = ParserUtils.getObjectMapper();
 
@@ -77,6 +82,7 @@ public class KartaRuntime
       pnpRegistry.addPluginType( FeatureSourceParser.class );
       pnpRegistry.addPluginType( StepRunner.class );
       pnpRegistry.addPluginType( TestDataSource.class );
+      pnpRegistry.addPluginType( TestEventListener.class );
       // }
 
       pnpRegistry.addPluginConfiguration( kartaBaseConfiguration.getPluginConfigs() );
@@ -102,6 +108,13 @@ public class KartaRuntime
       }
 
       pnpRegistry.initializePlugins( configurator.getPropertiesStore() );
+
+      eventProcessor = new EventProcessor();
+
+      pnpRegistry.getPluginsOfType( TestEventListener.class ).forEach( ( plugin ) -> eventProcessor.addEventListener( (TestEventListener) plugin ) );
+
+      configurator.loadProperties( eventProcessor );
+      eventProcessor.start();
 
       testCatalogManager = new TestCatalogManager();
 
@@ -129,6 +142,14 @@ public class KartaRuntime
                testCatalogManager.mergeRepositoryDirectoryIntoCatalog( repositoryDirectory );
             }
          }
+      }
+   }
+
+   public void stopRuntime()
+   {
+      if ( eventProcessor != null )
+      {
+         eventProcessor.stop();
       }
    }
 
@@ -169,11 +190,11 @@ public class KartaRuntime
       return mergedTestData;
    }
 
-   public boolean runFeatureFile( String featureFileName )
+   public boolean runFeatureFile( String runName, String featureFileName )
    {
       try
       {
-         return runFeatureSource( ClassPathLoaderUtils.readAllText( featureFileName ) );
+         return runFeatureSource( runName, ClassPathLoaderUtils.readAllText( featureFileName ) );
       }
       catch ( Throwable t )
       {
@@ -182,7 +203,7 @@ public class KartaRuntime
       }
    }
 
-   public boolean runFeatureSource( String featureFileSourceString )
+   public boolean runFeatureSource( String runName, String featureFileSourceString )
    {
       try
       {
@@ -195,7 +216,7 @@ public class KartaRuntime
          }
          TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
 
-         return run( testFeature );
+         return run( runName, testFeature );
       }
       catch ( Throwable t )
       {
@@ -204,7 +225,7 @@ public class KartaRuntime
       }
    }
 
-   public boolean run( TestFeature feature )
+   public boolean run( String runName, TestFeature feature )
    {
       StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( kartaRuntimeConfiguration.getDefaultStepRunnerPlugin(), StepRunner.class );
 
@@ -231,9 +252,9 @@ public class KartaRuntime
 
       try
       {
-         FeatureRunner featureRunner = FeatureRunner.builder().stepRunner( stepRunner ).testDataSources( testDataSources ).testProperties( configurator.getPropertiesStore() ).build();
-         configurator.loadProperties( featureRunner );
-         return featureRunner.run( feature );
+         FeatureRunner featureRunner = FeatureRunner.builder().stepRunner( stepRunner ).testDataSources( testDataSources ).testProperties( configurator.getPropertiesStore() ).eventProcessor( eventProcessor ).build();
+         // configurator.loadProperties( featureRunner );
+         return featureRunner.run( runName, feature );
       }
       catch ( Throwable t )
       {
@@ -244,11 +265,11 @@ public class KartaRuntime
 
    // TODO: Move running based on run target here
 
-   public boolean runTestTarget( RunTarget runTarget )
+   public boolean runTestTarget( String runName, RunTarget runTarget )
    {
       if ( StringUtils.isNotBlank( runTarget.getFeatureFile() ) )
       {
-         return runFeatureFile( runTarget.getFeatureFile() );
+         return runFeatureFile( runName, runTarget.getFeatureFile() );
       }
       else if ( StringUtils.isNotBlank( runTarget.getJavaTest() ) )
       {
@@ -258,7 +279,7 @@ public class KartaRuntime
       }
       else if ( ( runTarget.getTags() != null && !runTarget.getTags().isEmpty() ) )
       {
-         return runTestsWithTags( runTarget.getTags() );
+         return runTestsWithTags( runName, runTarget.getTags() );
       }
       else
       {
@@ -266,7 +287,7 @@ public class KartaRuntime
       }
    }
 
-   public boolean runTestsWithTags( HashSet<String> tags )
+   public boolean runTestsWithTags( String runName, HashSet<String> tags )
    {
       try
       {
@@ -310,14 +331,14 @@ public class KartaRuntime
                      testDataSources.add( testDataSource );
                   }
 
-                  FeatureRunner featureRunner = FeatureRunner.builder().stepRunner( stepRunner ).testDataSources( testDataSources ).testProperties( configurator.getPropertiesStore() ).build();
-                  configurator.loadProperties( featureRunner );
-                  featureRunner.run( testFeature );
+                  FeatureRunner featureRunner = FeatureRunner.builder().stepRunner( stepRunner ).testDataSources( testDataSources ).testProperties( configurator.getPropertiesStore() ).eventProcessor( eventProcessor ).build();
+                  // configurator.loadProperties( featureRunner );
+                  featureRunner.run( runName, testFeature, test.getNumberOfIterations(), test.getNumberOfThreads() );
                   break;
 
                case JAVA_TEST:
                   JavaTestRunner testRunner = JavaTestRunner.builder().testProperties( configurator.getPropertiesStore() ).build();
-                  configurator.loadProperties( testRunner );
+                  // configurator.loadProperties( testRunner );
                   testRunner.run( test.getJavaTestClass(), test.getSourceArchive() );
                   break;
             }

@@ -1,5 +1,6 @@
 package org.mvss.karta.framework.runtime;
 
+import java.io.Serializable;
 import java.util.HashSet;
 
 import lombok.AllArgsConstructor;
@@ -11,13 +12,17 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RunTarget
+public class RunTarget implements Serializable
 {
+   /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
 
-   private String          featureFile;
+   private String            featureFile;
 
-   private String          javaTest;
-   private String          javaTestJarFile;
+   private String            javaTest;
+   private String            javaTestJarFile;
 
-   private HashSet<String> tags;
+   private HashSet<String>   tags;
 }

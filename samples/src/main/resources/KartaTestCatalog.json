@@ -17,9 +17,24 @@
 			"tags": [
 				"tag1",
 				"tag2",
-				"tag3"
+				"tag3",
+				"cycle"
 			],
-			"featureFileName": "SampleFeatureFile.yaml"
+			"featureFileName": "SampleFeatureFile.yaml",
+			"numberOfIterations": 3
+		},
+		{
+			"name": "SampleFeatureFile2",
+			"description": "sample feature file2",
+			"tags": [
+				"tag1",
+				"tag2",
+				"tag3",
+				"cycle"
+			],
+			"featureFileName": "SampleFeatureFile2.yaml",
+			"numberOfIterations": 10,
+			"numberOfThreads": 5
 		},
 		{
 			"testType": "JAVA_TEST",

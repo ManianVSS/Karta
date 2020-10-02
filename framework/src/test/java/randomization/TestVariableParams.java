@@ -75,14 +75,14 @@ public class TestVariableParams
          testVariableParam( cricketScoreVP, 1000000, true );
 
          System.out.println( "Demo random distribution for variable set" );
-         longVP.setProbabilityOfOccurence( 66 );
-         stringVP.setProbabilityOfOccurence( 66 );
+         longVP.setProbabilityOfOccurrence( 66 );
+         stringVP.setProbabilityOfOccurrence( 66 );
          VariableParameter variableSet1 = VariableParameter.builder().variableName( "variableSet1" ).parameterType( ParameterType.VariableSet ).build().addVariableParams( longVP, stringValuesVP );
          testVariableParam( variableSet1, 1000000, true );
 
          System.out.println( "Demo random distribution for mutex variable in set" );
-         variableSet1.setProbabilityOfOccurence( 60 );
-         cricketScoreVP.setProbabilityOfOccurence( 40 );
+         variableSet1.setProbabilityOfOccurrence( 60 );
+         cricketScoreVP.setProbabilityOfOccurrence( 40 );
          VariableParameter variableSet2 = VariableParameter.builder().variableName( "variableSet2" ).parameterType( ParameterType.MutexVariableInSet ).build().addVariableParams( variableSet1, cricketScoreVP );
          testVariableParam( variableSet2, 1000000, true );
 
