@@ -18,6 +18,7 @@ public class StepDefinitionsCollection1
    @StepDefinition( "the calculator is powered on" )
    public void the_calculator_is_powered_on( TestExecutionContext context ) throws Throwable
    {
+      context.getVariables().put( "CalculatorState", "On" );
       log.info( "the calculator is powered on by " + username );
    }
 

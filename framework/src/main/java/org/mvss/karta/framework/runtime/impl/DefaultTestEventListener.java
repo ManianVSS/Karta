@@ -32,6 +32,12 @@ public class DefaultTestEventListener implements TestEventListener
    private boolean            initialized  = false;
 
    @Override
+   public String getPluginName()
+   {
+      return PLUGIN_NAME;
+   }
+
+   @Override
    public boolean initialize( HashMap<String, HashMap<String, Serializable>> properties ) throws Throwable
    {
       if ( initialized )

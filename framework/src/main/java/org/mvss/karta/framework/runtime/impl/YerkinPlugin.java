@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.mvss.karta.framework.core.StepDefinition;
+import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.runtime.Configurator;
@@ -24,6 +25,7 @@ import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
+import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
 
@@ -53,6 +55,12 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
 
    @PropertyMapping( group = PLUGIN_NAME, value = "stepDefinitionClassNames" )
    private ArrayList<String>                            stepDefinitionClassNames               = new ArrayList<String>();
+
+   @Override
+   public String getPluginName()
+   {
+      return PLUGIN_NAME;
+   }
 
    @Override
    public boolean initialize( HashMap<String, HashMap<String, Serializable>> properties ) throws Throwable
@@ -120,8 +128,10 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
 
    @SuppressWarnings( "unchecked" )
    @Override
-   public boolean runStep( TestStep testStep, TestExecutionContext testExecutionContext ) throws TestFailureException
+   public StepResult runStep( TestStep testStep, TestExecutionContext testExecutionContext ) throws TestFailureException
    {
+      StepResult result = new StepResult();
+
       log.debug( "Step run" + testStep + " with context " + testExecutionContext );
 
       String stepIdentifier = testStep.getIdentifier().trim();
@@ -129,7 +139,7 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
       if ( StringUtils.isAllEmpty( stepIdentifier ) )
       {
          log.error( "Empty step definition identifier for step " + testStep );
-         return false;
+         return result;
       }
 
       String words[] = stepIdentifier.split( WORD_FETCH_REGEX );
@@ -146,7 +156,7 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
 
       if ( !stepMap.containsKey( stepIdentifier ) )
       {
-         return false;
+         return result;
       }
 
       try
@@ -175,15 +185,26 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
             }
          }
 
-         stepDefMethodToInvoke.invoke( stepDefObject, values.toArray() );
+         if ( stepDefMethodToInvoke.getReturnType().equals( StepResult.class ) )
+         {
+            result = (StepResult) stepDefMethodToInvoke.invoke( stepDefObject, values.toArray() );
+            DataUtils.mergeVariables( result.getVariables(), testExecutionContext.getVariables() );
+         }
+         else
+         {
+            stepDefMethodToInvoke.invoke( stepDefObject, values.toArray() );
+            result.setSuccesssful( true );
+            result.setVariables( testExecutionContext.getVariables() );
+         }
 
       }
       catch ( Throwable t )
       {
-         return false;
+         result.setSuccesssful( false );
+         result.setErrorThrown( t );
       }
 
-      return true;
+      return result;
    }
 
    @Override

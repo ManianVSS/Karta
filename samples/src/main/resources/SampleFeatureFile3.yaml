@@ -1,37 +1,47 @@
 ---
-name: CalculatorTest2
+name: RemoteCalculatorTest
 description: This is a sample 2 YAML format feature file testing a calculator's function
-chanceBasedScenarioExecution: true
-exclusiveScenarioPerIteration: true
 setupSteps:
   - identifier: Given the calculator is powered on
+    node: Node1
 
 scenarioSetupSteps:
   - identifier: When the all clear button is pressed
+    node: Node2
   - identifier: Then the calculator should display "0"
+    node: Node1
 
 testScenarios:
   - name: Scenario1
     probability: 50
     scenarioExecutionSteps:
       - identifier: When the button "2" is pressed
+        node: Node2
       - identifier: And the button "+" is pressed
+        node: Node1
       - identifier: And the button "3" is pressed
+        node: Node2
       - identifier: And the button "=" is pressed
+        node: Node1
       - identifier: And the calculator should display "5"
+        node: Node2
 
   - name: Scenario2
-    probability: 50  
+    probability: 50
     scenarioExecutionSteps:
       - identifier: When a binary operation is perfomed on the calculator
         testData:
           operand1: 200
           operation: "/"
           operand2: 800
+        node: Node1
       - identifier: And the calculator should display "0.25"
+        node: Node2
 
 scenarioTearDownSteps:
   - identifier: Then dummy teardown step
+    node: Node1
 
 tearDownSteps:
   - identifier: Then the calculator is powered off
+    node: Node2

@@ -16,7 +16,7 @@
 
 	<modules>
 		<module>framework</module>
-		<module>CLI</module>
+		<module>cli</module>
 		<module>samples</module>
 		<module>server</module>
 		<module>packager</module>

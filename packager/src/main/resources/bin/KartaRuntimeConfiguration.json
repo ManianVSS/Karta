@@ -16,5 +16,16 @@
 	],
 	"testCatalogFiles": [
 		"../repository/KartaTestCatalog.json"
-	]
+	],
+	"sSLProperties": {
+		"trustStoreType": "jks",
+		"trustStore": "trustStore.jks",
+		"trustStorePassword": "changeit",
+		"keyStoreType": "pkcs12",
+		"keyStore": "keyStore.p12",
+		"keyStorePassword": "changeit"
+	},
+	"minions": {
+		
+	}
 }

@@ -12,6 +12,7 @@ import org.apache.commons.cli.MissingArgumentException;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.minions.KartaMinionServer;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunTarget;
@@ -33,6 +34,8 @@ public class KartaMain
    private static final String  JAVA_TEST_JAR = "javaTestJar";
 
    private static final String  RUN_NAME      = "runName";
+
+   private static final String  START_MINION  = "startMinion";
 
    public static List<Runnable> exitHooks     = Collections.synchronizedList( new ArrayList<Runnable>() );
 
@@ -63,6 +66,8 @@ public class KartaMain
 
       options.addOption( RUN_NAME, true, "the name of this test run" );
 
+      options.addOption( START_MINION, false, "starts Karta minion (rmi node)" );
+
       options.addOption( null, HELP, false, "prints this help message" );
 
       try
@@ -73,6 +78,13 @@ public class KartaMain
          {
             formatter.printHelp( KARTA, options );
             System.exit( 0 );
+         }
+         else if ( cmd.hasOption( START_MINION ) )
+         {
+            KartaRuntime kartaRuntime = KartaRuntime.getInstance();
+            KartaMinionServer kartaRMIServer = new KartaMinionServer( kartaRuntime );
+            log.info( "Karta minion started " + kartaRMIServer.getMinionConfig() );
+            Thread.currentThread().join();
          }
          else
          {

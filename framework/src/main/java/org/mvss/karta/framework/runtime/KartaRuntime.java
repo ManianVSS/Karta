@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,7 +14,11 @@ import java.util.HashSet;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.configuration.KartaBaseConfiguration;
+import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
+import org.mvss.karta.framework.core.TestStep;
+import org.mvss.karta.framework.minions.KartaMinionConfiguration;
+import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
@@ -25,6 +31,7 @@ import org.mvss.karta.framework.runtime.testcatalog.TestCategory;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
+import org.mvss.karta.framework.utils.SSLUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -56,9 +63,12 @@ public class KartaRuntime
    @Getter
    private EventProcessor            eventProcessor;
 
+   @Getter
+   private KartaMinionRegistry       minionRegistry;
+
    private static ObjectMapper       objectMapper = ParserUtils.getObjectMapper();
 
-   public void initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException
+   public void initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException
    {
       ObjectMapper objectMapper = ParserUtils.getObjectMapper();
 
@@ -99,6 +109,8 @@ public class KartaRuntime
       kartaRuntimeConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_RUNTIME_CONFIGURATION_JSON ), KartaRuntimeConfiguration.class );
       // }
 
+      SSLUtils.setSSLProperties( kartaRuntimeConfiguration.getSSLProperties() );
+
       HashSet<String> propertiesFileList = kartaRuntimeConfiguration.getPropertyFiles();
       if ( ( propertiesFileList != null ) && !propertiesFileList.isEmpty() )
       {
@@ -115,6 +127,15 @@ public class KartaRuntime
 
       configurator.loadProperties( eventProcessor );
       eventProcessor.start();
+
+      minionRegistry = new KartaMinionRegistry();
+
+      HashMap<String, KartaMinionConfiguration> nodeMap = kartaRuntimeConfiguration.getMinions();
+
+      for ( String nodeName : nodeMap.keySet() )
+      {
+         minionRegistry.addMinion( nodeName, nodeMap.get( nodeName ) );
+      }
 
       testCatalogManager = new TestCatalogManager();
 
@@ -252,7 +273,7 @@ public class KartaRuntime
 
       try
       {
-         FeatureRunner featureRunner = FeatureRunner.builder().stepRunner( stepRunner ).testDataSources( testDataSources ).testProperties( configurator.getPropertiesStore() ).eventProcessor( eventProcessor ).build();
+         FeatureRunner featureRunner = FeatureRunner.builder().stepRunner( stepRunner ).testDataSources( testDataSources ).testProperties( configurator.getPropertiesStore() ).eventProcessor( eventProcessor ).minionRegistry( minionRegistry ).build();
          // configurator.loadProperties( featureRunner );
          return featureRunner.run( runName, feature );
       }
@@ -331,7 +352,8 @@ public class KartaRuntime
                      testDataSources.add( testDataSource );
                   }
 
-                  FeatureRunner featureRunner = FeatureRunner.builder().stepRunner( stepRunner ).testDataSources( testDataSources ).testProperties( configurator.getPropertiesStore() ).eventProcessor( eventProcessor ).build();
+                  FeatureRunner featureRunner = FeatureRunner.builder().stepRunner( stepRunner ).testDataSources( testDataSources ).testProperties( configurator.getPropertiesStore() ).eventProcessor( eventProcessor ).minionRegistry( minionRegistry )
+                           .build();
                   // configurator.loadProperties( featureRunner );
                   featureRunner.run( runName, testFeature, test.getNumberOfIterations(), test.getNumberOfThreads() );
                   break;
@@ -350,5 +372,16 @@ public class KartaRuntime
          return false;
       }
       return true;
+   }
+
+   public StepResult runStep( String stepRunnerPlugin, TestStep step, TestExecutionContext context ) throws TestFailureException
+   {
+      StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin, StepRunner.class );
+      return stepRunner.runStep( step, context );
+   }
+
+   public StepResult runStepOnNode( String nodeName, String stepRunnerPlugin, TestStep step, TestExecutionContext context ) throws RemoteException
+   {
+      return minionRegistry.getMinion( nodeName ).runStep( stepRunnerPlugin, step, context );
    }
 }

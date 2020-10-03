@@ -22,4 +22,6 @@ public class TestStep implements Serializable
    private String                        identifier;
 
    private HashMap<String, Serializable> testData;
+
+   private String                        node;
 }

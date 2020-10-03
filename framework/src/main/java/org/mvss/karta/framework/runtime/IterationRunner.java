@@ -6,14 +6,17 @@ import java.util.HashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
+import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
+import org.mvss.karta.framework.utils.DataUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -38,6 +41,7 @@ public class IterationRunner implements Runnable
    private ArrayList<TestDataSource>                      testDataSources;
    private HashMap<String, HashMap<String, Serializable>> testProperties;
    private EventProcessor                                 eventProcessor;
+   private KartaMinionRegistry                            minionRegistry;
 
    private TestFeature                                    feature;
    String                                                 runName;
@@ -86,8 +90,19 @@ public class IterationRunner implements Runnable
             testExecutionContext.setData( testData );
 
             eventProcessor.raiseScenarioSetupStepStartedEvent( runName, feature, iterationIndex, testScenario, step );
+
             StepResult result = new StepResult();
-            result.setSuccesssful( stepRunner.runStep( step, testExecutionContext ) );
+
+            if ( StringUtils.isNotEmpty( step.getNode() ) )
+            {
+               result = minionRegistry.getMinion( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+               DataUtils.mergeVariables( result.getVariables(), testExecutionContext.getVariables() );
+            }
+            else
+            {
+               result = stepRunner.runStep( step, testExecutionContext );
+            }
+
             eventProcessor.raiseScenarioSetupStepCompletedEvent( runName, feature, iterationIndex, testScenario, step, result );
 
             if ( !result.isSuccesssful() )
@@ -105,7 +120,17 @@ public class IterationRunner implements Runnable
             testExecutionContext.setData( testData );
             eventProcessor.raiseScenarioStepStartedEvent( runName, feature, iterationIndex, testScenario, step );
             StepResult result = new StepResult();
-            result.setSuccesssful( stepRunner.runStep( step, testExecutionContext ) );
+
+            if ( StringUtils.isNotEmpty( step.getNode() ) )
+            {
+               result = minionRegistry.getMinion( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+               DataUtils.mergeVariables( result.getVariables(), testExecutionContext.getVariables() );
+            }
+            else
+            {
+               result = stepRunner.runStep( step, testExecutionContext );
+            }
+
             eventProcessor.raiseScenarioStepCompletedEvent( runName, feature, iterationIndex, testScenario, step, result );
 
             if ( !result.isSuccesssful() )
@@ -132,7 +157,17 @@ public class IterationRunner implements Runnable
 
                eventProcessor.raiseScenarioTearDownStepStartedEvent( runName, feature, iterationIndex, testScenario, step );
                StepResult result = new StepResult();
-               result.setSuccesssful( stepRunner.runStep( step, testExecutionContext ) );
+
+               if ( StringUtils.isNotEmpty( step.getNode() ) )
+               {
+                  result = minionRegistry.getMinion( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+                  DataUtils.mergeVariables( result.getVariables(), testExecutionContext.getVariables() );
+               }
+               else
+               {
+                  result = stepRunner.runStep( step, testExecutionContext );
+               }
+
                eventProcessor.raiseScenarioTearDownStepCompletedEvent( runName, feature, iterationIndex, testScenario, step, result );
 
                if ( !result.isSuccesssful() )

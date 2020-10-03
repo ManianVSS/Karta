@@ -8,16 +8,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
+import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
+import org.mvss.karta.framework.utils.DataUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -42,6 +45,7 @@ public class FeatureRunner
    private ArrayList<TestDataSource>                      testDataSources;
    private HashMap<String, HashMap<String, Serializable>> testProperties;
    private EventProcessor                                 eventProcessor;
+   private KartaMinionRegistry                            minionRegistry;
 
    public boolean run( String runName, TestFeature testFeature ) throws Throwable
    {
@@ -73,7 +77,15 @@ public class FeatureRunner
 
          try
          {
-            stepResult.setSuccesssful( stepRunner.runStep( step, testExecutionContext ) );
+            if ( StringUtils.isNotEmpty( step.getNode() ) )
+            {
+               stepResult = minionRegistry.getMinion( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+               DataUtils.mergeVariables( stepResult.getVariables(), testExecutionContext.getVariables() );
+            }
+            else
+            {
+               stepResult = stepRunner.runStep( step, testExecutionContext );
+            }
          }
          catch ( TestFailureException tfe )
          {
@@ -122,7 +134,7 @@ public class FeatureRunner
          }
 
          IterationRunner iterationRunner = IterationRunner.builder().stepRunner( stepRunner ).testDataSources( testDataSources ).testProperties( testProperties ).feature( testFeature ).runName( runName ).eventProcessor( eventProcessor )
-                  .scenariosToRun( scenariosToRun ).iterationIndex( iterationIndex ).build();
+                  .minionRegistry( minionRegistry ).scenariosToRun( scenariosToRun ).iterationIndex( iterationIndex ).build();
 
          if ( numberOfIterationsInParallel == 1 )
          {
@@ -153,7 +165,15 @@ public class FeatureRunner
 
          try
          {
-            stepResult.setSuccesssful( stepRunner.runStep( step, testExecutionContext ) );
+            if ( StringUtils.isNotEmpty( step.getNode() ) )
+            {
+               stepResult = minionRegistry.getMinion( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+               DataUtils.mergeVariables( stepResult.getVariables(), testExecutionContext.getVariables() );
+            }
+            else
+            {
+               stepResult = stepRunner.runStep( step, testExecutionContext );
+            }
          }
          catch ( TestFailureException tfe )
          {

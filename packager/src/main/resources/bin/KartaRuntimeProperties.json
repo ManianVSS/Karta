@@ -6,6 +6,11 @@
 			"numberOfIterations": 10
 		},
 		"EventProcessor.numberOfThread": 10,
-		"EventProcessor.maxEventQueueSize": 100
+		"EventProcessor.maxEventQueueSize": 100,
+		"minion.config": {
+			"host": "localhost",
+			"port": "17171",
+			"enableSSL": true
+		}
 	}
 }
