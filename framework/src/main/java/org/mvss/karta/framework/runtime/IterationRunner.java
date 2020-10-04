@@ -3,10 +3,13 @@ package org.mvss.karta.framework.runtime;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.chaos.ChaosAction;
+import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
@@ -37,6 +40,8 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class IterationRunner implements Runnable
 {
+   private static Random                                  random = new Random();
+
    private StepRunner                                     stepRunner;
    private ArrayList<TestDataSource>                      testDataSources;
    private HashMap<String, HashMap<String, Serializable>> testProperties;
@@ -45,12 +50,6 @@ public class IterationRunner implements Runnable
 
    private TestFeature                                    feature;
    String                                                 runName;
-
-   // @Builder.Default
-   // private ArrayList<TestStep> commonScenarioSetupSteps = new ArrayList<TestStep>();
-   //
-   // @Builder.Default
-   // private ArrayList<TestStep> commonScenarioTearDownSteps = new ArrayList<TestStep>();
 
    private long                                           iterationIndex;
 
@@ -113,6 +112,38 @@ public class IterationRunner implements Runnable
 
          }
 
+         ChaosActionTreeNode chaosConfiguration = testScenario.getChaosConfiguration();
+         if ( chaosConfiguration != null )
+         {
+            if ( !chaosConfiguration.checkForValidity() )
+            {
+               log.error( "Chaos configuration has errors " + chaosConfiguration );
+            }
+
+            ArrayList<ChaosAction> chaosActionsToPerform = chaosConfiguration.nextChaosActions( random );
+            // TODO: Handle chaos action being empty
+
+            for ( ChaosAction chaosAction : chaosActionsToPerform )
+            {
+               log.debug( "Performing chaos action: " + chaosAction );
+
+               eventProcessor.raiseScenarioChaosActionStartedEvent( runName, feature, iterationIndex, testScenario, chaosAction );
+
+               StepResult result = new StepResult();
+               if ( StringUtils.isNotEmpty( chaosAction.getNode() ) )
+               {
+                  result = minionRegistry.getMinion( chaosAction.getNode() ).performChaosAction( stepRunner.getPluginName(), chaosAction, testExecutionContext );
+                  DataUtils.mergeVariables( result.getVariables(), testExecutionContext.getVariables() );
+               }
+               else
+               {
+                  result = stepRunner.performChaosAction( chaosAction, testExecutionContext );
+               }
+
+               eventProcessor.raiseScenarioChaosActionCompletedEvent( runName, feature, iterationIndex, testScenario, chaosAction, result );
+            }
+         }
+
          for ( TestStep step : testScenario.getScenarioExecutionSteps() )
          {
             testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( feature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
@@ -123,6 +154,7 @@ public class IterationRunner implements Runnable
 
             if ( StringUtils.isNotEmpty( step.getNode() ) )
             {
+               // TODO: Handle missing node info
                result = minionRegistry.getMinion( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
                DataUtils.mergeVariables( result.getVariables(), testExecutionContext.getVariables() );
             }

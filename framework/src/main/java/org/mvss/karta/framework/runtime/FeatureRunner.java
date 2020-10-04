@@ -41,6 +41,8 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class FeatureRunner
 {
+   private static Random                                  random = new Random();
+
    private StepRunner                                     stepRunner;
    private ArrayList<TestDataSource>                      testDataSources;
    private HashMap<String, HashMap<String, Serializable>> testProperties;
@@ -90,6 +92,7 @@ public class FeatureRunner
          catch ( TestFailureException tfe )
          {
             log.error( "Exception in test failure ", tfe );
+            stepResult.setMessage( tfe.getMessage() );
             stepResult.setErrorThrown( tfe );
          }
          finally
@@ -104,8 +107,6 @@ public class FeatureRunner
             }
          }
       }
-
-      Random random = new Random();
 
       // TODO Check for valid number number of iterations
 
@@ -178,6 +179,7 @@ public class FeatureRunner
          catch ( TestFailureException tfe )
          {
             log.error( "Exception in test failure ", tfe );
+            stepResult.setMessage( tfe.getMessage() );
             stepResult.setErrorThrown( tfe );
          }
          finally

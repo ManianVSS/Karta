@@ -1,5 +1,6 @@
 package org.mvss.karta.framework.runtime.interfaces;
 
+import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
@@ -20,6 +21,10 @@ public interface TestEventListener extends Plugin
    void scenarioSetupStepStarted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioSetupStep );
 
    void scenarioSetupStepCompleted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioSetupStep, StepResult result );
+
+   void scenarioChaosActionStarted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, ChaosAction action );
+
+   void scenarioChaosActionCompleted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, ChaosAction action, StepResult result );
 
    void scenarioStepStarted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioStep );
 

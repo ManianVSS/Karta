@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
+import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.runtime.KartaRuntime;
@@ -45,9 +46,27 @@ public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion,
    }
 
    @Override
+   public StepResult performChaosAction( String stepRunnerPlugin, ChaosAction chaosAction, TestExecutionContext testExecutionContext ) throws RemoteException
+   {
+      try
+      {
+         return kartaRuntime.runChaosAction( stepRunnerPlugin, chaosAction, testExecutionContext );
+      }
+      catch ( TestFailureException e )
+      {
+         return new StepResult( false, e.getMessage(), e, null );
+      }
+      catch ( Throwable e )
+      {
+         throw new RemoteException( e.getMessage() );
+      }
+   }
+
+   @Override
    public boolean healthCheck() throws RemoteException
    {
       log.debug( "Health check ping" );
       return true;
    }
+
 }

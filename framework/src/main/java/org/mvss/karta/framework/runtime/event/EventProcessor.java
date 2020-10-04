@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
@@ -165,6 +166,38 @@ public class EventProcessor
          try
          {
             eventListenerExecutorService.submit( () -> testEventListener.scenarioSetupStepCompleted( runName, feature, iterationNumber, scenario, scenarioSetupStep, result ) );
+         }
+         catch ( Throwable t )
+         {
+            log.error( "Exception occured during event processing ", t );
+            continue;
+         }
+      }
+   }
+
+   public void raiseScenarioChaosActionStartedEvent( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, ChaosAction action )
+   {
+      for ( TestEventListener testEventListener : testEventListeners )
+      {
+         try
+         {
+            eventListenerExecutorService.submit( () -> testEventListener.scenarioChaosActionStarted( runName, feature, iterationNumber, scenario, action ) );
+         }
+         catch ( Throwable t )
+         {
+            log.error( "Exception occured during event processing ", t );
+            continue;
+         }
+      }
+   }
+
+   public void raiseScenarioChaosActionCompletedEvent( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, ChaosAction action, StepResult result )
+   {
+      for ( TestEventListener testEventListener : testEventListeners )
+      {
+         try
+         {
+            eventListenerExecutorService.submit( () -> testEventListener.scenarioChaosActionCompleted( runName, feature, iterationNumber, scenario, action, result ) );
          }
          catch ( Throwable t )
          {

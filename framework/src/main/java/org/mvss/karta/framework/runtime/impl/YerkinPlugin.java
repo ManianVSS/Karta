@@ -1,6 +1,5 @@
 package org.mvss.karta.framework.runtime.impl;
 
-import java.io.File;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -8,11 +7,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.mvss.karta.framework.chaos.ChaosAction;
+import org.mvss.karta.framework.core.ChaosActionDefinition;
 import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
@@ -25,9 +27,11 @@ import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
-import org.mvss.karta.framework.utils.DataUtils;
-import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
+import org.reflections.Reflections;
+import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -42,7 +46,8 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
    public static final String                           INLINE_TEST_DATA_PATTERN               = "\"(?:[^\\\\\"]+|\\\\.|\\\\\\\\)*\"";
    public static final String                           INLINE_STEP_DEF_PARAMTERS              = "inlineStepDefinitionParameters";
 
-   private HashMap<String, MutablePair<Object, Method>> stepMap                                = new HashMap<String, MutablePair<Object, Method>>();
+   private HashMap<String, MutablePair<Object, Method>> stepHandlerMap                         = new HashMap<String, MutablePair<Object, Method>>();
+   private HashMap<String, MutablePair<Object, Method>> chaosActionHandlerMap                  = new HashMap<String, MutablePair<Object, Method>>();
 
    private static Pattern                               testDataPattern                        = Pattern.compile( INLINE_TEST_DATA_PATTERN );
 
@@ -50,11 +55,11 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
 
    private boolean                                      initialized                            = false;
 
-   @PropertyMapping( group = PLUGIN_NAME, value = "stepDefinitionJar" )
-   private String                                       stepDefinitionJar                      = null;
+   @PropertyMapping( group = PLUGIN_NAME, value = "stepDefinitionPackageNames" )
+   private ArrayList<String>                            stepDefinitionPackageNames             = new ArrayList<String>();
 
-   @PropertyMapping( group = PLUGIN_NAME, value = "stepDefinitionClassNames" )
-   private ArrayList<String>                            stepDefinitionClassNames               = new ArrayList<String>();
+   @PropertyMapping( group = PLUGIN_NAME, value = "actionGroupPackageNames" )
+   private ArrayList<String>                            actionGroupPackageNames                = new ArrayList<String>();
 
    @Override
    public String getPluginName()
@@ -74,18 +79,17 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
 
       log.debug( "Initializing Yerkin plugin with " + properties );
 
-      ArrayList<Class<?>> stepDefClasses = StringUtils.isNotBlank( stepDefinitionJar ) ? DynamicClassLoader.loadClasses( new File( stepDefinitionJar ), stepDefinitionClassNames ) : DynamicClassLoader.loadClasses( stepDefinitionClassNames );
-
-      for ( Class<?> stepDefinitionClass : stepDefClasses )
+      for ( String stepDefinitionPackageName : stepDefinitionPackageNames )
       {
          try
          {
-            Object stepDefinitionClassObj = stepDefinitionClass.newInstance();
-            Configurator.loadProperties( properties, stepDefinitionClassObj );
+            Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( stepDefinitionPackageName ) ).setScanners( new MethodAnnotationsScanner() ) );
+            Set<Method> stepDefinitionMethods = reflections.getMethodsAnnotatedWith( StepDefinition.class );
+            HashMap<Class<?>, Object> stepDefinitionClassObjectMap = new HashMap<Class<?>, Object>();
 
-            for ( Method candidateStepDefinitionMethod : stepDefinitionClass.getMethods() )
+            for ( Method candidateStepDefinitionMethod : stepDefinitionMethods )
             {
-               if ( Modifier.isPublic( candidateStepDefinitionMethod.getModifiers() ) )// && Modifier.isStatic( candidateStepDefinitionMethod.getModifiers() ) )
+               if ( Modifier.isPublic( candidateStepDefinitionMethod.getModifiers() ) )
                {
                   for ( StepDefinition stepDefinition : candidateStepDefinitionMethod.getAnnotationsByType( StepDefinition.class ) )
                   {
@@ -106,16 +110,65 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
                      }
 
                      log.debug( "Mapping stepdef " + stepDefString + " to " + methodDescription );
-                     stepMap.put( stepDefString, new MutablePair<Object, Method>( stepDefinitionClassObj, candidateStepDefinitionMethod ) );
+
+                     Class<?> stepDefinitionClass = candidateStepDefinitionMethod.getDeclaringClass();
+                     if ( !stepDefinitionClassObjectMap.containsKey( stepDefinitionClass ) )
+                     {
+                        stepDefinitionClassObjectMap.put( stepDefinitionClass, stepDefinitionClass.newInstance() );
+                     }
+                     stepHandlerMap.put( stepDefString, new MutablePair<Object, Method>( stepDefinitionClassObjectMap.get( stepDefinitionClass ), candidateStepDefinitionMethod ) );
                   }
                }
             }
          }
          catch ( Throwable t )
          {
-            log.error( "Exception while parsing step definition class " + stepDefinitionClass.getName(), t );
+            log.error( "Exception while parsing step definition package " + stepDefinitionPackageName, t );
          }
       }
+
+      for ( String actionGroupPackageName : actionGroupPackageNames )
+      {
+         try
+         {
+            Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( actionGroupPackageName ) ).setScanners( new MethodAnnotationsScanner() ) );
+            Set<Method> chaosActionDefinitionMethods = reflections.getMethodsAnnotatedWith( ChaosActionDefinition.class );
+            HashMap<Class<?>, Object> chaosActionDefinitionClassObjectMap = new HashMap<Class<?>, Object>();
+
+            for ( Method candidateChaosActionMethod : chaosActionDefinitionMethods )
+            {
+               if ( Modifier.isPublic( candidateChaosActionMethod.getModifiers() ) )
+               {
+                  for ( ChaosActionDefinition chaosActionDefinition : candidateChaosActionMethod.getAnnotationsByType( ChaosActionDefinition.class ) )
+                  {
+                     String methodDescription = candidateChaosActionMethod.toString();
+                     String chaosActionName = chaosActionDefinition.value();
+                     Class<?>[] params = candidateChaosActionMethod.getParameterTypes();
+
+                     if ( !( ( params.length == 2 ) && ( TestExecutionContext.class == params[0] ) && ( ChaosAction.class == params[1] ) ) )
+                     {
+                        log.error( "Chaos action definition method " + methodDescription + " should have two parameters of types(" + TestExecutionContext.class.getName() + ", " + ChaosAction.class.getName() + ")" );
+                        continue;
+                     }
+
+                     log.debug( "Mapping choas action definition " + chaosActionName + " to " + methodDescription );
+
+                     Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
+                     if ( !chaosActionDefinitionClassObjectMap.containsKey( chaosActionDefinitionClass ) )
+                     {
+                        chaosActionDefinitionClassObjectMap.put( chaosActionDefinitionClass, chaosActionDefinitionClass.newInstance() );
+                     }
+                     chaosActionHandlerMap.put( chaosActionName, new MutablePair<Object, Method>( chaosActionDefinitionClassObjectMap.get( chaosActionDefinitionClass ), candidateChaosActionMethod ) );
+                  }
+               }
+            }
+         }
+         catch ( Throwable t )
+         {
+            log.error( "Exception while parsing step definition package " + actionGroupPackageName, t );
+         }
+      }
+
       initialized = true;
       return true;
    }
@@ -134,13 +187,13 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
 
       log.debug( "Step run" + testStep + " with context " + testExecutionContext );
 
-      String stepIdentifier = testStep.getIdentifier().trim();
-
-      if ( StringUtils.isAllEmpty( stepIdentifier ) )
+      if ( StringUtils.isBlank( testStep.getIdentifier() ) )
       {
          log.error( "Empty step definition identifier for step " + testStep );
          return result;
       }
+
+      String stepIdentifier = testStep.getIdentifier().trim();
 
       String words[] = stepIdentifier.split( WORD_FETCH_REGEX );
 
@@ -154,7 +207,7 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
 
       stepIdentifier = stepIdentifier.replaceAll( INLINE_TEST_DATA_PATTERN, INLINE_STEP_DEF_PARAM_INDICATOR_STRING );
 
-      if ( !stepMap.containsKey( stepIdentifier ) )
+      if ( !stepHandlerMap.containsKey( stepIdentifier ) )
       {
          return result;
       }
@@ -165,10 +218,10 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
 
          ArrayList<Object> values = new ArrayList<Object>();
 
-         MutablePair<Object, Method> stepDefObjectMethodPairToInvoke = stepMap.get( stepIdentifier );
+         MutablePair<Object, Method> stepDefHandlerObjectMethodPair = stepHandlerMap.get( stepIdentifier );
 
-         Object stepDefObject = stepDefObjectMethodPairToInvoke.getLeft();
-         Method stepDefMethodToInvoke = stepDefObjectMethodPairToInvoke.getRight();
+         Object stepDefObject = stepDefHandlerObjectMethodPair.getLeft();
+         Method stepDefMethodToInvoke = stepDefHandlerObjectMethodPair.getRight();
 
          Class<?>[] params = stepDefMethodToInvoke.getParameterTypes();
 
@@ -188,7 +241,6 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
          if ( stepDefMethodToInvoke.getReturnType().equals( StepResult.class ) )
          {
             result = (StepResult) stepDefMethodToInvoke.invoke( stepDefObject, values.toArray() );
-            DataUtils.mergeVariables( result.getVariables(), testExecutionContext.getVariables() );
          }
          else
          {
@@ -201,6 +253,53 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
       catch ( Throwable t )
       {
          result.setSuccesssful( false );
+         result.setMessage( t.getMessage() );
+         result.setErrorThrown( t );
+      }
+
+      return result;
+   }
+
+   @Override
+   public StepResult performChaosAction( ChaosAction chaosAction, TestExecutionContext testExecutionContext ) throws TestFailureException
+   {
+      StepResult result = new StepResult();
+
+      log.debug( "Chaos actions run" + chaosAction + " with context " + testExecutionContext );
+
+      if ( StringUtils.isBlank( chaosAction.getName() ) )
+      {
+         log.error( "Empty chaos action name " + chaosAction );
+         return result;
+      }
+
+      String choasActionName = chaosAction.getName();
+
+      try
+      {
+         if ( chaosActionHandlerMap.containsKey( choasActionName ) )
+         {
+            MutablePair<Object, Method> chaosActionHandlerObjectMethodPair = chaosActionHandlerMap.get( choasActionName );
+
+            Object chaosActionHandlerObject = chaosActionHandlerObjectMethodPair.getLeft();
+            Method choasActionHandlerMethodToInvoke = chaosActionHandlerObjectMethodPair.getRight();
+
+            if ( choasActionHandlerMethodToInvoke.getReturnType().equals( StepResult.class ) )
+            {
+               result = (StepResult) choasActionHandlerMethodToInvoke.invoke( chaosActionHandlerObject, testExecutionContext, chaosAction );
+            }
+            else
+            {
+               choasActionHandlerMethodToInvoke.invoke( chaosActionHandlerObject, testExecutionContext, chaosAction );
+               result.setSuccesssful( true );
+               result.setVariables( testExecutionContext.getVariables() );
+            }
+         }
+      }
+      catch ( Throwable t )
+      {
+         result.setSuccesssful( false );
+         result.setMessage( t.getMessage() );
          result.setErrorThrown( t );
       }
 

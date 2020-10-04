@@ -15,9 +15,7 @@
 			"name": "SampleFeatureFile",
 			"description": "sample feature file",
 			"tags": [
-				"tag1",
-				"tag2",
-				"tag3",
+				"samples",
 				"cycle"
 			],
 			"featureFileName": "SampleFeatureFile.yaml",
@@ -27,9 +25,7 @@
 			"name": "SampleFeatureFile2",
 			"description": "sample feature file2",
 			"tags": [
-				"tag1",
-				"tag2",
-				"tag3",
+				"samples",
 				"cycle"
 			],
 			"featureFileName": "SampleFeatureFile2.yaml",
@@ -37,11 +33,33 @@
 			"numberOfThreads": 5
 		},
 		{
+			"name": "SampleFeatureFile3",
+			"description": "sample feature file3",
+			"tags": [
+				"samples",
+				"remote"
+			],
+			"featureFileName": "SampleFeatureFile3.yaml",
+			"numberOfIterations": 1
+		},
+		{
+			"name": "SampleFeatureFile4",
+			"description": "sample feature file4",
+			"tags": [
+				"samples",
+				"remote",
+				"chaos"
+			],
+			"featureFileName": "SampleFeatureFile4.yaml",
+			"numberOfIterations": 1
+		},
+		{
 			"testType": "JAVA_TEST",
 			"name": "SampleJavaTest",
 			"description": "sample java test",
 			"tags": [
-				"javatag1"
+				"samples",
+				"javaTests"
 			],
 			"javaTestClass": "org.mvss.karta.samples.tests.Test1"
 		}

@@ -14,6 +14,7 @@ import java.util.HashSet;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.configuration.KartaBaseConfiguration;
+import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestStep;
@@ -378,6 +379,12 @@ public class KartaRuntime
    {
       StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin, StepRunner.class );
       return stepRunner.runStep( step, context );
+   }
+
+   public StepResult runChaosAction( String stepRunnerPlugin, ChaosAction chaosAction, TestExecutionContext context ) throws TestFailureException
+   {
+      StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin, StepRunner.class );
+      return stepRunner.performChaosAction( chaosAction, context );
    }
 
    public StepResult runStepOnNode( String nodeName, String stepRunnerPlugin, TestStep step, TestExecutionContext context ) throws RemoteException

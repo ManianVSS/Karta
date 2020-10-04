@@ -3,6 +3,7 @@ package org.mvss.karta.framework.core;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.randomization.ObjectWithChance;
 
 import lombok.AllArgsConstructor;
@@ -23,10 +24,12 @@ public class TestScenario implements Serializable, ObjectWithChance
 
    private String              name;
 
-   private Integer             probability;
+   private Float               probability;
 
    @Builder.Default
    private ArrayList<TestStep> scenarioSetupSteps     = new ArrayList<TestStep>();
+
+   private ChaosActionTreeNode chaosConfiguration;
 
    @Builder.Default
    private ArrayList<TestStep> scenarioExecutionSteps = new ArrayList<TestStep>();
@@ -35,7 +38,7 @@ public class TestScenario implements Serializable, ObjectWithChance
    private ArrayList<TestStep> scenarioTearDownSteps  = new ArrayList<TestStep>();
 
    @Override
-   public int getProbabilityOfOccurrence()
+   public float getProbabilityOfOccurrence()
    {
       return probability == null ? 100 : probability;
    }

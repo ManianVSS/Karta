@@ -12,5 +12,13 @@
 			"port": "17171",
 			"enableSSL": true
 		}
+	},
+	"Yerkin": {
+		"stepDefinitionPackageNames": [
+			"org.mvss.karta.samples.stepdefinitions"
+		],
+		"actionGroupPackageNames": [
+			"org.mvss.karta.samples.chaosdefinitions"
+		]
 	}
 }

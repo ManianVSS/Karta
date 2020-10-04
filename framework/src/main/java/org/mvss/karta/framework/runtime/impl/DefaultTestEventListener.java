@@ -3,6 +3,7 @@ package org.mvss.karta.framework.runtime.impl;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
@@ -93,6 +94,18 @@ public class DefaultTestEventListener implements TestEventListener
    public void scenarioSetupStepCompleted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioSetupStep, StepResult result )
    {
       log.info( "{" + runName + "}{" + feature.getName() + "}{" + scenario.getName() + "}{" + iterationNumber + "}{setup(" + scenarioSetupStep.getIdentifier() + ")}" + SPACE + ( result.isSuccesssful() ? PASSED : FAILED ) );
+   }
+
+   @Override
+   public void scenarioChaosActionStarted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, ChaosAction action )
+   {
+      log.info( "{" + runName + "}{" + feature.getName() + "}{" + scenario.getName() + "}{" + iterationNumber + "}{chaosAction(" + action.getName() + ")}" + SPACE + STARTED );
+   }
+
+   @Override
+   public void scenarioChaosActionCompleted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, ChaosAction action, StepResult result )
+   {
+      log.info( "{" + runName + "}{" + feature.getName() + "}{" + scenario.getName() + "}{" + iterationNumber + "}{chaosAction(" + action.getName() + ")}" + SPACE + ( result.isSuccesssful() ? PASSED : FAILED ) );
    }
 
    @Override
