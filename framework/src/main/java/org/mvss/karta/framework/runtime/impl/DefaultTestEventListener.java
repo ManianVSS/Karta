@@ -3,12 +3,26 @@ package org.mvss.karta.framework.runtime.impl;
 import java.io.Serializable;
 import java.util.HashMap;
 
-import org.mvss.karta.framework.chaos.ChaosAction;
-import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.core.TestScenario;
-import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.runtime.Configurator;
+import org.mvss.karta.framework.runtime.event.Event;
+import org.mvss.karta.framework.runtime.event.FeatureCompleteEvent;
+import org.mvss.karta.framework.runtime.event.FeatureSetupStepCompleteEvent;
+import org.mvss.karta.framework.runtime.event.FeatureSetupStepStartEvent;
+import org.mvss.karta.framework.runtime.event.FeatureStartEvent;
+import org.mvss.karta.framework.runtime.event.FeatureTearDownStepCompleteEvent;
+import org.mvss.karta.framework.runtime.event.FeatureTearDownStepStartEvent;
+import org.mvss.karta.framework.runtime.event.RunCompleteEvent;
+import org.mvss.karta.framework.runtime.event.RunStartEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioChaosActionCompleteEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioChaosActionStartEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioCompleteEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioSetupStepCompleteEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioSetupStepStartEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioStartEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioStepCompleteEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioStepStartEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioTearDownStepCompleteEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioTearDownStepStartEvent;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
 
 import lombok.extern.log4j.Log4j2;
@@ -55,113 +69,109 @@ public class DefaultTestEventListener implements TestEventListener
    }
 
    @Override
-   public void runStarted( String runName )
+   public void testEvent( Event event )
    {
-      log.info( "{" + runName + "}" + SPACE + STARTED );
+      if ( event instanceof RunStartEvent )
+      {
+         log.info( "{" + event.getRunName() + "}" + SPACE + STARTED );
+      }
+      else if ( event instanceof RunCompleteEvent )
+      {
+         log.info( "{" + event.getRunName() + "}" + SPACE + COMPLETED );
+      }
+      else if ( event instanceof FeatureStartEvent )
+      {
+         FeatureStartEvent featureStartEvent = (FeatureStartEvent) event;
+         log.info( "{" + featureStartEvent.getRunName() + "}{" + featureStartEvent.getFeature().getName() + "}" + SPACE + STARTED );
+      }
+      else if ( event instanceof FeatureCompleteEvent )
+      {
+         FeatureCompleteEvent featureStartEvent = (FeatureCompleteEvent) event;
+         log.info( "{" + featureStartEvent.getRunName() + "}{" + featureStartEvent.getFeature().getName() + "}" + SPACE + COMPLETED );
+      }
+      else if ( event instanceof FeatureSetupStepStartEvent )
+      {
+         FeatureSetupStepStartEvent stepStartEvent = (FeatureSetupStepStartEvent) event;
+         log.info( "{" + stepStartEvent.getRunName() + "}{" + stepStartEvent.getFeature().getName() + "}{setup(" + stepStartEvent.getSetupStep().getIdentifier() + ")}" + SPACE + STARTED );
+      }
+      else if ( event instanceof FeatureSetupStepCompleteEvent )
+      {
+         FeatureSetupStepCompleteEvent stepCompleteEvent = (FeatureSetupStepCompleteEvent) event;
+         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeature().getName() + "}{setup(" + stepCompleteEvent.getSetupStep().getIdentifier() + ")}" + SPACE
+                   + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+      }
+      else if ( event instanceof ScenarioStartEvent )
+      {
+         ScenarioStartEvent scenarioStartEvent = (ScenarioStartEvent) event;
+         log.info( "{" + scenarioStartEvent.getRunName() + "}{" + scenarioStartEvent.getFeature().getName() + "}{" + scenarioStartEvent.getIterationNumber() + "}{" + scenarioStartEvent.getScenario().getName() + "}" + SPACE + STARTED );
+      }
+      else if ( event instanceof ScenarioSetupStepStartEvent )
+      {
+         ScenarioSetupStepStartEvent stepStartEvent = (ScenarioSetupStepStartEvent) event;
+         log.info( "{" + stepStartEvent.getRunName() + "}{" + stepStartEvent.getFeature().getName() + "}{" + stepStartEvent.getScenario().getName() + "}{" + stepStartEvent.getIterationNumber() + "}{setup("
+                   + stepStartEvent.getScenarioSetupStep().getIdentifier() + ")}" + SPACE + STARTED );
+      }
+      else if ( event instanceof ScenarioSetupStepCompleteEvent )
+      {
+         ScenarioSetupStepCompleteEvent stepCompleteEvent = (ScenarioSetupStepCompleteEvent) event;
+         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeature().getName() + "}{" + stepCompleteEvent.getScenario().getName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{setup("
+                   + stepCompleteEvent.getScenarioSetupStep().getIdentifier() + ")}" + SPACE + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+      }
+      else if ( event instanceof ScenarioChaosActionStartEvent )
+      {
+         ScenarioChaosActionStartEvent chaosActionStartEvent = (ScenarioChaosActionStartEvent) event;
+         log.info( "{" + chaosActionStartEvent.getRunName() + "}{" + chaosActionStartEvent.getFeature().getName() + "}{" + chaosActionStartEvent.getScenario().getName() + "}{" + chaosActionStartEvent.getIterationNumber() + "}{chaosAction("
+                   + chaosActionStartEvent.getChaosAction().getName() + ")}" + SPACE + STARTED );
+      }
+      else if ( event instanceof ScenarioChaosActionCompleteEvent )
+      {
+         ScenarioChaosActionCompleteEvent chaosActionCopmleteEvent = (ScenarioChaosActionCompleteEvent) event;
+         log.info( "{" + chaosActionCopmleteEvent.getRunName() + "}{" + chaosActionCopmleteEvent.getFeature().getName() + "}{" + chaosActionCopmleteEvent.getScenario().getName() + "}{" + chaosActionCopmleteEvent.getIterationNumber() + "}{chaosAction("
+                   + chaosActionCopmleteEvent.getChaosAction().getName() + ")}" + SPACE + ( chaosActionCopmleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+      }
+      else if ( event instanceof ScenarioStepStartEvent )
+      {
+         ScenarioStepStartEvent stepStartEvent = (ScenarioStepStartEvent) event;
+         log.info( "{" + stepStartEvent.getRunName() + "}{" + stepStartEvent.getFeature().getName() + "}{" + stepStartEvent.getScenario().getName() + "}{" + stepStartEvent.getIterationNumber() + "}{step(" + stepStartEvent.getScenarioStep().getIdentifier()
+                   + ")}" + SPACE + STARTED );
+      }
+      else if ( event instanceof ScenarioStepCompleteEvent )
+      {
+         ScenarioStepCompleteEvent stepCompleteEvent = (ScenarioStepCompleteEvent) event;
+         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeature().getName() + "}{" + stepCompleteEvent.getScenario().getName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{step("
+                   + stepCompleteEvent.getScenarioStep().getIdentifier() + ")}" + SPACE + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+      }
+      else if ( event instanceof ScenarioTearDownStepStartEvent )
+      {
+         ScenarioTearDownStepStartEvent stepStartEvent = (ScenarioTearDownStepStartEvent) event;
+         log.info( "{" + stepStartEvent.getRunName() + "}{" + stepStartEvent.getFeature().getName() + "}{" + stepStartEvent.getScenario().getName() + "}{" + stepStartEvent.getIterationNumber() + "}{tearDown("
+                   + stepStartEvent.getScenarioTearDownStep().getIdentifier() + ")}" + SPACE + STARTED );
+      }
+      else if ( event instanceof ScenarioTearDownStepCompleteEvent )
+      {
+         ScenarioTearDownStepCompleteEvent stepCompleteEvent = (ScenarioTearDownStepCompleteEvent) event;
+         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeature().getName() + "}{" + stepCompleteEvent.getScenario().getName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{tearDown("
+                   + stepCompleteEvent.getScenarioTearDownStep().getIdentifier() + ")}" + SPACE + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+      }
+      else if ( event instanceof ScenarioCompleteEvent )
+      {
+         ScenarioCompleteEvent scenarioCompleteEvent = (ScenarioCompleteEvent) event;
+         log.info( "{" + scenarioCompleteEvent.getRunName() + "}{" + scenarioCompleteEvent.getFeature().getName() + "}{" + scenarioCompleteEvent.getIterationNumber() + "}{" + scenarioCompleteEvent.getScenario().getName() + "}" + SPACE + COMPLETED );
+      }
+      else if ( event instanceof FeatureTearDownStepStartEvent )
+      {
+         FeatureTearDownStepStartEvent featureTearDownStepStartEvent = (FeatureTearDownStepStartEvent) event;
+         log.info( "{" + featureTearDownStepStartEvent.getRunName() + "}{" + featureTearDownStepStartEvent.getFeature().getName() + "}{tearDown(" + featureTearDownStepStartEvent.getTearDownStep().getIdentifier() + ")}" + SPACE + STARTED );
+      }
+      else if ( event instanceof FeatureTearDownStepCompleteEvent )
+      {
+         FeatureTearDownStepCompleteEvent featureTearDownStepCompleteEvent = (FeatureTearDownStepCompleteEvent) event;
+         log.info( "{" + featureTearDownStepCompleteEvent.getRunName() + "}{" + featureTearDownStepCompleteEvent.getFeature().getName() + "}{tearDown(" + featureTearDownStepCompleteEvent.getTearDownStep().getIdentifier() + ")}" + SPACE
+                   + ( featureTearDownStepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+      }
+      else
+      {
+         log.info( "{" + event.getRunName() + "}{" + event.getEventType() + SPACE + event );
+      }
    }
-
-   @Override
-   public void featureStarted( String runName, TestFeature feature )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}" + SPACE + STARTED );
-   }
-
-   @Override
-   public void featureSetupStepStarted( String runName, TestFeature feature, TestStep setupStep )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{setup(" + setupStep.getIdentifier() + ")}" + SPACE + STARTED );
-   }
-
-   @Override
-   public void featureSetupStepComplete( String runName, TestFeature feature, TestStep setupStep, StepResult result )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{setup(" + setupStep.getIdentifier() + ")}" + SPACE + ( result.isSuccesssful() ? PASSED : FAILED ) );
-   }
-
-   @Override
-   public void scenarioStarted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{" + iterationNumber + "}{" + scenario.getName() + "}" + SPACE + STARTED );
-   }
-
-   @Override
-   public void scenarioSetupStepStarted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioSetupStep )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{" + scenario.getName() + "}{" + iterationNumber + "}{setup(" + scenarioSetupStep.getIdentifier() + ")}" + SPACE + STARTED );
-   }
-
-   @Override
-   public void scenarioSetupStepCompleted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioSetupStep, StepResult result )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{" + scenario.getName() + "}{" + iterationNumber + "}{setup(" + scenarioSetupStep.getIdentifier() + ")}" + SPACE + ( result.isSuccesssful() ? PASSED : FAILED ) );
-   }
-
-   @Override
-   public void scenarioChaosActionStarted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, ChaosAction action )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{" + scenario.getName() + "}{" + iterationNumber + "}{chaosAction(" + action.getName() + ")}" + SPACE + STARTED );
-   }
-
-   @Override
-   public void scenarioChaosActionCompleted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, ChaosAction action, StepResult result )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{" + scenario.getName() + "}{" + iterationNumber + "}{chaosAction(" + action.getName() + ")}" + SPACE + ( result.isSuccesssful() ? PASSED : FAILED ) );
-   }
-
-   @Override
-   public void scenarioStepStarted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioStep )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{" + scenario.getName() + "}{" + iterationNumber + "}{step(" + scenarioStep.getIdentifier() + ")}" + SPACE + STARTED );
-   }
-
-   @Override
-   public void scenarioStepCompleted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioStep, StepResult result )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{" + scenario.getName() + "}{" + iterationNumber + "}{step(" + scenarioStep.getIdentifier() + ")}" + SPACE + ( result.isSuccesssful() ? PASSED : FAILED ) );
-   }
-
-   @Override
-   public void scenarioTearDownStepStarted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioTearDownStep )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{" + scenario.getName() + "}{" + iterationNumber + "}{tearDown(" + scenarioTearDownStep.getIdentifier() + ")}" + SPACE + STARTED );
-   }
-
-   @Override
-   public void scenarioTearDownStepCompleted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioTearDownStep, StepResult result )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{" + scenario.getName() + "}{" + iterationNumber + "}{tearDown(" + scenarioTearDownStep.getIdentifier() + ")}" + SPACE + ( result.isSuccesssful() ? PASSED : FAILED ) );
-   }
-
-   @Override
-   public void scenarioCompleted( String runName, TestFeature feature, long iterationNumber, TestScenario scenario )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{" + iterationNumber + "}{" + scenario.getName() + "}" + SPACE + COMPLETED );
-   }
-
-   @Override
-   public void featureTearDownStepStarted( String runName, TestFeature feature, TestStep tearDownStep )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{tearDown(" + tearDownStep.getIdentifier() + ")}" + SPACE + STARTED );
-   }
-
-   @Override
-   public void featureTearDownStepComplete( String runName, TestFeature feature, TestStep tearDownStep, StepResult result )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}{tearDown(" + tearDownStep.getIdentifier() + ")}" + SPACE + ( result.isSuccesssful() ? PASSED : FAILED ) );
-   }
-
-   @Override
-   public void featureCompleted( String runName, TestFeature feature )
-   {
-      log.info( "{" + runName + "}{" + feature.getName() + "}" + SPACE + COMPLETED );
-
-   }
-
-   @Override
-   public void runCompleted( String runName )
-   {
-      log.info( "{" + runName + "}" + SPACE + COMPLETED );
-
-   }
-
 }

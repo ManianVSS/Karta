@@ -16,6 +16,12 @@ import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
+import org.mvss.karta.framework.runtime.event.FeatureCompleteEvent;
+import org.mvss.karta.framework.runtime.event.FeatureSetupStepCompleteEvent;
+import org.mvss.karta.framework.runtime.event.FeatureSetupStepStartEvent;
+import org.mvss.karta.framework.runtime.event.FeatureStartEvent;
+import org.mvss.karta.framework.runtime.event.FeatureTearDownStepCompleteEvent;
+import org.mvss.karta.framework.runtime.event.FeatureTearDownStepStartEvent;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
@@ -56,7 +62,7 @@ public class FeatureRunner
 
    public boolean run( String runName, TestFeature testFeature, long numberOfIterations, int numberOfIterationsInParallel ) throws Throwable
    {
-      eventProcessor.raiseFeatureStartedEvent( runName, testFeature );
+      eventProcessor.raiseEvent( new FeatureStartEvent( runName, testFeature ) );;
 
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
       HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
@@ -75,7 +81,7 @@ public class FeatureRunner
 
          StepResult stepResult = new StepResult();
 
-         eventProcessor.raiseFeatureSetupStepStartedEvent( runName, testFeature, step );
+         eventProcessor.raiseEvent( new FeatureSetupStepStartEvent( runName, testFeature, step ) );
 
          try
          {
@@ -97,12 +103,12 @@ public class FeatureRunner
          }
          finally
          {
-            eventProcessor.raiseFeatureSetupStepCompletedEvent( runName, testFeature, step, stepResult );
+            eventProcessor.raiseEvent( new FeatureSetupStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
             if ( !stepResult.isSuccesssful() )
             {
                // log.error( "Feature \"" + testFeature.getName() + "\" failed at setup step " + step );
-               eventProcessor.raiseFeatureCompletedEvent( runName, testFeature );
+               eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature ) );
                return false;
             }
          }
@@ -162,7 +168,7 @@ public class FeatureRunner
 
          StepResult stepResult = new StepResult();
 
-         eventProcessor.raiseFeatureTearDownStepStartedEvent( runName, testFeature, step );
+         eventProcessor.raiseEvent( new FeatureTearDownStepStartEvent( runName, testFeature, step ) );
 
          try
          {
@@ -184,7 +190,7 @@ public class FeatureRunner
          }
          finally
          {
-            eventProcessor.raiseFeatureTearDownStepCompleteEvent( runName, testFeature, step, stepResult );
+            eventProcessor.raiseEvent( new FeatureTearDownStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
             if ( !stepResult.isSuccesssful() )
             {
@@ -194,7 +200,7 @@ public class FeatureRunner
          }
       }
 
-      eventProcessor.raiseFeatureCompletedEvent( runName, testFeature );
+      eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature ) );
 
       return true;
    }

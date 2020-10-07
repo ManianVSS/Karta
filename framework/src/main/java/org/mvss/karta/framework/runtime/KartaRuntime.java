@@ -21,6 +21,8 @@ import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinionConfiguration;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
+import org.mvss.karta.framework.runtime.event.RunCompleteEvent;
+import org.mvss.karta.framework.runtime.event.RunStartEvent;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
@@ -291,13 +293,19 @@ public class KartaRuntime
    {
       if ( StringUtils.isNotBlank( runTarget.getFeatureFile() ) )
       {
-         return runFeatureFile( runName, runTarget.getFeatureFile() );
+         eventProcessor.raiseEvent( new RunStartEvent( runName ) );
+         boolean result = runFeatureFile( runName, runTarget.getFeatureFile() );
+         eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
+         return result;
       }
       else if ( StringUtils.isNotBlank( runTarget.getJavaTest() ) )
       {
          JavaTestRunner testRunner = objectMapper.convertValue( kartaRuntimeConfiguration, JavaTestRunner.class );
+         eventProcessor.raiseEvent( new RunStartEvent( runName ) );
          testRunner.setTestProperties( configurator.getPropertiesStore() );
-         return testRunner.run( runTarget.getJavaTest(), runTarget.getJavaTestJarFile() );
+         boolean result = testRunner.run( runTarget.getJavaTest(), runTarget.getJavaTestJarFile() );
+         eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
+         return result;
       }
       else if ( ( runTarget.getTags() != null && !runTarget.getTags().isEmpty() ) )
       {
@@ -313,6 +321,8 @@ public class KartaRuntime
    {
       try
       {
+         eventProcessor.raiseEvent( new RunStartEvent( runName ) );
+
          ArrayList<Test> tests = testCatalogManager.filterTestsByTag( tags );
 
          for ( Test test : tests )
@@ -325,6 +335,7 @@ public class KartaRuntime
                   if ( featureParser == null )
                   {
                      log.error( "Failed to get a feature source parser of type: " + test.getFeatureSourceParserPlugin() );
+                     eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
                      return false;
                   }
                   // TODO: Handle io errors
@@ -335,6 +346,7 @@ public class KartaRuntime
                   if ( stepRunner == null )
                   {
                      log.error( "Failed to get a step runner of type: " + test.getStepRunnerPlugin() );
+                     eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
                      return false;
                   }
 
@@ -347,6 +359,7 @@ public class KartaRuntime
                      if ( testDataSource == null )
                      {
                         log.error( "Failed to get a test data source of type: " + testDataSourcePlugin );
+                        eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
                         return false;
                      }
 
@@ -366,6 +379,8 @@ public class KartaRuntime
                   break;
             }
          }
+
+         eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
       }
       catch ( Throwable t )
       {
@@ -390,5 +405,10 @@ public class KartaRuntime
    public StepResult runStepOnNode( String nodeName, String stepRunnerPlugin, TestStep step, TestExecutionContext context ) throws RemoteException
    {
       return minionRegistry.getMinion( nodeName ).runStep( stepRunnerPlugin, step, context );
+   }
+
+   public StepResult runChaosActionNode( String nodeName, String stepRunnerPlugin, ChaosAction chaosAction, TestExecutionContext context ) throws RemoteException
+   {
+      return minionRegistry.getMinion( nodeName ).performChaosAction( stepRunnerPlugin, chaosAction, context );
    }
 }

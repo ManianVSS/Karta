@@ -11,7 +11,7 @@ scenarioSetupSteps:
 testScenarios:
   - name: Scenario1
     chaosConfiguration:
-      subNodeSelectionType: MutuallyExclusive
+      subNodeSelectionType: MUTUALLY_EXCLUSIVE
       chaosActions:
         - name: the calculator is powered off
           node: Node1

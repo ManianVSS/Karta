@@ -16,6 +16,16 @@ import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
+import org.mvss.karta.framework.runtime.event.ScenarioChaosActionCompleteEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioChaosActionStartEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioCompleteEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioSetupStepCompleteEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioSetupStepStartEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioStartEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioStepCompleteEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioStepStartEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioTearDownStepCompleteEvent;
+import org.mvss.karta.framework.runtime.event.ScenarioTearDownStepStartEvent;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
@@ -64,9 +74,9 @@ public class IterationRunner implements Runnable
       {
          log.debug( "Running Scenario: " + testScenario );
 
-         eventProcessor.raiseScenarioStartedEvent( runName, feature, iterationIndex, testScenario );
+         eventProcessor.raiseEvent( new ScenarioStartEvent( runName, feature, iterationIndex, testScenario ) );
          runScenario( testScenario, iterationIndex );
-         eventProcessor.raiseScenarioCompletedEvent( runName, feature, iterationIndex, testScenario );
+         eventProcessor.raiseEvent( new ScenarioCompleteEvent( runName, feature, iterationIndex, testScenario ) );
 
       }
       // TODO: Scenario passed handler;
@@ -88,7 +98,7 @@ public class IterationRunner implements Runnable
             // log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setData( testData );
 
-            eventProcessor.raiseScenarioSetupStepStartedEvent( runName, feature, iterationIndex, testScenario, step );
+            eventProcessor.raiseEvent( new ScenarioSetupStepStartEvent( runName, feature, iterationIndex, testScenario, step ) );
 
             StepResult result = new StepResult();
 
@@ -102,7 +112,7 @@ public class IterationRunner implements Runnable
                result = stepRunner.runStep( step, testExecutionContext );
             }
 
-            eventProcessor.raiseScenarioSetupStepCompletedEvent( runName, feature, iterationIndex, testScenario, step, result );
+            eventProcessor.raiseEvent( new ScenarioSetupStepCompleteEvent( runName, feature, iterationIndex, testScenario, step, result ) );
 
             if ( !result.isSuccesssful() )
             {
@@ -127,7 +137,7 @@ public class IterationRunner implements Runnable
             {
                log.debug( "Performing chaos action: " + chaosAction );
 
-               eventProcessor.raiseScenarioChaosActionStartedEvent( runName, feature, iterationIndex, testScenario, chaosAction );
+               eventProcessor.raiseEvent( new ScenarioChaosActionStartEvent( runName, feature, iterationIndex, testScenario, chaosAction ) );
 
                StepResult result = new StepResult();
                if ( StringUtils.isNotEmpty( chaosAction.getNode() ) )
@@ -140,7 +150,7 @@ public class IterationRunner implements Runnable
                   result = stepRunner.performChaosAction( chaosAction, testExecutionContext );
                }
 
-               eventProcessor.raiseScenarioChaosActionCompletedEvent( runName, feature, iterationIndex, testScenario, chaosAction, result );
+               eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, feature, iterationIndex, testScenario, chaosAction, result ) );
             }
          }
 
@@ -149,7 +159,7 @@ public class IterationRunner implements Runnable
             testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( feature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
             // log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setData( testData );
-            eventProcessor.raiseScenarioStepStartedEvent( runName, feature, iterationIndex, testScenario, step );
+            eventProcessor.raiseEvent( new ScenarioStepStartEvent( runName, feature, iterationIndex, testScenario, step ) );
             StepResult result = new StepResult();
 
             if ( StringUtils.isNotEmpty( step.getNode() ) )
@@ -163,7 +173,7 @@ public class IterationRunner implements Runnable
                result = stepRunner.runStep( step, testExecutionContext );
             }
 
-            eventProcessor.raiseScenarioStepCompletedEvent( runName, feature, iterationIndex, testScenario, step, result );
+            eventProcessor.raiseEvent( new ScenarioStepCompleteEvent( runName, feature, iterationIndex, testScenario, step, result ) );
 
             if ( !result.isSuccesssful() )
             {
@@ -187,7 +197,7 @@ public class IterationRunner implements Runnable
                // log.debug( "Step test data is " + testData.toString() );
                testExecutionContext.setData( testData );
 
-               eventProcessor.raiseScenarioTearDownStepStartedEvent( runName, feature, iterationIndex, testScenario, step );
+               eventProcessor.raiseEvent( new ScenarioTearDownStepStartEvent( runName, feature, iterationIndex, testScenario, step ) );
                StepResult result = new StepResult();
 
                if ( StringUtils.isNotEmpty( step.getNode() ) )
@@ -200,7 +210,7 @@ public class IterationRunner implements Runnable
                   result = stepRunner.runStep( step, testExecutionContext );
                }
 
-               eventProcessor.raiseScenarioTearDownStepCompletedEvent( runName, feature, iterationIndex, testScenario, step, result );
+               eventProcessor.raiseEvent( new ScenarioTearDownStepCompleteEvent( runName, feature, iterationIndex, testScenario, step, result ) );
 
                if ( !result.isSuccesssful() )
                {

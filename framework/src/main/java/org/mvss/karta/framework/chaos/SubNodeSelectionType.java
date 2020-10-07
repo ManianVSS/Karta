@@ -2,5 +2,5 @@ package org.mvss.karta.framework.chaos;
 
 public enum SubNodeSelectionType
 {
-   All, CaseToCaseEvaluation, MutuallyExclusive
+   ALL, CASE_TO_CASE_EVALUATION, MUTUALLY_EXCLUSIVE
 }

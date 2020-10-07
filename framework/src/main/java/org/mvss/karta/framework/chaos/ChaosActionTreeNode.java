@@ -28,7 +28,7 @@ public class ChaosActionTreeNode implements Serializable, ObjectWithChance
    private float                          probabilityOfOccurrence = 100;
 
    @Builder.Default
-   private SubNodeSelectionType           subNodeSelectionType    = SubNodeSelectionType.MutuallyExclusive;
+   private SubNodeSelectionType           subNodeSelectionType    = SubNodeSelectionType.MUTUALLY_EXCLUSIVE;
 
    private ArrayList<ChaosActionTreeNode> chaosActionSubNodes;
 
@@ -42,11 +42,11 @@ public class ChaosActionTreeNode implements Serializable, ObjectWithChance
       {
          isLeafOrHasSubNodes = true;
 
-         if ( subNodeSelectionType != SubNodeSelectionType.All )
+         if ( subNodeSelectionType != SubNodeSelectionType.ALL )
          {
             float probabilityNotCovered = RandomizationUtils.getMissingProbabilityCoverage( chaosActionSubNodes, 100, true );
 
-            if ( ( subNodeSelectionType == SubNodeSelectionType.MutuallyExclusive ) && ( probabilityNotCovered != 0 ) )
+            if ( ( subNodeSelectionType == SubNodeSelectionType.MUTUALLY_EXCLUSIVE ) && ( probabilityNotCovered != 0 ) )
             {
                return false;
             }
@@ -74,9 +74,9 @@ public class ChaosActionTreeNode implements Serializable, ObjectWithChance
             probabilityNotCovered -= chaosAction.getProbabilityOfOccurrence();
          }
 
-         if ( subNodeSelectionType != SubNodeSelectionType.All )
+         if ( subNodeSelectionType != SubNodeSelectionType.ALL )
          {
-            if ( ( subNodeSelectionType == SubNodeSelectionType.MutuallyExclusive ) && ( probabilityNotCovered != 0 ) )
+            if ( ( subNodeSelectionType == SubNodeSelectionType.MUTUALLY_EXCLUSIVE ) && ( probabilityNotCovered != 0 ) )
             {
                return false;
             }
@@ -94,13 +94,13 @@ public class ChaosActionTreeNode implements Serializable, ObjectWithChance
       {
          switch ( subNodeSelectionType )
          {
-            case All:
+            case ALL:
                selectedActions.addAll( chaosActions );
                break;
-            case CaseToCaseEvaluation:
+            case CASE_TO_CASE_EVALUATION:
                selectedActions.addAll( RandomizationUtils.generateNextComposition( random, chaosActions ) );
                break;
-            case MutuallyExclusive:
+            case MUTUALLY_EXCLUSIVE:
                selectedActions.add( RandomizationUtils.generateNextMutexComposition( random, chaosActions ) );
                break;
             default:
@@ -114,13 +114,13 @@ public class ChaosActionTreeNode implements Serializable, ObjectWithChance
 
          switch ( subNodeSelectionType )
          {
-            case All:
+            case ALL:
                selectedSubNodes = chaosActionSubNodes;
                break;
-            case CaseToCaseEvaluation:
+            case CASE_TO_CASE_EVALUATION:
                selectedSubNodes = RandomizationUtils.generateNextComposition( random, chaosActionSubNodes );
                break;
-            case MutuallyExclusive:
+            case MUTUALLY_EXCLUSIVE:
                selectedSubNodes = new ArrayList<ChaosActionTreeNode>();
                selectedSubNodes.add( RandomizationUtils.generateNextMutexComposition( random, chaosActionSubNodes ) );
                break;

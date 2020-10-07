@@ -29,7 +29,7 @@ public class TestFeature implements Serializable
    private Boolean                 exclusiveScenarioPerIteration = false;
 
    @Builder.Default
-   private ArrayList<TestStep>     setupSteps                = new ArrayList<TestStep>();
+   private ArrayList<TestStep>     setupSteps                    = new ArrayList<TestStep>();
 
    @Builder.Default
    private ArrayList<TestStep>     scenarioSetupSteps            = new ArrayList<TestStep>();
@@ -41,5 +41,5 @@ public class TestFeature implements Serializable
    private ArrayList<TestStep>     scenarioTearDownSteps         = new ArrayList<TestStep>();
 
    @Builder.Default
-   private ArrayList<TestStep>     tearDownSteps             = new ArrayList<TestStep>();
+   private ArrayList<TestStep>     tearDownSteps                 = new ArrayList<TestStep>();
 }
