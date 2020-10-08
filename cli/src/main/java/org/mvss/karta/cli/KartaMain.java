@@ -81,10 +81,12 @@ public class KartaMain
          }
          else if ( cmd.hasOption( START_MINION ) )
          {
-            KartaRuntime kartaRuntime = KartaRuntime.getInstance();
-            KartaMinionServer kartaRMIServer = new KartaMinionServer( kartaRuntime );
-            log.info( "Karta minion started " + kartaRMIServer.getMinionConfig() );
-            Thread.currentThread().join();
+            try (KartaRuntime kartaRuntime = KartaRuntime.getInstance())
+            {
+               KartaMinionServer kartaRMIServer = new KartaMinionServer( kartaRuntime );
+               log.info( "Karta minion started " + kartaRMIServer.getMinionConfig() );
+               Thread.currentThread().join();
+            }
          }
          else
          {
@@ -143,12 +145,13 @@ public class KartaMain
             if ( runTargetAvailable )
             {
 
-               KartaRuntime kartaRuntime = KartaRuntime.getInstance();
-               if ( !kartaRuntime.runTestTarget( runName, runTarget ) )
+               try (KartaRuntime kartaRuntime = KartaRuntime.getInstance())
                {
-                  System.exit( 1 );
+                  if ( !kartaRuntime.runTestTarget( runName, runTarget ) )
+                  {
+                     System.exit( 1 );
+                  }
                }
-               kartaRuntime.stopRuntime();
             }
             else
             {

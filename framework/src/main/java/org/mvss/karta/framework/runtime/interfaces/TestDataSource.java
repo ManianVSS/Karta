@@ -5,7 +5,7 @@ import java.util.HashMap;
 
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 
-public interface TestDataSource extends Plugin, AutoCloseable
+public interface TestDataSource extends Plugin
 {
    HashMap<String, Serializable> getData( ExecutionStepPointer executionStepPointer ) throws Throwable;
 }

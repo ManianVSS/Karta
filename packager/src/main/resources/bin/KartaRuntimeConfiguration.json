@@ -1,23 +1,23 @@
 {
+	"enabledPlugins": [
+		"Yerkin",
+		"KartaDefaultTestEventListener"
+	],
 	"defaultFeatureSourceParserPlugin": "Yerkin",
 	"defaultStepRunnerPlugin": "Yerkin",
 	"defaultTestDataSourcePlugins": [
-		"Yerkin",
-		"RandomTestDataSource"
+		"Yerkin"
 	],
 	"propertyFiles": [
-		"KartaRuntimeProperties.json",
-		"SampleRunProperties.json",
-		"SampleRunProperties2.json"
+		"KartaRuntimeProperties.json"
 	],
 	"testRepositorydirectories": [
-		"../repository/",
-		"../plugins/"
+		"../repository/"
 	],
 	"testCatalogFiles": [
 		"../repository/KartaTestCatalog.json"
 	],
-	"sSLProperties": {
+	"sslProperties": {
 		"trustStoreType": "jks",
 		"trustStore": "trustStore.jks",
 		"trustStorePassword": "changeit",
@@ -26,15 +26,6 @@
 		"keyStorePassword": "changeit"
 	},
 	"minions": {
-		"Node1": {
-			"host": "localhost",
-			"port": 17171,
-			"enableSSL": true
-		},
-		"Node2": {
-			"host": "localhost",
-			"port": 17171,
-			"enableSSL": true
-		}
+		
 	}
 }

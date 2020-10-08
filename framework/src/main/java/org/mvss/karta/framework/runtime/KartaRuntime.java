@@ -46,7 +46,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @AllArgsConstructor
-public class KartaRuntime
+public class KartaRuntime implements AutoCloseable
 {
    @Getter
    private KartaBaseConfiguration    kartaBaseConfiguration;
@@ -71,7 +71,7 @@ public class KartaRuntime
 
    private static ObjectMapper       objectMapper = ParserUtils.getObjectMapper();
 
-   public void initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException
+   public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException
    {
       ObjectMapper objectMapper = ParserUtils.getObjectMapper();
 
@@ -112,7 +112,7 @@ public class KartaRuntime
       kartaRuntimeConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_RUNTIME_CONFIGURATION_JSON ), KartaRuntimeConfiguration.class );
       // }
 
-      SSLUtils.setSSLProperties( kartaRuntimeConfiguration.getSSLProperties() );
+      SSLUtils.setSslProperties( kartaRuntimeConfiguration.getSslProperties() );
 
       HashSet<String> propertiesFileList = kartaRuntimeConfiguration.getPropertyFiles();
       if ( ( propertiesFileList != null ) && !propertiesFileList.isEmpty() )
@@ -122,11 +122,16 @@ public class KartaRuntime
          configurator.mergePropertiesFiles( propertyFilesToLoad );
       }
 
-      pnpRegistry.initializePlugins( configurator.getPropertiesStore() );
+      pnpRegistry.enablePlugins( kartaRuntimeConfiguration.getEnabledPlugins() );
+
+      if ( !pnpRegistry.initializePlugins( configurator.getPropertiesStore() ) )
+      {
+         return false;
+      }
 
       eventProcessor = new EventProcessor();
 
-      pnpRegistry.getPluginsOfType( TestEventListener.class ).forEach( ( plugin ) -> eventProcessor.addEventListener( (TestEventListener) plugin ) );
+      pnpRegistry.getEnabledPluginsOfType( TestEventListener.class ).forEach( ( plugin ) -> eventProcessor.addEventListener( (TestEventListener) plugin ) );
 
       configurator.loadProperties( eventProcessor );
       eventProcessor.start();
@@ -167,13 +172,22 @@ public class KartaRuntime
             }
          }
       }
+
+      return true;
    }
 
-   public void stopRuntime()
+   @Override
+   public void close()
    {
+      // TODO: Perform save actions and close threads
+      if ( pnpRegistry != null )
+      {
+         pnpRegistry.close();
+      }
+
       if ( eventProcessor != null )
       {
-         eventProcessor.stop();
+         eventProcessor.close();
       }
    }
 
@@ -194,7 +208,11 @@ public class KartaRuntime
          synchronized ( _syncLockObject )
          {
             instance = new KartaRuntime();
-            instance.initializeRuntime();
+
+            if ( !instance.initializeRuntime() )
+            {
+               instance = null;
+            }
          }
       }
 
@@ -214,11 +232,11 @@ public class KartaRuntime
       return mergedTestData;
    }
 
-   public boolean runFeatureFile( String runName, String featureFileName )
+   public boolean runFeatureFile( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String featureFileName )
    {
       try
       {
-         return runFeatureSource( runName, ClassPathLoaderUtils.readAllText( featureFileName ) );
+         return runFeatureSource( runName, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, ClassPathLoaderUtils.readAllText( featureFileName ) );
       }
       catch ( Throwable t )
       {
@@ -229,9 +247,14 @@ public class KartaRuntime
 
    public boolean runFeatureSource( String runName, String featureFileSourceString )
    {
+      return runFeatureSource( runName, kartaRuntimeConfiguration.getDefaultFeatureSourceParserPlugin(), kartaRuntimeConfiguration.getDefaultStepRunnerPlugin(), kartaRuntimeConfiguration.getDefaultTestDataSourcePlugins(), featureFileSourceString );
+   }
+
+   public boolean runFeatureSource( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String featureFileSourceString )
+   {
       try
       {
-         FeatureSourceParser featureParser = (FeatureSourceParser) pnpRegistry.getPlugin( kartaRuntimeConfiguration.getDefaultFeatureSourceParserPlugin(), FeatureSourceParser.class );
+         FeatureSourceParser featureParser = (FeatureSourceParser) pnpRegistry.getPlugin( featureSourceParserPlugin, FeatureSourceParser.class );
 
          if ( featureParser == null )
          {
@@ -240,7 +263,7 @@ public class KartaRuntime
          }
          TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
 
-         return run( runName, testFeature );
+         return run( runName, stepRunnerPlugin, testDataSourcePlugins, testFeature );
       }
       catch ( Throwable t )
       {
@@ -249,9 +272,9 @@ public class KartaRuntime
       }
    }
 
-   public boolean run( String runName, TestFeature feature )
+   public boolean run( String runName, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, TestFeature feature )
    {
-      StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( kartaRuntimeConfiguration.getDefaultStepRunnerPlugin(), StepRunner.class );
+      StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin, StepRunner.class );
 
       if ( stepRunner == null )
       {
@@ -261,7 +284,7 @@ public class KartaRuntime
 
       ArrayList<TestDataSource> testDataSources = new ArrayList<TestDataSource>();
 
-      for ( String testDataSourcePlugin : kartaRuntimeConfiguration.getDefaultTestDataSourcePlugins() )
+      for ( String testDataSourcePlugin : testDataSourcePlugins )
       {
          TestDataSource testDataSource = (TestDataSource) pnpRegistry.getPlugin( testDataSourcePlugin, TestDataSource.class );
 
@@ -291,10 +314,15 @@ public class KartaRuntime
 
    public boolean runTestTarget( String runName, RunTarget runTarget )
    {
+      return runTestTarget( runName, kartaRuntimeConfiguration.getDefaultStepRunnerPlugin(), kartaRuntimeConfiguration.getDefaultStepRunnerPlugin(), kartaRuntimeConfiguration.getDefaultTestDataSourcePlugins(), runTarget );
+   }
+
+   public boolean runTestTarget( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, RunTarget runTarget )
+   {
       if ( StringUtils.isNotBlank( runTarget.getFeatureFile() ) )
       {
          eventProcessor.raiseEvent( new RunStartEvent( runName ) );
-         boolean result = runFeatureFile( runName, runTarget.getFeatureFile() );
+         boolean result = runFeatureFile( runName, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, runTarget.getFeatureFile() );
          eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
          return result;
       }

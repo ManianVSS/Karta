@@ -8,26 +8,31 @@ import java.util.concurrent.TimeUnit;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
+import org.mvss.karta.framework.utils.WaitUtil;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class EventProcessor
+public class EventProcessor implements AutoCloseable
 {
+   private static final long          POLL_TIME_FOR_EVENT_QUEUE_CLEARING = 1000;
+
    @Getter
    @Setter
    @PropertyMapping( "EventProcessor.numberOfThread" )
-   private int                        numberOfThread               = 1;
+   private int                        numberOfThread                     = 1;
 
    @Getter
    @Setter
    @PropertyMapping( "EventProcessor.maxEventQueueSize" )
-   private int                        maxEventQueueSize            = 100;
+   private int                        maxEventQueueSize                  = 100;
 
-   private ExecutorService            eventListenerExecutorService = null;
-   private HashSet<TestEventListener> testEventListeners           = new HashSet<TestEventListener>();
+   private ExecutorService            eventListenerExecutorService       = null;
+   private HashSet<TestEventListener> testEventListeners                 = new HashSet<TestEventListener>();
+
+   private BlockingRunnableQueue      eventProcessingQueue;
 
    public boolean addEventListener( TestEventListener testEventListener )
    {
@@ -42,13 +47,19 @@ public class EventProcessor
    public void start()
    {
       // TODO: Change to thread factory to be able to manage events.
-      eventListenerExecutorService = new ThreadPoolExecutor( numberOfThread, numberOfThread, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( maxEventQueueSize ) );
+      eventProcessingQueue = new BlockingRunnableQueue( maxEventQueueSize );
+      eventListenerExecutorService = new ThreadPoolExecutor( numberOfThread, numberOfThread, 0L, TimeUnit.MILLISECONDS, eventProcessingQueue );
    }
 
-   public void stop()
+   @Override
+   public void close()
    {
       try
       {
+         while ( !eventProcessingQueue.isEmpty() )
+         {
+            WaitUtil.sleep( POLL_TIME_FOR_EVENT_QUEUE_CLEARING );
+         }
          eventListenerExecutorService.shutdown();
          eventListenerExecutorService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
       }

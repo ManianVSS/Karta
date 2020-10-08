@@ -53,12 +53,6 @@ public class RandomTestDataSource implements TestDataSource
    }
 
    @Override
-   public void close() throws Exception
-   {
-
-   }
-
-   @Override
    public HashMap<String, Serializable> getData( ExecutionStepPointer executionStepPointer ) throws Throwable
    {
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();

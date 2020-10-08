@@ -14,16 +14,6 @@ public class RMIUtils
 {
    public static final String JAVA_RMI_SERVER_HOSTNAME = "java.rmi.server.hostname";
 
-   public static void init()
-   {
-      SSLUtils.setSSLProperties();
-   }
-
-   static
-   {
-      init();
-   }
-
    public static Registry createNewRegistry( String host, int port, boolean enableSSL, RMIClientSocketFactory csf, RMIServerSocketFactory ssf ) throws RemoteException
    {
       Registry callBackRegistry;

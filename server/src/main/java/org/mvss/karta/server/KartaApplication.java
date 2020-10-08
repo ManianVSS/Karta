@@ -33,7 +33,6 @@ public class KartaApplication implements CommandLineRunner
    public void run( String... args ) throws Exception
    {
       log.info( "******************** Starting Karta Server *********************" );
-      exitHooks.add( () -> kartaRuntime.stopRuntime() );
    }
 
    @PreDestroy

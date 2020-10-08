@@ -9,8 +9,12 @@
 		}
 	},
 	"Yerkin": {
-		"stepDefinitionPackageNames": [],
-		"chaosActionDefinitionPackageNames": []
+		"stepDefinitionPackageNames": [
+			"org.mvss.karta.samples.stepdefinitions"
+		],
+		"chaosActionDefinitionPackageNames": [
+			"org.mvss.karta.samples.chaosdefinitions"
+		]
 	},
 	"KartaDumpToFileTestEventListener": {
 		"fileName": "KartaEventsRawDump.bin"

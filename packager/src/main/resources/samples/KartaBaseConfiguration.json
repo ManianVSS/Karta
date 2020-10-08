@@ -31,5 +31,5 @@
 			"className": "org.mvss.karta.framework.runtime.impl.RabbitMQTestEventListener"
 		}
 	],
-	"pluginsDirectory": "../plugins/"
+	"pluginsDirectory": "."
 }

@@ -32,6 +32,8 @@ public class KartaRuntimeConfiguration implements Serializable
 
    // private HashMap<String, HashMap<String, Serializable>> pluginConfiguration;
 
+   private HashSet<String>                           enabledPlugins;
+
    @Builder.Default
    private HashSet<String>                           propertyFiles                = new HashSet<String>();
 
@@ -41,8 +43,7 @@ public class KartaRuntimeConfiguration implements Serializable
    @Builder.Default
    private HashSet<String>                           testCatalogFiles             = new HashSet<String>();
 
-   @Builder.Default
-   private SSLProperties                             sSLProperties                = new SSLProperties();
+   private SSLProperties                             sslProperties;
 
    @Builder.Default
    private HashMap<String, KartaMinionConfiguration> minions                      = new HashMap<String, KartaMinionConfiguration>();

@@ -58,8 +58,8 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
    @PropertyMapping( group = PLUGIN_NAME, value = "stepDefinitionPackageNames" )
    private ArrayList<String>                            stepDefinitionPackageNames             = new ArrayList<String>();
 
-   @PropertyMapping( group = PLUGIN_NAME, value = "actionGroupPackageNames" )
-   private ArrayList<String>                            actionGroupPackageNames                = new ArrayList<String>();
+   @PropertyMapping( group = PLUGIN_NAME, value = "chaosActionDefinitionPackageNames" )
+   private ArrayList<String>                            chaosActionDefinitionPackageNames      = new ArrayList<String>();
 
    @Override
    public String getPluginName()
@@ -78,6 +78,32 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
       Configurator.loadProperties( properties, this );
 
       log.debug( "Initializing Yerkin plugin with " + properties );
+
+      // HashSet<String> repoDirectories = new HashSet<String>();
+      // repoDirectories.addAll( kartaRuntimeConfiguration.getTestRepositorydirectories() );
+      //
+      // HashSet<String> jarFilesToScan = new HashSet<String>();
+      //
+      // for ( String rpeoDirectory : repoDirectories )
+      // {
+      // for ( File file : FileUtils.listFiles( new File( rpeoDirectory ), Constants.jarExtention, true ) )
+      // {
+      // jarFilesToScan.add( file.getAbsolutePath() );
+      // }
+      // }
+      //
+      // HashSet<ClassLoader> classLoadersToLoadFrom = new HashSet<ClassLoader>();
+      //
+      // classLoadersToLoadFrom.add( this.getClass().getClassLoader() );
+      //
+      // for ( String jarFile : jarFilesToScan )
+      // {
+      // classLoadersToLoadFrom.add( DynamicClassLoader.getClassLoaderForJar( jarFile ) );
+      // }
+
+      // ClassLoader[] classLoaderArrToLoadFrom = new ClassLoader[classLoadersToLoadFrom.size()];
+      // classLoadersToLoadFrom.toArray( classLoaderArrToLoadFrom );
+      // Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forClassLoader( classLoaderArrToLoadFrom ) ).addClassLoaders( classLoaderArrToLoadFrom ).setScanners( new MethodAnnotationsScanner() ) );
 
       for ( String stepDefinitionPackageName : stepDefinitionPackageNames )
       {
@@ -120,52 +146,54 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
                   }
                }
             }
+
          }
          catch ( Throwable t )
          {
             log.error( "Exception while parsing step definition package " + stepDefinitionPackageName, t );
          }
-      }
 
-      for ( String actionGroupPackageName : actionGroupPackageNames )
-      {
-         try
+         for ( String actionGroupPackageName : chaosActionDefinitionPackageNames )
          {
-            Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( actionGroupPackageName ) ).setScanners( new MethodAnnotationsScanner() ) );
-            Set<Method> chaosActionDefinitionMethods = reflections.getMethodsAnnotatedWith( ChaosActionDefinition.class );
-            HashMap<Class<?>, Object> chaosActionDefinitionClassObjectMap = new HashMap<Class<?>, Object>();
-
-            for ( Method candidateChaosActionMethod : chaosActionDefinitionMethods )
+            try
             {
-               if ( Modifier.isPublic( candidateChaosActionMethod.getModifiers() ) )
+               Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( actionGroupPackageName ) ).setScanners( new MethodAnnotationsScanner() ) );
+               Set<Method> chaosActionDefinitionMethods = reflections.getMethodsAnnotatedWith( ChaosActionDefinition.class );
+               HashMap<Class<?>, Object> chaosActionDefinitionClassObjectMap = new HashMap<Class<?>, Object>();
+
+               for ( Method candidateChaosActionMethod : chaosActionDefinitionMethods )
                {
-                  for ( ChaosActionDefinition chaosActionDefinition : candidateChaosActionMethod.getAnnotationsByType( ChaosActionDefinition.class ) )
+                  if ( Modifier.isPublic( candidateChaosActionMethod.getModifiers() ) )
                   {
-                     String methodDescription = candidateChaosActionMethod.toString();
-                     String chaosActionName = chaosActionDefinition.value();
-                     Class<?>[] params = candidateChaosActionMethod.getParameterTypes();
-
-                     if ( !( ( params.length == 2 ) && ( TestExecutionContext.class == params[0] ) && ( ChaosAction.class == params[1] ) ) )
+                     for ( ChaosActionDefinition chaosActionDefinition : candidateChaosActionMethod.getAnnotationsByType( ChaosActionDefinition.class ) )
                      {
-                        log.error( "Chaos action definition method " + methodDescription + " should have two parameters of types(" + TestExecutionContext.class.getName() + ", " + ChaosAction.class.getName() + ")" );
-                        continue;
-                     }
+                        String methodDescription = candidateChaosActionMethod.toString();
+                        String chaosActionName = chaosActionDefinition.value();
+                        Class<?>[] params = candidateChaosActionMethod.getParameterTypes();
 
-                     log.debug( "Mapping choas action definition " + chaosActionName + " to " + methodDescription );
+                        if ( !( ( params.length == 2 ) && ( TestExecutionContext.class == params[0] ) && ( ChaosAction.class == params[1] ) ) )
+                        {
+                           log.error( "Chaos action definition method " + methodDescription + " should have two parameters of types(" + TestExecutionContext.class.getName() + ", " + ChaosAction.class.getName() + ")" );
+                           continue;
+                        }
 
-                     Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
-                     if ( !chaosActionDefinitionClassObjectMap.containsKey( chaosActionDefinitionClass ) )
-                     {
-                        chaosActionDefinitionClassObjectMap.put( chaosActionDefinitionClass, chaosActionDefinitionClass.newInstance() );
+                        log.debug( "Mapping choas action definition " + chaosActionName + " to " + methodDescription );
+
+                        Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
+                        if ( !chaosActionDefinitionClassObjectMap.containsKey( chaosActionDefinitionClass ) )
+                        {
+                           chaosActionDefinitionClassObjectMap.put( chaosActionDefinitionClass, chaosActionDefinitionClass.newInstance() );
+                        }
+                        chaosActionHandlerMap.put( chaosActionName, new MutablePair<Object, Method>( chaosActionDefinitionClassObjectMap.get( chaosActionDefinitionClass ), candidateChaosActionMethod ) );
                      }
-                     chaosActionHandlerMap.put( chaosActionName, new MutablePair<Object, Method>( chaosActionDefinitionClassObjectMap.get( chaosActionDefinitionClass ), candidateChaosActionMethod ) );
                   }
                }
+
             }
-         }
-         catch ( Throwable t )
-         {
-            log.error( "Exception while parsing step definition package " + actionGroupPackageName, t );
+            catch ( Throwable t )
+            {
+               log.error( "Exception while parsing step definition package " + actionGroupPackageName, t );
+            }
          }
       }
 
@@ -332,11 +360,5 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
       testData.put( INLINE_STEP_DEF_PARAMTERS, inlineStepDefinitionParameters );
 
       return testData;
-   }
-
-   @Override
-   public void close() throws Exception
-   {
-      // nothing to do
    }
 }

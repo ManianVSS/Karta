@@ -10,6 +10,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -23,7 +25,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class PnPRegistry
+public class PnPRegistry implements AutoCloseable
 {
    private static TypeReference<ArrayList<PluginConfig>>             pluginConfigArrayListType = new TypeReference<ArrayList<PluginConfig>>()
                                                                                                {
@@ -31,6 +33,7 @@ public class PnPRegistry
 
    private HashMap<Class<? extends Plugin>, HashMap<String, Plugin>> pluginMap                 = new HashMap<Class<? extends Plugin>, HashMap<String, Plugin>>();
    private HashMap<String, Plugin>                                   registeredPlugins         = new HashMap<String, Plugin>();
+   private HashSet<Plugin>                                           enabledPlugins            = new HashSet<Plugin>();
 
    private ArrayList<Class<? extends Plugin>>                        pluginTypes               = new ArrayList<Class<? extends Plugin>>();
 
@@ -142,17 +145,48 @@ public class PnPRegistry
       }
    }
 
-   public void initializePlugins( HashMap<String, HashMap<String, Serializable>> runProperties )
+   public void enablePlugins( HashSet<String> pluginNamesToEnable )
    {
-      for ( String pluginName : registeredPlugins.keySet() )
+      for ( String pluginName : pluginNamesToEnable )
+      {
+         Plugin pluginToEnable = registeredPlugins.get( pluginName );
+
+         if ( pluginToEnable != null )
+         {
+            enabledPlugins.add( pluginToEnable );
+         }
+      }
+   }
+
+   public boolean initializePlugins( HashMap<String, HashMap<String, Serializable>> runProperties )
+   {
+      for ( Plugin plugin : enabledPlugins )
       {
          try
          {
-            registeredPlugins.get( pluginName ).initialize( runProperties );
+            plugin.initialize( runProperties );
          }
          catch ( Throwable t )
          {
-            log.error( "Plugin failed to initialize: " + pluginName, t );
+            log.error( "Plugin failed to initialize: " + plugin.getPluginName(), t );
+            return false;
+         }
+      }
+      return true;
+   }
+
+   @Override
+   public void close()
+   {
+      for ( Plugin plugin : enabledPlugins )
+      {
+         try
+         {
+            plugin.close();
+         }
+         catch ( Throwable t )
+         {
+            log.error( "Plugin failed to close: " + plugin.getPluginName(), t );
          }
       }
    }
@@ -160,6 +194,11 @@ public class PnPRegistry
    public Plugin getPlugin( String name, Class<? extends Plugin> pluginType )
    {
       return pluginMap.containsKey( pluginType ) ? pluginMap.get( pluginType ).get( name ) : null;
+   }
+
+   public Collection<Plugin> getEnabledPluginsOfType( Class<? extends Plugin> pluginType )
+   {
+      return getPluginsOfType( pluginType ).stream().filter( ( plugin ) -> enabledPlugins.contains( plugin ) ).collect( Collectors.toList() );
    }
 
    public Collection<Plugin> getPluginsOfType( Class<? extends Plugin> pluginType )

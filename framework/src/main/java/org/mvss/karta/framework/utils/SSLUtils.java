@@ -14,12 +14,12 @@ public class SSLUtils
    @Setter
    private static SSLProperties defaultSSLProperties             = new SSLProperties();
 
-   public static void setSSLProperties()
+   public static void setSslProperties()
    {
-      setSSLProperties( defaultSSLProperties );
+      setSslProperties( defaultSSLProperties );
    }
 
-   public static void setSSLProperties( SSLProperties sslProperties )
+   public static void setSslProperties( SSLProperties sslProperties )
    {
       System.setProperty( JAVAX_NET_SSL_TRUSTSTORETYPE, sslProperties.getTrustStoreType() );
       System.setProperty( JAVAX_NET_SSL_TRUSTSTORE, sslProperties.getTrustStore() );
@@ -30,7 +30,7 @@ public class SSLUtils
       System.setProperty( JAVAX_NET_SSL_KEYSTOREPASSWORD, sslProperties.getKeyStorePassword() );
    }
 
-   public static void clearSSLProperties()
+   public static void clearSslProperties()
    {
       System.clearProperty( JAVAX_NET_SSL_TRUSTSTORETYPE );
       System.clearProperty( JAVAX_NET_SSL_TRUSTSTORE );

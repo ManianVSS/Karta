@@ -1,11 +1,13 @@
 package org.mvss.karta.server.api;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashSet;
 
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunTarget;
+import org.mvss.karta.framework.runtime.impl.YerkinPlugin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,37 +30,46 @@ public class RunController
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = RUN_TARGET_PATH )
-   public boolean startFeatureFileRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestBody RunTarget runTarget ) throws IllegalAccessException, InvocationTargetException
+   public boolean startFeatureFileRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestParam( defaultValue = YerkinPlugin.PLUGIN_NAME ) String pluginName, @RequestBody RunTarget runTarget )
+            throws IllegalAccessException, InvocationTargetException
    {
       if ( runName.equals( Constants.UNNAMED ) )
       {
          runName = runName + "-" + System.currentTimeMillis();
       }
 
-      return kartaRuntime.runTestTarget( runName, runTarget );
+      HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
+      testDataSourcePluginHashSet.add( pluginName );
+      return kartaRuntime.runTestTarget( runName, pluginName, pluginName, testDataSourcePluginHashSet, runTarget );
    }
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = FEATURE_STRING_RUN_URL )
-   public boolean startFeatureSourceRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestBody String featureSourceString ) throws IllegalAccessException, InvocationTargetException
+   public boolean startFeatureSourceRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestParam( defaultValue = YerkinPlugin.PLUGIN_NAME ) String pluginName, @RequestBody String featureSourceString )
+            throws IllegalAccessException, InvocationTargetException
    {
       if ( runName.equals( Constants.UNNAMED ) )
       {
          runName = runName + "-" + System.currentTimeMillis();
       }
 
-      return kartaRuntime.runFeatureSource( runName, featureSourceString );
+      HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
+      testDataSourcePluginHashSet.add( pluginName );
+      return kartaRuntime.runFeatureSource( runName, pluginName, pluginName, testDataSourcePluginHashSet, featureSourceString );
    }
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = FEATURE_RUN_URL )
-   public boolean startFeatureRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestBody TestFeature feature ) throws IllegalAccessException, InvocationTargetException
+   public boolean startFeatureRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestParam( defaultValue = YerkinPlugin.PLUGIN_NAME ) String pluginName, @RequestBody TestFeature feature )
+            throws IllegalAccessException, InvocationTargetException
    {
       if ( runName.equals( Constants.UNNAMED ) )
       {
          runName = runName + "-" + System.currentTimeMillis();
       }
 
-      return kartaRuntime.run( runName, feature );
+      HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
+      testDataSourcePluginHashSet.add( pluginName );
+      return kartaRuntime.run( runName, pluginName, testDataSourcePluginHashSet, feature );
    }
 }
