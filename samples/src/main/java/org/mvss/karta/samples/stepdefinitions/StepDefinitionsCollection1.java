@@ -3,6 +3,7 @@ package org.mvss.karta.samples.stepdefinitions;
 import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
+import org.mvss.karta.framework.utils.ParserUtils;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -19,7 +20,7 @@ public class StepDefinitionsCollection1
    public void the_calculator_is_powered_on( TestExecutionContext context ) throws Throwable
    {
       context.getVariables().put( "CalculatorState", "On" );
-      log.info( "the calculator is powered on by " + username );
+      log.info( "the calculator is powered on by " + username + " employee:" + ParserUtils.getObjectMapper().convertValue( context.getData().get( "employee" ), Employee.class ) );
    }
 
    @StepDefinition( "the all clear button is pressed" )

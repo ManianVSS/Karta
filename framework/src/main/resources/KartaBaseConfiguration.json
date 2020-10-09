@@ -10,6 +10,13 @@
 			"className": "org.mvss.karta.framework.runtime.impl.YerkinPlugin"
 		},
 		{
+			"pluginName": "KartaObjectGenTestDataSource",
+			"pluginTypes": [
+				"org.mvss.karta.framework.runtime.interfaces.TestDataSource"
+			],
+			"className": "org.mvss.karta.framework.runtime.impl.ObjectGenTestDataSource"
+		},
+		{
 			"pluginName": "KartaDefaultTestEventListener",
 			"pluginTypes": [
 				"org.mvss.karta.framework.runtime.interfaces.TestEventListener"

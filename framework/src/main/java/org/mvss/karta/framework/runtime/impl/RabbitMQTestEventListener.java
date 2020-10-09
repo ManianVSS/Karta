@@ -95,7 +95,10 @@ public class RabbitMQTestEventListener implements TestEventListener
       {
          if ( channel != null )
          {
-            channel.close();
+            if ( channel.isOpen() )
+            {
+               channel.close();
+            }
             channel = null;
          }
          if ( connection != null )

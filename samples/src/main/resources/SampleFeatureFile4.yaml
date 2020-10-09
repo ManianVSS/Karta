@@ -15,7 +15,7 @@ testScenarios:
       chaosActions:
         - name: the calculator is powered off
           node: Node1
-          probabilityOfOccurrence: 100
+          probability: 1.0
           subjects:
             - calculator1
             - calculator2

@@ -7,7 +7,8 @@
 	"featureSourceParserPlugin": "Yerkin",
 	"stepRunnerPlugin": "Yerkin",
 	"testDataSourcePlugins": [
-		"Yerkin"
+		"Yerkin",
+		"KartaObjectGenTestDataSource"
 	],
 	"tests": [],
 	"subCategories": []

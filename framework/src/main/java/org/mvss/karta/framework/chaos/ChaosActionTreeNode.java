@@ -6,7 +6,6 @@ import java.util.Random;
 
 import org.mvss.karta.framework.randomization.ObjectWithChance;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
-import org.mvss.karta.framework.utils.DataUtils;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,7 +24,7 @@ public class ChaosActionTreeNode implements Serializable, ObjectWithChance
    private static final long              serialVersionUID        = 1L;
 
    @Builder.Default
-   private float                          probabilityOfOccurrence = 100;
+   private float                          probability = 1.0f;
 
    @Builder.Default
    private SubNodeSelectionType           subNodeSelectionType    = SubNodeSelectionType.MUTUALLY_EXCLUSIVE;
@@ -42,9 +41,17 @@ public class ChaosActionTreeNode implements Serializable, ObjectWithChance
       {
          isLeafOrHasSubNodes = true;
 
+         for ( ChaosActionTreeNode chaosActionSubNode : chaosActionSubNodes )
+         {
+            if ( !chaosActionSubNode.checkForValidity() )
+            {
+               return false;
+            }
+         }
+
          if ( subNodeSelectionType != SubNodeSelectionType.ALL )
          {
-            float probabilityNotCovered = RandomizationUtils.getMissingProbabilityCoverage( chaosActionSubNodes, 100, true );
+            float probabilityNotCovered = RandomizationUtils.getMissingProbabilityCoverage( chaosActionSubNodes, 1.0f, true );
 
             if ( ( subNodeSelectionType == SubNodeSelectionType.MUTUALLY_EXCLUSIVE ) && ( probabilityNotCovered != 0 ) )
             {
@@ -56,24 +63,15 @@ public class ChaosActionTreeNode implements Serializable, ObjectWithChance
       {
          isLeafOrHasSubNodes = true;
 
-         float probabilityNotCovered = 100;
          for ( ChaosAction chaosAction : chaosActions )
          {
             if ( !chaosAction.checkForValidity() )
             {
                return false;
             }
-
-            float probabilityOfOccurrence = chaosAction.getProbabilityOfOccurrence();
-
-            if ( ( probabilityOfOccurrence == 0 ) || !DataUtils.inRange( probabilityOfOccurrence, 0, 100 ) )
-            {
-               return false;
-            }
-
-            probabilityNotCovered -= chaosAction.getProbabilityOfOccurrence();
          }
 
+         float probabilityNotCovered = RandomizationUtils.getMissingProbabilityCoverage( chaosActions, 1.0f, true );
          if ( subNodeSelectionType != SubNodeSelectionType.ALL )
          {
             if ( ( subNodeSelectionType == SubNodeSelectionType.MUTUALLY_EXCLUSIVE ) && ( probabilityNotCovered != 0 ) )

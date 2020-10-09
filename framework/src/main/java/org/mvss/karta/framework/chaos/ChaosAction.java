@@ -29,7 +29,7 @@ public class ChaosAction implements Serializable, ObjectWithChance
    private String            node;
 
    @Builder.Default
-   private float             probabilityOfOccurrence = 100;
+   private float             probability = 1.0f;
 
    private ArrayList<String> subjects;
 

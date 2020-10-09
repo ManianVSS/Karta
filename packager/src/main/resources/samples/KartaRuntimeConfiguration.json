@@ -2,6 +2,7 @@
 	"enabledPlugins": [
 		"Yerkin",
 		"YerkinExt",
+		"KartaObjectGenTestDataSource",
 		"RandomTestDataSource",
 		"KartaDefaultTestEventListener",
 		"KartaDumpToFileTestEventListener",

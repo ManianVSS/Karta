@@ -8,6 +8,7 @@
 	"stepRunnerPlugin": "YerkinExt",
 	"testDataSourcePlugins": [
 		"YerkinExt",
+		"KartaObjectGenTestDataSource",
 		"RandomTestDataSource"
 	],
 	"tests": [

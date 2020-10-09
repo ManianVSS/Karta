@@ -1,0 +1,79 @@
+---
+ruleType: OBJECT_RULE
+objectRules:
+  - fieldName: employeeId
+    ruleType: STRING_RANGE
+    range:
+      min: 6
+      max: 6
+  - fieldName: name
+    ruleType: OBJECT_RULE
+    objectRules:
+      - fieldName: firstName
+        ruleType: STRING_RANGE
+        range:
+          min: 5
+          max: 5
+      - fieldName: middleName
+        ruleType: STRING_RANGE
+        probability: 0.5
+        range:
+          min: 1
+          max: 5
+      - fieldName: lastName
+        ruleType: STRING_RANGE
+        range:
+          min: 5
+          max: 5
+  - fieldName: gender
+    ruleType: MUTEX_OBJECT_RULE_VALUE
+    objectRules:
+      - ruleType: VALUES
+        values: [FEMALE, MALE]
+        probability: 0.9
+      - ruleType: VALUES
+        values: [TRANSGENDER]
+        probability: 0.1
+  - fieldName: married
+    ruleType: BOOLEAN
+  - fieldName: role
+    ruleType: MUTEX_OBJECT_RULE_VALUE
+    objectRules:
+      - ruleType: VALUES
+        values: [ENGINEER]
+        probability: 0.9
+      - ruleType: VALUES
+        values: [MANAGER]
+        probability: 0.09
+      - ruleType: VALUES
+        values: [EXECUTIVE]
+        probability: 0.01
+  - fieldName: salary
+    ruleType: INTEGER_RANGE
+    range:
+      min: 100000
+      max: 200000
+  - fieldName: address
+    ruleType: OBJECT_RULE
+    objectRules:
+      - fieldName: addressline1
+        ruleType: STRING_RANGE
+        range:
+          min: 10
+          max: 20
+      - fieldName: landmark
+        ruleType: STRING_RANGE
+        probability: 0.5
+        range:
+          min: 10
+          max: 20
+      - fieldName: addressline2
+        ruleType: STRING_RANGE
+        range:
+          min: 10
+          max: 20
+      - fieldName: pincode
+        ruleType: INTEGER_RANGE
+        range:
+          min: 560000
+          max: 561000

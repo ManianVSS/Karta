@@ -24,7 +24,8 @@ public class TestScenario implements Serializable, ObjectWithChance
 
    private String              name;
 
-   private Float               probability;
+   @Builder.Default
+   private float               probability            = 1.0f;
 
    @Builder.Default
    private ArrayList<TestStep> scenarioSetupSteps     = new ArrayList<TestStep>();
@@ -36,12 +37,6 @@ public class TestScenario implements Serializable, ObjectWithChance
 
    @Builder.Default
    private ArrayList<TestStep> scenarioTearDownSteps  = new ArrayList<TestStep>();
-
-   @Override
-   public float getProbabilityOfOccurrence()
-   {
-      return probability == null ? 100 : probability;
-   }
 
    //
    // @Builder.Default
