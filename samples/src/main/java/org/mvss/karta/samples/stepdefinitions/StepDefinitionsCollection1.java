@@ -1,9 +1,10 @@
 package org.mvss.karta.samples.stepdefinitions;
 
+import org.mvss.karta.framework.core.NamedParameter;
+import org.mvss.karta.framework.core.ParameterMapping;
 import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
-import org.mvss.karta.framework.utils.ParserUtils;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -16,17 +17,17 @@ public class StepDefinitionsCollection1
    @PropertyMapping( group = "groupName", value = "variable2" )
    private SamplePropertyType variable2;
 
-   @StepDefinition( "the calculator is powered on" )
-   public void the_calculator_is_powered_on( TestExecutionContext context ) throws Throwable
+   @StepDefinition( value = "the calculator is powered on", parameterMapping = ParameterMapping.NAMED )
+   public void the_calculator_is_powered_on( TestExecutionContext context, @NamedParameter( "employee" ) Employee employee ) throws Throwable
    {
       context.getVariables().put( "CalculatorState", "On" );
-      log.info( "the calculator is powered on by " + username + " employee:" + ParserUtils.getObjectMapper().convertValue( context.getData().get( "employee" ), Employee.class ) );
+      log.info( "the calculator is powered on by " + username + " employee:" + employee );
    }
 
-   @StepDefinition( "the all clear button is pressed" )
-   public void the_all_clear_button_is_cleared( TestExecutionContext context ) throws Throwable
+   @StepDefinition( value = "the all clear button is pressed", parameterMapping = ParameterMapping.NAMED )
+   public void the_all_clear_button_is_cleared( TestExecutionContext context, @NamedParameter( "csvEmployee" ) Employee csvEmployee ) throws Throwable
    {
-      log.info( "the all clear button is pressed. Test data is " + context.getData() + " employee: " + ParserUtils.getObjectMapper().readValue( context.getData().get( "csvEmployee" ).toString(), Employee.class ) );
+      log.info( "the all clear button is pressed. Employee from CSV: " + csvEmployee );
    }
 
    @StepDefinition( "the calculator should display \"\"" )

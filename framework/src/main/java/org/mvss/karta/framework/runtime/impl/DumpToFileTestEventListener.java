@@ -26,6 +26,8 @@ public class DumpToFileTestEventListener implements TestEventListener
 
    private boolean            initialized  = false;
 
+   private Object             writeLock    = new Object();
+
    @Override
    public String getPluginName()
    {
@@ -62,7 +64,10 @@ public class DumpToFileTestEventListener implements TestEventListener
    {
       try
       {
-         outputStream.writeObject( event );
+         synchronized ( writeLock )
+         {
+            outputStream.writeObject( event );
+         }
       }
       catch ( IOException e )
       {
@@ -79,8 +84,12 @@ public class DumpToFileTestEventListener implements TestEventListener
 
          if ( outputStream != null )
          {
-            outputStream.close();
-            outputStream = null;
+            synchronized ( writeLock )
+            {
+
+               outputStream.close();
+               outputStream = null;
+            }
          }
       }
       catch ( IOException e )

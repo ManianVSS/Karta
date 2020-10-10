@@ -12,6 +12,7 @@ public class Constants
    public static final String   KARTA_STEP_DEFINITION_JSON         = "KartaStepDefinitions.json";
    public static final String   KARTA_CHAOS_ACTION_DEFINITION_JSON = "KartaChaosActionDefinitions.json";
 
+   public static final String   NULL_STRING                        = (String) null;
    public static final String   EMPTY_STRING                       = "";
 
    public static final String   JAR                                = "jar";

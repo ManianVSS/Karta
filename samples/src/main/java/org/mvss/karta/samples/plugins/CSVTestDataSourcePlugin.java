@@ -10,7 +10,9 @@ import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
+import org.mvss.karta.framework.utils.ParserUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
 
 import lombok.extern.log4j.Log4j2;
@@ -18,16 +20,20 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class CSVTestDataSourcePlugin implements TestDataSource
 {
-   public static final String PLUGIN_NAME = "CSVTestDataSourcePlugin";
+   public static final String  PLUGIN_NAME  = "CSVTestDataSourcePlugin";
 
    @PropertyMapping( group = PLUGIN_NAME, value = "csvFileName" )
-   private String             csvFileName = "TestData.csv";
+   private String              csvFileName  = "TestData.csv";
 
-   private boolean            initialized = false;
+   private boolean             initialized  = false;
 
-   private CSVReader          csvReader;
+   private CSVReader           csvReader;
 
-   private String[]           headerRecord;
+   private String[]            headerRecord;
+
+   private static ObjectMapper objectMapper = ParserUtils.getYamlObjectMapper();
+
+   private Object              writeLock    = new Object();
 
    @Override
    public String getPluginName()
@@ -37,15 +43,18 @@ public class CSVTestDataSourcePlugin implements TestDataSource
 
    private void resetCSV() throws Throwable
    {
-      File file = new File( csvFileName );
-      FileReader filereader = new FileReader( file );
-      csvReader = new CSVReader( filereader );
-      headerRecord = csvReader.readNext();
-
-      if ( ( headerRecord == null ) || ( headerRecord.length == 0 ) )
+      synchronized ( writeLock )
       {
-         filereader.close();
-         throw new Exception( "CSV file does not have data or headers " + csvFileName );
+         File file = new File( csvFileName );
+         FileReader filereader = new FileReader( file );
+         csvReader = new CSVReader( filereader );
+         headerRecord = csvReader.readNext();
+
+         if ( ( headerRecord == null ) || ( headerRecord.length == 0 ) )
+         {
+            filereader.close();
+            throw new Exception( "CSV file does not have data or headers " + csvFileName );
+         }
       }
    }
 
@@ -67,25 +76,35 @@ public class CSVTestDataSourcePlugin implements TestDataSource
    public HashMap<String, Serializable> getData( ExecutionStepPointer executionStepPointer ) throws Throwable
    {
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
-
-      // TODO: retrieve record for the execution step pointer instead of cycling
-
-      String[] nextRecord;
-
-      if ( ( nextRecord = csvReader.readNext() ) == null )
+      try
       {
-         resetCSV();
-         if ( ( nextRecord = csvReader.readNext() ) == null )
+
+         // TODO: retrieve record for the execution step pointer instead of cycling
+
+         String[] nextRecord;
+
+         synchronized ( writeLock )
          {
-            return testData;
+            if ( ( nextRecord = csvReader.readNext() ) == null )
+            {
+               resetCSV();
+               if ( ( nextRecord = csvReader.readNext() ) == null )
+               {
+                  return testData;
+               }
+            }
          }
-      }
 
-      for ( int i = 0; i < headerRecord.length; i++ )
+         for ( int i = 0; i < headerRecord.length; i++ )
+         {
+            testData.put( headerRecord[i], objectMapper.readValue( nextRecord[i], Serializable.class ) );
+         }
+
+      }
+      catch ( Throwable t )
       {
-         testData.put( headerRecord[i], nextRecord[i] );
+         log.error( t );
       }
-
       return testData;
    }
 

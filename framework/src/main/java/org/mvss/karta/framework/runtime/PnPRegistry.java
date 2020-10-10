@@ -113,6 +113,7 @@ public class PnPRegistry implements AutoCloseable
 
    public void loadPluginJar( Configurator configurator, File jarFile ) throws MalformedURLException, IOException, URISyntaxException
    {
+      // TODO: ignore jar files without config json
       String pluginConfigStr = IOUtils.toString( DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_PLUGINS_CONFIG_JSON ), Charset.defaultCharset() );
       ArrayList<PluginConfig> pluginConfigs = ParserUtils.getObjectMapper().readValue( pluginConfigStr, pluginConfigArrayListType );
       addPluginConfiguration( jarFile, pluginConfigs );

@@ -5,11 +5,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target( ElementType.METHOD )
+@Target( ElementType.PARAMETER )
 @Retention( RetentionPolicy.RUNTIME )
-public @interface StepDefinition
+public @interface NamedParameter
 {
    public String value();
-
-   public ParameterMapping parameterMapping() default ParameterMapping.POSITIONAL;
 }

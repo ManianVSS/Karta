@@ -73,8 +73,6 @@ public class KartaRuntime implements AutoCloseable
 
    public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException
    {
-      ObjectMapper objectMapper = ParserUtils.getObjectMapper();
-
       // if ( kartaConfiguration == null )
       // {
       kartaBaseConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_BASE_CONFIG_JSON ), KartaBaseConfiguration.class );
@@ -180,14 +178,15 @@ public class KartaRuntime implements AutoCloseable
    public void close()
    {
       // TODO: Perform save actions and close threads
-      if ( pnpRegistry != null )
-      {
-         pnpRegistry.close();
-      }
 
       if ( eventProcessor != null )
       {
          eventProcessor.close();
+      }
+
+      if ( pnpRegistry != null )
+      {
+         pnpRegistry.close();
       }
    }
 
@@ -328,10 +327,10 @@ public class KartaRuntime implements AutoCloseable
       }
       else if ( StringUtils.isNotBlank( runTarget.getJavaTest() ) )
       {
-         JavaTestRunner testRunner = objectMapper.convertValue( kartaRuntimeConfiguration, JavaTestRunner.class );
+         JavaFeatureRunner testRunner = JavaFeatureRunner.builder().testProperties( configurator.getPropertiesStore() ).eventProcessor( eventProcessor ).minionRegistry( minionRegistry ).build();
          eventProcessor.raiseEvent( new RunStartEvent( runName ) );
          testRunner.setTestProperties( configurator.getPropertiesStore() );
-         boolean result = testRunner.run( runTarget.getJavaTest(), runTarget.getJavaTestJarFile() );
+         boolean result = testRunner.run( runName, runTarget.getJavaTest(), runTarget.getJavaTestJarFile() );
          eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
          return result;
       }
@@ -355,6 +354,8 @@ public class KartaRuntime implements AutoCloseable
 
          for ( Test test : tests )
          {
+            ArrayList<TestDataSource> testDataSources = new ArrayList<TestDataSource>();
+
             switch ( test.getTestType() )
             {
                case FEATURE:
@@ -378,8 +379,6 @@ public class KartaRuntime implements AutoCloseable
                      return false;
                   }
 
-                  ArrayList<TestDataSource> testDataSources = new ArrayList<TestDataSource>();
-
                   for ( String testDataSourcePlugin : test.getTestDataSourcePlugins() )
                   {
                      TestDataSource testDataSource = (TestDataSource) pnpRegistry.getPlugin( testDataSourcePlugin, TestDataSource.class );
@@ -396,14 +395,25 @@ public class KartaRuntime implements AutoCloseable
 
                   FeatureRunner featureRunner = FeatureRunner.builder().stepRunner( stepRunner ).testDataSources( testDataSources ).testProperties( configurator.getPropertiesStore() ).eventProcessor( eventProcessor ).minionRegistry( minionRegistry )
                            .build();
-                  // configurator.loadProperties( featureRunner );
                   featureRunner.run( runName, testFeature, test.getNumberOfIterations(), test.getNumberOfThreads() );
                   break;
 
                case JAVA_TEST:
-                  JavaTestRunner testRunner = JavaTestRunner.builder().testProperties( configurator.getPropertiesStore() ).build();
-                  // configurator.loadProperties( testRunner );
-                  testRunner.run( test.getJavaTestClass(), test.getSourceArchive() );
+                  for ( String testDataSourcePlugin : test.getTestDataSourcePlugins() )
+                  {
+                     TestDataSource testDataSource = (TestDataSource) pnpRegistry.getPlugin( testDataSourcePlugin, TestDataSource.class );
+
+                     if ( testDataSource == null )
+                     {
+                        log.error( "Failed to get a test data source of type: " + testDataSourcePlugin );
+                        eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
+                        return false;
+                     }
+
+                     testDataSources.add( testDataSource );
+                  }
+                  JavaFeatureRunner testRunner = JavaFeatureRunner.builder().testDataSources( testDataSources ).testProperties( configurator.getPropertiesStore() ).eventProcessor( eventProcessor ).minionRegistry( minionRegistry ).build();
+                  testRunner.run( runName, test.getJavaTestClass(), test.getSourceArchive() );
                   break;
             }
          }

@@ -3,6 +3,7 @@ package org.mvss.karta.framework.runtime.impl;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -15,6 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.ChaosActionDefinition;
+import org.mvss.karta.framework.core.NamedParameter;
+import org.mvss.karta.framework.core.ParameterMapping;
 import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
@@ -32,6 +35,8 @@ import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -52,6 +57,8 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
    private static Pattern                               testDataPattern                        = Pattern.compile( INLINE_TEST_DATA_PATTERN );
 
    public static final List<String>                     conjunctions                           = Arrays.asList( "Given", "When", "Then", "And", "But" );
+
+   private static ObjectMapper                          objectMapper                           = ParserUtils.getObjectMapper();
 
    private boolean                                      initialized                            = false;
 
@@ -129,10 +136,13 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
                         continue;
                      }
 
-                     if ( ( params.length > 1 ) && !( params.length == StringUtils.countMatches( stepDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) + 1 ) )
+                     if ( stepDefinition.parameterMapping() == ParameterMapping.POSITIONAL )
                      {
-                        log.error( "Step definition method " + methodDescription + " does not match the argument count as per the identifier" );
-                        continue;
+                        if ( params.length != ( StringUtils.countMatches( stepDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) + 1 ) )
+                        {
+                           log.error( "Step definition method " + methodDescription + " does not match the argument count as per the identifier" );
+                           continue;
+                        }
                      }
 
                      log.debug( "Mapping stepdef " + stepDefString + " to " + methodDescription );
@@ -255,19 +265,41 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
          Object stepDefObject = stepDefHandlerObjectMethodPair.getLeft();
          Method stepDefMethodToInvoke = stepDefHandlerObjectMethodPair.getRight();
 
-         Class<?>[] params = stepDefMethodToInvoke.getParameterTypes();
+         // Class<?>[] params = stepDefMethodToInvoke.getParameterTypes();
 
-         Class<?>[] parameters = stepDefMethodToInvoke.getParameterTypes();
+         Parameter[] parametersObj = stepDefMethodToInvoke.getParameters();
+         // Class<?>[] parameters = stepDefMethodToInvoke.getParameterTypes();
 
          values.add( testExecutionContext );
-         int i = 1;
 
-         if ( params.length > 1 )
+         if ( parametersObj.length > 1 )
          {
-            for ( String positionalParam : (ArrayList<String>) testData.get( INLINE_STEP_DEF_PARAMTERS ) )
+            StepDefinition definition = stepDefMethodToInvoke.getAnnotationsByType( StepDefinition.class )[0];
+
+            if ( definition.parameterMapping() == ParameterMapping.NAMED )
             {
-               values.add( ParserUtils.getObjectMapper().readValue( positionalParam, parameters[i++] ) );
+               for ( int i = 1; i < parametersObj.length; i++ )
+               {
+                  String name = parametersObj[i].getName();
+                  NamedParameter[] paramaterNameInfo = parametersObj[i].getAnnotationsByType( NamedParameter.class );
+                  if ( ( paramaterNameInfo != null ) && ( paramaterNameInfo.length >= 1 ) )
+                  {
+                     name = paramaterNameInfo[0].value();
+                  }
+                  Serializable parameterValue = testData.get( name );
+                  values.add( ( parameterValue == null ) ? null : objectMapper.convertValue( parameterValue, parametersObj[i++].getType() ) );
+
+               }
             }
+            else // ( definition.parameterMapping() == ParameterMapping.POSITIONAL )
+            {
+               int i = 1;
+               for ( String positionalParam : (ArrayList<String>) testData.get( INLINE_STEP_DEF_PARAMTERS ) )
+               {
+                  values.add( ParserUtils.getObjectMapper().readValue( positionalParam, parametersObj[i++].getType() ) );
+               }
+            }
+
          }
 
          if ( stepDefMethodToInvoke.getReturnType().equals( StepResult.class ) )
@@ -345,6 +377,11 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
       ArrayList<String> inlineStepDefinitionParameters = new ArrayList<String>();
 
       TestStep testStep = executionStepPointer.getTestStep();
+
+      if ( testStep == null )
+      {
+         return testData;
+      }
 
       HashMap<String, Serializable> inStepTestData = testStep.getTestData();
 
