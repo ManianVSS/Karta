@@ -9,5 +9,8 @@
 	},
 	"RandomTestDataSource": {
 		"seed": 1723
+	},
+	"CSVTestDataSourcePlugin": {
+		"csvFileName": "TestData.csv"
 	}
 }

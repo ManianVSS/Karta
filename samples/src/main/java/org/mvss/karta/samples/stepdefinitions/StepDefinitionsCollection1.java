@@ -26,7 +26,7 @@ public class StepDefinitionsCollection1
    @StepDefinition( "the all clear button is pressed" )
    public void the_all_clear_button_is_cleared( TestExecutionContext context ) throws Throwable
    {
-      log.info( "the all clear button is pressed" );
+      log.info( "the all clear button is pressed. Test data is " + context.getData() + " employee: " + ParserUtils.getObjectMapper().readValue( context.getData().get( "csvEmployee" ).toString(), Employee.class ) );
    }
 
    @StepDefinition( "the calculator should display \"\"" )

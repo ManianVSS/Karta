@@ -132,6 +132,7 @@ public class Configurator
 
       if ( propertyMapping != null )
       {
+         // TODO: Default property name to field name if blank
          String propertyGroup = propertyMapping.group();
          String propertyName = propertyMapping.value();
 

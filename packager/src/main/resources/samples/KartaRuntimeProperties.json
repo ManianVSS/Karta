@@ -75,7 +75,7 @@
 					},
 					{
 						"fieldName": "role",
-						"ruleType": "VALUES",
+						"ruleType": "MUTEX_OBJECT_RULE_VALUE",
 						"objectRules": [
 							{
 								"ruleType": "VALUES",

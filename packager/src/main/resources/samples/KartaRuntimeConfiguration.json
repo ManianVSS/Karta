@@ -6,7 +6,8 @@
 		"RandomTestDataSource",
 		"KartaDefaultTestEventListener",
 		"KartaDumpToFileTestEventListener",
-		"KartaRabbitMQTestEventListener"
+		"KartaRabbitMQTestEventListener",
+		"CSVTestDataSourcePlugin"
 	],
 	"defaultFeatureSourceParserPlugin": "Yerkin",
 	"defaultStepRunnerPlugin": "Yerkin",

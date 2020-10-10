@@ -14,5 +14,12 @@
 			"org.mvss.karta.framework.runtime.interfaces.TestDataSource"
 		],
 		"className": "org.mvss.karta.samples.plugins.RandomTestDataSource"
+	},
+	{
+		"pluginName": "CSVTestDataSourcePlugin",
+		"pluginTypes": [
+			"org.mvss.karta.framework.runtime.interfaces.TestDataSource"
+		],
+		"className": "org.mvss.karta.samples.plugins.CSVTestDataSourcePlugin"
 	}
 ]

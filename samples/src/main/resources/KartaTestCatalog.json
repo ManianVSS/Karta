@@ -9,7 +9,8 @@
 	"testDataSourcePlugins": [
 		"YerkinExt",
 		"KartaObjectGenTestDataSource",
-		"RandomTestDataSource"
+		"RandomTestDataSource",
+		"CSVTestDataSourcePlugin"
 	],
 	"tests": [
 		{
