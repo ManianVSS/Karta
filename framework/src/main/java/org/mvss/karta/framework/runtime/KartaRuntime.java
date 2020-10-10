@@ -114,7 +114,7 @@ public class KartaRuntime implements AutoCloseable
 
       SSLUtils.setSslProperties( kartaRuntimeConfiguration.getSslProperties() );
 
-      HashSet<String> propertiesFileList = kartaRuntimeConfiguration.getPropertyFiles();
+      ArrayList<String> propertiesFileList = kartaRuntimeConfiguration.getPropertyFiles();
       if ( ( propertiesFileList != null ) && !propertiesFileList.isEmpty() )
       {
          String[] propertyFilesToLoad = new String[propertiesFileList.size()];
@@ -147,7 +147,7 @@ public class KartaRuntime implements AutoCloseable
 
       testCatalogManager = new TestCatalogManager();
 
-      HashSet<String> testCatalogFiles = kartaRuntimeConfiguration.getTestCatalogFiles();
+      ArrayList<String> testCatalogFiles = kartaRuntimeConfiguration.getTestCatalogFiles();
 
       if ( ( testCatalogFiles != null ) && !testCatalogFiles.isEmpty() )
       {
@@ -158,7 +158,7 @@ public class KartaRuntime implements AutoCloseable
          }
       }
 
-      HashSet<String> repoDirNames = kartaRuntimeConfiguration.getTestRepositorydirectories();
+      ArrayList<String> repoDirNames = kartaRuntimeConfiguration.getTestRepositorydirectories();
 
       if ( repoDirNames != null )
       {

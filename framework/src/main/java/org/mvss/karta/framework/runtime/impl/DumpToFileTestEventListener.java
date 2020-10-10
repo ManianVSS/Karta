@@ -58,7 +58,7 @@ public class DumpToFileTestEventListener implements TestEventListener
    }
 
    @Override
-   public synchronized void testEvent( Event event )
+   public synchronized void processEvent( Event event )
    {
       try
       {

@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.runtime;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -35,13 +36,13 @@ public class KartaRuntimeConfiguration implements Serializable
    private HashSet<String>                           enabledPlugins;
 
    @Builder.Default
-   private HashSet<String>                           propertyFiles                = new HashSet<String>();
+   private ArrayList<String>                         propertyFiles                = new ArrayList<String>();
 
    @Builder.Default
-   private HashSet<String>                           testRepositorydirectories    = new HashSet<String>();
+   private ArrayList<String>                         testRepositorydirectories    = new ArrayList<String>();
 
    @Builder.Default
-   private HashSet<String>                           testCatalogFiles             = new HashSet<String>();
+   private ArrayList<String>                         testCatalogFiles             = new ArrayList<String>();
 
    private SSLProperties                             sslProperties;
 

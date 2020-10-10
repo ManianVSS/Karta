@@ -4,5 +4,5 @@ import org.mvss.karta.framework.runtime.event.Event;
 
 public interface TestEventListener extends Plugin
 {
-   void testEvent( Event event );
+   void processEvent( Event event );
 }

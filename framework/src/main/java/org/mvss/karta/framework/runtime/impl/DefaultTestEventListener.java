@@ -69,7 +69,7 @@ public class DefaultTestEventListener implements TestEventListener
    }
 
    @Override
-   public void testEvent( Event event )
+   public void processEvent( Event event )
    {
       if ( event instanceof RunStartEvent )
       {

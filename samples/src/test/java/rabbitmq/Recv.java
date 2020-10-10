@@ -41,7 +41,7 @@ public class Recv
       dtev.initialize( new HashMap<String, HashMap<String, Serializable>>() );
 
       DeliverCallback deliverCallback = ( consumerTag, delivery ) -> {
-         dtev.testEvent( SerializationUtils.deserialize( delivery.getBody() ) );
+         dtev.processEvent( SerializationUtils.deserialize( delivery.getBody() ) );
       };
 
       channel.basicConsume( QUEUE_NAME, true, deliverCallback, consumerTag -> {

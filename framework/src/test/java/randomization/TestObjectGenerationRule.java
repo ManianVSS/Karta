@@ -74,11 +74,11 @@ public class TestObjectGenerationRule
          System.out.println( "Demo random distribution for cricket scores" );
          ArrayList<ObjectGenerationRule> cricketScoreProbDist = new ArrayList<ObjectGenerationRule>();
          cricketScoreProbDist.add( ObjectGenerationRule.builder().probability( 0.05f ).values( new ArrayList<Serializable>( Arrays.asList( 0 ) ) ).build() );
-         cricketScoreProbDist.add( ObjectGenerationRule.builder().probability( 0.05f ).ruleType( ObjectGenerationRuleType.INTEGER_RANGE ).range( new Range( 1, 29 ) ).build() );
-         cricketScoreProbDist.add( ObjectGenerationRule.builder().probability( 0.40f ).ruleType( ObjectGenerationRuleType.INTEGER_RANGE ).range( new Range( 30, 69 ) ).build() );
-         cricketScoreProbDist.add( ObjectGenerationRule.builder().probability( 0.15f ).ruleType( ObjectGenerationRuleType.INTEGER_RANGE ).range( new Range( 70, 95 ) ).build() );
+         cricketScoreProbDist.add( ObjectGenerationRule.builder().probability( 0.05f ).ruleType( ObjectGenerationRuleType.INTEGER_RANGE ).range( new Range( 1, 30 ) ).build() );
+         cricketScoreProbDist.add( ObjectGenerationRule.builder().probability( 0.40f ).ruleType( ObjectGenerationRuleType.INTEGER_RANGE ).range( new Range( 30, 70 ) ).build() );
+         cricketScoreProbDist.add( ObjectGenerationRule.builder().probability( 0.15f ).ruleType( ObjectGenerationRuleType.INTEGER_RANGE ).range( new Range( 70, 96 ) ).build() );
          cricketScoreProbDist.add( ObjectGenerationRule.builder().probability( 0.10f ).values( new ArrayList<Serializable>( Arrays.asList( 96, 97, 98, 99 ) ) ).build() );
-         cricketScoreProbDist.add( ObjectGenerationRule.builder().probability( 0.25f ).ruleType( ObjectGenerationRuleType.INTEGER_RANGE ).range( new Range( 100, 150 ) ).build() );
+         cricketScoreProbDist.add( ObjectGenerationRule.builder().probability( 0.25f ).ruleType( ObjectGenerationRuleType.INTEGER_RANGE ).range( new Range( 100, 151 ) ).build() );
          ObjectGenerationRule cricketScoreVP = ObjectGenerationRule.builder().fieldName( "cricketScoreVar" ).ruleType( ObjectGenerationRuleType.MUTEX_OBJECT_RULE_VALUE ).objectRules( cricketScoreProbDist ).build();
          testVariableParam( random, cricketScoreVP, 1000000, true );
 

@@ -75,7 +75,7 @@ public class EventProcessor implements AutoCloseable
       {
          try
          {
-            eventListenerExecutorService.submit( () -> testEventListener.testEvent( event ) );
+            eventListenerExecutorService.submit( () -> testEventListener.processEvent( event ) );
          }
          catch ( Throwable t )
          {

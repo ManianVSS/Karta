@@ -140,7 +140,9 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
                      Class<?> stepDefinitionClass = candidateStepDefinitionMethod.getDeclaringClass();
                      if ( !stepDefinitionClassObjectMap.containsKey( stepDefinitionClass ) )
                      {
-                        stepDefinitionClassObjectMap.put( stepDefinitionClass, stepDefinitionClass.newInstance() );
+                        Object stepDefClassObj = stepDefinitionClass.newInstance();
+                        Configurator.loadProperties( properties, stepDefClassObj );
+                        stepDefinitionClassObjectMap.put( stepDefinitionClass, stepDefClassObj );
                      }
                      stepHandlerMap.put( stepDefString, new MutablePair<Object, Method>( stepDefinitionClassObjectMap.get( stepDefinitionClass ), candidateStepDefinitionMethod ) );
                   }
@@ -182,7 +184,9 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
                         Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
                         if ( !chaosActionDefinitionClassObjectMap.containsKey( chaosActionDefinitionClass ) )
                         {
-                           chaosActionDefinitionClassObjectMap.put( chaosActionDefinitionClass, chaosActionDefinitionClass.newInstance() );
+                           Object chaosActionDefClassObj = chaosActionDefinitionClass.newInstance();
+                           Configurator.loadProperties( properties, chaosActionDefClassObj );
+                           chaosActionDefinitionClassObjectMap.put( chaosActionDefinitionClass, chaosActionDefClassObj );
                         }
                         chaosActionHandlerMap.put( chaosActionName, new MutablePair<Object, Method>( chaosActionDefinitionClassObjectMap.get( chaosActionDefinitionClass ), candidateChaosActionMethod ) );
                      }
