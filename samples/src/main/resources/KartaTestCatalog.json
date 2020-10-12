@@ -63,7 +63,9 @@
 				"samples",
 				"javaTests"
 			],
-			"javaTestClass": "org.mvss.karta.samples.tests.Test1"
+			"javaTestClass": "org.mvss.karta.samples.tests.Test1",
+			"numberOfIterations": 10,
+			"numberOfThreads": 5
 		}
 	],
 	"subCategories": []

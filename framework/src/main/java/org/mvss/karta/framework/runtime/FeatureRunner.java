@@ -47,13 +47,11 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class FeatureRunner
 {
-   private static Random                                  random = new Random();
+   private static Random             random = new Random();
 
-   private StepRunner                                     stepRunner;
-   private ArrayList<TestDataSource>                      testDataSources;
-   private HashMap<String, HashMap<String, Serializable>> testProperties;
-   private EventProcessor                                 eventProcessor;
-   private KartaMinionRegistry                            minionRegistry;
+   private KartaRuntime              kartaRuntime;
+   private StepRunner                stepRunner;
+   private ArrayList<TestDataSource> testDataSources;
 
    public boolean run( String runName, TestFeature testFeature ) throws Throwable
    {
@@ -62,6 +60,10 @@ public class FeatureRunner
 
    public boolean run( String runName, TestFeature testFeature, long numberOfIterations, int numberOfIterationsInParallel ) throws Throwable
    {
+      EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
+      HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
+      KartaMinionRegistry minionRegistry = kartaRuntime.getMinionRegistry();
+
       eventProcessor.raiseEvent( new FeatureStartEvent( runName, testFeature ) );;
 
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
@@ -140,8 +142,8 @@ public class FeatureRunner
             scenariosToRun = testFeature.getTestScenarios();
          }
 
-         IterationRunner iterationRunner = IterationRunner.builder().stepRunner( stepRunner ).testDataSources( testDataSources ).testProperties( testProperties ).feature( testFeature ).runName( runName ).eventProcessor( eventProcessor )
-                  .minionRegistry( minionRegistry ).scenariosToRun( scenariosToRun ).iterationIndex( iterationIndex ).build();
+         IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).feature( testFeature ).runName( runName ).scenariosToRun( scenariosToRun )
+                  .iterationIndex( iterationIndex ).build();
 
          if ( numberOfIterationsInParallel == 1 )
          {

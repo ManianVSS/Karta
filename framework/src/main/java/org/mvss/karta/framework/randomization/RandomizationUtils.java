@@ -1,13 +1,14 @@
 package org.mvss.karta.framework.randomization;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
+import org.mvss.karta.framework.chaos.ChaosUnit;
 import org.mvss.karta.framework.utils.DataUtils;
 
 public class RandomizationUtils
 {
-
    public static <E extends ObjectWithChance> boolean checkForProbabilityCoverage( ArrayList<E> chanceObjects )
    {
       return checkForProbabilityCoverage( chanceObjects, 1.0f );
@@ -116,5 +117,106 @@ public class RandomizationUtils
       }
 
       return returnValue;
+   }
+
+   public static <T> List<T> discardListItems( Random random, List<T> items, int count )
+   {
+      ArrayList<T> returnList = null;
+
+      if ( items != null )
+      {
+         if ( count >= items.size() )
+         {
+            returnList = new ArrayList<T>();
+         }
+         else
+         {
+            returnList = new ArrayList<T>( items );
+            if ( count > 0 )
+            {
+               for ( int dicardedItems = 0; dicardedItems < count; dicardedItems++ )
+               {
+                  returnList.remove( random.nextInt( returnList.size() ) );
+               }
+            }
+         }
+      }
+
+      return returnList;
+   }
+
+   public static <T> List<T> selectListItems( Random random, List<T> items, int count )
+   {
+      ArrayList<T> returnList = null;
+
+      if ( items != null )
+      {
+         if ( count <= 0 )
+         {
+            returnList = new ArrayList<T>();
+         }
+         else
+         {
+            returnList = new ArrayList<T>( items );
+
+            if ( count < items.size() )
+            {
+               ArrayList<T> selectedList = new ArrayList<T>();
+               for ( int selected = 0; selected < count; selected++ )
+               {
+                  selectedList.add( returnList.remove( random.nextInt( returnList.size() ) ) );
+               }
+               returnList = selectedList;
+            }
+         }
+      }
+
+      return returnList;
+   }
+
+   public static <T> List<T> selectByPercentage( Random random, List<T> items, float percentage )
+   {
+      if ( items == null )
+      {
+         return null;
+      }
+
+      int selectCount = (int) Math.ceil( items.size() * percentage / 100 );
+      return selectListItems( random, items, selectCount );
+   }
+
+   public static <T> List<T> selectByMaxPercentage( Random random, List<T> items, float maxPercentage )
+   {
+      if ( items == null )
+      {
+         return null;
+      }
+
+      float percentage = maxPercentage * ( ( 1 + random.nextInt( 1000000 ) ) / 1000000.0f );
+
+      int selectCount = (int) Math.ceil( items.size() * percentage / 100 );
+      return selectListItems( random, items, selectCount );
+   }
+
+   public static <T> List<T> selectByChaos( Random random, List<T> items, float chaosLevel, ChaosUnit chaosUnit )
+   {
+      if ( ( items == null ) || items.isEmpty() )
+      {
+         return items;
+      }
+
+      switch ( chaosUnit )
+      {
+         case CONSTANT:
+            return selectListItems( random, items, (int) Math.ceil( chaosLevel ) );
+         case ALL_BUT_ONE:
+            return discardListItems( random, items, 1 );
+         case MAX_PERCENTAGE:
+            return selectByMaxPercentage( random, items, chaosLevel );
+         case PERCENTAGE:
+            return selectByPercentage( random, items, chaosLevel );
+         default:
+            return items;
+      }
    }
 }

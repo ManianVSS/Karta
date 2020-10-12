@@ -17,12 +17,18 @@ public class RunTarget implements Serializable
    /**
     * 
     */
-   private static final long serialVersionUID = 1L;
+   private static final long serialVersionUID   = 1L;
 
    private String            featureFile;
 
    private String            javaTest;
    private String            javaTestJarFile;
+
+   @Builder.Default
+   private long              numberOfIterations = 1;
+
+   @Builder.Default
+   private int               numberOfThreads    = 1;
 
    private HashSet<String>   tags;
 }

@@ -27,7 +27,7 @@ public class Test1
    private SamplePropertyType variable2;
 
    @FeatureSetup
-   public StepResult runIteration( TestExecutionContext testExecutionContext )
+   public StepResult myFeatureSetup( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
       return new StepResult( true, null, null, null );

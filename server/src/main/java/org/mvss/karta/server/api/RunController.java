@@ -55,7 +55,7 @@ public class RunController
 
       HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
       testDataSourcePluginHashSet.add( pluginName );
-      return kartaRuntime.runFeatureSource( runName, pluginName, pluginName, testDataSourcePluginHashSet, featureSourceString );
+      return kartaRuntime.runFeatureSource( runName, pluginName, pluginName, testDataSourcePluginHashSet, featureSourceString, 1, 1 );
    }
 
    @ResponseStatus( HttpStatus.OK )
@@ -70,6 +70,6 @@ public class RunController
 
       HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
       testDataSourcePluginHashSet.add( pluginName );
-      return kartaRuntime.run( runName, pluginName, testDataSourcePluginHashSet, feature );
+      return kartaRuntime.run( runName, pluginName, testDataSourcePluginHashSet, feature, 1, 1 );
    }
 }

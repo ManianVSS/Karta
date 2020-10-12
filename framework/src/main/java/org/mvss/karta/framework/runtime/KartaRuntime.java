@@ -231,11 +231,11 @@ public class KartaRuntime implements AutoCloseable
       return mergedTestData;
    }
 
-   public boolean runFeatureFile( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String featureFileName )
+   public boolean runFeatureFile( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String featureFileName, long numberOfIterations, int numberOfIterationsInParallel )
    {
       try
       {
-         return runFeatureSource( runName, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, ClassPathLoaderUtils.readAllText( featureFileName ) );
+         return runFeatureSource( runName, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, ClassPathLoaderUtils.readAllText( featureFileName ), numberOfIterations, numberOfIterationsInParallel );
       }
       catch ( Throwable t )
       {
@@ -244,12 +244,13 @@ public class KartaRuntime implements AutoCloseable
       }
    }
 
-   public boolean runFeatureSource( String runName, String featureFileSourceString )
+   public boolean runFeatureSource( String runName, String featureFileSourceString, long numberOfIterations, int numberOfIterationsInParallel )
    {
-      return runFeatureSource( runName, kartaRuntimeConfiguration.getDefaultFeatureSourceParserPlugin(), kartaRuntimeConfiguration.getDefaultStepRunnerPlugin(), kartaRuntimeConfiguration.getDefaultTestDataSourcePlugins(), featureFileSourceString );
+      return runFeatureSource( runName, kartaRuntimeConfiguration.getDefaultFeatureSourceParserPlugin(), kartaRuntimeConfiguration.getDefaultStepRunnerPlugin(), kartaRuntimeConfiguration
+               .getDefaultTestDataSourcePlugins(), featureFileSourceString, numberOfIterations, numberOfIterationsInParallel );
    }
 
-   public boolean runFeatureSource( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String featureFileSourceString )
+   public boolean runFeatureSource( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String featureFileSourceString, long numberOfIterations, int numberOfIterationsInParallel )
    {
       try
       {
@@ -262,7 +263,7 @@ public class KartaRuntime implements AutoCloseable
          }
          TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
 
-         return run( runName, stepRunnerPlugin, testDataSourcePlugins, testFeature );
+         return run( runName, stepRunnerPlugin, testDataSourcePlugins, testFeature, numberOfIterations, numberOfIterationsInParallel );
       }
       catch ( Throwable t )
       {
@@ -271,7 +272,7 @@ public class KartaRuntime implements AutoCloseable
       }
    }
 
-   public boolean run( String runName, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, TestFeature feature )
+   public boolean run( String runName, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, TestFeature feature, long numberOfIterations, int numberOfIterationsInParallel )
    {
       StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin, StepRunner.class );
 
@@ -298,9 +299,9 @@ public class KartaRuntime implements AutoCloseable
 
       try
       {
-         FeatureRunner featureRunner = FeatureRunner.builder().stepRunner( stepRunner ).testDataSources( testDataSources ).testProperties( configurator.getPropertiesStore() ).eventProcessor( eventProcessor ).minionRegistry( minionRegistry ).build();
+         FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).testDataSources( testDataSources ).build();
          // configurator.loadProperties( featureRunner );
-         return featureRunner.run( runName, feature );
+         return featureRunner.run( runName, feature, numberOfIterations, numberOfIterationsInParallel );
       }
       catch ( Throwable t )
       {
@@ -318,19 +319,33 @@ public class KartaRuntime implements AutoCloseable
 
    public boolean runTestTarget( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, RunTarget runTarget )
    {
+
       if ( StringUtils.isNotBlank( runTarget.getFeatureFile() ) )
       {
          eventProcessor.raiseEvent( new RunStartEvent( runName ) );
-         boolean result = runFeatureFile( runName, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, runTarget.getFeatureFile() );
+         boolean result = runFeatureFile( runName, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, runTarget.getFeatureFile(), runTarget.getNumberOfIterations(), runTarget.getNumberOfThreads() );
          eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
          return result;
       }
       else if ( StringUtils.isNotBlank( runTarget.getJavaTest() ) )
       {
-         JavaFeatureRunner testRunner = JavaFeatureRunner.builder().testProperties( configurator.getPropertiesStore() ).eventProcessor( eventProcessor ).minionRegistry( minionRegistry ).build();
+         ArrayList<TestDataSource> testDataSources = new ArrayList<TestDataSource>();
+         for ( String testDataSourcePlugin : testDataSourcePlugins )
+         {
+            TestDataSource testDataSource = (TestDataSource) pnpRegistry.getPlugin( testDataSourcePlugin, TestDataSource.class );
+
+            if ( testDataSource == null )
+            {
+               log.error( "Failed to get a test data source of type: " + testDataSourcePlugin );
+               eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
+               return false;
+            }
+            testDataSources.add( testDataSource );
+         }
+
+         JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).testDataSources( testDataSources ).build();
          eventProcessor.raiseEvent( new RunStartEvent( runName ) );
-         testRunner.setTestProperties( configurator.getPropertiesStore() );
-         boolean result = testRunner.run( runName, runTarget.getJavaTest(), runTarget.getJavaTestJarFile() );
+         boolean result = testRunner.run( runName, runTarget.getJavaTest(), runTarget.getJavaTestJarFile(), runTarget.getNumberOfIterations(), runTarget.getNumberOfThreads() );
          eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
          return result;
       }
@@ -393,8 +408,7 @@ public class KartaRuntime implements AutoCloseable
                      testDataSources.add( testDataSource );
                   }
 
-                  FeatureRunner featureRunner = FeatureRunner.builder().stepRunner( stepRunner ).testDataSources( testDataSources ).testProperties( configurator.getPropertiesStore() ).eventProcessor( eventProcessor ).minionRegistry( minionRegistry )
-                           .build();
+                  FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).testDataSources( testDataSources ).build();
                   featureRunner.run( runName, testFeature, test.getNumberOfIterations(), test.getNumberOfThreads() );
                   break;
 
@@ -412,8 +426,8 @@ public class KartaRuntime implements AutoCloseable
 
                      testDataSources.add( testDataSource );
                   }
-                  JavaFeatureRunner testRunner = JavaFeatureRunner.builder().testDataSources( testDataSources ).testProperties( configurator.getPropertiesStore() ).eventProcessor( eventProcessor ).minionRegistry( minionRegistry ).build();
-                  testRunner.run( runName, test.getJavaTestClass(), test.getSourceArchive() );
+                  JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).testDataSources( testDataSources ).build();
+                  testRunner.run( runName, test.getJavaTestClass(), test.getSourceArchive(), test.getNumberOfIterations(), test.getNumberOfThreads() );
                   break;
             }
          }
