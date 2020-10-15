@@ -1,0 +1,28 @@
+---
+enabledPlugins:
+  - Yerkin
+  - KartaDefaultTestEventListener
+
+defaultFeatureSourceParserPlugin: Yerkin
+defaultStepRunnerPlugin: Yerkin
+defaultTestDataSourcePlugins:
+  - Yerkin
+
+propertyFiles:
+  - KartaRuntimeProperties.yaml
+
+testRepositorydirectories:
+  - "../repository/"
+
+testCatalogFiles:
+  - "../repository/KartaTestCatalog.yaml"
+
+sslProperties:
+  trustStoreType: jks
+  trustStore: trustStore.jks
+  trustStorePassword: changeit
+  keyStoreType: pkcs12
+  keyStore: keyStore.p12
+  keyStorePassword: changeit
+
+minions: {}

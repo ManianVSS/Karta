@@ -1,0 +1,80 @@
+---
+Karta:
+  EventProcessor.numberOfThread: 10
+  EventProcessor.maxEventQueueSize: 100
+  minion.config:
+    host: localhost
+    port: 17171
+    enableSSL: true
+
+Yerkin:
+  stepDefinitionPackageNames:
+    - org.mvss.karta.samples.stepdefinitions
+  chaosActionDefinitionPackageNames:
+    - org.mvss.karta.samples.chaosdefinitions
+
+KartaDumpToFileTestEventListener:
+  fileName: KartaEventsRawDump.bin
+
+KartaRabbitMQTestEventListener:
+  queueName: KartaEvents
+  userName: guest
+  password: guest
+  virtualHost: "/"
+  hostName: localhost
+  portNumber: 5672
+  
+KartaObjectGenTestDataSource:
+  objectRuleMap:
+    employee:
+      ruleType: OBJECT_RULE
+      objectRules:
+        - fieldName: employeeId
+          ruleType: STRING_RANGE
+          range:
+            min: 6
+            max: 6
+        - fieldName: name
+          ruleType: STRING_RANGE
+          range:
+            min: 5
+            max: 12
+        - fieldName: gender
+          ruleType: MUTEX_OBJECT_RULE_VALUE
+          objectRules:
+            - ruleType: VALUES
+              probability: 0.9
+              values:
+                - FEMALE
+                - MALE
+            - ruleType: VALUES
+              probability: 0.1
+              values:
+                - TRANSGENDER
+        - fieldName: married
+          ruleType: BOOLEAN
+        - fieldName: role
+          ruleType: MUTEX_OBJECT_RULE_VALUE
+          objectRules:
+            - ruleType: VALUES
+              probability: 0.9
+              values:
+                - ENGINEER
+            - ruleType: VALUES
+              probability: 0.09
+              values:
+                - MANAGER
+            - ruleType: VALUES
+              probability: 0.01
+              values:
+                - EXECUTIVE
+        - fieldName: salary
+          ruleType: INTEGER_RANGE
+          range:
+            min: 100000
+            max: 200000
+        - fieldName: address
+          ruleType: STRING_RANGE
+          range:
+            min: 20
+            max: 20

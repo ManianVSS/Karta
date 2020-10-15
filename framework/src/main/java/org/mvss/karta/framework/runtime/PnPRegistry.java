@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.mvss.karta.configuration.PluginConfig;
+import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.interfaces.Plugin;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
@@ -114,18 +115,18 @@ public class PnPRegistry implements AutoCloseable
    public void loadPluginJar( Configurator configurator, File jarFile ) throws MalformedURLException, IOException, URISyntaxException
    {
       // TODO: ignore jar files without config json
-      String pluginConfigStr = IOUtils.toString( DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_PLUGINS_CONFIG_JSON ), Charset.defaultCharset() );
-      ArrayList<PluginConfig> pluginConfigs = ParserUtils.getObjectMapper().readValue( pluginConfigStr, pluginConfigArrayListType );
+      String pluginConfigStr = IOUtils.toString( DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_PLUGINS_CONFIG_YAML ), Charset.defaultCharset() );
+      ArrayList<PluginConfig> pluginConfigs = ParserUtils.getYamlObjectMapper().readValue( pluginConfigStr, pluginConfigArrayListType );
       addPluginConfiguration( jarFile, pluginConfigs );
 
       if ( configurator != null )
       {
-         InputStream runtimePropertiesInputStream = DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_RUNTIME_PROPERTIES_JSON );
+         InputStream runtimePropertiesInputStream = DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_RUNTIME_PROPERTIES_YAML );
 
          if ( runtimePropertiesInputStream != null )
          {
             String runtimePropertiesStr = IOUtils.toString( runtimePropertiesInputStream, Charset.defaultCharset() );
-            HashMap<String, HashMap<String, Serializable>> runtimeProperties = Configurator.readPropertiesFromString( runtimePropertiesStr );
+            HashMap<String, HashMap<String, Serializable>> runtimeProperties = Configurator.readPropertiesFromString( DataFormat.YAML, runtimePropertiesStr );
             configurator.mergeProperties( runtimeProperties );
          }
       }

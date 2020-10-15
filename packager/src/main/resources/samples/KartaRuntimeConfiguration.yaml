@@ -1,0 +1,45 @@
+---
+enabledPlugins:
+  - Yerkin
+  - YerkinExt
+  - KartaObjectGenTestDataSource
+  - RandomTestDataSource
+  - KartaDefaultTestEventListener
+  - KartaDumpToFileTestEventListener
+  #- KartaRabbitMQTestEventListener
+  - CSVTestDataSourcePlugin
+
+defaultFeatureSourceParserPlugin: Yerkin
+defaultStepRunnerPlugin: Yerkin
+defaultTestDataSourcePlugins:
+  - Yerkin
+  - RandomTestDataSource
+
+propertyFiles:
+  - KartaRuntimeProperties.yaml
+  - SampleRunProperties.yaml
+  - SampleRunProperties2.yaml
+
+testRepositorydirectories:
+  - "."
+
+testCatalogFiles:
+  - "../repository/KartaTestCatalog.yaml"
+
+sslProperties:
+  trustStoreType: jks
+  trustStore: "../bin/trustStore.jks"
+  trustStorePassword: changeit
+  keyStoreType: pkcs12
+  keyStore: "../bin/keyStore.p12"
+  keyStorePassword: changeit
+  
+minions:
+  Node1:
+    host: localhost
+    port: 17171
+    enableSSL: true
+  Node2:
+    host: localhost
+    port: 17171
+    enableSSL: true

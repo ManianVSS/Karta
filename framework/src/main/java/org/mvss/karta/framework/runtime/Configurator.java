@@ -7,6 +7,7 @@ import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 
+import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
@@ -26,6 +27,7 @@ public class Configurator
                                                                                                                        };
 
    private static ObjectMapper                                                       objectMapper                      = ParserUtils.getObjectMapper();
+   private static ObjectMapper                                                       yamlObjectMapper                  = ParserUtils.getYamlObjectMapper();
 
    @Getter
    private HashMap<String, HashMap<String, Serializable>>                            propertiesStore                   = new HashMap<String, HashMap<String, Serializable>>();
@@ -58,14 +60,14 @@ public class Configurator
       }
    }
 
-   public static HashMap<String, HashMap<String, Serializable>> readPropertiesFromString( String propertiesDataString ) throws JsonMappingException, JsonProcessingException
+   public static HashMap<String, HashMap<String, Serializable>> readPropertiesFromString( DataFormat dataFormat, String propertiesDataString ) throws JsonMappingException, JsonProcessingException
    {
-      return objectMapper.readValue( propertiesDataString, propertiesType );
+      return ParserUtils.readValue( dataFormat, propertiesDataString, propertiesType );
    }
 
-   public void mergePropertiesString( String propertiesDataString ) throws IOException, URISyntaxException
+   public void mergePropertiesString( DataFormat dataFormat, String propertiesDataString ) throws IOException, URISyntaxException
    {
-      HashMap<String, HashMap<String, Serializable>> propertiesToMerge = readPropertiesFromString( propertiesDataString );
+      HashMap<String, HashMap<String, Serializable>> propertiesToMerge = readPropertiesFromString( dataFormat, propertiesDataString );
       mergeProperties( propertiesToMerge );
    }
 
@@ -73,7 +75,7 @@ public class Configurator
    {
       for ( String propertyFile : propertyFiles )
       {
-         mergePropertiesString( ClassPathLoaderUtils.readAllText( propertyFile ) );
+         mergePropertiesString( ParserUtils.getFileDataFormat( propertyFile ), ClassPathLoaderUtils.readAllText( propertyFile ) );
       }
    }
 
@@ -112,7 +114,7 @@ public class Configurator
 
       if ( propertyFromEnvOrSys != null )
       {
-         return objectMapper.convertValue( propertyFromEnvOrSys, Serializable.class );
+         return yamlObjectMapper.convertValue( propertyFromEnvOrSys, Serializable.class );
       }
 
       HashMap<String, Serializable> groupStore = propertiesStore.get( group );
@@ -214,16 +216,20 @@ public class Configurator
       }
    }
 
-   public static HashMap<String, Serializable> parseProperties( String propertiesDataString ) throws JsonMappingException, JsonProcessingException
+   public static HashMap<String, Serializable> parseProperties( String propertiesDataString, DataFormat dataFormat ) throws JsonMappingException, JsonProcessingException
    {
       HashMap<String, Serializable> returnProperties = new HashMap<String, Serializable>();
-      objectMapper.readValue( propertiesDataString, ParserUtils.genericHashMapObjectType );
+      ParserUtils.readValue( dataFormat, propertiesDataString, ParserUtils.genericHashMapObjectType );
       return returnProperties;
+   }
+
+   public static HashMap<String, Serializable> parsePropertiesFile( String propertiesDataFile, DataFormat dataFormat ) throws IOException, URISyntaxException
+   {
+      return parseProperties( ClassPathLoaderUtils.readAllText( propertiesDataFile ), dataFormat );
    }
 
    public static HashMap<String, Serializable> parsePropertiesFile( String propertiesDataFile ) throws IOException, URISyntaxException
    {
-      return parseProperties( ClassPathLoaderUtils.readAllText( propertiesDataFile ) );
+      return parsePropertiesFile( propertiesDataFile, ParserUtils.getFileDataFormat( propertiesDataFile ) );
    }
-
 }

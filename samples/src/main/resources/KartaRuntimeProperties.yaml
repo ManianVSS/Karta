@@ -1,0 +1,12 @@
+---
+YerkinExt:
+  stepDefinitionPackageNames:
+    - org.mvss.karta.samples.stepdefinitions
+  actionGroupPackageNames:
+    - org.mvss.karta.samples.chaosdefinitions
+
+RandomTestDataSource:
+  seed: 1723
+
+CSVTestDataSourcePlugin:
+  csvFileName: TestData.csv

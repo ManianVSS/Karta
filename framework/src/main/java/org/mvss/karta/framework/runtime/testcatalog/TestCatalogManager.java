@@ -23,9 +23,9 @@ import lombok.extern.log4j.Log4j2;
 @NoArgsConstructor
 public class TestCatalogManager
 {
-   private static ObjectMapper objectMapper = ParserUtils.getObjectMapper();
+   private static ObjectMapper yamlObjectMapper = ParserUtils.getYamlObjectMapper();
 
-   private TestCategory        testCatalog  = new TestCategory();
+   private TestCategory        testCatalog      = new TestCategory();
 
    public void mergeWithCatalog( TestCategory updatesToRootCategory )
    {
@@ -48,7 +48,7 @@ public class TestCatalogManager
          return;
       }
 
-      TestCategory updatesToRootCategory = objectMapper.readValue( IOUtils.toString( fileStream, Charset.defaultCharset() ), TestCategory.class );
+      TestCategory updatesToRootCategory = yamlObjectMapper.readValue( IOUtils.toString( fileStream, Charset.defaultCharset() ), TestCategory.class );
       updatesToRootCategory.propogateSourceArchive( sourceArchive, updatesToRootCategory.getFeatureSourceParserPlugin(), updatesToRootCategory.getFeatureSourceParserPlugin(), updatesToRootCategory.getTestDataSourcePlugins() );
       testCatalog.mergeWithTestCategory( updatesToRootCategory );
    }

@@ -69,13 +69,13 @@ public class KartaRuntime implements AutoCloseable
    @Getter
    private KartaMinionRegistry       minionRegistry;
 
-   private static ObjectMapper       objectMapper = ParserUtils.getObjectMapper();
+   private static ObjectMapper       yamlObjectMapper = ParserUtils.getYamlObjectMapper();
 
    public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException
    {
       // if ( kartaConfiguration == null )
       // {
-      kartaBaseConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_BASE_CONFIG_JSON ), KartaBaseConfiguration.class );
+      kartaBaseConfiguration = yamlObjectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_BASE_CONFIG_YAML ), KartaBaseConfiguration.class );
       // }
 
       // Configurator should be setup before plugin initialization
@@ -107,7 +107,7 @@ public class KartaRuntime implements AutoCloseable
 
       // if ( runtimeConfiguration == null )
       // {
-      kartaRuntimeConfiguration = objectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_RUNTIME_CONFIGURATION_JSON ), KartaRuntimeConfiguration.class );
+      kartaRuntimeConfiguration = yamlObjectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_RUNTIME_CONFIGURATION_YAML ), KartaRuntimeConfiguration.class );
       // }
 
       SSLUtils.setSslProperties( kartaRuntimeConfiguration.getSslProperties() );
@@ -151,7 +151,7 @@ public class KartaRuntime implements AutoCloseable
       {
          for ( String testCatalogFile : testCatalogFiles )
          {
-            TestCategory testCategory = objectMapper.readValue( ClassPathLoaderUtils.readAllText( testCatalogFile ), TestCategory.class );
+            TestCategory testCategory = yamlObjectMapper.readValue( ClassPathLoaderUtils.readAllText( testCatalogFile ), TestCategory.class );
             testCatalogManager.mergeWithCatalog( testCategory );
          }
       }
