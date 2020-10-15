@@ -6,7 +6,7 @@ tags:
 featureSourceParserPlugin: Yerkin
 stepRunnerPlugin: Yerkin
 testDataSourcePlugins:
-  - Yerkin
+  - KartaDataFilesTestDataSourcePlugin
   - KartaObjectGenTestDataSource
 tests: []
 subCategories: []

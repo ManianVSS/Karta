@@ -98,17 +98,17 @@ public class KartaRuntime implements AutoCloseable
 
       pnpRegistry.addPluginConfiguration( kartaBaseConfiguration.getPluginConfigs() );
 
-      String pluginsDirectory = kartaBaseConfiguration.getPluginsDirectory();
+      // if ( runtimeConfiguration == null )
+      // {
+      kartaRuntimeConfiguration = yamlObjectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_RUNTIME_CONFIGURATION_YAML ), KartaRuntimeConfiguration.class );
+      // }
+
+      String pluginsDirectory = kartaRuntimeConfiguration.getPluginsDirectory();
 
       if ( StringUtils.isNotEmpty( pluginsDirectory ) )
       {
          pnpRegistry.loadPlugins( configurator, new File( pluginsDirectory ) );
       }
-
-      // if ( runtimeConfiguration == null )
-      // {
-      kartaRuntimeConfiguration = yamlObjectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_RUNTIME_CONFIGURATION_YAML ), KartaRuntimeConfiguration.class );
-      // }
 
       SSLUtils.setSslProperties( kartaRuntimeConfiguration.getSslProperties() );
 
@@ -218,16 +218,19 @@ public class KartaRuntime implements AutoCloseable
       return instance;
    }
 
-   public static HashMap<String, Serializable> getMergedTestData( ArrayList<TestDataSource> testDataSources, ExecutionStepPointer executionStepPointer ) throws Throwable
+   public static HashMap<String, Serializable> getMergedTestData( HashMap<String, Serializable> stepTestData, ArrayList<TestDataSource> testDataSources, ExecutionStepPointer executionStepPointer ) throws Throwable
    {
       HashMap<String, Serializable> mergedTestData = new HashMap<String, Serializable>();
-
       for ( TestDataSource tds : testDataSources )
       {
          HashMap<String, Serializable> testData = tds.getData( executionStepPointer );
          testData.forEach( ( key, value ) -> mergedTestData.put( key, value ) );
       }
 
+      if ( stepTestData != null )
+      {
+         stepTestData.forEach( ( key, value ) -> mergedTestData.put( key, value ) );
+      }
       return mergedTestData;
    }
 

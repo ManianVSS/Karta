@@ -10,5 +10,7 @@ public interface StepRunner extends Plugin
 {
    StepResult runStep( TestStep testStep, TestExecutionContext testExecutionContext ) throws TestFailureException;
 
+   String sanitizeStepDefinition( String stepDefinition );
+
    StepResult performChaosAction( ChaosAction chaosAction, TestExecutionContext testExecutionContext ) throws TestFailureException;
 }

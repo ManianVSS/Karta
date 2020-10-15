@@ -28,6 +28,13 @@ public class Constants
    public static final String   PROPERTIES                       = "properties";
 
    public static final String[] jarExtention                     = {JAR};
+   public static final String[] dataFileExtentions               = {JSON, YAML, YML, XML};
 
    public static final String   UNNAMED                          = "Unnamed";
+
+   public static final String   GENERIC_FEATURE                  = "__generic_feature__";
+   public static final String   FEATURE_SETUP                    = "__feature_setup__";
+   public static final String   GENERIC_SCENARIO                 = "__generic_scenario__";
+   public static final String   GENERIC_STEP                     = "__generic_step__";
+   public static final String   FEATURE_TEARDOWN                 = "__feature_teardown__";
 }

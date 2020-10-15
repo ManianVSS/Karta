@@ -1,0 +1,95 @@
+CalculatorTest2:
+    __feature_setup__:
+        the calculator is powered on:
+            data1:
+                - value1
+                - value2
+                - value3
+            data2:
+                - mapval1:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval2:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval3:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+    Scenario1:
+        the button "" is pressed:
+            data1:
+                - value1
+                - value2
+                - value3
+            data2:
+                - mapval1:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval2:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval3:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+        the calculator should display "":
+            data1:
+                - value1
+                - value2
+                - value3
+            data2:
+                - mapval1:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval2:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval3:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+    Scenario2:
+        a binary operation is perfomed on the calculator:
+            data1:
+                - value1
+                - value2
+                - value3
+            data2:
+                - mapval1:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval2:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval3:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+        the calculator should display "":
+            data1:
+                - value1
+                - value2
+                - value3
+            data2:
+                - mapval1:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval2:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval3:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+    __feature_teardown__:
+        the calculator is powered off:
+            data1:
+                - value1
+                - value2
+                - value3
+            data2:
+                - mapval1:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval2:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval3:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value

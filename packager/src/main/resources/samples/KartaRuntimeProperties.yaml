@@ -23,7 +23,12 @@ KartaRabbitMQTestEventListener:
   virtualHost: "/"
   hostName: localhost
   portNumber: 5672
-  
+
+KartaDataFilesTestDataSourcePlugin:
+  dataPath:
+    - dataFile1.yaml
+    - testDataFolder
+
 KartaObjectGenTestDataSource:
   objectRuleMap:
     employee:

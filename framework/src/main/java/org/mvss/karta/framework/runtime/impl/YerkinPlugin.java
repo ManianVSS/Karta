@@ -28,8 +28,6 @@ import org.mvss.karta.framework.runtime.TestFailureException;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
-import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
-import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.utils.ParserUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
@@ -41,7 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSource
+public class YerkinPlugin implements FeatureSourceParser, StepRunner
 {
    public static final String                           PLUGIN_NAME                            = "Yerkin";
 
@@ -49,7 +47,6 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
    public static final String                           WORD_FETCH_REGEX                       = "\\W+";
 
    public static final String                           INLINE_TEST_DATA_PATTERN               = "\"(?:[^\\\\\"]+|\\\\.|\\\\\\\\)*\"";
-   public static final String                           INLINE_STEP_DEF_PARAMTERS              = "inlineStepDefinitionParameters";
 
    private HashMap<String, MutablePair<Object, Method>> stepHandlerMap                         = new HashMap<String, MutablePair<Object, Method>>();
    private HashMap<String, MutablePair<Object, Method>> chaosActionHandlerMap                  = new HashMap<String, MutablePair<Object, Method>>();
@@ -221,7 +218,22 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
       return ParserUtils.getYamlObjectMapper().readValue( sourceString, TestFeature.class );
    }
 
-   @SuppressWarnings( "unchecked" )
+   @Override
+   public String sanitizeStepDefinition( String stepIdentifier )
+   {
+      stepIdentifier = stepIdentifier.trim();
+      String words[] = stepIdentifier.split( WORD_FETCH_REGEX );
+      String conjuctionUsed = null;
+      if ( conjunctions.contains( words[0] ) )
+      {
+         conjuctionUsed = words[0];
+         stepIdentifier = stepIdentifier.substring( conjuctionUsed.length() ).trim();
+      }
+      stepIdentifier = stepIdentifier.replaceAll( INLINE_TEST_DATA_PATTERN, INLINE_STEP_DEF_PARAM_INDICATOR_STRING );
+
+      return stepIdentifier;
+   }
+
    @Override
    public StepResult runStep( TestStep testStep, TestExecutionContext testExecutionContext ) throws TestFailureException
    {
@@ -235,19 +247,7 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
          return result;
       }
 
-      String stepIdentifier = testStep.getIdentifier().trim();
-
-      String words[] = stepIdentifier.split( WORD_FETCH_REGEX );
-
-      String conjuctionUsed = null;
-
-      if ( conjunctions.contains( words[0] ) )
-      {
-         conjuctionUsed = words[0];
-         stepIdentifier = stepIdentifier.substring( conjuctionUsed.length() ).trim();
-      }
-
-      stepIdentifier = stepIdentifier.replaceAll( INLINE_TEST_DATA_PATTERN, INLINE_STEP_DEF_PARAM_INDICATOR_STRING );
+      String stepIdentifier = sanitizeStepDefinition( testStep.getIdentifier() );
 
       if ( !stepHandlerMap.containsKey( stepIdentifier ) )
       {
@@ -265,12 +265,17 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
          Object stepDefObject = stepDefHandlerObjectMethodPair.getLeft();
          Method stepDefMethodToInvoke = stepDefHandlerObjectMethodPair.getRight();
 
-         // Class<?>[] params = stepDefMethodToInvoke.getParameterTypes();
-
          Parameter[] parametersObj = stepDefMethodToInvoke.getParameters();
-         // Class<?>[] parameters = stepDefMethodToInvoke.getParameterTypes();
 
          values.add( testExecutionContext );
+
+         // Fetch the positional argument names
+         ArrayList<String> inlineStepDefinitionParameterNames = new ArrayList<String>();
+         Matcher matcher = testDataPattern.matcher( testStep.getIdentifier().trim() );
+         while ( matcher.find() )
+         {
+            inlineStepDefinitionParameterNames.add( matcher.group() );
+         }
 
          if ( parametersObj.length > 1 )
          {
@@ -294,7 +299,7 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
             else // ( definition.parameterMapping() == ParameterMapping.POSITIONAL )
             {
                int i = 1;
-               for ( String positionalParam : (ArrayList<String>) testData.get( INLINE_STEP_DEF_PARAMTERS ) )
+               for ( String positionalParam : inlineStepDefinitionParameterNames )
                {
                   values.add( ParserUtils.getObjectMapper().readValue( positionalParam, parametersObj[i++].getType() ) );
                }
@@ -368,38 +373,5 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner, TestDataSo
       }
 
       return result;
-   }
-
-   @Override
-   public HashMap<String, Serializable> getData( ExecutionStepPointer executionStepPointer ) throws Throwable
-   {
-      HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
-      ArrayList<String> inlineStepDefinitionParameters = new ArrayList<String>();
-
-      TestStep testStep = executionStepPointer.getTestStep();
-
-      if ( testStep == null )
-      {
-         return testData;
-      }
-
-      HashMap<String, Serializable> inStepTestData = testStep.getTestData();
-
-      if ( inStepTestData != null )
-      {
-         inStepTestData.forEach( ( dataKey, data ) -> testData.put( dataKey, data ) );
-      }
-
-      String stepDefinition = testStep.getIdentifier();
-      Matcher matcher = testDataPattern.matcher( stepDefinition );
-
-      while ( matcher.find() )
-      {
-         inlineStepDefinitionParameters.add( matcher.group() );
-      }
-
-      testData.put( INLINE_STEP_DEF_PARAMTERS, inlineStepDefinitionParameters );
-
-      return testData;
    }
 }

@@ -1,7 +1,8 @@
----
+pluginsDirectory: "."
 enabledPlugins:
   - Yerkin
   - YerkinExt
+  - KartaDataFilesTestDataSourcePlugin
   - KartaObjectGenTestDataSource
   - RandomTestDataSource
   - KartaDefaultTestEventListener
@@ -12,7 +13,7 @@ enabledPlugins:
 defaultFeatureSourceParserPlugin: Yerkin
 defaultStepRunnerPlugin: Yerkin
 defaultTestDataSourcePlugins:
-  - Yerkin
+  - KartaDataFilesTestDataSourcePlugin
   - RandomTestDataSource
 
 propertyFiles:
@@ -33,7 +34,7 @@ sslProperties:
   keyStoreType: pkcs12
   keyStore: "../bin/keyStore.p12"
   keyStorePassword: changeit
-  
+
 minions:
   Node1:
     host: localhost

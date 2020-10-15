@@ -10,6 +10,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.StepResult;
@@ -139,11 +140,14 @@ public class JavaFeatureRunner
 
          TestExecutionContext testExecutionContext = new TestExecutionContext( testProperties, testData, variables );
 
-         long iterationIndex = -1;
+         int iterationIndex = -1;
+
+         HashMap<Method, AtomicInteger> scenarioIterationIndexMap = new HashMap<Method, AtomicInteger>();
+         scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario.getObject(), new AtomicInteger() ) );
 
          eventProcessor.raiseEvent( new GenericTestEvent( runName, "Feature started " + featureName + " " + featureDescription ) );
 
-         if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, featureDescription, "Feature setup", testCaseObject, testExecutionContext, featureSetupMethods ) )
+         if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, featureDescription, "Feature setup", testCaseObject, testExecutionContext, featureSetupMethods, iterationIndex ) )
          {
             eventProcessor.raiseEvent( new GenericTestEvent( runName, "Feature completed " + featureName + " " + featureDescription ) );
             return false;
@@ -181,7 +185,7 @@ public class JavaFeatureRunner
 
             JavaIterationRunner iterationRunner = JavaIterationRunner.builder().testDataSources( testDataSources ).testProperties( testProperties ).eventProcessor( eventProcessor ).minionRegistry( minionRegistry ).testCaseObject( testCaseObject )
                      .scenarioSetupMethods( scenarioSetupMethods ).scenariosMethodsToRun( scenariosMethodsToRun ).scenarioTearDownMethods( scenarioTearDownMethods ).runName( runName ).featureName( featureName ).featureDescription( featureDescription )
-                     .iterationIndex( iterationIndex ).build();
+                     .iterationIndex( iterationIndex ).scenarioIterationIndexMap( scenarioIterationIndexMap ).build();
 
             if ( numberOfIterationsInParallel == 1 )
             {
@@ -195,8 +199,9 @@ public class JavaFeatureRunner
 
          iterationExecutionService.shutdown();
          iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
+         scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario.getObject() ).set( 0 ) );
 
-         if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, featureDescription, "feature teardown", testCaseObject, testExecutionContext, featureTearDownMethods ) )
+         if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, featureDescription, "feature teardown", testCaseObject, testExecutionContext, featureTearDownMethods, iterationIndex ) )
          {
             eventProcessor.raiseEvent( new GenericTestEvent( runName, "Feature completed " + featureName + " " + featureDescription ) );
             return false;
@@ -250,7 +255,7 @@ public class JavaFeatureRunner
    }
 
    public static boolean runTestMethod( EventProcessor eventProcessor, ArrayList<TestDataSource> testDataSources, String runName, String featureName, String featureDescription, String stage, Object testCaseObject, TestExecutionContext testExecutionContext,
-                                        Method methodToInvoke )
+                                        Method methodToInvoke, int iterationNumber )
    {
       StepResult result;
 
@@ -258,7 +263,7 @@ public class JavaFeatureRunner
 
       try
       {
-         HashMap<String, Serializable> testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( featureName, null, null, 0, 0 ) );
+         HashMap<String, Serializable> testData = KartaRuntime.getMergedTestData( null, testDataSources, new ExecutionStepPointer( featureName, methodToInvoke.getName(), null, iterationNumber, -1 ) );
          testExecutionContext.setData( testData );
 
          Object resultReturned = methodToInvoke.invoke( testCaseObject, testExecutionContext );
@@ -284,12 +289,12 @@ public class JavaFeatureRunner
    }
 
    public static boolean runTestMethods( EventProcessor eventProcessor, ArrayList<TestDataSource> testDataSources, String runName, String featureName, String featureDescription, String stage, Object testCaseObject,
-                                         TestExecutionContext testExecutionContext, ArrayList<Method> methodsOfSequence )
+                                         TestExecutionContext testExecutionContext, ArrayList<Method> methodsOfSequence, int iterationNumber )
    {
 
       for ( Method methodToInvoke : methodsOfSequence )
       {
-         if ( !runTestMethod( eventProcessor, testDataSources, runName, featureName, featureDescription, stage, testCaseObject, testExecutionContext, methodToInvoke ) )
+         if ( !runTestMethod( eventProcessor, testDataSources, runName, featureName, featureDescription, stage, testCaseObject, testExecutionContext, methodToInvoke, iterationNumber ) )
          {
             return false;
          }

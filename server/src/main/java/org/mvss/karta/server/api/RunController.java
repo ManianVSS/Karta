@@ -7,6 +7,7 @@ import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunTarget;
+import org.mvss.karta.framework.runtime.impl.DataFilesTestDataSourcePlugin;
 import org.mvss.karta.framework.runtime.impl.YerkinPlugin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -39,7 +40,7 @@ public class RunController
       }
 
       HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
-      testDataSourcePluginHashSet.add( pluginName );
+      testDataSourcePluginHashSet.add( DataFilesTestDataSourcePlugin.PLUGIN_NAME );
       return kartaRuntime.runTestTarget( runName, pluginName, pluginName, testDataSourcePluginHashSet, runTarget );
    }
 
@@ -54,7 +55,7 @@ public class RunController
       }
 
       HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
-      testDataSourcePluginHashSet.add( pluginName );
+      testDataSourcePluginHashSet.add( DataFilesTestDataSourcePlugin.PLUGIN_NAME );
       return kartaRuntime.runFeatureSource( runName, pluginName, pluginName, testDataSourcePluginHashSet, featureSourceString, 1, 1 );
    }
 
@@ -69,7 +70,7 @@ public class RunController
       }
 
       HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
-      testDataSourcePluginHashSet.add( pluginName );
+      testDataSourcePluginHashSet.add( DataFilesTestDataSourcePlugin.PLUGIN_NAME );
       return kartaRuntime.run( runName, pluginName, testDataSourcePluginHashSet, feature, 1, 1 );
    }
 }

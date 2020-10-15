@@ -7,6 +7,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.StepResult;
@@ -71,13 +72,16 @@ public class FeatureRunner
 
       TestExecutionContext testExecutionContext = new TestExecutionContext( testProperties, testData, variables );
 
-      long iterationIndex = -1;
-      long stepIndex = 0;
+      int iterationIndex = -1;
+      int stepIndex = 0;
+
+      HashMap<TestScenario, AtomicInteger> scenarioIterationIndexMap = new HashMap<TestScenario, AtomicInteger>();
+      testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario, new AtomicInteger() ) );
 
       stepIndex = 0;
       for ( TestStep step : testFeature.getSetupSteps() )
       {
-         testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), null, step, iterationIndex, stepIndex++ ) );
+         testData = KartaRuntime.getMergedTestData( step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.FEATURE_SETUP, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
          // log.debug( "Step test data is " + testData.toString() );
          testExecutionContext.setData( testData );
 
@@ -143,7 +147,7 @@ public class FeatureRunner
          }
 
          IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).feature( testFeature ).runName( runName ).scenariosToRun( scenariosToRun )
-                  .iterationIndex( iterationIndex ).build();
+                  .iterationIndex( iterationIndex ).scenarioIterationIndexMap( scenarioIterationIndexMap ).build();
 
          if ( numberOfIterationsInParallel == 1 )
          {
@@ -160,11 +164,14 @@ public class FeatureRunner
       iterationExecutionService.shutdown();
       iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
 
+      testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario ).set( 0 ) );
+
       iterationIndex = -1;
       stepIndex = 0;
       for ( TestStep step : testFeature.getTearDownSteps() )
       {
-         testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( testFeature.getName(), null, step, iterationIndex, stepIndex++ ) );
+         testData = KartaRuntime
+                  .getMergedTestData( step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.FEATURE_TEARDOWN, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
          // log.debug( "Step test data is " + testData.toString() );
          testExecutionContext.setData( testData );
 

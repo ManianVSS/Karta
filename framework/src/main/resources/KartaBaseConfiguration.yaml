@@ -4,8 +4,12 @@ pluginConfigs:
     pluginTypes:
       - org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser
       - org.mvss.karta.framework.runtime.interfaces.StepRunner
-      - org.mvss.karta.framework.runtime.interfaces.TestDataSource
     className: org.mvss.karta.framework.runtime.impl.YerkinPlugin
+
+  - pluginName: KartaDataFilesTestDataSourcePlugin
+    pluginTypes:
+      - org.mvss.karta.framework.runtime.interfaces.TestDataSource
+    className: org.mvss.karta.framework.runtime.impl.DataFilesTestDataSourcePlugin
 
   - pluginName: KartaObjectGenTestDataSource
     pluginTypes:
@@ -26,5 +30,3 @@ pluginConfigs:
     pluginTypes:
       - org.mvss.karta.framework.runtime.interfaces.TestEventListener
     className: org.mvss.karta.framework.runtime.impl.RabbitMQTestEventListener
-
-pluginsDirectory: "../plugins/"

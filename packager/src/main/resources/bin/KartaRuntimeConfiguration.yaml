@@ -1,12 +1,13 @@
----
+pluginsDirectory: "../plugins/"
 enabledPlugins:
   - Yerkin
+  - KartaDataFilesTestDataSourcePlugin
   - KartaDefaultTestEventListener
 
 defaultFeatureSourceParserPlugin: Yerkin
 defaultStepRunnerPlugin: Yerkin
 defaultTestDataSourcePlugins:
-  - Yerkin
+  - KartaDataFilesTestDataSourcePlugin
 
 propertyFiles:
   - KartaRuntimeProperties.yaml

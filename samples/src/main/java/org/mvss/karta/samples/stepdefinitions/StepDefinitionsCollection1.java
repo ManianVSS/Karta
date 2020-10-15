@@ -21,7 +21,7 @@ public class StepDefinitionsCollection1
    public void the_calculator_is_powered_on( TestExecutionContext context, @NamedParameter( "employee" ) Employee employee ) throws Throwable
    {
       context.getVariables().put( "CalculatorState", "On" );
-      log.info( "the calculator is powered on by " + username + " employee:" + employee );
+      log.info( "the calculator is powered on by " + username + " employee:" + employee + " and testdata=" + context.getData() );
    }
 
    @StepDefinition( value = "the all clear button is pressed", parameterMapping = ParameterMapping.NAMED )
@@ -33,13 +33,13 @@ public class StepDefinitionsCollection1
    @StepDefinition( "the calculator should display \"\"" )
    public void the_calculator_should_display( TestExecutionContext context, double displayNumber ) throws Throwable
    {
-      log.info( "the calculator should display \"" + displayNumber + "\"" );
+      log.info( "the calculator should display \"" + displayNumber + "\" with testdata " + context.getData() );
    }
 
    @StepDefinition( "the button \"\" is pressed" )
    public void the_button_is_pressed( TestExecutionContext context, String button ) throws Throwable
    {
-      log.info( "the button \"" + button + "\" is pressed " );
+      log.info( "the button \"" + button + "\" is pressed with testData" + context.getData() );
    }
 
    @StepDefinition( "dummy teardown step" )
@@ -51,7 +51,7 @@ public class StepDefinitionsCollection1
    @StepDefinition( "the calculator is powered off" )
    public void the_calculator_is_powered_off( TestExecutionContext context ) throws Throwable
    {
-      log.info( "the calculator is powered off by " + username );
+      log.info( "the calculator is powered off by " + username + " and testdata=" + context.getData() );
    }
 
 }

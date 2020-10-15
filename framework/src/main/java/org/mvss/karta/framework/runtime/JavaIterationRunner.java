@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.javatest.Scenario;
@@ -46,7 +47,9 @@ public class JavaIterationRunner implements Runnable
    private String                                         featureName;
    private String                                         featureDescription;
 
-   private long                                           iterationIndex;
+   private int                                            iterationIndex;
+
+   private HashMap<Method, AtomicInteger>                 scenarioIterationIndexMap;
 
    @Override
    public void run()
@@ -58,7 +61,9 @@ public class JavaIterationRunner implements Runnable
 
       nextScenarioMethod: for ( Method scenarioMethod : scenariosMethodsToRun )
       {
-         String scenarioName = "Unnamed";
+         int scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( scenarioMethod ) ) ) ? scenarioIterationIndexMap.get( scenarioMethod ).getAndIncrement() : 0;
+
+         String scenarioName = Constants.GENERIC_SCENARIO;
          if ( scenarioMethod.isAnnotationPresent( Scenario.class ) )
          {
             scenarioName = scenarioMethod.getAnnotation( Scenario.class ).value();
@@ -72,7 +77,7 @@ public class JavaIterationRunner implements Runnable
             if ( scenarioSetupMethods != null )
             {
                if ( !JavaFeatureRunner.runTestMethods( eventProcessor, testDataSources, runName, featureName, featureDescription, "feature:" + featureName + " iteration [" + iterationIndex + "] scenario "
-                                                                                                                                  + " setup", testCaseObject, testExecutionContext, scenarioSetupMethods ) )
+                                                                                                                                  + " setup", testCaseObject, testExecutionContext, scenarioSetupMethods, scenarioIterationNumber ) )
                {
                   continue nextScenarioMethod;
                }
@@ -80,7 +85,7 @@ public class JavaIterationRunner implements Runnable
 
             eventProcessor.raiseEvent( new GenericTestEvent( runName, "feature:" + featureName + " iteration [" + iterationIndex + "] scenario steps started " + featureName + " " + scenarioMethod.getName() ) );
 
-            testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( featureName, null, null, 0, 0 ) );
+            testData = KartaRuntime.getMergedTestData( null, testDataSources, new ExecutionStepPointer( featureName, scenarioName, null, scenarioIterationNumber, 0 ) );
             testExecutionContext.setData( testData );
 
             Object resultReturned = scenarioMethod.invoke( testCaseObject, testExecutionContext );
@@ -100,7 +105,7 @@ public class JavaIterationRunner implements Runnable
             if ( scenarioTearDownMethods != null )
             {
                if ( !JavaFeatureRunner.runTestMethods( eventProcessor, testDataSources, runName, featureName, featureDescription, "feature:" + featureName + " iteration [" + iterationIndex + "] scenario "
-                                                                                                                                  + " tearDown", testCaseObject, testExecutionContext, scenarioTearDownMethods ) )
+                                                                                                                                  + " tearDown", testCaseObject, testExecutionContext, scenarioTearDownMethods, scenarioIterationNumber ) )
                {
                   eventProcessor.raiseEvent( new GenericTestEvent( runName, "feature:" + featureName + " iteration [" + iterationIndex + "] scenario completed" + featureName + " " + scenarioMethod.getName() + " Result: " + result.toString() ) );
                   continue nextScenarioMethod;

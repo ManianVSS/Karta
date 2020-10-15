@@ -1,0 +1,114 @@
+Sample Java Test Feature:
+    myFeatureSetup:
+        __generic_step__:
+            data1:
+                - value1
+                - value2
+                - value3
+            data2:
+                - mapval1:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval2:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval3:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+    myScenarioSetupMethod:
+        __generic_step__:
+            data1:
+                - value1
+                - value2
+                - value3
+            data2:
+                - mapval1:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval2:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval3:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+    Scenario1:
+        __generic_step__:
+            data1:
+                - value1
+                - value2
+                - value3
+            data2:
+                - mapval1:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval2:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval3:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+    Scenario2:
+        __generic_step__:
+            data1:
+                - value1
+                - value2
+                - value3
+            data2:
+                - mapval1:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval2:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval3:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+    Scenario3:
+        __generic_step__:
+            data1:
+                - value1
+                - value2
+                - value3
+            data2:
+                - mapval1:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval2:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval3:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+    myScenarioTearDownMethod:
+        __generic_step__:
+            data1:
+                - value1
+                - value2
+                - value3
+            data2:
+                - mapval1:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval2:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval3:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+
+    myFeatureTearDownMethod:
+        __generic_step__:
+            data1:
+                - value1
+                - value2
+                - value3
+            data2:
+                - mapval1:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval2:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value
+                - mapval3:
+                      mapvalkey1: mapvalkey1value
+                      mapvalkey2: mapvalkey2value

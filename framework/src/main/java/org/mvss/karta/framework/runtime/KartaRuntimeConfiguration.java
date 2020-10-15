@@ -24,6 +24,8 @@ public class KartaRuntimeConfiguration implements Serializable
     */
    private static final long                         serialVersionUID             = 1L;
 
+   private String                                    pluginsDirectory;
+
    private String                                    defaultFeatureSourceParserPlugin;
 
    private String                                    defaultStepRunnerPlugin;

@@ -11,6 +11,11 @@ Yerkin:
   stepDefinitionPackageNames: []
   chaosActionDefinitionPackageNames: []
 
+
+KartaDataFilesTestDataSourcePlugin:
+  dataPath:  
+    - ../repository/testdata
+    
 KartaDumpToFileTestEventListener:
   fileName: KartaEventsRawDump.bin
 

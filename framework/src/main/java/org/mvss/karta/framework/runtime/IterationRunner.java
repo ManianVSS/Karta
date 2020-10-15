@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,18 +51,20 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class IterationRunner implements Runnable
 {
-   private static Random             random = new Random();
+   private static Random                        random = new Random();
 
-   private KartaRuntime              kartaRuntime;
-   private StepRunner                stepRunner;
-   private ArrayList<TestDataSource> testDataSources;
+   private KartaRuntime                         kartaRuntime;
+   private StepRunner                           stepRunner;
+   private ArrayList<TestDataSource>            testDataSources;
 
-   private TestFeature               feature;
-   private String                    runName;
+   private TestFeature                          feature;
+   private String                               runName;
 
-   private long                      iterationIndex;
+   private int                                  iterationIndex;
 
-   private ArrayList<TestScenario>   scenariosToRun;
+   private ArrayList<TestScenario>              scenariosToRun;
+
+   private HashMap<TestScenario, AtomicInteger> scenarioIterationIndexMap;
 
    @Override
    public void run()
@@ -74,11 +77,12 @@ public class IterationRunner implements Runnable
 
       nextScenario: for ( TestScenario testScenario : scenariosToRun )
       {
-         log.debug( "Running Scenario: " + testScenario );
+         int scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( testScenario ) ) ) ? scenarioIterationIndexMap.get( testScenario ).getAndIncrement() : 0;
+         log.debug( "Running Scenario: " + testScenario + ", iteration=" + scenarioIterationNumber );
 
          eventProcessor.raiseEvent( new ScenarioStartEvent( runName, feature, iterationIndex, testScenario ) );
          log.debug( "Running Scenario: " + testScenario );
-         long stepIndex = 0;
+         int stepIndex = 0;
          HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
          TestExecutionContext testExecutionContext = new TestExecutionContext( testProperties, testData, variables );
@@ -87,7 +91,8 @@ public class IterationRunner implements Runnable
          {
             for ( TestStep step : Stream.concat( feature.getScenarioSetupSteps().stream(), testScenario.getScenarioSetupSteps().stream() ).collect( Collectors.toList() ) )
             {
-               testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( feature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
+               testData = KartaRuntime
+                        .getMergedTestData( step.getTestData(), testDataSources, new ExecutionStepPointer( feature.getName(), testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
                // log.debug( "Step test data is " + testData.toString() );
                testExecutionContext.setData( testData );
 
@@ -149,7 +154,8 @@ public class IterationRunner implements Runnable
 
             for ( TestStep step : testScenario.getScenarioExecutionSteps() )
             {
-               testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( feature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
+               testData = KartaRuntime
+                        .getMergedTestData( step.getTestData(), testDataSources, new ExecutionStepPointer( feature.getName(), testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
                // log.debug( "Step test data is " + testData.toString() );
                testExecutionContext.setData( testData );
                eventProcessor.raiseEvent( new ScenarioStepStartEvent( runName, feature, iterationIndex, testScenario, step ) );
@@ -185,7 +191,8 @@ public class IterationRunner implements Runnable
             {
                for ( TestStep step : Stream.concat( feature.getScenarioTearDownSteps().stream(), testScenario.getScenarioTearDownSteps().stream() ).collect( Collectors.toList() ) )
                {
-                  testData = KartaRuntime.getMergedTestData( testDataSources, new ExecutionStepPointer( feature.getName(), testScenario.getName(), step, iterationIndex, stepIndex++ ) );
+                  testData = KartaRuntime
+                           .getMergedTestData( step.getTestData(), testDataSources, new ExecutionStepPointer( feature.getName(), testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
 
                   // log.debug( "Step test data is " + testData.toString() );
                   testExecutionContext.setData( testData );
