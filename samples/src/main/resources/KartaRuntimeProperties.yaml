@@ -1,5 +1,4 @@
----
-YerkinExt:
+KriyaExt:
   stepDefinitionPackageNames:
     - org.mvss.karta.samples.stepdefinitions
   actionGroupPackageNames:

@@ -126,7 +126,7 @@ public class FeatureRunner
 
       ExecutorService iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfIterationsInParallel ) );
 
-      for ( iterationIndex = 0; iterationIndex < numberOfIterations; iterationIndex++ )
+      for ( iterationIndex = 0; ( numberOfIterations <= 0 ) || ( iterationIndex < numberOfIterations ); iterationIndex++ )
       {
          ArrayList<TestScenario> scenariosToRun = new ArrayList<TestScenario>();
 

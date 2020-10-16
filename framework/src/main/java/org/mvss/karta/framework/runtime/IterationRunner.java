@@ -87,6 +87,7 @@ public class IterationRunner implements Runnable
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
          TestExecutionContext testExecutionContext = new TestExecutionContext( testProperties, testData, variables );
 
+         // TODO: Handle null steps for steps
          try
          {
             for ( TestStep step : Stream.concat( feature.getScenarioSetupSteps().stream(), testScenario.getScenarioSetupSteps().stream() ).collect( Collectors.toList() ) )

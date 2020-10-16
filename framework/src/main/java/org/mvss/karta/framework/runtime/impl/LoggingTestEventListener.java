@@ -28,9 +28,9 @@ import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class DefaultTestEventListener implements TestEventListener
+public class LoggingTestEventListener implements TestEventListener
 {
-   public static final String PLUGIN_NAME  = "KartaDefaultTestEventListener";
+   public static final String PLUGIN_NAME  = "LoggingTestEventListener";
 
    public static final String SPACE        = " ";
    public static final String RUN          = "Run:";

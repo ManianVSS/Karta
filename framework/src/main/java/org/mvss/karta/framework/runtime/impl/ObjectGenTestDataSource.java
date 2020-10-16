@@ -18,7 +18,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class ObjectGenTestDataSource implements TestDataSource
 {
-   public static final String                             PLUGIN_NAME      = "KartaObjectGenTestDataSource";
+   public static final String                             PLUGIN_NAME      = "ObjectGenTestDataSource";
 
    @PropertyMapping( group = PLUGIN_NAME, value = "seed" )
    private Long                                           seed;

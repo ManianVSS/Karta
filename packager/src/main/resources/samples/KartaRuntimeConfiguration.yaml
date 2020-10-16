@@ -1,19 +1,19 @@
 pluginsDirectory: "."
 enabledPlugins:
-  - Yerkin
-  - YerkinExt
-  - KartaDataFilesTestDataSourcePlugin
-  - KartaObjectGenTestDataSource
+  - Kriya
+  - KriyaExt
+  - DataFilesTestDataSource
+  - ObjectGenTestDataSource
   - RandomTestDataSource
-  - KartaDefaultTestEventListener
-  - KartaDumpToFileTestEventListener
-  #- KartaRabbitMQTestEventListener
+  - LoggingTestEventListener
+  - DumpToFileTestEventListener
+  #- RabbitMQTestEventListener
   - CSVTestDataSourcePlugin
 
-defaultFeatureSourceParserPlugin: Yerkin
-defaultStepRunnerPlugin: Yerkin
+defaultFeatureSourceParserPlugin: Kriya
+defaultStepRunnerPlugin: Kriya
 defaultTestDataSourcePlugins:
-  - KartaDataFilesTestDataSourcePlugin
+  - DataFilesTestDataSource
   - RandomTestDataSource
 
 propertyFiles:

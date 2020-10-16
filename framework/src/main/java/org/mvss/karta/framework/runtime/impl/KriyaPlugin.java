@@ -39,9 +39,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class YerkinPlugin implements FeatureSourceParser, StepRunner
+public class KriyaPlugin implements FeatureSourceParser, StepRunner
 {
-   public static final String                           PLUGIN_NAME                            = "Yerkin";
+   public static final String                           PLUGIN_NAME                            = "Kriya";
 
    public static final String                           INLINE_STEP_DEF_PARAM_INDICATOR_STRING = "\"\"";
    public static final String                           WORD_FETCH_REGEX                       = "\\W+";
@@ -81,7 +81,7 @@ public class YerkinPlugin implements FeatureSourceParser, StepRunner
 
       Configurator.loadProperties( properties, this );
 
-      log.debug( "Initializing Yerkin plugin with " + properties );
+      log.debug( "Initializing " + PLUGIN_NAME + " plugin with " + properties );
 
       // HashSet<String> repoDirectories = new HashSet<String>();
       // repoDirectories.addAll( kartaRuntimeConfiguration.getTestRepositorydirectories() );

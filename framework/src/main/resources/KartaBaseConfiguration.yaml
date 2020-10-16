@@ -1,32 +1,31 @@
----
 pluginConfigs:
-  - pluginName: Yerkin
+  - pluginName: Kriya
     pluginTypes:
       - org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser
       - org.mvss.karta.framework.runtime.interfaces.StepRunner
-    className: org.mvss.karta.framework.runtime.impl.YerkinPlugin
+    className: org.mvss.karta.framework.runtime.impl.KriyaPlugin
 
-  - pluginName: KartaDataFilesTestDataSourcePlugin
+  - pluginName: DataFilesTestDataSource
     pluginTypes:
       - org.mvss.karta.framework.runtime.interfaces.TestDataSource
-    className: org.mvss.karta.framework.runtime.impl.DataFilesTestDataSourcePlugin
+    className: org.mvss.karta.framework.runtime.impl.DataFilesTestDataSource
 
-  - pluginName: KartaObjectGenTestDataSource
+  - pluginName: ObjectGenTestDataSource
     pluginTypes:
       - org.mvss.karta.framework.runtime.interfaces.TestDataSource
     className: org.mvss.karta.framework.runtime.impl.ObjectGenTestDataSource
 
-  - pluginName: KartaDefaultTestEventListener
+  - pluginName: LoggingTestEventListener
     pluginTypes:
       - org.mvss.karta.framework.runtime.interfaces.TestEventListener
-    className: org.mvss.karta.framework.runtime.impl.DefaultTestEventListener
+    className: org.mvss.karta.framework.runtime.impl.LoggingTestEventListener
 
-  - pluginName: KartaDumpToFileTestEventListener
+  - pluginName: DumpToFileTestEventListener
     pluginTypes:
       - org.mvss.karta.framework.runtime.interfaces.TestEventListener
     className: org.mvss.karta.framework.runtime.impl.DumpToFileTestEventListener
 
-  - pluginName: KartaRabbitMQTestEventListener
+  - pluginName: RabbitMQTestEventListener
     pluginTypes:
       - org.mvss.karta.framework.runtime.interfaces.TestEventListener
     className: org.mvss.karta.framework.runtime.impl.RabbitMQTestEventListener

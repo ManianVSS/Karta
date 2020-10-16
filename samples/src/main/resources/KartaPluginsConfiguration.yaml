@@ -1,9 +1,9 @@
 ---
-- pluginName: YerkinExt
+- pluginName: KriyaExt
   pluginTypes:
     - org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser
     - org.mvss.karta.framework.runtime.interfaces.StepRunner
-  className: org.mvss.karta.samples.plugins.YerkinExt
+  className: org.mvss.karta.samples.plugins.KriyaExtPlugin
 
 - pluginName: RandomTestDataSource
   pluginTypes:

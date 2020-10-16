@@ -22,9 +22,9 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class DataFilesTestDataSourcePlugin implements TestDataSource
+public class DataFilesTestDataSource implements TestDataSource
 {
-   public static final String                                                                                                     PLUGIN_NAME       = "KartaDataFilesTestDataSourcePlugin";
+   public static final String                                                                                                     PLUGIN_NAME       = "DataFilesTestDataSource";
 
    public static final TypeReference<HashMap<String, HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>>>> testDataStoreType = new TypeReference<HashMap<String, HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>>>>()
                                                                                                                                                     {

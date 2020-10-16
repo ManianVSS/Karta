@@ -17,7 +17,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class DumpToFileTestEventListener implements TestEventListener
 {
-   public static final String PLUGIN_NAME  = "KartaDumpToFileTestEventListener";
+   public static final String PLUGIN_NAME  = "DumpToFileTestEventListener";
 
    private ObjectOutputStream outputStream = null;
 

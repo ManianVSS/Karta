@@ -17,7 +17,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class RabbitMQTestEventListener implements TestEventListener
 {
-   private static final String PLUGIN_NAME = "KartaRabbitMQTestEventListener";
+   private static final String PLUGIN_NAME = "RabbitMQTestEventListener";
 
    @PropertyMapping( group = PLUGIN_NAME, value = "queueName" )
    private String              queueName   = "KartaEvents";

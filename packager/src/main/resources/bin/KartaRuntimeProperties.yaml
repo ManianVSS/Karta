@@ -1,4 +1,3 @@
----
 Karta:
   EventProcessor.numberOfThread: 10
   EventProcessor.maxEventQueueSize: 100
@@ -7,19 +6,19 @@ Karta:
     port: "17171"
     enableSSL: true
 
-Yerkin:
+Kriya:
   stepDefinitionPackageNames: []
   chaosActionDefinitionPackageNames: []
 
 
-KartaDataFilesTestDataSourcePlugin:
+DataFilesTestDataSource:
   dataPath:  
     - ../repository/testdata
     
-KartaDumpToFileTestEventListener:
+DumpToFileTestEventListener:
   fileName: KartaEventsRawDump.bin
 
-KartaRabbitMQTestEventListener:
+RabbitMQTestEventListener:
   queueName: KartaEvents
   userName: guest
   password: guest

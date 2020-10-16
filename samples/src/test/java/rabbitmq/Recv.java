@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 import org.apache.commons.lang3.SerializationUtils;
-import org.mvss.karta.framework.runtime.impl.DefaultTestEventListener;
+import org.mvss.karta.framework.runtime.impl.LoggingTestEventListener;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -36,7 +36,7 @@ public class Recv
       channel.queueDeclare( QUEUE_NAME, false, false, false, null );
       System.out.println( " [*] Waiting for messages. To exit press CTRL+C" );
 
-      DefaultTestEventListener dtev = new DefaultTestEventListener();
+      LoggingTestEventListener dtev = new LoggingTestEventListener();
 
       dtev.initialize( new HashMap<String, HashMap<String, Serializable>>() );
 

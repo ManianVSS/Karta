@@ -5,11 +5,11 @@ description: sample tests category
 tags:
   - sample
 
-featureSourceParserPlugin: YerkinExt
-stepRunnerPlugin: YerkinExt
+featureSourceParserPlugin: KriyaExt
+stepRunnerPlugin: KriyaExt
 testDataSourcePlugins:
-  - KartaDataFilesTestDataSourcePlugin
-  - KartaObjectGenTestDataSource
+  - DataFilesTestDataSource
+  - ObjectGenTestDataSource
   - RandomTestDataSource
   - CSVTestDataSourcePlugin
 

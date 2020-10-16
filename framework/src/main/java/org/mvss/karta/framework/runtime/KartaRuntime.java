@@ -69,10 +69,15 @@ public class KartaRuntime implements AutoCloseable
    @Getter
    private KartaMinionRegistry       minionRegistry;
 
+   @Getter
+   private KartaThreadFactory        kartaThreadFactory;
+
    private static ObjectMapper       yamlObjectMapper = ParserUtils.getYamlObjectMapper();
 
    public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException
    {
+      kartaThreadFactory = new KartaThreadFactory();
+
       // if ( kartaConfiguration == null )
       // {
       kartaBaseConfiguration = yamlObjectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_BASE_CONFIG_YAML ), KartaBaseConfiguration.class );
@@ -322,7 +327,6 @@ public class KartaRuntime implements AutoCloseable
 
    public boolean runTestTarget( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, RunTarget runTarget )
    {
-
       if ( StringUtils.isNotBlank( runTarget.getFeatureFile() ) )
       {
          eventProcessor.raiseEvent( new RunStartEvent( runName ) );
