@@ -71,6 +71,6 @@ public class RunController
 
       HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
       testDataSourcePluginHashSet.add( DataFilesTestDataSource.PLUGIN_NAME );
-      return kartaRuntime.run( runName, pluginName, testDataSourcePluginHashSet, feature, 1, 1 );
+      return kartaRuntime.runFeature( pluginName, testDataSourcePluginHashSet, runName, feature, 1, 1 );
    }
 }

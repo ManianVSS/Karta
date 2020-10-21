@@ -21,9 +21,10 @@ public class StepResult implements Serializable
 
    @Builder.Default
    private boolean                       successsful      = false;
-   private String                        message;
-   private Throwable                     errorThrown;
+
+   private TestIncident                  incident;
 
    @Builder.Default
-   private HashMap<String, Serializable> variables        = new HashMap<String, Serializable>();
+   private HashMap<String, Serializable> results          = new HashMap<String, Serializable>();
+
 }

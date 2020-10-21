@@ -16,6 +16,6 @@ public class StepDefinitionsCollection2
    {
       log.info( "a binary operation is perfomed on the calculator " + context.getData() );
       context.getVariables().put( "BinaryOperationResult", context.getProperties() );
-      return StepResult.builder().successsful( true ).message( "The binary operation completed" ).variables( context.getVariables() ).build();
+      return StepResult.builder().successsful( true ).results( context.getVariables() ).build();
    }
 }

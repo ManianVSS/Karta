@@ -3,9 +3,13 @@ package org.mvss.karta.framework.minions;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.HashSet;
 
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.core.TestFeature;
+import org.mvss.karta.framework.core.TestIncident;
+import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
@@ -29,6 +33,18 @@ public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion,
    }
 
    @Override
+   public boolean runFeature( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, long numberOfIterations, int numberOfIterationsInParallel ) throws RemoteException
+   {
+      return kartaRuntime.runFeature( stepRunnerPlugin, testDataSourcePlugins, runName, feature, numberOfIterations, numberOfIterationsInParallel );
+   }
+
+   @Override
+   public boolean runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, int iterationIndex, TestScenario testScenario, int scenarioIterationNumber ) throws RemoteException
+   {
+      return kartaRuntime.runTestScenario( stepRunnerPlugin, testDataSourcePlugins, runName, feature, iterationIndex, testScenario, scenarioIterationNumber );
+   }
+
+   @Override
    public StepResult runStep( String stepRunnerPlugin, TestStep step, TestExecutionContext context ) throws RemoteException
    {
       try
@@ -37,11 +53,7 @@ public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion,
       }
       catch ( TestFailureException e )
       {
-         return new StepResult( false, e.getMessage(), e, null );
-      }
-      catch ( Throwable e )
-      {
-         throw new RemoteException( e.getMessage() );
+         return new StepResult( false, TestIncident.builder().thrownCause( e ).build(), null );
       }
    }
 
@@ -54,11 +66,7 @@ public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion,
       }
       catch ( TestFailureException e )
       {
-         return new StepResult( false, e.getMessage(), e, null );
-      }
-      catch ( Throwable e )
-      {
-         throw new RemoteException( e.getMessage() );
+         return new StepResult( false, TestIncident.builder().thrownCause( e ).build(), null );
       }
    }
 
@@ -68,5 +76,4 @@ public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion,
       log.debug( "Health check ping" );
       return true;
    }
-
 }

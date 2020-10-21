@@ -7,10 +7,12 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.javatest.Scenario;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
-import org.mvss.karta.framework.runtime.event.GenericTestEvent;
+import org.mvss.karta.framework.runtime.event.JavaScenarioCompleteEvent;
+import org.mvss.karta.framework.runtime.event.JavaScenarioStartEvent;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 
@@ -72,18 +74,15 @@ public class JavaIterationRunner implements Runnable
          StepResult result;
          try
          {
-            eventProcessor.raiseEvent( new GenericTestEvent( runName, "feature:" + featureName + " iteration [" + iterationIndex + "] scenario started " + scenarioName ) );
-
             if ( scenarioSetupMethods != null )
             {
-               if ( !JavaFeatureRunner.runTestMethods( eventProcessor, testDataSources, runName, featureName, featureDescription, "feature:" + featureName + " iteration [" + iterationIndex + "] scenario "
-                                                                                                                                  + " setup", testCaseObject, testExecutionContext, scenarioSetupMethods, scenarioIterationNumber ) )
+               if ( !JavaFeatureRunner.runTestMethods( eventProcessor, testDataSources, runName, featureName, scenarioName, false, true, testCaseObject, testExecutionContext, scenarioSetupMethods, scenarioIterationNumber ) )
                {
                   continue nextScenarioMethod;
                }
             }
 
-            eventProcessor.raiseEvent( new GenericTestEvent( runName, "feature:" + featureName + " iteration [" + iterationIndex + "] scenario steps started " + featureName + " " + scenarioMethod.getName() ) );
+            eventProcessor.raiseEvent( new JavaScenarioStartEvent( scenarioName, featureName, iterationIndex, scenarioMethod.getName(), scenarioName ) );
 
             testData = KartaRuntime.getMergedTestData( null, testDataSources, new ExecutionStepPointer( featureName, scenarioName, null, scenarioIterationNumber, 0 ) );
             testExecutionContext.setData( testData );
@@ -97,27 +96,24 @@ public class JavaIterationRunner implements Runnable
             }
             else
             {
-               result = new StepResult( ( returnType == boolean.class ) ? ( (boolean) resultReturned ) : true, null, null, null );
+               result = new StepResult( ( returnType == boolean.class ) ? ( (boolean) resultReturned ) : true, null, null );
             }
 
-            eventProcessor.raiseEvent( new GenericTestEvent( runName, "feature:" + featureName + " iteration [" + iterationIndex + "] scenario completed" + featureName + " " + scenarioMethod.getName() + " Result: " + result.toString() ) );
+            eventProcessor.raiseEvent( new JavaScenarioCompleteEvent( scenarioName, scenarioName, iterationIndex, scenarioMethod.getName(), scenarioName, result ) );
 
             if ( scenarioTearDownMethods != null )
             {
-               if ( !JavaFeatureRunner.runTestMethods( eventProcessor, testDataSources, runName, featureName, featureDescription, "feature:" + featureName + " iteration [" + iterationIndex + "] scenario "
-                                                                                                                                  + " tearDown", testCaseObject, testExecutionContext, scenarioTearDownMethods, scenarioIterationNumber ) )
+               if ( !JavaFeatureRunner.runTestMethods( eventProcessor, testDataSources, runName, featureName, scenarioName, false, false, testCaseObject, testExecutionContext, scenarioTearDownMethods, scenarioIterationNumber ) )
                {
-                  eventProcessor.raiseEvent( new GenericTestEvent( runName, "feature:" + featureName + " iteration [" + iterationIndex + "] scenario completed" + featureName + " " + scenarioMethod.getName() + " Result: " + result.toString() ) );
                   continue nextScenarioMethod;
                }
             }
          }
          catch ( Throwable t )
          {
-            result = new StepResult( false, t.getMessage(), t, null );
+            result = new StepResult( false, TestIncident.builder().thrownCause( t ).build(), null );
             log.error( t );
          }
-         eventProcessor.raiseEvent( new GenericTestEvent( runName, "feature:" + featureName + " iteration [" + iterationIndex + "] scenario completed" + scenarioName + " " + scenarioMethod.getName() + " Result: " + result.toString() ) );
       }
    }
 }

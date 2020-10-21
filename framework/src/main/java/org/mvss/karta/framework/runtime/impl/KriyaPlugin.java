@@ -21,6 +21,7 @@ import org.mvss.karta.framework.core.ParameterMapping;
 import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
+import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
@@ -315,15 +316,13 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
          {
             stepDefMethodToInvoke.invoke( stepDefObject, values.toArray() );
             result.setSuccesssful( true );
-            result.setVariables( testExecutionContext.getVariables() );
          }
 
       }
       catch ( Throwable t )
       {
          result.setSuccesssful( false );
-         result.setMessage( t.getMessage() );
-         result.setErrorThrown( t );
+         result.setIncident( TestIncident.builder().thrownCause( t ).build() );
       }
 
       return result;
@@ -361,15 +360,13 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
             {
                choasActionHandlerMethodToInvoke.invoke( chaosActionHandlerObject, testExecutionContext, chaosAction );
                result.setSuccesssful( true );
-               result.setVariables( testExecutionContext.getVariables() );
             }
          }
       }
       catch ( Throwable t )
       {
          result.setSuccesssful( false );
-         result.setMessage( t.getMessage() );
-         result.setErrorThrown( t );
+         result.setIncident( TestIncident.builder().thrownCause( t ).build() );
       }
 
       return result;

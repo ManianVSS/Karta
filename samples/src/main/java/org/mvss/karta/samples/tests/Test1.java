@@ -30,48 +30,48 @@ public class Test1
    public StepResult myFeatureSetup( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
-      return new StepResult( true, null, null, null );
+      return new StepResult( true, null, null );
    }
 
    @ScenarioSetup
    public StepResult myScenarioSetupMethod( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
-      return new StepResult( true, null, null, null );
+      return new StepResult( true, null, null );
    }
 
    @Scenario( value = "Scenario2", sequence = 2 )
    public StepResult myScenarioMethod2( TestExecutionContext testExecutionContext )
    {
       log.info( username + " " + variable2 );
-      return new StepResult( true, null, null, null );
+      return new StepResult( true, null, null );
    }
 
    @Scenario( value = "Scenario1", sequence = 1 )
    public StepResult myScenarioMethod( TestExecutionContext testExecutionContext )
    {
       log.info( username + " " + variable1 );
-      return new StepResult( true, null, null, null );
+      return new StepResult( true, null, null );
    }
 
    @Scenario( value = "Scenario3" )
    public StepResult myScenarioMethod3( TestExecutionContext testExecutionContext )
    {
       log.info( username + " " + variable2 );
-      return new StepResult( true, null, null, null );
+      return new StepResult( true, null, null );
    }
 
    @ScenarioTearDown
    public StepResult myScenarioTearDownMethod( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
-      return new StepResult( true, null, null, null );
+      return new StepResult( true, null, null );
    }
 
    @FeatureTearDown
    public StepResult myFeatureTearDownMethod( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
-      return new StepResult( true, null, null, null );
+      return new StepResult( true, null, null );
    }
 }

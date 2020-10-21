@@ -37,8 +37,4 @@ public class TestScenario implements Serializable, ObjectWithChance
 
    @Builder.Default
    private ArrayList<TestStep> scenarioTearDownSteps  = new ArrayList<TestStep>();
-
-   //
-   // @Builder.Default
-   // private HashSet<String> tags = new HashSet<String>();
 }

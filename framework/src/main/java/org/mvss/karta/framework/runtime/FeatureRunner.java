@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
+import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
@@ -94,7 +95,7 @@ public class FeatureRunner
             if ( StringUtils.isNotEmpty( step.getNode() ) )
             {
                stepResult = minionRegistry.getMinion( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-               DataUtils.mergeVariables( stepResult.getVariables(), testExecutionContext.getVariables() );
+               DataUtils.mergeVariables( stepResult.getResults(), testExecutionContext.getVariables() );
             }
             else
             {
@@ -104,8 +105,7 @@ public class FeatureRunner
          catch ( TestFailureException tfe )
          {
             log.error( "Exception in test failure ", tfe );
-            stepResult.setMessage( tfe.getMessage() );
-            stepResult.setErrorThrown( tfe );
+            stepResult.setIncident( TestIncident.builder().thrownCause( tfe ).build() );
          }
          finally
          {
@@ -184,7 +184,7 @@ public class FeatureRunner
             if ( StringUtils.isNotEmpty( step.getNode() ) )
             {
                stepResult = minionRegistry.getMinion( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-               DataUtils.mergeVariables( stepResult.getVariables(), testExecutionContext.getVariables() );
+               DataUtils.mergeVariables( stepResult.getResults(), testExecutionContext.getVariables() );
             }
             else
             {
@@ -194,8 +194,7 @@ public class FeatureRunner
          catch ( TestFailureException tfe )
          {
             log.error( "Exception in test failure ", tfe );
-            stepResult.setMessage( tfe.getMessage() );
-            stepResult.setErrorThrown( tfe );
+            stepResult.setIncident( TestIncident.builder().thrownCause( tfe ).build() );
          }
          finally
          {

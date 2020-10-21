@@ -5,6 +5,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.mvss.karta.framework.core.TestIncident;
+import org.mvss.karta.framework.runtime.TestFailureException;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
@@ -82,6 +84,23 @@ public class EventProcessor implements AutoCloseable
             log.error( "Exception occured during event processing ", t );
             continue;
          }
+      }
+   }
+
+   public void fail( String runName, TestIncident incident ) throws TestFailureException
+   {
+      if ( incident != null )
+      {
+         raiseEvent( new TestIncidentOccurenceEvent( runName, incident ) );
+         throw new TestFailureException( incident.getMessage(), incident.getThrownCause() );
+      }
+   }
+
+   public void raiseIncident( String runName, TestIncident incident )
+   {
+      if ( incident != null )
+      {
+         raiseEvent( new TestIncidentOccurenceEvent( runName, incident ) );
       }
    }
 }
