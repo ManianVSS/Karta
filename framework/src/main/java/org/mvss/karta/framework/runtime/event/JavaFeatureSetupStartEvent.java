@@ -26,7 +26,7 @@ public class JavaFeatureSetupStartEvent extends Event
 
    public JavaFeatureSetupStartEvent( String runName, String featureName, String methodName )
    {
-      super( StandardEventsTypes.FEATURE_SETUP_STEP_START_EVENT, runName );
+      super( StandardEventsTypes.JAVA_FEATURE_SETUP_START_EVENT, runName );
       this.featureName = featureName;
       this.methodName = methodName;
    }
@@ -34,7 +34,7 @@ public class JavaFeatureSetupStartEvent extends Event
    @Builder
    public JavaFeatureSetupStartEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, String methodName )
    {
-      super( StandardEventsTypes.FEATURE_SETUP_STEP_START_EVENT, runName, id, timeOfOccurrence );
+      super( StandardEventsTypes.JAVA_FEATURE_SETUP_START_EVENT, runName, id, timeOfOccurrence );
       this.featureName = featureName;
       this.methodName = methodName;
    }

@@ -7,7 +7,6 @@ import java.util.Random;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
-import org.mvss.karta.framework.utils.DataUtils;
 import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
 import lombok.AllArgsConstructor;
@@ -163,7 +162,7 @@ public class ObjectGenerationRule implements Serializable, ObjectWithChance
                {
                   range = new Range( 1, STRING_LENGTH_RANGE_DEFAULT_MAX );
                }
-               return DataUtils.randomAlphaNumericString( random, (int) range.getNext( random ) );
+               return RandomizationUtils.randomAlphaNumericString( random, (int) range.getNext( random ) );
 
             case BINARY_DATA_RANGE:
                if ( range == null )

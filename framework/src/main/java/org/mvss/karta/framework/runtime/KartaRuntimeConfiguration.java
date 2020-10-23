@@ -48,6 +48,8 @@ public class KartaRuntimeConfiguration implements Serializable
 
    private SSLProperties                             sslProperties;
 
+   private String                                    nodeName;
+
    @Builder.Default
    private HashMap<String, KartaMinionConfiguration> minions                      = new HashMap<String, KartaMinionConfiguration>();
 

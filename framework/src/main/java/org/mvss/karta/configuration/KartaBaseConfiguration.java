@@ -19,5 +19,8 @@ public class KartaBaseConfiguration implements Serializable
     */
    private static final long       serialVersionUID = 1L;
 
+   private ArrayList<String>       pluginTypes;
+
    private ArrayList<PluginConfig> pluginConfigs;
+
 }

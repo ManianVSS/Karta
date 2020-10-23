@@ -307,7 +307,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
                      name = paramaterNameInfo.value();
                   }
                   Serializable parameterValue = testData.get( name );
-                  values.add( ( parameterValue == null ) ? null : objectMapper.convertValue( parameterValue, parametersObj[i++].getType() ) );
+                  values.add( ( parameterValue == null ) ? null : objectMapper.convertValue( parameterValue, parametersObj[i].getType() ) );
 
                }
             }

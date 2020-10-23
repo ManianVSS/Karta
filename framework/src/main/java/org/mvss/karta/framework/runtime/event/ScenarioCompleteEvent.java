@@ -25,10 +25,10 @@ public class ScenarioCompleteEvent extends Event
    private static final long serialVersionUID = 1L;
 
    private TestFeature       feature;
-   private long              iterationNumber;
+   private int               iterationNumber;
    private TestScenario      scenario;
 
-   public ScenarioCompleteEvent( String runName, TestFeature feature, long iterationNumber, TestScenario scenario )
+   public ScenarioCompleteEvent( String runName, TestFeature feature, int iterationNumber, TestScenario scenario )
    {
       super( StandardEventsTypes.SCENARIO_COMPLETE_EVENT, runName );
       this.feature = feature;
@@ -37,7 +37,7 @@ public class ScenarioCompleteEvent extends Event
    }
 
    @Builder
-   public ScenarioCompleteEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, long iterationNumber, TestScenario scenario )
+   public ScenarioCompleteEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, int iterationNumber, TestScenario scenario )
    {
       super( StandardEventsTypes.SCENARIO_COMPLETE_EVENT, runName, id, timeOfOccurrence );
       this.feature = feature;

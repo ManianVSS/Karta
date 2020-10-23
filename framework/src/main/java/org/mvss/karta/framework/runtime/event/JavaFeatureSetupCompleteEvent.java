@@ -29,7 +29,7 @@ public class JavaFeatureSetupCompleteEvent extends Event
 
    public JavaFeatureSetupCompleteEvent( String runName, String featureName, String methodName, StepResult result )
    {
-      super( StandardEventsTypes.FEATURE_SETUP_STEP_COMPLETE_EVENT, runName );
+      super( StandardEventsTypes.JAVA_FEATURE_SETUP_COMPLETE_EVENT, runName );
       this.featureName = featureName;
       this.methodName = methodName;
       this.result = result;
@@ -38,7 +38,7 @@ public class JavaFeatureSetupCompleteEvent extends Event
    @Builder
    public JavaFeatureSetupCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, String methodName, StepResult result )
    {
-      super( StandardEventsTypes.FEATURE_SETUP_STEP_COMPLETE_EVENT, runName, id, timeOfOccurrence );
+      super( StandardEventsTypes.JAVA_FEATURE_SETUP_COMPLETE_EVENT, runName, id, timeOfOccurrence );
       this.featureName = featureName;
       this.methodName = methodName;
       this.result = result;

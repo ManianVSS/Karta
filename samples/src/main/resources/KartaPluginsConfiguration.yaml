@@ -1,16 +1,8 @@
----
 - pluginName: KriyaExt
-  pluginTypes:
-    - org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser
-    - org.mvss.karta.framework.runtime.interfaces.StepRunner
   className: org.mvss.karta.samples.plugins.KriyaExtPlugin
 
 - pluginName: RandomTestDataSource
-  pluginTypes:
-    - org.mvss.karta.framework.runtime.interfaces.TestDataSource
   className: org.mvss.karta.samples.plugins.RandomTestDataSource
 
 - pluginName: CSVTestDataSourcePlugin
-  pluginTypes:
-    - org.mvss.karta.framework.runtime.interfaces.TestDataSource
   className: org.mvss.karta.samples.plugins.CSVTestDataSourcePlugin

@@ -30,7 +30,7 @@ public class JavaScenarioChaosActionStartEvent extends Event
 
    public JavaScenarioChaosActionStartEvent( String runName, String featureName, long iterationNumber, String scenarioName, ChaosAction chaosAction )
    {
-      super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_START_EVENT, runName );
+      super( StandardEventsTypes.JAVA_SCENARIO_CHAOS_ACTION_START_EVENT, runName );
       this.featureName = featureName;
       this.iterationNumber = iterationNumber;
       this.scenarioName = scenarioName;
@@ -40,7 +40,7 @@ public class JavaScenarioChaosActionStartEvent extends Event
    @Builder
    public JavaScenarioChaosActionStartEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, long iterationNumber, String scenarioName, ChaosAction chaosAction )
    {
-      super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_START_EVENT, runName, id, timeOfOccurrence );
+      super( StandardEventsTypes.JAVA_SCENARIO_CHAOS_ACTION_START_EVENT, runName, id, timeOfOccurrence );
       this.featureName = featureName;
       this.iterationNumber = iterationNumber;
       this.scenarioName = scenarioName;

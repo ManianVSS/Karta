@@ -155,7 +155,7 @@ public class JavaFeatureRunner
          HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
-         TestExecutionContext testExecutionContext = new TestExecutionContext( testProperties, testData, variables );
+         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testProperties, testData, variables );
 
          int iterationIndex = -1;
 

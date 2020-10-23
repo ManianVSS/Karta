@@ -21,6 +21,8 @@ import org.mvss.karta.framework.runtime.event.JavaScenarioSetupStartEvent;
 import org.mvss.karta.framework.runtime.event.JavaScenarioStartEvent;
 import org.mvss.karta.framework.runtime.event.JavaScenarioTearDownCompleteEvent;
 import org.mvss.karta.framework.runtime.event.JavaScenarioTearDownStartEvent;
+import org.mvss.karta.framework.runtime.event.JobStepCompleteEvent;
+import org.mvss.karta.framework.runtime.event.JobStepStartEvent;
 import org.mvss.karta.framework.runtime.event.RunCompleteEvent;
 import org.mvss.karta.framework.runtime.event.RunStartEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioChaosActionCompleteEvent;
@@ -253,6 +255,18 @@ public class LoggingTestEventListener implements TestEventListener
          JavaFeatureTearDownCompleteEvent featureTearDownStepCompleteEvent = (JavaFeatureTearDownCompleteEvent) event;
          log.info( "{" + featureTearDownStepCompleteEvent.getRunName() + "}{" + featureTearDownStepCompleteEvent.getFeatureName() + "}{tearDown(" + featureTearDownStepCompleteEvent.getMethod() + ")}" + SPACE
                    + ( featureTearDownStepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+      }
+      else if ( event instanceof JobStepStartEvent )
+      {
+         JobStepStartEvent stepStartEvent = (JobStepStartEvent) event;
+         log.info( "{" + stepStartEvent.getRunName() + "}{" + stepStartEvent.getFeature().getName() + "}{" + stepStartEvent.getJob().getName() + "}{" + stepStartEvent.getIterationNumber() + "}{step(" + stepStartEvent.getStep().getIdentifier() + ")}"
+                   + SPACE + STARTED );
+      }
+      else if ( event instanceof JobStepCompleteEvent )
+      {
+         JobStepCompleteEvent stepCompleteEvent = (JobStepCompleteEvent) event;
+         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeature().getName() + "}{" + stepCompleteEvent.getJob().getName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{step("
+                   + stepCompleteEvent.getStep().getIdentifier() + ")}" + SPACE + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
       }
       else if ( event instanceof TestIncidentOccurenceEvent )
       {

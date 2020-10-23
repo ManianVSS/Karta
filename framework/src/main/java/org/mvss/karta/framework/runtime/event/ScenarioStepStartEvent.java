@@ -26,11 +26,11 @@ public class ScenarioStepStartEvent extends Event
    private static final long serialVersionUID = 1L;
 
    private TestFeature       feature;
-   private long              iterationNumber;
+   private int               iterationNumber;
    private TestScenario      scenario;
    private TestStep          scenarioStep;
 
-   public ScenarioStepStartEvent( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioStep )
+   public ScenarioStepStartEvent( String runName, TestFeature feature, int iterationNumber, TestScenario scenario, TestStep scenarioStep )
    {
       super( StandardEventsTypes.SCENARIO_STEP_START_EVENT, runName );
       this.feature = feature;
@@ -40,7 +40,7 @@ public class ScenarioStepStartEvent extends Event
    }
 
    @Builder
-   public ScenarioStepStartEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioStep )
+   public ScenarioStepStartEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, int iterationNumber, TestScenario scenario, TestStep scenarioStep )
    {
       super( StandardEventsTypes.SCENARIO_STEP_START_EVENT, runName, id, timeOfOccurrence );
       this.feature = feature;

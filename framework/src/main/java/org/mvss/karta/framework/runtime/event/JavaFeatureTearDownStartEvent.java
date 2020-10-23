@@ -26,7 +26,7 @@ public class JavaFeatureTearDownStartEvent extends Event
 
    public JavaFeatureTearDownStartEvent( String runName, String featureName, String methodName )
    {
-      super( StandardEventsTypes.FEATURE_SETUP_STEP_START_EVENT, runName );
+      super( StandardEventsTypes.JAVA_FEATURE_TEARDOWN_START_EVENT, runName );
       this.featureName = featureName;
       this.method = methodName;
    }
@@ -34,7 +34,7 @@ public class JavaFeatureTearDownStartEvent extends Event
    @Builder
    public JavaFeatureTearDownStartEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, String methodName )
    {
-      super( StandardEventsTypes.FEATURE_SETUP_STEP_START_EVENT, runName, id, timeOfOccurrence );
+      super( StandardEventsTypes.JAVA_FEATURE_TEARDOWN_START_EVENT, runName, id, timeOfOccurrence );
       this.featureName = featureName;
       this.method = methodName;
    }

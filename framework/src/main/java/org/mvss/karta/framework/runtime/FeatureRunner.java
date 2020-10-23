@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
+import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
@@ -66,12 +67,36 @@ public class FeatureRunner
       HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
       KartaMinionRegistry minionRegistry = kartaRuntime.getMinionRegistry();
 
-      eventProcessor.raiseEvent( new FeatureStartEvent( runName, testFeature ) );;
+      ArrayList<Integer> runningJobs = new ArrayList<Integer>();
+
+      eventProcessor.raiseEvent( new FeatureStartEvent( runName, testFeature ) );
 
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
       HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
-      TestExecutionContext testExecutionContext = new TestExecutionContext( testProperties, testData, variables );
+      TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testProperties, testData, variables );
+
+      for ( TestJob job : testFeature.getTestJobs() )
+      {
+         long jobInterval = job.getInterval();
+
+         if ( jobInterval > 0 )
+         {
+            HashMap<String, Object> jobData = new HashMap<String, Object>();
+            jobData.put( "kartaRuntime", kartaRuntime );
+            jobData.put( "stepRunner", stepRunner );
+            jobData.put( "testDataSources", testDataSources );
+            jobData.put( "runName", runName );
+            jobData.put( "testFeature", testFeature );
+            jobData.put( "testJob", job );
+            jobData.put( "iterationCounter", new AtomicInteger() );
+            runningJobs.add( QuartzJobScheduler.scheduleJob( QuartzTestJob.class, jobInterval, jobData ) );
+         }
+         else
+         {
+            TestJobRunner.run( kartaRuntime, stepRunner, testDataSources, runName, testFeature, job, 0 );
+         }
+      }
 
       int iterationIndex = -1;
       int stepIndex = 0;
@@ -115,6 +140,11 @@ public class FeatureRunner
             if ( !stepResult.isSuccesssful() )
             {
                // log.error( "Feature \"" + testFeature.getName() + "\" failed at setup step " + step );
+               if ( !QuartzJobScheduler.deleteJobs( runningJobs ) )
+               {
+                  log.error( "Failed to delete test jobs" );
+               }
+
                eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature ) );
                return false;
             }
@@ -210,6 +240,11 @@ public class FeatureRunner
       }
 
       eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature ) );
+
+      if ( !QuartzJobScheduler.deleteJobs( runningJobs ) )
+      {
+         log.error( "Failed to delete test jobs" );
+      }
 
       return true;
    }

@@ -27,12 +27,12 @@ public class ScenarioTearDownStepCompleteEvent extends Event
    private static final long serialVersionUID = 1L;
 
    private TestFeature       feature;
-   private long              iterationNumber;
+   private int               iterationNumber;
    private TestScenario      scenario;
    private TestStep          scenarioTearDownStep;
    private StepResult        result;
 
-   public ScenarioTearDownStepCompleteEvent( String runName, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioTearDownStep, StepResult result )
+   public ScenarioTearDownStepCompleteEvent( String runName, TestFeature feature, int iterationNumber, TestScenario scenario, TestStep scenarioTearDownStep, StepResult result )
    {
       super( StandardEventsTypes.SCENARIO_TEARDOWN_STEP_COMPLETE_EVENT, runName );
       this.feature = feature;
@@ -43,7 +43,7 @@ public class ScenarioTearDownStepCompleteEvent extends Event
    }
 
    @Builder
-   public ScenarioTearDownStepCompleteEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, long iterationNumber, TestScenario scenario, TestStep scenarioTearDownStep, StepResult result )
+   public ScenarioTearDownStepCompleteEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, int iterationNumber, TestScenario scenario, TestStep scenarioTearDownStep, StepResult result )
    {
       super( StandardEventsTypes.SCENARIO_TEARDOWN_STEP_COMPLETE_EVENT, runName, id, timeOfOccurrence );
       this.feature = feature;

@@ -28,7 +28,7 @@ public class JavaScenarioTearDownStartEvent extends Event
 
    public JavaScenarioTearDownStartEvent( String runName, String feature, long iterationNumber, String scenario, String scenarioSetupStep )
    {
-      super( StandardEventsTypes.SCENARIO_SETUP_STEP_START_EVENT, runName );
+      super( StandardEventsTypes.JAVA_SCENARIO_TEARDOWN_START_EVENT, runName );
       this.featureName = feature;
       this.iterationNumber = iterationNumber;
       this.method = scenario;
@@ -38,7 +38,7 @@ public class JavaScenarioTearDownStartEvent extends Event
    @Builder
    public JavaScenarioTearDownStartEvent( String runName, UUID id, Date timeOfOccurrence, String feature, long iterationNumber, String scenario, String scenarioSetupStep )
    {
-      super( StandardEventsTypes.SCENARIO_SETUP_STEP_START_EVENT, runName, id, timeOfOccurrence );
+      super( StandardEventsTypes.JAVA_SCENARIO_TEARDOWN_START_EVENT, runName, id, timeOfOccurrence );
       this.featureName = feature;
       this.iterationNumber = iterationNumber;
       this.method = scenario;

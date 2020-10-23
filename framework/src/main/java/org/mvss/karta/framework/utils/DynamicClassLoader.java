@@ -114,6 +114,12 @@ public class DynamicClassLoader
    public static InputStream getClassPathResourceInJarAsStream( File jarFile, String resourceName ) throws MalformedURLException, URISyntaxException
    {
       ClassLoader loader = getClassLoaderForJar( jarFile );
+
+      if ( loader == null )
+      {
+         return null;
+      }
+
       return loader.getResourceAsStream( resourceName );
    }
 }

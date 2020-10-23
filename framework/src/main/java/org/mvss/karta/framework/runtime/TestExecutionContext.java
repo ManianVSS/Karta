@@ -18,7 +18,8 @@ public class TestExecutionContext implements Serializable
     */
    private static final long                              serialVersionUID = 1L;
 
-   private HashMap<String, HashMap<String, Serializable>> properties   = null;
-   private HashMap<String, Serializable>                  data         = null;
-   private HashMap<String, Serializable>                  variables = new HashMap<String, Serializable>();
+   private String                                         runName;
+   private HashMap<String, HashMap<String, Serializable>> properties       = null;
+   private HashMap<String, Serializable>                  data             = null;
+   private HashMap<String, Serializable>                  variables        = new HashMap<String, Serializable>();
 }

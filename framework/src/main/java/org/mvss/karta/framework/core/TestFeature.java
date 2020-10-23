@@ -29,6 +29,9 @@ public class TestFeature implements Serializable
    private Boolean                 exclusiveScenarioPerIteration = false;
 
    @Builder.Default
+   private ArrayList<TestJob>      testJobs                      = new ArrayList<TestJob>();
+
+   @Builder.Default
    private ArrayList<TestStep>     setupSteps                    = new ArrayList<TestStep>();
 
    @Builder.Default

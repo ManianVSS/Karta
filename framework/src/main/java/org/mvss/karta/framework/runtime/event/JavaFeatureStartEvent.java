@@ -25,14 +25,14 @@ public class JavaFeatureStartEvent extends Event
 
    public JavaFeatureStartEvent( String runName, String featureName )
    {
-      super( StandardEventsTypes.FEATURE_START_EVENT, runName );
+      super( StandardEventsTypes.JAVA_FEATURE_START_EVENT, runName );
       this.featureName = featureName;
    }
 
    @Builder
    public JavaFeatureStartEvent( String runName, UUID id, Date timeOfOccurrence, String featureName )
    {
-      super( StandardEventsTypes.FEATURE_START_EVENT, runName, id, timeOfOccurrence );
+      super( StandardEventsTypes.JAVA_FEATURE_START_EVENT, runName, id, timeOfOccurrence );
       this.featureName = featureName;
    }
 }

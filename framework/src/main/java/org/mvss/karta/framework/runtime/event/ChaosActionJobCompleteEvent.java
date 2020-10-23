@@ -5,8 +5,7 @@ import java.util.UUID;
 
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.core.TestScenario;
+import org.mvss.karta.framework.core.TestJob;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -18,7 +17,7 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
-public class ScenarioChaosActionCompleteEvent extends Event
+public class ChaosActionJobCompleteEvent extends Event
 {
 
    /**
@@ -26,29 +25,26 @@ public class ScenarioChaosActionCompleteEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private TestFeature       feature;
+   private TestJob           job;
    private int               iterationNumber;
-   private TestScenario      scenario;
    private ChaosAction       chaosAction;
    private StepResult        result;
 
-   public ScenarioChaosActionCompleteEvent( String runName, TestFeature feature, int iterationNumber, TestScenario scenario, ChaosAction chaosAction, StepResult result )
+   public ChaosActionJobCompleteEvent( String runName, TestJob job, int iterationNumber, ChaosAction chaosAction, StepResult result )
    {
       super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName );
-      this.feature = feature;
+      this.job = job;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
       this.chaosAction = chaosAction;
       this.result = result;
    }
 
    @Builder
-   public ScenarioChaosActionCompleteEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, int iterationNumber, TestScenario scenario, ChaosAction chaosAction, StepResult result )
+   public ChaosActionJobCompleteEvent( String runName, UUID id, Date timeOfOccurrence, TestJob job, int iterationNumber, ChaosAction chaosAction, StepResult result )
    {
       super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName, id, timeOfOccurrence );
-      this.feature = feature;
+      this.job = job;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
       this.chaosAction = chaosAction;
       this.result = result;
    }

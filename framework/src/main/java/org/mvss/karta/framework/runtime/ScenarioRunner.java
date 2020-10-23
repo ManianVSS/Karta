@@ -67,7 +67,7 @@ public class ScenarioRunner
       int stepIndex = 0;
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
       HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
-      TestExecutionContext testExecutionContext = new TestExecutionContext( testProperties, testData, variables );
+      TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testProperties, testData, variables );
 
       String featureName = ( feature != null ) ? feature.getName() : Constants.UNNAMED;
 
@@ -125,6 +125,9 @@ public class ScenarioRunner
             for ( ChaosAction chaosAction : chaosActionsToPerform )
             {
                log.debug( "Performing chaos action: " + chaosAction );
+
+               testData = KartaRuntime.getMergedTestData( runName, null, testDataSources, new ExecutionStepPointer( feature.getName(), testScenario.getName(), chaosAction.getName(), iterationIndex, 0 ) );
+               // log.debug( "Chaos test data is " + testData.toString() );
 
                eventProcessor.raiseEvent( new ScenarioChaosActionStartEvent( runName, feature, iterationIndex, testScenario, chaosAction ) );
 

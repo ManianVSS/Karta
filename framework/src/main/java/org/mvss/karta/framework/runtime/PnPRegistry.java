@@ -23,11 +23,13 @@ import org.mvss.karta.framework.utils.ParserUtils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class PnPRegistry implements AutoCloseable
 {
+   @Getter
    private static TypeReference<ArrayList<PluginConfig>>             pluginConfigArrayListType = new TypeReference<ArrayList<PluginConfig>>()
                                                                                                {
                                                                                                };
@@ -95,13 +97,16 @@ public class PnPRegistry implements AutoCloseable
       {
          try
          {
-            if ( !registerPlugin( jarFile, pluginConfig ) )
+            File evaluatedJarFile = ( jarFile == null ) ? ( ( pluginConfig.getJarFile() == null ) ? null : new File( pluginConfig.getJarFile() ) ) : jarFile;
+
+            if ( !registerPlugin( evaluatedJarFile, pluginConfig ) )
             {
                log.error( "Plugin registration failed for " + pluginConfig );
             }
          }
          catch ( Throwable t )
          {
+            log.error( t );
             continue;
          }
       }
@@ -114,8 +119,19 @@ public class PnPRegistry implements AutoCloseable
 
    public void loadPluginJar( Configurator configurator, File jarFile ) throws MalformedURLException, IOException, URISyntaxException
    {
-      // TODO: ignore jar files without config json
-      String pluginConfigStr = IOUtils.toString( DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_PLUGINS_CONFIG_YAML ), Charset.defaultCharset() );
+      if ( jarFile == null )
+      {
+         return;
+      }
+
+      InputStream jarFileInputStream = DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_PLUGINS_CONFIG_YAML );
+
+      if ( jarFileInputStream == null )
+      {
+         return;
+      }
+
+      String pluginConfigStr = IOUtils.toString( jarFileInputStream, Charset.defaultCharset() );
       ArrayList<PluginConfig> pluginConfigs = ParserUtils.getYamlObjectMapper().readValue( pluginConfigStr, pluginConfigArrayListType );
       addPluginConfiguration( jarFile, pluginConfigs );
 

@@ -4,8 +4,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import org.mvss.karta.framework.chaos.ChaosAction;
-import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.core.TestScenario;
+import org.mvss.karta.framework.core.TestJob;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -17,7 +16,7 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
-public class ScenarioChaosActionStartEvent extends Event
+public class ChaosActionJobStartEvent extends Event
 {
 
    /**
@@ -25,27 +24,24 @@ public class ScenarioChaosActionStartEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private TestFeature       feature;
+   private TestJob           job;
    private int               iterationNumber;
-   private TestScenario      scenario;
    private ChaosAction       chaosAction;
 
-   public ScenarioChaosActionStartEvent( String runName, TestFeature feature, int iterationNumber, TestScenario scenario, ChaosAction chaosAction )
+   public ChaosActionJobStartEvent( String runName, TestJob job, int iterationNumber, ChaosAction chaosAction )
    {
       super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_START_EVENT, runName );
-      this.feature = feature;
+      this.job = job;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
       this.chaosAction = chaosAction;
    }
 
    @Builder
-   public ScenarioChaosActionStartEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, int iterationNumber, TestScenario scenario, ChaosAction chaosAction )
+   public ChaosActionJobStartEvent( String runName, UUID id, Date timeOfOccurrence, TestJob job, int iterationNumber, ChaosAction chaosAction )
    {
       super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_START_EVENT, runName, id, timeOfOccurrence );
-      this.feature = feature;
+      this.job = job;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
       this.chaosAction = chaosAction;
    }
 }

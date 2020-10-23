@@ -19,7 +19,7 @@ public class KartaMinionServer
    private Registry                 rmiRegistry;
    private KartaMinion              kartaMinion;
 
-   @PropertyMapping( "minion.config" )
+   @PropertyMapping( "node.config" )
    private KartaMinionConfiguration minionConfig = new KartaMinionConfiguration();
 
    public KartaMinionServer( KartaRuntime kartaRuntime ) throws IllegalArgumentException, IllegalAccessException, RemoteException, AlreadyBoundException

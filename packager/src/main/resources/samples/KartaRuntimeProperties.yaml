@@ -1,7 +1,7 @@
 Karta:
   EventProcessor.numberOfThread: 10
   EventProcessor.maxEventQueueSize: 100
-  minion.config:
+  node.config:
     host: localhost
     port: 17171
     enableSSL: true

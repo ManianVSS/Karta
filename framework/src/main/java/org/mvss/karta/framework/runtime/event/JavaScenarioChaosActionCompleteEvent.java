@@ -32,7 +32,7 @@ public class JavaScenarioChaosActionCompleteEvent extends Event
 
    public JavaScenarioChaosActionCompleteEvent( String runName, String featureName, long iterationNumber, String scenarioName, ChaosAction chaosAction, StepResult result )
    {
-      super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName );
+      super( StandardEventsTypes.JAVA_SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName );
       this.featureName = featureName;
       this.iterationNumber = iterationNumber;
       this.scenarioName = scenarioName;
@@ -43,7 +43,7 @@ public class JavaScenarioChaosActionCompleteEvent extends Event
    @Builder
    public JavaScenarioChaosActionCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, long iterationNumber, String scenarioName, ChaosAction chaosAction, StepResult result )
    {
-      super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName, id, timeOfOccurrence );
+      super( StandardEventsTypes.JAVA_SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName, id, timeOfOccurrence );
       this.featureName = featureName;
       this.iterationNumber = iterationNumber;
       this.scenarioName = scenarioName;

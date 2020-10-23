@@ -23,12 +23,12 @@ public class RunCompleteEvent extends Event
 
    public RunCompleteEvent( String runName )
    {
-      super( StandardEventsTypes.RUN_COMPLETE_EVENT, runName );
+      super( StandardEventsTypes.JOB_STEP_COMPLETE_EVENT, runName );
    }
 
    @Builder
    public RunCompleteEvent( String runName, UUID id, Date timeOfOccurrence )
    {
-      super( StandardEventsTypes.RUN_COMPLETE_EVENT, runName, id, timeOfOccurrence );
+      super( StandardEventsTypes.JOB_STEP_COMPLETE_EVENT, runName, id, timeOfOccurrence );
    }
 }

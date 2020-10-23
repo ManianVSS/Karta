@@ -28,7 +28,7 @@ public class JavaScenarioSetupStartEvent extends Event
 
    public JavaScenarioSetupStartEvent( String runName, String feature, long iterationNumber, String method, String scenarioName )
    {
-      super( StandardEventsTypes.SCENARIO_SETUP_STEP_START_EVENT, runName );
+      super( StandardEventsTypes.JAVA_SCENARIO_SETUP_START_EVENT, runName );
       this.featureName = feature;
       this.iterationNumber = iterationNumber;
       this.method = method;
@@ -38,7 +38,7 @@ public class JavaScenarioSetupStartEvent extends Event
    @Builder
    public JavaScenarioSetupStartEvent( String runName, UUID id, Date timeOfOccurrence, String feature, long iterationNumber, String method, String scenarioName )
    {
-      super( StandardEventsTypes.SCENARIO_SETUP_STEP_START_EVENT, runName, id, timeOfOccurrence );
+      super( StandardEventsTypes.JAVA_SCENARIO_SETUP_START_EVENT, runName, id, timeOfOccurrence );
       this.featureName = feature;
       this.iterationNumber = iterationNumber;
       this.method = method;

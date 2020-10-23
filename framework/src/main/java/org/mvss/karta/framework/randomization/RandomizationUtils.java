@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Random;
 
 import org.mvss.karta.framework.chaos.ChaosUnit;
+import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.DataUtils;
 
 public class RandomizationUtils
@@ -219,4 +220,30 @@ public class RandomizationUtils
             return items;
       }
    }
+
+   public static String randomAlphaNumericString( Random random, int length )
+   {
+      String returnValue = Constants.EMPTY_STRING;
+
+      for ( int i = 0; i < length; i++ )
+      {
+         int randomDigit = random.nextInt( 62 );
+
+         if ( randomDigit < 10 )
+         {
+            returnValue = returnValue + (char) ( '0' + randomDigit );
+         }
+         else if ( randomDigit < 36 )
+         {
+            returnValue = returnValue + (char) ( 'A' + ( randomDigit - 10 ) );
+         }
+         else
+         {
+            returnValue = returnValue + (char) ( 'a' + ( randomDigit - 36 ) );
+         }
+
+      }
+      return returnValue;
+   }
+
 }

@@ -7,7 +7,6 @@ import org.mvss.karta.framework.core.NamedParameter;
 import org.mvss.karta.framework.core.ParameterMapping;
 import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.core.TestIncident;
-import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
@@ -38,12 +37,11 @@ public class StepDefinitionsCollection1
    {
       log.info( "the all clear button is pressed. Employee from CSV: " + csvEmployee );
 
-      String runName = KartaRuntime.getRunName( context );
       HashSet<String> failureTags = new HashSet<String>();
       failureTags.add( "sample" );
       failureTags.add( "failure" );
       failureTags.add( "tags" );
-      eventProcessor.raiseIncident( runName, TestIncident.builder().message( "Sample test incident" ).tags( failureTags ).build() );
+      eventProcessor.raiseIncident( context.getRunName(), TestIncident.builder().message( "Sample test incident" ).tags( failureTags ).build() );
    }
 
    @StepDefinition( "the calculator should display \"\"" )

@@ -26,4 +26,6 @@ sslProperties:
   keyStore: keyStore.p12
   keyStorePassword: changeit
 
+nodeName: local
+
 minions: {}

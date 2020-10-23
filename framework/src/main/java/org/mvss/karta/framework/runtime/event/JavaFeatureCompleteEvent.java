@@ -25,14 +25,14 @@ public class JavaFeatureCompleteEvent extends Event
 
    public JavaFeatureCompleteEvent( String runName, String featureName )
    {
-      super( StandardEventsTypes.FEATURE_COMPLETE_EVENT, runName );
+      super( StandardEventsTypes.JAVA_FEATURE_COMPLETE_EVENT, runName );
       this.featureName = featureName;
    }
 
    @Builder
    public JavaFeatureCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String featureName )
    {
-      super( StandardEventsTypes.FEATURE_COMPLETE_EVENT, runName, id, timeOfOccurrence );
+      super( StandardEventsTypes.JAVA_FEATURE_COMPLETE_EVENT, runName, id, timeOfOccurrence );
       this.featureName = featureName;
    }
 }

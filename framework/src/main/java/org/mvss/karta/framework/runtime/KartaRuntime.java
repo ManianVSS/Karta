@@ -27,6 +27,7 @@ import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.RunCompleteEvent;
 import org.mvss.karta.framework.runtime.event.RunStartEvent;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
+import org.mvss.karta.framework.runtime.interfaces.Plugin;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
@@ -38,6 +39,7 @@ import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
 import org.mvss.karta.framework.utils.SSLUtils;
+import org.quartz.SchedulerException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -83,7 +85,8 @@ public class KartaRuntime implements AutoCloseable
    @Getter
    private HashSet<Object>           beans;
 
-   public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException
+   @SuppressWarnings( "unchecked" )
+   public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException, ClassNotFoundException
    {
       random = new Random();
 
@@ -103,12 +106,10 @@ public class KartaRuntime implements AutoCloseable
       // {
       pnpRegistry = new PnPRegistry();
 
-      // TODO: Move plugin types to Karta Configuration
-      pnpRegistry.addPluginType( FeatureSourceParser.class );
-      pnpRegistry.addPluginType( StepRunner.class );
-      pnpRegistry.addPluginType( TestDataSource.class );
-      pnpRegistry.addPluginType( TestEventListener.class );
-      // }
+      for ( String pluginType : kartaBaseConfiguration.getPluginTypes() )
+      {
+         pnpRegistry.addPluginType( (Class<? extends Plugin>) Class.forName( pluginType ) );
+      }
 
       pnpRegistry.addPluginConfiguration( kartaBaseConfiguration.getPluginConfigs() );
 
@@ -201,6 +202,15 @@ public class KartaRuntime implements AutoCloseable
    {
       // TODO: Perform save actions and close threads
 
+      try
+      {
+         QuartzJobScheduler.shutdown();
+      }
+      catch ( SchedulerException e )
+      {
+         log.error( e );
+      }
+
       if ( eventProcessor != null )
       {
          eventProcessor.close();
@@ -254,29 +264,7 @@ public class KartaRuntime implements AutoCloseable
          stepTestData.forEach( ( key, value ) -> mergedTestData.put( key, value ) );
       }
 
-      HashMap<String, Serializable> runTimeMap = new HashMap<String, Serializable>();
-      runTimeMap.put( Constants.RUN_NAME, runName );
-      mergedTestData.put( Constants.__RUNTIME__, runTimeMap );
       return mergedTestData;
-   }
-
-   public static String getRunName( TestExecutionContext context )
-   {
-      HashMap<String, Serializable> testData = context.getData();
-      if ( testData == null )
-      {
-         return null;
-      }
-      Serializable runtimeMapVar = testData.get( Constants.__RUNTIME__ );
-
-      if ( runtimeMapVar == null )
-      {
-         return null;
-      }
-
-      @SuppressWarnings( "unchecked" )
-      HashMap<String, Serializable> runTimeMap = (HashMap<String, Serializable>) runtimeMapVar;
-      return (String) runTimeMap.get( Constants.RUN_NAME );
    }
 
    public void loadRuntimeObjects( Object object ) throws IllegalArgumentException, IllegalAccessException

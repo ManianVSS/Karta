@@ -2,10 +2,6 @@ package org.mvss.karta.framework.runtime;
 
 public class Constants
 {
-   public static final String   KARTA                            = "Karta";
-   public static final String   __RUNTIME__                      = "__runtime__";
-   public static final String   RUN_NAME                         = "runName";
-
    public static final String   KARTA_BASE_CONFIG_JSON           = "KartaBaseConfiguration.json";
    public static final String   KARTA_PLUGINS_CONFIG_JSON        = "KartaPluginsConfiguration.json";
    public static final String   KARTA_RUNTIME_CONFIGURATION_JSON = "KartaRuntimeConfiguration.json";

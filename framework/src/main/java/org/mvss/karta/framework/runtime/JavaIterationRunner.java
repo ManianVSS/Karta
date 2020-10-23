@@ -59,7 +59,7 @@ public class JavaIterationRunner implements Runnable
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
       HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
-      TestExecutionContext testExecutionContext = new TestExecutionContext( testProperties, testData, variables );
+      TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testProperties, testData, variables );
 
       nextScenarioMethod: for ( Method scenarioMethod : scenariosMethodsToRun )
       {

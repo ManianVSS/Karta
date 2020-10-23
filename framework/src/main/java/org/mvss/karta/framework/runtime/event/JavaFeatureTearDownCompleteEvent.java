@@ -29,7 +29,7 @@ public class JavaFeatureTearDownCompleteEvent extends Event
 
    public JavaFeatureTearDownCompleteEvent( String runName, String featureName, String method, StepResult result )
    {
-      super( StandardEventsTypes.FEATURE_SETUP_STEP_COMPLETE_EVENT, runName );
+      super( StandardEventsTypes.JAVA_FEATURE_TEARDOWN_COMPLETE_EVENT, runName );
       this.featureName = featureName;
       this.method = method;
       this.result = result;
@@ -38,7 +38,7 @@ public class JavaFeatureTearDownCompleteEvent extends Event
    @Builder
    public JavaFeatureTearDownCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, String method, StepResult result )
    {
-      super( StandardEventsTypes.FEATURE_SETUP_STEP_COMPLETE_EVENT, runName, id, timeOfOccurrence );
+      super( StandardEventsTypes.JAVA_FEATURE_TEARDOWN_COMPLETE_EVENT, runName, id, timeOfOccurrence );
       this.featureName = featureName;
       this.method = method;
       this.result = result;
