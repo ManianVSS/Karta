@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 
-import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
@@ -59,14 +58,15 @@ public class CSVTestDataSourcePlugin implements TestDataSource
    }
 
    @Override
-   public boolean initialize( HashMap<String, HashMap<String, Serializable>> properties ) throws Throwable
+   public boolean initialize() throws Throwable
    {
       if ( initialized )
       {
          return true;
       }
 
-      Configurator.loadProperties( properties, this );
+      log.info( "Initializing " + PLUGIN_NAME + " plugin" );
+
       resetCSV();
       initialized = true;
       return true;

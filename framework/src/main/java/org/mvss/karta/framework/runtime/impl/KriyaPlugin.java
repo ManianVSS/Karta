@@ -7,6 +7,7 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -16,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.ChaosActionDefinition;
+import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.core.NamedParameter;
 import org.mvss.karta.framework.core.ParameterMapping;
 import org.mvss.karta.framework.core.StepDefinition;
@@ -26,6 +28,7 @@ import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.TestFailureException;
+import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
@@ -66,6 +69,12 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
    @PropertyMapping( group = PLUGIN_NAME, value = "chaosActionDefinitionPackageNames" )
    private ArrayList<String>                            chaosActionDefinitionPackageNames      = new ArrayList<String>();
 
+   @KartaAutoWired
+   private Configurator                                 configurator;
+
+   @KartaAutoWired
+   private EventProcessor                               eventProcessor;
+
    @Override
    public String getPluginName()
    {
@@ -73,16 +82,18 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
    }
 
    @Override
-   public boolean initialize( HashMap<String, HashMap<String, Serializable>> properties ) throws Throwable
+   public boolean initialize() throws Throwable
    {
       if ( initialized )
       {
          return true;
       }
+      log.info( "Initializing " + PLUGIN_NAME + " plugin" );
 
-      Configurator.loadProperties( properties, this );
+      HashSet<Object> beans = new HashSet<Object>();
 
-      log.debug( "Initializing " + PLUGIN_NAME + " plugin with " + properties );
+      beans.add( configurator );
+      beans.add( eventProcessor );
 
       // HashSet<String> repoDirectories = new HashSet<String>();
       // repoDirectories.addAll( kartaRuntimeConfiguration.getTestRepositorydirectories() );
@@ -128,8 +139,9 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
                      String stepDefString = stepDefinition.value();
                      Class<?>[] params = candidateStepDefinitionMethod.getParameterTypes();
 
-                     if ( !( ( params.length >= 1 ) && ( TestExecutionContext.class == params[0] ) ) )
+                     if ( !( ( params.length > 0 ) && ( TestExecutionContext.class == params[0] ) ) )
                      {
+
                         log.error( "Step definition method " + methodDescription + " should have the first parameter type as TestExecutionContext" );
                         continue;
                      }
@@ -149,7 +161,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
                      if ( !stepDefinitionClassObjectMap.containsKey( stepDefinitionClass ) )
                      {
                         Object stepDefClassObj = stepDefinitionClass.newInstance();
-                        Configurator.loadProperties( properties, stepDefClassObj );
+                        configurator.loadProperties( stepDefClassObj );
+                        Configurator.loadBeans( stepDefClassObj, beans );
                         stepDefinitionClassObjectMap.put( stepDefinitionClass, stepDefClassObj );
                      }
                      stepHandlerMap.put( stepDefString, new MutablePair<Object, Method>( stepDefinitionClassObjectMap.get( stepDefinitionClass ), candidateStepDefinitionMethod ) );
@@ -193,7 +206,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
                         if ( !chaosActionDefinitionClassObjectMap.containsKey( chaosActionDefinitionClass ) )
                         {
                            Object chaosActionDefClassObj = chaosActionDefinitionClass.newInstance();
-                           Configurator.loadProperties( properties, chaosActionDefClassObj );
+                           configurator.loadProperties( chaosActionDefClassObj );
+                           Configurator.loadBeans( chaosActionDefClassObj, beans );
                            chaosActionDefinitionClassObjectMap.put( chaosActionDefinitionClass, chaosActionDefClassObj );
                         }
                         chaosActionHandlerMap.put( chaosActionName, new MutablePair<Object, Method>( chaosActionDefinitionClassObjectMap.get( chaosActionDefinitionClass ), candidateChaosActionMethod ) );
@@ -280,17 +294,17 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
 
          if ( parametersObj.length > 1 )
          {
-            StepDefinition definition = stepDefMethodToInvoke.getAnnotationsByType( StepDefinition.class )[0];
+            StepDefinition definition = stepDefMethodToInvoke.getAnnotation( StepDefinition.class );
 
             if ( definition.parameterMapping() == ParameterMapping.NAMED )
             {
                for ( int i = 1; i < parametersObj.length; i++ )
                {
                   String name = parametersObj[i].getName();
-                  NamedParameter[] paramaterNameInfo = parametersObj[i].getAnnotationsByType( NamedParameter.class );
-                  if ( ( paramaterNameInfo != null ) && ( paramaterNameInfo.length >= 1 ) )
+                  NamedParameter paramaterNameInfo = parametersObj[i].getAnnotation( NamedParameter.class );
+                  if ( paramaterNameInfo != null )
                   {
-                     name = paramaterNameInfo[0].value();
+                     name = paramaterNameInfo.value();
                   }
                   Serializable parameterValue = testData.get( name );
                   values.add( ( parameterValue == null ) ? null : objectMapper.convertValue( parameterValue, parametersObj[i++].getType() ) );

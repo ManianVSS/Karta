@@ -1,13 +1,19 @@
 package org.mvss.karta.samples.tests;
 
+import java.util.HashSet;
+
+import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.javatest.Feature;
 import org.mvss.karta.framework.core.javatest.FeatureSetup;
 import org.mvss.karta.framework.core.javatest.FeatureTearDown;
 import org.mvss.karta.framework.core.javatest.Scenario;
 import org.mvss.karta.framework.core.javatest.ScenarioSetup;
 import org.mvss.karta.framework.core.javatest.ScenarioTearDown;
+import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
+import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.samples.stepdefinitions.SamplePropertyType;
 
@@ -25,6 +31,9 @@ public class Test1
 
    @PropertyMapping( group = "groupName", value = "variable2" )
    private SamplePropertyType variable2;
+
+   @KartaAutoWired
+   EventProcessor             eventProcessor;
 
    @FeatureSetup
    public StepResult myFeatureSetup( TestExecutionContext testExecutionContext )
@@ -58,6 +67,13 @@ public class Test1
    public StepResult myScenarioMethod3( TestExecutionContext testExecutionContext )
    {
       log.info( username + " " + variable2 );
+      String runName = KartaRuntime.getRunName( testExecutionContext );
+      HashSet<String> failureTags = new HashSet<String>();
+      failureTags.add( "sample" );
+      failureTags.add( "failure" );
+      failureTags.add( "java" );
+      failureTags.add( "tags" );
+      eventProcessor.raiseIncident( runName, TestIncident.builder().message( "Sample test incident" ).tags( failureTags ).build() );
       return new StepResult( true, null, null );
    }
 

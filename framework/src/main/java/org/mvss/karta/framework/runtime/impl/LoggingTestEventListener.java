@@ -1,9 +1,5 @@
 package org.mvss.karta.framework.runtime.impl;
 
-import java.io.Serializable;
-import java.util.HashMap;
-
-import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.FeatureCompleteEvent;
 import org.mvss.karta.framework.runtime.event.FeatureSetupStepCompleteEvent;
@@ -68,16 +64,14 @@ public class LoggingTestEventListener implements TestEventListener
    }
 
    @Override
-   public boolean initialize( HashMap<String, HashMap<String, Serializable>> properties ) throws Throwable
+   public boolean initialize() throws Throwable
    {
       if ( initialized )
       {
          return true;
       }
 
-      Configurator.loadProperties( properties, this );
-
-      log.debug( "Initializing Yerkin plugin with " + properties );
+      log.info( "Initializing " + PLUGIN_NAME + " plugin" );
 
       initialized = true;
       return true;

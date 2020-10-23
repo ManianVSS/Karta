@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
@@ -75,6 +76,11 @@ public class JavaFeatureRunner
       HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
       KartaMinionRegistry minionRegistry = kartaRuntime.getMinionRegistry();
 
+      HashSet<Object> beans = new HashSet<Object>();
+
+      beans.add( kartaRuntime.getConfigurator() );
+      beans.add( eventProcessor );
+
       try
       {
          Class<?> testCaseClass = StringUtils.isNotBlank( javaTestJarFile ) ? (Class<?>) DynamicClassLoader.loadClass( javaTestJarFile, javaTest ) : (Class<?>) Class.forName( javaTest );
@@ -100,6 +106,7 @@ public class JavaFeatureRunner
          TreeMap<Integer, ArrayList<Method>> featureTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
 
          Object testCaseObject = testCaseClass.newInstance();
+         Configurator.loadBeans( testCaseObject, beans );
 
          for ( Method classMethod : classMethods )
          {
@@ -269,7 +276,7 @@ public class JavaFeatureRunner
 
       try
       {
-         HashMap<String, Serializable> testData = KartaRuntime.getMergedTestData( null, testDataSources, new ExecutionStepPointer( featureName, methodToInvoke.getName(), null, iterationNumber, -1 ) );
+         HashMap<String, Serializable> testData = KartaRuntime.getMergedTestData( runName, null, testDataSources, new ExecutionStepPointer( featureName, methodToInvoke.getName(), null, iterationNumber, -1 ) );
          testExecutionContext.setData( testData );
 
          Object resultReturned = methodToInvoke.invoke( testCaseObject, testExecutionContext );

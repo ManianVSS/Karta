@@ -1,9 +1,15 @@
 package org.mvss.karta.samples.stepdefinitions;
 
+import java.util.HashSet;
+
+import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.core.NamedParameter;
 import org.mvss.karta.framework.core.ParameterMapping;
 import org.mvss.karta.framework.core.StepDefinition;
+import org.mvss.karta.framework.core.TestIncident;
+import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
+import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 
 import lombok.extern.log4j.Log4j2;
@@ -17,6 +23,9 @@ public class StepDefinitionsCollection1
    @PropertyMapping( group = "groupName", value = "variable2" )
    private SamplePropertyType variable2;
 
+   @KartaAutoWired
+   EventProcessor             eventProcessor;
+
    @StepDefinition( value = "the calculator is powered on", parameterMapping = ParameterMapping.NAMED )
    public void the_calculator_is_powered_on( TestExecutionContext context, @NamedParameter( "employee" ) Employee employee ) throws Throwable
    {
@@ -28,6 +37,13 @@ public class StepDefinitionsCollection1
    public void the_all_clear_button_is_cleared( TestExecutionContext context, @NamedParameter( "csvEmployee" ) Employee csvEmployee ) throws Throwable
    {
       log.info( "the all clear button is pressed. Employee from CSV: " + csvEmployee );
+
+      String runName = KartaRuntime.getRunName( context );
+      HashSet<String> failureTags = new HashSet<String>();
+      failureTags.add( "sample" );
+      failureTags.add( "failure" );
+      failureTags.add( "tags" );
+      eventProcessor.raiseIncident( runName, TestIncident.builder().message( "Sample test incident" ).tags( failureTags ).build() );
    }
 
    @StepDefinition( "the calculator should display \"\"" )

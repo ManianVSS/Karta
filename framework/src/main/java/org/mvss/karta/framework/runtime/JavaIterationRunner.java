@@ -84,7 +84,7 @@ public class JavaIterationRunner implements Runnable
 
             eventProcessor.raiseEvent( new JavaScenarioStartEvent( scenarioName, featureName, iterationIndex, scenarioMethod.getName(), scenarioName ) );
 
-            testData = KartaRuntime.getMergedTestData( null, testDataSources, new ExecutionStepPointer( featureName, scenarioName, null, scenarioIterationNumber, 0 ) );
+            testData = KartaRuntime.getMergedTestData( runName, null, testDataSources, new ExecutionStepPointer( featureName, scenarioName, null, scenarioIterationNumber, 0 ) );
             testExecutionContext.setData( testData );
 
             Object resultReturned = scenarioMethod.invoke( testCaseObject, testExecutionContext );

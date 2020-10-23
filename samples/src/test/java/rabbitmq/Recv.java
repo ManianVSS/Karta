@@ -1,8 +1,5 @@
 package rabbitmq;
 
-import java.io.Serializable;
-import java.util.HashMap;
-
 import org.apache.commons.lang3.SerializationUtils;
 import org.mvss.karta.framework.runtime.impl.LoggingTestEventListener;
 
@@ -38,7 +35,7 @@ public class Recv
 
       LoggingTestEventListener dtev = new LoggingTestEventListener();
 
-      dtev.initialize( new HashMap<String, HashMap<String, Serializable>>() );
+      dtev.initialize();
 
       DeliverCallback deliverCallback = ( consumerTag, delivery ) -> {
          dtev.processEvent( SerializationUtils.deserialize( delivery.getBody() ) );

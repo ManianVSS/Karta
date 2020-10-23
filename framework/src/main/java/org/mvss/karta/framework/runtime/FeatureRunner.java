@@ -82,7 +82,8 @@ public class FeatureRunner
       stepIndex = 0;
       for ( TestStep step : testFeature.getSetupSteps() )
       {
-         testData = KartaRuntime.getMergedTestData( step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.FEATURE_SETUP, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
+         testData = KartaRuntime
+                  .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.FEATURE_SETUP, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
          // log.debug( "Step test data is " + testData.toString() );
          testExecutionContext.setData( testData );
 
@@ -171,7 +172,7 @@ public class FeatureRunner
       for ( TestStep step : testFeature.getTearDownSteps() )
       {
          testData = KartaRuntime
-                  .getMergedTestData( step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.FEATURE_TEARDOWN, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
+                  .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.FEATURE_TEARDOWN, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
          // log.debug( "Step test data is " + testData.toString() );
          testExecutionContext.setData( testData );
 

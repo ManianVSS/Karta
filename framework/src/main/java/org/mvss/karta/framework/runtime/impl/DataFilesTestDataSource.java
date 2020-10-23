@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
-import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
@@ -99,14 +98,14 @@ public class DataFilesTestDataSource implements TestDataSource
    }
 
    @Override
-   public boolean initialize( HashMap<String, HashMap<String, Serializable>> properties ) throws Throwable
+   public boolean initialize() throws Throwable
    {
       if ( initialized )
       {
          return true;
       }
 
-      Configurator.loadProperties( properties, this );
+      log.info( "Initializing " + PLUGIN_NAME + " plugin" );
 
       for ( String dataPathEntry : dataPath )
       {

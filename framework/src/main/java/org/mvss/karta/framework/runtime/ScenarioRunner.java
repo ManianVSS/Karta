@@ -83,7 +83,8 @@ public class ScenarioRunner
 
          for ( TestStep step : mergedSetupSteps )
          {
-            testData = KartaRuntime.getMergedTestData( step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
+            testData = KartaRuntime
+                     .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
             // log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setData( testData );
 
@@ -144,7 +145,8 @@ public class ScenarioRunner
 
          for ( TestStep step : testScenario.getScenarioExecutionSteps() )
          {
-            testData = KartaRuntime.getMergedTestData( step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
+            testData = KartaRuntime
+                     .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
             // log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setData( testData );
             eventProcessor.raiseEvent( new ScenarioStepStartEvent( runName, feature, iterationIndex, testScenario, step ) );
@@ -187,7 +189,7 @@ public class ScenarioRunner
             for ( TestStep step : mergedTearDownSteps )
             {
                testData = KartaRuntime
-                        .getMergedTestData( step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
+                        .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
 
                // log.debug( "Step test data is " + testData.toString() );
                testExecutionContext.setData( testData );

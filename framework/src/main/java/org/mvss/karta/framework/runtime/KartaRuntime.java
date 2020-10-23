@@ -80,6 +80,9 @@ public class KartaRuntime implements AutoCloseable
 
    private static ObjectMapper       yamlObjectMapper = ParserUtils.getYamlObjectMapper();
 
+   @Getter
+   private HashSet<Object>           beans;
+
    public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException
    {
       random = new Random();
@@ -133,11 +136,6 @@ public class KartaRuntime implements AutoCloseable
 
       pnpRegistry.enablePlugins( kartaRuntimeConfiguration.getEnabledPlugins() );
 
-      if ( !pnpRegistry.initializePlugins( configurator.getPropertiesStore() ) )
-      {
-         return false;
-      }
-
       eventProcessor = new EventProcessor();
 
       pnpRegistry.getEnabledPluginsOfType( TestEventListener.class ).forEach( ( plugin ) -> eventProcessor.addEventListener( (TestEventListener) plugin ) );
@@ -183,6 +181,17 @@ public class KartaRuntime implements AutoCloseable
       }
 
       kartaThreadFactory = new KartaThreadFactory();
+
+      beans = new HashSet<Object>();
+      beans.add( configurator );
+      beans.add( testCatalogManager );
+      beans.add( eventProcessor );
+      beans.add( minionRegistry );
+
+      if ( !pnpRegistry.initializePlugins( this ) )
+      {
+         return false;
+      }
 
       return true;
    }
@@ -231,7 +240,7 @@ public class KartaRuntime implements AutoCloseable
       return instance;
    }
 
-   public static HashMap<String, Serializable> getMergedTestData( HashMap<String, Serializable> stepTestData, ArrayList<TestDataSource> testDataSources, ExecutionStepPointer executionStepPointer ) throws Throwable
+   public static HashMap<String, Serializable> getMergedTestData( String runName, HashMap<String, Serializable> stepTestData, ArrayList<TestDataSource> testDataSources, ExecutionStepPointer executionStepPointer ) throws Throwable
    {
       HashMap<String, Serializable> mergedTestData = new HashMap<String, Serializable>();
       for ( TestDataSource tds : testDataSources )
@@ -244,7 +253,35 @@ public class KartaRuntime implements AutoCloseable
       {
          stepTestData.forEach( ( key, value ) -> mergedTestData.put( key, value ) );
       }
+
+      HashMap<String, Serializable> runTimeMap = new HashMap<String, Serializable>();
+      runTimeMap.put( Constants.RUN_NAME, runName );
+      mergedTestData.put( Constants.__RUNTIME__, runTimeMap );
       return mergedTestData;
+   }
+
+   public static String getRunName( TestExecutionContext context )
+   {
+      HashMap<String, Serializable> testData = context.getData();
+      if ( testData == null )
+      {
+         return null;
+      }
+      Serializable runtimeMapVar = testData.get( Constants.__RUNTIME__ );
+
+      if ( runtimeMapVar == null )
+      {
+         return null;
+      }
+
+      @SuppressWarnings( "unchecked" )
+      HashMap<String, Serializable> runTimeMap = (HashMap<String, Serializable>) runtimeMapVar;
+      return (String) runTimeMap.get( Constants.RUN_NAME );
+   }
+
+   public void loadRuntimeObjects( Object object ) throws IllegalArgumentException, IllegalAccessException
+   {
+      Configurator.loadBeans( object, beans );
    }
 
    public boolean runFeatureFile( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String featureFileName, long numberOfIterations, int numberOfIterationsInParallel )

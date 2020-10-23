@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Random;
 
 import org.mvss.karta.framework.randomization.ObjectGenerationRule;
-import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
@@ -39,14 +38,13 @@ public class ObjectGenTestDataSource implements TestDataSource
    }
 
    @Override
-   public boolean initialize( HashMap<String, HashMap<String, Serializable>> properties ) throws Throwable
+   public boolean initialize() throws Throwable
    {
       if ( initialized )
       {
          return true;
       }
-      log.debug( "Initializing " + PLUGIN_NAME + " plugin with " + properties );
-      Configurator.loadProperties( properties, this );
+      log.info( "Initializing " + PLUGIN_NAME + " plugin" );
       random = ( seed == null ) ? new Random() : new Random( seed );
 
       ObjectMapper objectMapper = ParserUtils.getObjectMapper();

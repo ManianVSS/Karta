@@ -6,7 +6,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.HashSet;
 
+import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
@@ -186,6 +188,49 @@ public class Configurator
       else
       {
          loadProperties( propertiesStore, object, superClass );
+      }
+   }
+
+   public static void loadBeans( Object object, HashSet<Object> beans ) throws IllegalArgumentException, IllegalAccessException
+   {
+      loadBeans( object, object.getClass(), beans );
+   }
+
+   public static void loadBeans( Object object, Class<?> theClassOfObject, HashSet<Object> beans ) throws IllegalArgumentException, IllegalAccessException
+   {
+      if ( ( object == null ) || ( theClassOfObject == null ) || theClassOfObject.getName().equals( Object.class.getName() ) || !theClassOfObject.isAssignableFrom( object.getClass() ) )
+      {
+         return;
+      }
+      for ( Field field : theClassOfObject.getDeclaredFields() )
+      {
+         field.setAccessible( true );
+
+         KartaAutoWired propertyMapping = field.getDeclaredAnnotation( KartaAutoWired.class );
+
+         if ( propertyMapping != null )
+         {
+            Class<?> fieldClass = field.getType();
+
+            for ( Object bean : beans )
+            {
+               if ( fieldClass == bean.getClass() )
+               {
+                  field.set( object, bean );
+                  break;
+               }
+            }
+         }
+      }
+
+      Class<?> superClass = theClassOfObject.getSuperclass();
+      if ( superClass.getName().equals( Object.class.getName() ) )
+      {
+         return;
+      }
+      else
+      {
+         loadBeans( object, superClass, beans );
       }
    }
 

@@ -1,8 +1,5 @@
 package org.mvss.karta.framework.runtime.impl;
 
-import java.io.Serializable;
-import java.util.HashMap;
-
 import org.apache.commons.lang3.SerializationUtils;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
@@ -50,12 +47,14 @@ public class RabbitMQTestEventListener implements TestEventListener
    }
 
    @Override
-   public boolean initialize( HashMap<String, HashMap<String, Serializable>> properties ) throws Throwable
+   public boolean initialize() throws Throwable
    {
       if ( initialized )
       {
          return true;
       }
+
+      log.info( "Initializing " + PLUGIN_NAME + " plugin" );
 
       factory = new ConnectionFactory();
       factory.setUsername( userName );

@@ -160,13 +160,18 @@ public class PnPRegistry implements AutoCloseable
       }
    }
 
-   public boolean initializePlugins( HashMap<String, HashMap<String, Serializable>> runProperties )
+   public boolean initializePlugins( KartaRuntime kartaRunTime )
    {
       for ( Plugin plugin : enabledPlugins )
       {
          try
          {
-            plugin.initialize( runProperties );
+            if ( kartaRunTime != null )
+            {
+               kartaRunTime.loadRuntimeObjects( plugin );
+               kartaRunTime.getConfigurator().loadProperties( plugin );
+            }
+            plugin.initialize();
          }
          catch ( Throwable t )
          {

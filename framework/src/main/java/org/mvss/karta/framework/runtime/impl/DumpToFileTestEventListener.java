@@ -4,10 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.util.HashMap;
 
-import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
@@ -35,16 +32,14 @@ public class DumpToFileTestEventListener implements TestEventListener
    }
 
    @Override
-   public boolean initialize( HashMap<String, HashMap<String, Serializable>> properties ) throws Throwable
+   public boolean initialize() throws Throwable
    {
       if ( initialized )
       {
          return true;
       }
 
-      Configurator.loadProperties( properties, this );
-
-      log.debug( "Initializing Yerkin plugin with " + properties );
+      log.info( "Initializing " + PLUGIN_NAME + " plugin" );
 
       File eventDumpFile = new File( fileName );
 
