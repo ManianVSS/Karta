@@ -26,4 +26,7 @@ public class KartaMinionConfiguration implements Serializable
 
    @Builder.Default
    private boolean           enableSSL        = true;
+
+   @Builder.Default
+   private boolean           minion           = false;
 }

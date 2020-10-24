@@ -9,19 +9,19 @@ testJobs:
     repeat: true
     interval: 1000
     steps:
-      - identifier: Then authenticate to get new token
+      - identifier: authenticate to get new token
         testData:
           userName: "admin"
           password: "password@123"
 
-      - identifier: And reserve use of calculator for next "1500" milliseconds
+      - identifier: reserve use of calculator for next "1500" milliseconds
 
-      - identifier: Then logoff the old token
+      - identifier: logoff the old token
 
   - name: job2
     steps:
-      - identifier: Then the calculator is powered on
-      - identifier: And the all clear button is pressed
+      - identifier: the calculator is powered on
+      - identifier: the all clear button is pressed
 
 setupSteps:
   - identifier: Given the calculator is powered on

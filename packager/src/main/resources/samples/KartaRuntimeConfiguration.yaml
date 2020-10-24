@@ -37,7 +37,7 @@ sslProperties:
 
 nodeName: local
 
-minions:
+nodes:
   Node1:
     host: localhost
     port: 17171

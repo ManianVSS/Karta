@@ -31,7 +31,7 @@ public class TestJobRunner
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
       HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
-      KartaMinionRegistry minionRegistry = kartaRuntime.getMinionRegistry();
+      KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
 
       log.debug( "Running job: " + job );
 
@@ -66,7 +66,7 @@ public class TestJobRunner
                   StepResult result = new StepResult();
                   if ( StringUtils.isNotEmpty( chaosAction.getNode() ) )
                   {
-                     result = minionRegistry.getMinion( chaosAction.getNode() ).performChaosAction( stepRunner.getPluginName(), chaosAction, testExecutionContext );
+                     result = nodeRegistry.getNode( chaosAction.getNode() ).performChaosAction( stepRunner.getPluginName(), chaosAction, testExecutionContext );
                      DataUtils.mergeVariables( result.getResults(), testExecutionContext.getVariables() );
                   }
                   else
@@ -103,8 +103,7 @@ public class TestJobRunner
 
                if ( StringUtils.isNotEmpty( step.getNode() ) )
                {
-                  // TODO: Handle missing node info
-                  result = minionRegistry.getMinion( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+                  result = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
                   DataUtils.mergeVariables( result.getResults(), testExecutionContext.getVariables() );
                }
                else

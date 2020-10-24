@@ -35,27 +35,29 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class JavaIterationRunner implements Runnable
 {
-   private ArrayList<TestDataSource>                      testDataSources;
-   private HashMap<String, HashMap<String, Serializable>> testProperties;
-   private EventProcessor                                 eventProcessor;
-   private KartaMinionRegistry                            minionRegistry;
+   private KartaRuntime                   kartaRuntime;
+   private ArrayList<TestDataSource>      testDataSources;
 
-   private Object                                         testCaseObject;
-   private ArrayList<Method>                              scenarioSetupMethods;
-   private ArrayList<Method>                              scenariosMethodsToRun;
-   private ArrayList<Method>                              scenarioTearDownMethods;
+   private Object                         testCaseObject;
+   private ArrayList<Method>              scenarioSetupMethods;
+   private ArrayList<Method>              scenariosMethodsToRun;
+   private ArrayList<Method>              scenarioTearDownMethods;
 
-   private String                                         runName;
-   private String                                         featureName;
-   private String                                         featureDescription;
+   private String                         runName;
+   private String                         featureName;
+   private String                         featureDescription;
 
-   private int                                            iterationIndex;
+   private int                            iterationIndex;
 
-   private HashMap<Method, AtomicInteger>                 scenarioIterationIndexMap;
+   private HashMap<Method, AtomicInteger> scenarioIterationIndexMap;
 
    @Override
    public void run()
    {
+      EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
+      HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
+      KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
+
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
       HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 

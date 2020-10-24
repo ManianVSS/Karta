@@ -65,7 +65,7 @@ public class FeatureRunner
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
       HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
-      KartaMinionRegistry minionRegistry = kartaRuntime.getMinionRegistry();
+      KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
 
       ArrayList<Integer> runningJobs = new ArrayList<Integer>();
 
@@ -120,7 +120,7 @@ public class FeatureRunner
          {
             if ( StringUtils.isNotEmpty( step.getNode() ) )
             {
-               stepResult = minionRegistry.getMinion( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+               stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
                DataUtils.mergeVariables( stepResult.getResults(), testExecutionContext.getVariables() );
             }
             else
@@ -214,7 +214,7 @@ public class FeatureRunner
          {
             if ( StringUtils.isNotEmpty( step.getNode() ) )
             {
-               stepResult = minionRegistry.getMinion( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+               stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
                DataUtils.mergeVariables( stepResult.getResults(), testExecutionContext.getVariables() );
             }
             else

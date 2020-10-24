@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TestFeature implements Serializable
+public class TestFeature implements Serializable, Comparable<TestFeature>
 {
    /**
     * 
@@ -21,6 +21,9 @@ public class TestFeature implements Serializable
 
    private String                  name;
    private String                  description;
+
+   @Builder.Default
+   private Integer                 priority                      = Integer.MAX_VALUE;
 
    @Builder.Default
    private Boolean                 chanceBasedScenarioExecution  = false;
@@ -45,4 +48,13 @@ public class TestFeature implements Serializable
 
    @Builder.Default
    private ArrayList<TestStep>     tearDownSteps                 = new ArrayList<TestStep>();
+
+   @Override
+   public int compareTo( TestFeature other )
+   {
+      int lhs = ( priority == null ) ? 0 : priority;
+      int rhs = ( other.priority == null ) ? 0 : other.priority;
+      return lhs - rhs;
+      // return ( priorityComparision == 0 ) ? name.compareTo( other.name ) : priorityComparision;
+   }
 }

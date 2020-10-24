@@ -75,7 +75,7 @@ public class KartaRuntime implements AutoCloseable
    private EventProcessor            eventProcessor;
 
    @Getter
-   private KartaMinionRegistry       minionRegistry;
+   private KartaMinionRegistry       nodeRegistry;
 
    @Getter
    private KartaThreadFactory        kartaThreadFactory;
@@ -84,6 +84,9 @@ public class KartaRuntime implements AutoCloseable
 
    @Getter
    private HashSet<Object>           beans;
+
+   @Getter
+   private KartaMinionRegistry       minionRegistry;
 
    @SuppressWarnings( "unchecked" )
    public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException, ClassNotFoundException
@@ -144,13 +147,13 @@ public class KartaRuntime implements AutoCloseable
       configurator.loadProperties( eventProcessor );
       eventProcessor.start();
 
-      minionRegistry = new KartaMinionRegistry();
+      nodeRegistry = new KartaMinionRegistry();
 
-      HashMap<String, KartaMinionConfiguration> nodeMap = kartaRuntimeConfiguration.getMinions();
+      HashMap<String, KartaMinionConfiguration> nodeMap = kartaRuntimeConfiguration.getNodes();
 
       for ( String nodeName : nodeMap.keySet() )
       {
-         minionRegistry.addMinion( nodeName, nodeMap.get( nodeName ) );
+         nodeRegistry.addNode( nodeName, nodeMap.get( nodeName ) );
       }
 
       testCatalogManager = new TestCatalogManager();
@@ -187,7 +190,7 @@ public class KartaRuntime implements AutoCloseable
       beans.add( configurator );
       beans.add( testCatalogManager );
       beans.add( eventProcessor );
-      beans.add( minionRegistry );
+      beans.add( nodeRegistry );
 
       if ( !pnpRegistry.initializePlugins( this ) )
       {
@@ -512,6 +515,11 @@ public class KartaRuntime implements AutoCloseable
          return false;
       }
 
+      return runTestScenario( stepRunner, testDataSources, runName, feature, iterationIndex, testScenario, scenarioIterationNumber );
+   }
+
+   public boolean runTestScenario( StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, TestFeature feature, int iterationIndex, TestScenario testScenario, int scenarioIterationNumber )
+   {
       return ScenarioRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).testDataSources( testDataSources ).runName( runName ).feature( feature ).iterationIndex( iterationIndex ).testScenario( testScenario )
                .scenarioIterationNumber( scenarioIterationNumber ).build().run();
    }
@@ -528,11 +536,11 @@ public class KartaRuntime implements AutoCloseable
 
    public StepResult runStepOnNode( String nodeName, String stepRunnerPlugin, TestStep step, TestExecutionContext context ) throws RemoteException
    {
-      return minionRegistry.getMinion( nodeName ).runStep( stepRunnerPlugin, step, context );
+      return nodeRegistry.getNode( nodeName ).runStep( stepRunnerPlugin, step, context );
    }
 
    public StepResult runChaosActionNode( String nodeName, String stepRunnerPlugin, ChaosAction chaosAction, TestExecutionContext context ) throws RemoteException
    {
-      return minionRegistry.getMinion( nodeName ).performChaosAction( stepRunnerPlugin, chaosAction, context );
+      return nodeRegistry.getNode( nodeName ).performChaosAction( stepRunnerPlugin, chaosAction, context );
    }
 }

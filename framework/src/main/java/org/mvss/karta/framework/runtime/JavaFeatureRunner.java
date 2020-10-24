@@ -74,7 +74,7 @@ public class JavaFeatureRunner
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
       HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
-      KartaMinionRegistry minionRegistry = kartaRuntime.getMinionRegistry();
+      KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
 
       HashSet<Object> beans = new HashSet<Object>();
 
@@ -194,9 +194,9 @@ public class JavaFeatureRunner
                scenariosMethodsToRun = GenericObjectWithChance.extractObjects( scenarioMethods );
             }
 
-            JavaIterationRunner iterationRunner = JavaIterationRunner.builder().testDataSources( testDataSources ).testProperties( testProperties ).eventProcessor( eventProcessor ).minionRegistry( minionRegistry ).testCaseObject( testCaseObject )
-                     .scenarioSetupMethods( scenarioSetupMethods ).scenariosMethodsToRun( scenariosMethodsToRun ).scenarioTearDownMethods( scenarioTearDownMethods ).runName( runName ).featureName( featureName ).featureDescription( featureDescription )
-                     .iterationIndex( iterationIndex ).scenarioIterationIndexMap( scenarioIterationIndexMap ).build();
+            JavaIterationRunner iterationRunner = JavaIterationRunner.builder().kartaRuntime( kartaRuntime ).testDataSources( testDataSources ).testCaseObject( testCaseObject ).scenarioSetupMethods( scenarioSetupMethods )
+                     .scenariosMethodsToRun( scenariosMethodsToRun ).scenarioTearDownMethods( scenarioTearDownMethods ).runName( runName ).featureName( featureName ).featureDescription( featureDescription ).iterationIndex( iterationIndex )
+                     .scenarioIterationIndexMap( scenarioIterationIndexMap ).build();
 
             if ( numberOfIterationsInParallel == 1 )
             {

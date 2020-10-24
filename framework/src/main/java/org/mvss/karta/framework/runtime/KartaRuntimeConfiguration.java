@@ -50,7 +50,13 @@ public class KartaRuntimeConfiguration implements Serializable
 
    private String                                    nodeName;
 
+   // @Builder.Default
+   // private Boolean enableMinions = true;
+
    @Builder.Default
-   private HashMap<String, KartaMinionConfiguration> minions                      = new HashMap<String, KartaMinionConfiguration>();
+   private HashMap<String, KartaMinionConfiguration> nodes                        = new HashMap<String, KartaMinionConfiguration>();
+
+   // @Builder.Default
+   // private HashMap<String, KartaMinionConfiguration> minions = new HashMap<String, KartaMinionConfiguration>();
 
 }

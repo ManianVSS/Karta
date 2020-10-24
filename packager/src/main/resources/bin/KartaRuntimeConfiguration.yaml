@@ -28,4 +28,4 @@ sslProperties:
 
 nodeName: local
 
-minions: {}
+nodes: {}
