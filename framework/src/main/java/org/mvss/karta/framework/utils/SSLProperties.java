@@ -30,4 +30,14 @@ public class SSLProperties implements Serializable
    private String            keyStore           = "keyStore.p12";
    @Builder.Default
    private String            keyStorePassword   = "changeit";
+
+   public synchronized void expandSystemAndEnvProperties()
+   {
+      trustStoreType = PropertyUtils.expandEnvVars( trustStoreType );
+      trustStore = PropertyUtils.expandEnvVars( trustStore );
+      trustStorePassword = PropertyUtils.expandEnvVars( trustStorePassword );
+      keyStoreType = PropertyUtils.expandEnvVars( keyStoreType );
+      keyStore = PropertyUtils.expandEnvVars( keyStore );
+      keyStorePassword = PropertyUtils.expandEnvVars( keyStorePassword );
+   }
 }

@@ -79,7 +79,10 @@ public class ScenarioRunner
          {
             mergedSetupSteps.addAll( feature.getScenarioSetupSteps() );
          }
-         mergedSetupSteps.addAll( testScenario.getScenarioSetupSteps() );
+         if ( testScenario.getScenarioSetupSteps() != null )
+         {
+            mergedSetupSteps.addAll( testScenario.getScenarioSetupSteps() );
+         }
 
          for ( TestStep step : mergedSetupSteps )
          {
@@ -183,11 +186,15 @@ public class ScenarioRunner
          try
          {
             ArrayList<TestStep> mergedTearDownSteps = new ArrayList<TestStep>();
+
+            if ( testScenario.getScenarioTearDownSteps() != null )
+            {
+               mergedTearDownSteps.addAll( testScenario.getScenarioTearDownSteps() );
+            }
             if ( ( feature != null ) && ( feature.getScenarioTearDownSteps() != null ) )
             {
                mergedTearDownSteps.addAll( feature.getScenarioTearDownSteps() );
             }
-            mergedTearDownSteps.addAll( testScenario.getScenarioTearDownSteps() );
 
             for ( TestStep step : mergedTearDownSteps )
             {

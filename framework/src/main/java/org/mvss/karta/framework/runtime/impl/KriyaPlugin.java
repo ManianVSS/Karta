@@ -141,7 +141,6 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
 
                      if ( !( ( params.length > 0 ) && ( TestExecutionContext.class == params[0] ) ) )
                      {
-
                         log.error( "Step definition method " + methodDescription + " should have the first parameter type as TestExecutionContext" );
                         continue;
                      }
@@ -335,6 +334,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
       }
       catch ( Throwable t )
       {
+         // TODO: report failures for data convertion as errors and not test failures
          result.setSuccesssful( false );
          result.setIncident( TestIncident.builder().thrownCause( t ).build() );
       }

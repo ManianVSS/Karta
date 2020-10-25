@@ -1,1 +1,0 @@
-Refer to samples/dataFile1.yaml  and samples/testDataFolder as example

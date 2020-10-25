@@ -91,13 +91,6 @@
 			<directoryMode>0755</directoryMode>
 		</fileSet>
 		<fileSet>
-			<directory>${basedir}/src/main/resources/repository
-			</directory>
-			<outputDirectory>repository/</outputDirectory>
-			<fileMode>0755</fileMode>
-			<directoryMode>0755</directoryMode>
-		</fileSet>
-		<fileSet>
 			<directory>${basedir}/src/main/resources/samples
 			</directory>
 			<outputDirectory>samples/</outputDirectory>

@@ -41,7 +41,7 @@ public class ObjectGenerationRule implements Serializable, ObjectWithChance
    private ArrayList<Serializable>         values;
 
    @Builder.Default
-   private float                           probability                     = 1;
+   private float                           probability                     = 1.0f;
 
    private ArrayList<ObjectGenerationRule> objectRules;
 

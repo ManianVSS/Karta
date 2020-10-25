@@ -36,10 +36,10 @@ public class TestCategory implements Serializable
    private HashSet<String>         testDataSourcePlugins = new HashSet<String>();
 
    @Builder.Default
-   private ArrayList<Test>         tests                 = new ArrayList<Test>();
+   private ArrayList<TestCategory> subCategories         = new ArrayList<TestCategory>();
 
    @Builder.Default
-   private ArrayList<TestCategory> subCategories         = new ArrayList<TestCategory>();
+   private ArrayList<Test>         tests                 = new ArrayList<Test>();
 
    public Test findTestByName( String name )
    {
@@ -163,14 +163,29 @@ public class TestCategory implements Serializable
          }
       }
 
-      for ( TestCategory test : testCategory.getSubCategories() )
+      if ( StringUtils.isEmpty( featureSourceParserPlugin ) && StringUtils.isNotEmpty( testCategory.featureSourceParserPlugin ) )
       {
-         mergeTestCategory( test );
+         featureSourceParserPlugin = testCategory.featureSourceParserPlugin;
+      }
+
+      if ( StringUtils.isEmpty( stepRunnerPlugin ) && StringUtils.isNotEmpty( testCategory.stepRunnerPlugin ) )
+      {
+         stepRunnerPlugin = testCategory.stepRunnerPlugin;
+      }
+
+      if ( testDataSourcePlugins.isEmpty() && !testCategory.testDataSourcePlugins.isEmpty() )
+      {
+         testDataSourcePlugins.addAll( testCategory.testDataSourcePlugins );
+      }
+
+      for ( TestCategory testSubCatToAdd : testCategory.getSubCategories() )
+      {
+         mergeTestCategory( testSubCatToAdd );
       }
 
       for ( Test test : testCategory.getTests() )
       {
-         addTest( test );
+         mergeTest( test );
       }
    }
 
@@ -193,16 +208,22 @@ public class TestCategory implements Serializable
       }
    }
 
-   public void addTest( Test test )
+   public void mergeTest( Test test )
    {
       if ( test == null )
       {
          return;
       }
 
-      if ( findTestByName( test.getName() ) == null )
+      Test testToEdit = findTestByName( test.getName() );
+
+      if ( testToEdit == null )
       {
          tests.add( test );
+      }
+      else
+      {
+         testToEdit.mergeWithTest( test );
       }
    }
 }

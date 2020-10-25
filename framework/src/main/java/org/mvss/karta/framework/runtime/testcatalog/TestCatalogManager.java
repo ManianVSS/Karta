@@ -30,6 +30,7 @@ public class TestCatalogManager
    public void mergeWithCatalog( TestCategory updatesToRootCategory )
    {
       testCatalog.mergeWithTestCategory( updatesToRootCategory );
+      updatesToRootCategory.propogateSourceArchive( null, updatesToRootCategory.getFeatureSourceParserPlugin(), updatesToRootCategory.getFeatureSourceParserPlugin(), updatesToRootCategory.getTestDataSourcePlugins() );
    }
 
    public void mergeWithCatalog( String sourceArchive ) throws Throwable
@@ -41,7 +42,7 @@ public class TestCatalogManager
          return;
       }
 
-      InputStream fileStream = loader.getResourceAsStream( Constants.TEST_CATALOG_FILE_NAME );
+      InputStream fileStream = loader.getResourceAsStream( Constants.TEST_CATALOG_FRAGMENT_FILE_NAME );
 
       if ( fileStream == null )
       {
@@ -75,12 +76,12 @@ public class TestCatalogManager
 
    public void addTest( Test testToMerge )
    {
-      testCatalog.addTest( testToMerge );
+      testCatalog.mergeTest( testToMerge );
    }
 
    public void addTest( String sourceArchive, Test testToMerge )
    {
-      testCatalog.addTest( testToMerge );
+      testCatalog.mergeTest( testToMerge );
    }
 
    public ArrayList<Test> filterTestsByTag( HashSet<String> tags )

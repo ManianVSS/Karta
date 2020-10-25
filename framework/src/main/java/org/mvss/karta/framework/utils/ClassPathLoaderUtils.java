@@ -45,7 +45,8 @@ public class ClassPathLoaderUtils
 
       if ( fileInputStream == null )
       {
-         throw new IOException( "Resource " + fileName + " not found" );
+         // throw new IOException( "Resource " + fileName + " not found" );
+         return null;
       }
       return IOUtils.toString( fileInputStream, Charset.defaultCharset() );
    }

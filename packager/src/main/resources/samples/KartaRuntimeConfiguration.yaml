@@ -1,4 +1,6 @@
-pluginsDirectory: "."
+pluginsDirectories:
+  - "${KARTA_HOME}/plugins/" 
+  - "."
 enabledPlugins:
   - Kriya
   - KriyaExt
@@ -21,18 +23,12 @@ propertyFiles:
   - SampleRunProperties.yaml
   - SampleRunProperties2.yaml
 
-testRepositorydirectories:
-  - "."
-
-testCatalogFiles:
-  - "../repository/KartaTestCatalog.yaml"
-
 sslProperties:
   trustStoreType: jks
-  trustStore: "../bin/trustStore.jks"
+  trustStore: "${KARTA_HOME}/bin/trustStore.jks"
   trustStorePassword: changeit
   keyStoreType: pkcs12
-  keyStore: "../bin/keyStore.p12"
+  keyStore: "${KARTA_HOME}/bin/keyStore.p12"
   keyStorePassword: changeit
 
 nodeName: local

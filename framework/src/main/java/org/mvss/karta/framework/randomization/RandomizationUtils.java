@@ -42,14 +42,15 @@ public class RandomizationUtils
             return null;
          }
 
-         probabilityNotCovered -= chanceObject.getProbability();
+         probabilityNotCovered = probabilityNotCovered - chanceObject.getProbability();
 
          if ( !ignoreOverflow && ( probabilityNotCovered < 0 ) )
          {
             return null;
          }
       }
-      return probabilityNotCovered;
+
+      return (float) ( ( (long) ( probabilityNotCovered * 1000000.f ) ) / 1000000l );
    }
 
    public static <E extends ObjectWithChance> ArrayList<E> generateNextComposition( Random random, ArrayList<E> objectsToChooseFrom )

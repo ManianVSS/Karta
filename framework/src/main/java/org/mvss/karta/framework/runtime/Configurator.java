@@ -7,12 +7,15 @@ import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
 
 import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
+import org.mvss.karta.framework.utils.PropertyUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -20,28 +23,18 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
-import lombok.Setter;
 
 public class Configurator
 {
-   public static final TypeReference<HashMap<String, HashMap<String, Serializable>>> propertiesType                    = new TypeReference<HashMap<String, HashMap<String, Serializable>>>()
-                                                                                                                       {
-                                                                                                                       };
+   public static final TypeReference<HashMap<String, HashMap<String, Serializable>>> propertiesType   = new TypeReference<HashMap<String, HashMap<String, Serializable>>>()
+                                                                                                      {
+                                                                                                      };
 
-   private static ObjectMapper                                                       objectMapper                      = ParserUtils.getObjectMapper();
-   private static ObjectMapper                                                       yamlObjectMapper                  = ParserUtils.getYamlObjectMapper();
+   private static ObjectMapper                                                       objectMapper     = ParserUtils.getObjectMapper();
+   private static ObjectMapper                                                       yamlObjectMapper = ParserUtils.getYamlObjectMapper();
 
    @Getter
-   private HashMap<String, HashMap<String, Serializable>>                            propertiesStore                   = new HashMap<String, HashMap<String, Serializable>>();
-
-   @Setter
-   private static boolean                                                            useSystemProperties               = true;
-
-   @Setter
-   private static boolean                                                            useEnvironmentProperties          = true;
-
-   @Setter
-   private static boolean                                                            envPropertiesPreceedsOverSysProps = true;
+   private HashMap<String, HashMap<String, Serializable>>                            propertiesStore  = new HashMap<String, HashMap<String, Serializable>>();
 
    public void mergeProperties( HashMap<String, HashMap<String, Serializable>> propertiesToMerge )
    {
@@ -81,38 +74,10 @@ public class Configurator
       }
    }
 
-   public static String getEnv( String key, String defaultValue )
-   {
-      String envValue = System.getenv( key );
-      return ( envValue == null ) ? defaultValue : envValue;
-   }
-
    public static Serializable getPropertyValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, String group, String name )
    {
-      String propertyFromEnvOrSys = null;
-
       String keyForEnvOrSys = group + "." + name;
-      String propFromEnv = System.getenv( keyForEnvOrSys );
-      String propFromSys = System.getProperty( keyForEnvOrSys );
-
-      if ( useEnvironmentProperties )
-      {
-         if ( envPropertiesPreceedsOverSysProps )
-         {
-            propertyFromEnvOrSys = ( useSystemProperties ) ? getEnv( keyForEnvOrSys, propFromSys ) : propFromEnv;
-         }
-         else
-         {
-            propertyFromEnvOrSys = ( useSystemProperties ) ? System.getProperty( keyForEnvOrSys, propFromEnv ) : propFromEnv;
-         }
-      }
-      else
-      {
-         if ( useSystemProperties )
-         {
-            propertyFromEnvOrSys = propFromSys;
-         }
-      }
+      String propertyFromEnvOrSys = PropertyUtils.systemPropertyMap.get( keyForEnvOrSys );
 
       if ( propertyFromEnvOrSys != null )
       {
@@ -122,6 +87,9 @@ public class Configurator
       HashMap<String, Serializable> groupStore = propertiesStore.get( group );
       return ( groupStore == null ) ? null : groupStore.get( name );
    }
+
+   public static Map<String, String> envPropMap    = System.getenv();
+   public static Properties          systemPropMap = System.getProperties();
 
    public Serializable getPropertyValue( String group, String name )
    {

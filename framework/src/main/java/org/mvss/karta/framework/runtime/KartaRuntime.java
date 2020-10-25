@@ -119,13 +119,20 @@ public class KartaRuntime implements AutoCloseable
       // if ( runtimeConfiguration == null )
       // {
       kartaRuntimeConfiguration = yamlObjectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_RUNTIME_CONFIGURATION_YAML ), KartaRuntimeConfiguration.class );
+      kartaRuntimeConfiguration.expandSystemAndEnvProperties();
       // }
 
-      String pluginsDirectory = kartaRuntimeConfiguration.getPluginsDirectory();
+      ArrayList<String> pluginDirectories = kartaRuntimeConfiguration.getPluginsDirectories();
 
-      if ( StringUtils.isNotEmpty( pluginsDirectory ) )
+      if ( pluginDirectories != null )
       {
-         pnpRegistry.loadPlugins( configurator, new File( pluginsDirectory ) );
+         for ( String pluginsDirectory : pluginDirectories )
+         {
+            if ( StringUtils.isNotEmpty( pluginsDirectory ) )
+            {
+               pnpRegistry.loadPlugins( configurator, new File( pluginsDirectory ) );
+            }
+         }
       }
 
       SSLUtils.setSslProperties( kartaRuntimeConfiguration.getSslProperties() );
@@ -158,31 +165,10 @@ public class KartaRuntime implements AutoCloseable
 
       testCatalogManager = new TestCatalogManager();
 
-      ArrayList<String> testCatalogFiles = kartaRuntimeConfiguration.getTestCatalogFiles();
-
-      if ( ( testCatalogFiles != null ) && !testCatalogFiles.isEmpty() )
-      {
-         for ( String testCatalogFile : testCatalogFiles )
-         {
-            TestCategory testCategory = yamlObjectMapper.readValue( ClassPathLoaderUtils.readAllText( testCatalogFile ), TestCategory.class );
-            testCatalogManager.mergeWithCatalog( testCategory );
-         }
-      }
-
-      ArrayList<String> repoDirNames = kartaRuntimeConfiguration.getTestRepositorydirectories();
-
-      if ( repoDirNames != null )
-      {
-         for ( String testRepositoryDirectoryName : repoDirNames )
-         {
-            File repositoryDirectory = new File( testRepositoryDirectoryName );
-
-            if ( repositoryDirectory.exists() && repositoryDirectory.isDirectory() )
-            {
-               testCatalogManager.mergeRepositoryDirectoryIntoCatalog( repositoryDirectory );
-            }
-         }
-      }
+      String catalogFileString = ClassPathLoaderUtils.readAllText( Constants.TEST_CATALOG_FILE_NAME );
+      TestCategory testCategory = ( catalogFileString == null ) ? new TestCategory() : yamlObjectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.TEST_CATALOG_FILE_NAME ), TestCategory.class );
+      testCatalogManager.mergeWithCatalog( testCategory );
+      testCatalogManager.mergeRepositoryDirectoryIntoCatalog( new File( Constants.DOT ) );
 
       kartaThreadFactory = new KartaThreadFactory();
 

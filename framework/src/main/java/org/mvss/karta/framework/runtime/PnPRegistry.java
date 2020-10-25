@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -36,7 +37,8 @@ public class PnPRegistry implements AutoCloseable
 
    private HashMap<Class<? extends Plugin>, HashMap<String, Plugin>> pluginMap                 = new HashMap<Class<? extends Plugin>, HashMap<String, Plugin>>();
    private HashMap<String, Plugin>                                   registeredPlugins         = new HashMap<String, Plugin>();
-   private HashSet<Plugin>                                           enabledPlugins            = new HashSet<Plugin>();
+   private HashMap<String, Plugin>                                   enabledPlugins            = new HashMap<String, Plugin>();
+   // private HashSet<Plugin> enabledPlugins = new HashSet<Plugin>();
 
    private ArrayList<Class<? extends Plugin>>                        pluginTypes               = new ArrayList<Class<? extends Plugin>>();
 
@@ -171,15 +173,16 @@ public class PnPRegistry implements AutoCloseable
 
          if ( pluginToEnable != null )
          {
-            enabledPlugins.add( pluginToEnable );
+            enabledPlugins.put( pluginName, pluginToEnable );
          }
       }
    }
 
    public boolean initializePlugins( KartaRuntime kartaRunTime )
    {
-      for ( Plugin plugin : enabledPlugins )
+      for ( Entry<String, Plugin> pluginEntry : enabledPlugins.entrySet() )
       {
+         Plugin plugin = pluginEntry.getValue();
          try
          {
             if ( kartaRunTime != null )
@@ -191,7 +194,7 @@ public class PnPRegistry implements AutoCloseable
          }
          catch ( Throwable t )
          {
-            log.error( "Plugin failed to initialize: " + plugin.getPluginName(), t );
+            log.error( "Plugin failed to initialize: " + pluginEntry.getKey(), t );
             return false;
          }
       }
@@ -201,15 +204,16 @@ public class PnPRegistry implements AutoCloseable
    @Override
    public void close()
    {
-      for ( Plugin plugin : enabledPlugins )
+      for ( Entry<String, Plugin> pluginEntry : enabledPlugins.entrySet() )
       {
+         Plugin plugin = pluginEntry.getValue();
          try
          {
             plugin.close();
          }
          catch ( Throwable t )
          {
-            log.error( "Plugin failed to close: " + plugin.getPluginName(), t );
+            log.error( "Plugin failed to close: " + pluginEntry.getKey(), t );
          }
       }
    }
@@ -221,7 +225,7 @@ public class PnPRegistry implements AutoCloseable
 
    public Collection<Plugin> getEnabledPluginsOfType( Class<? extends Plugin> pluginType )
    {
-      return getPluginsOfType( pluginType ).stream().filter( ( plugin ) -> enabledPlugins.contains( plugin ) ).collect( Collectors.toList() );
+      return getPluginsOfType( pluginType ).stream().filter( ( plugin ) -> enabledPlugins.values().contains( plugin ) ).collect( Collectors.toList() );
    }
 
    public Collection<Plugin> getPluginsOfType( Class<? extends Plugin> pluginType )

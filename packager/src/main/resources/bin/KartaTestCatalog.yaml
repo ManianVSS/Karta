@@ -1,0 +1,11 @@
+name: "/"
+description: Test catalog root
+tags:
+  - _karta_all_
+featureSourceParserPlugin: Kriya
+stepRunnerPlugin: Kriya
+testDataSourcePlugins:
+  - DataFilesTestDataSource
+  - ObjectGenTestDataSource
+tests: []
+subCategories: []

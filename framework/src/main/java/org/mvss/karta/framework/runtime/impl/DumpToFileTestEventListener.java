@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
+import org.mvss.karta.framework.utils.PropertyUtils;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -40,6 +41,8 @@ public class DumpToFileTestEventListener implements TestEventListener
       }
 
       log.info( "Initializing " + PLUGIN_NAME + " plugin" );
+
+      fileName = PropertyUtils.expandEnvVars( fileName );
 
       File eventDumpFile = new File( fileName );
 

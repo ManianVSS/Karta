@@ -1,4 +1,6 @@
-pluginsDirectory: "../plugins/"
+pluginsDirectories:
+  - "${KARTA_HOME}/plugins/"
+  - "."
 enabledPlugins:
   - Kriya
   - DataFilesTestDataSource
@@ -12,18 +14,12 @@ defaultTestDataSourcePlugins:
 propertyFiles:
   - KartaRuntimeProperties.yaml
 
-testRepositorydirectories:
-  - "../repository/"
-
-testCatalogFiles:
-  - "../repository/KartaTestCatalog.yaml"
-
 sslProperties:
   trustStoreType: jks
-  trustStore: trustStore.jks
+  trustStore: "${KARTA_HOME}/bin/trustStore.jks"
   trustStorePassword: changeit
   keyStoreType: pkcs12
-  keyStore: keyStore.p12
+  keyStore: "${KARTA_HOME}/bin/keyStore.p12"
   keyStorePassword: changeit
 
 nodeName: local

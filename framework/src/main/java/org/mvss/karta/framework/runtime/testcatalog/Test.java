@@ -1,7 +1,6 @@
 package org.mvss.karta.framework.runtime.testcatalog;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.HashSet;
 
 import org.apache.commons.lang3.StringUtils;
@@ -21,36 +20,34 @@ public class Test implements Serializable
    /**
     * 
     */
-   private static final long             serialVersionUID      = 1L;
+   private static final long serialVersionUID      = 1L;
 
    @Builder.Default
-   private TestType                      testType              = TestType.FEATURE;
+   private TestType          testType              = TestType.FEATURE;
 
-   private String                        name;
-   private String                        description;
-
-   @Builder.Default
-   private HashSet<String>               tags                  = new HashSet<String>();
-
-   private String                        sourceArchive;
-
-   private String                        featureSourceParserPlugin;
-   private String                        stepRunnerPlugin;
+   private String            name;
+   private String            description;
 
    @Builder.Default
-   private HashSet<String>               testDataSourcePlugins = new HashSet<String>();
+   private HashSet<String>   tags                  = new HashSet<String>();
 
-   private String                        featureFileName;
+   private String            sourceArchive;
 
-   private String                        javaTestClass;
-
-   private HashMap<String, Serializable> testProperties;
-
-   @Builder.Default
-   private long                          numberOfIterations    = 1;
+   private String            featureSourceParserPlugin;
+   private String            stepRunnerPlugin;
 
    @Builder.Default
-   private int                           numberOfThreads       = 1;
+   private HashSet<String>   testDataSourcePlugins = new HashSet<String>();
+
+   private String            featureFileName;
+
+   private String            javaTestClass;
+
+   @Builder.Default
+   private long              numberOfIterations    = 1;
+
+   @Builder.Default
+   private int               numberOfThreads       = 1;
 
    public void propogateSourceArchive( String sa, String fspp, String srp, HashSet<String> tdsp )
    {
@@ -78,6 +75,39 @@ public class Test implements Serializable
       if ( StringUtils.isEmpty( sourceArchive ) && StringUtils.isNotEmpty( sa ) )
       {
          sourceArchive = sa;
+      }
+   }
+
+   public void mergeWithTest( Test test )
+   {
+      if ( test == null )
+      {
+         return;
+      }
+
+      if ( tags.isEmpty() && !test.tags.isEmpty() )
+      {
+         tags.addAll( test.tags );
+      }
+
+      if ( StringUtils.isEmpty( sourceArchive ) && StringUtils.isNotEmpty( test.sourceArchive ) )
+      {
+         sourceArchive = test.sourceArchive;
+      }
+
+      if ( StringUtils.isEmpty( featureSourceParserPlugin ) && StringUtils.isNotEmpty( test.featureSourceParserPlugin ) )
+      {
+         featureSourceParserPlugin = test.featureSourceParserPlugin;
+      }
+
+      if ( StringUtils.isEmpty( stepRunnerPlugin ) && StringUtils.isNotEmpty( test.stepRunnerPlugin ) )
+      {
+         stepRunnerPlugin = test.stepRunnerPlugin;
+      }
+
+      if ( testDataSourcePlugins.isEmpty() && !test.testDataSourcePlugins.isEmpty() )
+      {
+         testDataSourcePlugins.addAll( test.testDataSourcePlugins );
       }
    }
 }

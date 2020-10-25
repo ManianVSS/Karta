@@ -13,6 +13,7 @@ public class Constants
    public static final String   KARTA_RUNTIME_PROPERTIES_YAML    = "KartaRuntimeProperties.yaml";
 
    public static final String   TEST_CATALOG_FILE_NAME           = "KartaTestCatalog.yaml";
+   public static final String   TEST_CATALOG_FRAGMENT_FILE_NAME  = "KartaTestCatalogFragment.yaml";
 
    public static final String   NULL_STRING                      = (String) null;
    public static final String   EMPTY_STRING                     = "";

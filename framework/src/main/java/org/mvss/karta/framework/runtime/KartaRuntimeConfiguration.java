@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import org.mvss.karta.framework.minions.KartaMinionConfiguration;
+import org.mvss.karta.framework.utils.PropertyUtils;
 import org.mvss.karta.framework.utils.SSLProperties;
 
 import lombok.AllArgsConstructor;
@@ -24,7 +25,8 @@ public class KartaRuntimeConfiguration implements Serializable
     */
    private static final long                         serialVersionUID             = 1L;
 
-   private String                                    pluginsDirectory;
+   @Builder.Default
+   private ArrayList<String>                         pluginsDirectories           = new ArrayList<String>();
 
    private String                                    defaultFeatureSourceParserPlugin;
 
@@ -33,30 +35,33 @@ public class KartaRuntimeConfiguration implements Serializable
    @Builder.Default
    private HashSet<String>                           defaultTestDataSourcePlugins = new HashSet<String>();
 
-   // private HashMap<String, HashMap<String, Serializable>> pluginConfiguration;
-
    private HashSet<String>                           enabledPlugins;
 
    @Builder.Default
    private ArrayList<String>                         propertyFiles                = new ArrayList<String>();
 
-   @Builder.Default
-   private ArrayList<String>                         testRepositorydirectories    = new ArrayList<String>();
-
-   @Builder.Default
-   private ArrayList<String>                         testCatalogFiles             = new ArrayList<String>();
-
    private SSLProperties                             sslProperties;
 
    private String                                    nodeName;
-
-   // @Builder.Default
-   // private Boolean enableMinions = true;
 
    @Builder.Default
    private HashMap<String, KartaMinionConfiguration> nodes                        = new HashMap<String, KartaMinionConfiguration>();
 
    // @Builder.Default
+   // private Boolean enableMinions = true;
+
+   // @Builder.Default
    // private HashMap<String, KartaMinionConfiguration> minions = new HashMap<String, KartaMinionConfiguration>();
 
+   public synchronized void expandSystemAndEnvProperties()
+   {
+      PropertyUtils.expandEnvVars( pluginsDirectories );
+      defaultFeatureSourceParserPlugin = PropertyUtils.expandEnvVars( defaultFeatureSourceParserPlugin );
+      defaultStepRunnerPlugin = PropertyUtils.expandEnvVars( defaultStepRunnerPlugin );
+      PropertyUtils.expandEnvVars( defaultTestDataSourcePlugins );
+      PropertyUtils.expandEnvVars( enabledPlugins );
+      PropertyUtils.expandEnvVars( propertyFiles );
+      sslProperties.expandSystemAndEnvProperties();
+      nodeName = PropertyUtils.expandEnvVars( nodeName );
+   }
 }

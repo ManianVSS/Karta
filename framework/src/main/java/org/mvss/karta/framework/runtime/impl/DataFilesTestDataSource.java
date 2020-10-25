@@ -13,6 +13,7 @@ import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.utils.ParserUtils;
+import org.mvss.karta.framework.utils.PropertyUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -106,6 +107,7 @@ public class DataFilesTestDataSource implements TestDataSource
       }
 
       log.info( "Initializing " + PLUGIN_NAME + " plugin" );
+      PropertyUtils.expandEnvVars( dataPath );
 
       for ( String dataPathEntry : dataPath )
       {

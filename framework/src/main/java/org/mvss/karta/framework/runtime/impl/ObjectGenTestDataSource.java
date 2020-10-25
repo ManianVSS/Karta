@@ -17,19 +17,22 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class ObjectGenTestDataSource implements TestDataSource
 {
-   public static final String                             PLUGIN_NAME      = "ObjectGenTestDataSource";
+   public static final String                             PLUGIN_NAME          = "ObjectGenTestDataSource";
+
+   @PropertyMapping( group = PLUGIN_NAME, value = "enableRuleValidation" )
+   private boolean                                        enableRuleValidation = true;
 
    @PropertyMapping( group = PLUGIN_NAME, value = "seed" )
-   private Long                                           seed;
+   private Long                                           seed                 = null;
 
    @PropertyMapping( group = PLUGIN_NAME, value = "objectRuleMap" )
-   private HashMap<String, HashMap<String, Serializable>> objectRuleMapRaw = new HashMap<String, HashMap<String, Serializable>>();
+   private HashMap<String, HashMap<String, Serializable>> objectRuleMapRaw     = new HashMap<String, HashMap<String, Serializable>>();
 
-   private HashMap<String, ObjectGenerationRule>          objectRuleMap    = new HashMap<String, ObjectGenerationRule>();
+   private HashMap<String, ObjectGenerationRule>          objectRuleMap        = new HashMap<String, ObjectGenerationRule>();
 
    private Random                                         random;
 
-   private boolean                                        initialized      = false;
+   private boolean                                        initialized          = false;
 
    @Override
    public String getPluginName()
@@ -52,9 +55,15 @@ public class ObjectGenTestDataSource implements TestDataSource
       for ( String objectKey : objectRuleMapRaw.keySet() )
       {
          ObjectGenerationRule ruleToAdd = objectMapper.readValue( objectMapper.writeValueAsString( objectRuleMapRaw.get( objectKey ) ), ObjectGenerationRule.class );
+
+         if ( enableRuleValidation && !ruleToAdd.validateConfiguration() )
+         {
+            log.error( "Object rule generation failed validation: " + ruleToAdd );
+            continue;
+         }
+
          objectRuleMap.put( objectKey, ruleToAdd );
       }
-      // objectRules.removeIf( ( objectRule ) -> ( objectRule.validateConfiguration() ) );
 
       initialized = true;
       return true;
