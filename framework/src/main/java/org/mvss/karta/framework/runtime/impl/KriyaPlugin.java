@@ -20,11 +20,12 @@ import org.mvss.karta.framework.core.ChaosActionDefinition;
 import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.core.NamedParameter;
 import org.mvss.karta.framework.core.ParameterMapping;
+import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.TestStep;
+import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.TestFailureException;
@@ -75,6 +76,9 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
    @KartaAutoWired
    private EventProcessor                               eventProcessor;
 
+   @KartaAutoWired
+   private KartaMinionRegistry                          minionRegistry;
+
    @Override
    public String getPluginName()
    {
@@ -94,32 +98,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
 
       beans.add( configurator );
       beans.add( eventProcessor );
-
-      // HashSet<String> repoDirectories = new HashSet<String>();
-      // repoDirectories.addAll( kartaRuntimeConfiguration.getTestRepositorydirectories() );
-      //
-      // HashSet<String> jarFilesToScan = new HashSet<String>();
-      //
-      // for ( String rpeoDirectory : repoDirectories )
-      // {
-      // for ( File file : FileUtils.listFiles( new File( rpeoDirectory ), Constants.jarExtention, true ) )
-      // {
-      // jarFilesToScan.add( file.getAbsolutePath() );
-      // }
-      // }
-      //
-      // HashSet<ClassLoader> classLoadersToLoadFrom = new HashSet<ClassLoader>();
-      //
-      // classLoadersToLoadFrom.add( this.getClass().getClassLoader() );
-      //
-      // for ( String jarFile : jarFilesToScan )
-      // {
-      // classLoadersToLoadFrom.add( DynamicClassLoader.getClassLoaderForJar( jarFile ) );
-      // }
-
-      // ClassLoader[] classLoaderArrToLoadFrom = new ClassLoader[classLoadersToLoadFrom.size()];
-      // classLoadersToLoadFrom.toArray( classLoaderArrToLoadFrom );
-      // Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forClassLoader( classLoaderArrToLoadFrom ) ).addClassLoaders( classLoaderArrToLoadFrom ).setScanners( new MethodAnnotationsScanner() ) );
+      beans.add( minionRegistry );
 
       for ( String stepDefinitionPackageName : stepDefinitionPackageNames )
       {
@@ -334,9 +313,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
       }
       catch ( Throwable t )
       {
-         // TODO: report failures for data convertion as errors and not test failures
-         result.setSuccesssful( false );
-         result.setIncident( TestIncident.builder().thrownCause( t ).build() );
+         log.error( t );
+         result = StandardStepResults.error( t );
       }
 
       return result;
@@ -379,8 +357,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
       }
       catch ( Throwable t )
       {
-         result.setSuccesssful( false );
-         result.setIncident( TestIncident.builder().thrownCause( t ).build() );
+         log.error( t );
+         result = StandardStepResults.error( t );
       }
 
       return result;

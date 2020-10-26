@@ -6,10 +6,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.javatest.Scenario;
-import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.JavaScenarioCompleteEvent;
 import org.mvss.karta.framework.runtime.event.JavaScenarioStartEvent;
@@ -56,12 +55,9 @@ public class JavaIterationRunner implements Runnable
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
       HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
-      KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
 
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
       HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
-
-      TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testProperties, testData, variables );
 
       nextScenarioMethod: for ( Method scenarioMethod : scenariosMethodsToRun )
       {
@@ -72,6 +68,8 @@ public class JavaIterationRunner implements Runnable
          {
             scenarioName = scenarioMethod.getAnnotation( Scenario.class ).value();
          }
+
+         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, Constants.GENERIC_STEP, testProperties, testData, variables );
 
          StepResult result;
          try
@@ -98,7 +96,7 @@ public class JavaIterationRunner implements Runnable
             }
             else
             {
-               result = new StepResult( ( returnType == boolean.class ) ? ( (boolean) resultReturned ) : true, null, null );
+               result = StepResult.builder().successsful( ( returnType == boolean.class ) ? ( (boolean) resultReturned ) : true ).build();
             }
 
             eventProcessor.raiseEvent( new JavaScenarioCompleteEvent( scenarioName, scenarioName, iterationIndex, scenarioMethod.getName(), scenarioName, result ) );
@@ -113,8 +111,8 @@ public class JavaIterationRunner implements Runnable
          }
          catch ( Throwable t )
          {
-            result = new StepResult( false, TestIncident.builder().thrownCause( t ).build(), null );
             log.error( t );
+            result = StandardStepResults.failure( t );
          }
       }
    }

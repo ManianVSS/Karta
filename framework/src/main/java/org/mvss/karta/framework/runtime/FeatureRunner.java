@@ -74,8 +74,6 @@ public class FeatureRunner
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
       HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
-      TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testProperties, testData, variables );
-
       for ( TestJob job : testFeature.getTestJobs() )
       {
          long jobInterval = job.getInterval();
@@ -107,6 +105,8 @@ public class FeatureRunner
       stepIndex = 0;
       for ( TestStep step : testFeature.getSetupSteps() )
       {
+         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.FEATURE_SETUP, step.getIdentifier(), testProperties, testData, variables );
+
          testData = KartaRuntime
                   .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.FEATURE_SETUP, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
          // log.debug( "Step test data is " + testData.toString() );
@@ -131,7 +131,8 @@ public class FeatureRunner
          catch ( TestFailureException tfe )
          {
             log.error( "Exception in test failure ", tfe );
-            stepResult.setIncident( TestIncident.builder().thrownCause( tfe ).build() );
+            stepResult.setSuccesssful( false );
+            stepResult.addIncident( TestIncident.builder().thrownCause( tfe ).build() );
          }
          finally
          {
@@ -201,6 +202,8 @@ public class FeatureRunner
       stepIndex = 0;
       for ( TestStep step : testFeature.getTearDownSteps() )
       {
+         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.FEATURE_TEARDOWN, step.getIdentifier(), testProperties, testData, variables );
+
          testData = KartaRuntime
                   .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.FEATURE_TEARDOWN, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
          // log.debug( "Step test data is " + testData.toString() );
@@ -225,7 +228,8 @@ public class FeatureRunner
          catch ( TestFailureException tfe )
          {
             log.error( "Exception in test failure ", tfe );
-            stepResult.setIncident( TestIncident.builder().thrownCause( tfe ).build() );
+            stepResult.setSuccesssful( false );
+            stepResult.addIncident( TestIncident.builder().thrownCause( tfe ).build() );
          }
          finally
          {

@@ -23,6 +23,8 @@ public class TestScenario implements Serializable, ObjectWithChance
    private static final long   serialVersionUID       = 1L;
 
    private String              name;
+
+   private String              description;
    //
    // @Builder.Default
    // private Integer priority = Integer.MAX_VALUE;

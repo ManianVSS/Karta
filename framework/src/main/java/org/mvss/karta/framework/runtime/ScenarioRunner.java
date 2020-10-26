@@ -67,7 +67,7 @@ public class ScenarioRunner
       int stepIndex = 0;
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
       HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
-      TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testProperties, testData, variables );
+      // TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testProperties, testData, variables );
 
       String featureName = ( feature != null ) ? feature.getName() : Constants.UNNAMED;
 
@@ -86,6 +86,8 @@ public class ScenarioRunner
 
          for ( TestStep step : mergedSetupSteps )
          {
+            TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, testScenario.getName(), step.getIdentifier(), testProperties, testData, variables );
+
             testData = KartaRuntime
                      .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
             // log.debug( "Step test data is " + testData.toString() );
@@ -127,6 +129,8 @@ public class ScenarioRunner
 
             for ( ChaosAction chaosAction : chaosActionsToPerform )
             {
+               TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, testScenario.getName(), chaosAction.getName(), testProperties, testData, variables );
+
                log.debug( "Performing chaos action: " + chaosAction );
 
                testData = KartaRuntime.getMergedTestData( runName, null, testDataSources, new ExecutionStepPointer( feature.getName(), testScenario.getName(), chaosAction.getName(), iterationIndex, 0 ) );
@@ -151,6 +155,8 @@ public class ScenarioRunner
 
          for ( TestStep step : testScenario.getScenarioExecutionSteps() )
          {
+            TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, testScenario.getName(), step.getIdentifier(), testProperties, testData, variables );
+
             testData = KartaRuntime
                      .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
             // log.debug( "Step test data is " + testData.toString() );
@@ -200,6 +206,8 @@ public class ScenarioRunner
             {
                testData = KartaRuntime
                         .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
+
+               TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, testScenario.getName(), step.getIdentifier(), testProperties, testData, variables );
 
                // log.debug( "Step test data is " + testData.toString() );
                testExecutionContext.setData( testData );

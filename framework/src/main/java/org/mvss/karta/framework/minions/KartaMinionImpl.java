@@ -6,9 +6,9 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.HashSet;
 
 import org.mvss.karta.framework.chaos.ChaosAction;
+import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.runtime.KartaRuntime;
@@ -53,7 +53,7 @@ public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion,
       }
       catch ( TestFailureException e )
       {
-         return new StepResult( false, TestIncident.builder().thrownCause( e ).build(), null );
+         return StandardStepResults.failure( e );
       }
    }
 
@@ -66,7 +66,7 @@ public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion,
       }
       catch ( TestFailureException e )
       {
-         return new StepResult( false, TestIncident.builder().thrownCause( e ).build(), null );
+         return StandardStepResults.failure( e );
       }
    }
 

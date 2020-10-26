@@ -87,20 +87,20 @@ public class EventProcessor implements AutoCloseable
       }
    }
 
-   public void fail( String runName, TestIncident incident ) throws TestFailureException
+   public void fail( String runName, String featureName, Integer iteration, String scenarioName, String stepIdentifier, TestIncident incident ) throws TestFailureException
    {
       if ( incident != null )
       {
-         raiseEvent( new TestIncidentOccurenceEvent( runName, incident ) );
+         raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iteration, scenarioName, stepIdentifier, incident ) );
          throw new TestFailureException( incident.getMessage(), incident.getThrownCause() );
       }
    }
 
-   public void raiseIncident( String runName, TestIncident incident )
+   public void raiseIncident( String runName, String featureName, Integer iteration, String scenarioName, String stepIdentifier, TestIncident incident )
    {
       if ( incident != null )
       {
-         raiseEvent( new TestIncidentOccurenceEvent( runName, incident ) );
+         raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iteration, scenarioName, stepIdentifier, incident ) );
       }
    }
 }

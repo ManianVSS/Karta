@@ -16,6 +16,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.configuration.KartaBaseConfiguration;
 import org.mvss.karta.framework.chaos.ChaosAction;
+import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
@@ -486,7 +487,7 @@ public class KartaRuntime implements AutoCloseable
       StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin, StepRunner.class );
       if ( stepRunner == null )
       {
-         return new StepResult( false, TestIncident.builder().message( "Step runner plugin not found: " + stepRunnerPlugin ).build(), null );
+         return StandardStepResults.error( TestIncident.builder().message( "Step runner plugin not found: " + stepRunnerPlugin ).build() );
       }
       return stepRunner.runStep( step, context );
    }
@@ -515,7 +516,7 @@ public class KartaRuntime implements AutoCloseable
       StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin, StepRunner.class );
       if ( stepRunner == null )
       {
-         return new StepResult( false, TestIncident.builder().message( "Step runner plugin not found: " + stepRunnerPlugin ).build(), null );
+         return StandardStepResults.error( TestIncident.builder().message( "Step runner plugin not found: " + stepRunnerPlugin ).build() );
       }
       return stepRunner.performChaosAction( chaosAction, context );
    }

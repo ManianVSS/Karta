@@ -37,7 +37,7 @@ public class TestJobRunner
 
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
       HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
-      TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testProperties, testData, variables );
+      // TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testProperties, testData, variables );
 
       switch ( job.getJobType() )
       {
@@ -55,6 +55,8 @@ public class TestJobRunner
 
                for ( ChaosAction chaosAction : chaosActionsToPerform )
                {
+                  TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, Constants.JOB + job.getName(), chaosAction.getName(), testProperties, testData, variables );
+
                   testData = KartaRuntime.getMergedTestData( runName, null, testDataSources, new ExecutionStepPointer( feature.getName(), job.getName(), chaosAction.getName(), iterationIndex, 0 ) );
                   // log.debug( "Step test data is " + testData.toString() );
                   testExecutionContext.setData( testData );
@@ -97,6 +99,8 @@ public class TestJobRunner
             {
                testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( feature.getName(), job.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
                // log.debug( "Step test data is " + testData.toString() );
+               TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, Constants.JOB + job.getName(), step.getIdentifier(), testProperties, testData, variables );
+
                testExecutionContext.setData( testData );
                eventProcessor.raiseEvent( new JobStepStartEvent( runName, feature, job, iterationIndex, step ) );
                StepResult result = new StepResult();

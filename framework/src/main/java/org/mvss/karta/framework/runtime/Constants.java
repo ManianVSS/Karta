@@ -38,4 +38,7 @@ public class Constants
    public static final String   GENERIC_SCENARIO                 = "__generic_scenario__";
    public static final String   GENERIC_STEP                     = "__generic_step__";
    public static final String   FEATURE_TEARDOWN                 = "__feature_teardown__";
+   public static final String   JOB                              = "job:";
+   public static final String   _SETUP_                          = ":Setup:";
+   public static final String   _TEARDOWN_                       = ":TearDown:";
 }

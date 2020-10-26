@@ -14,8 +14,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.javatest.Feature;
 import org.mvss.karta.framework.core.javatest.FeatureSetup;
 import org.mvss.karta.framework.core.javatest.FeatureTearDown;
@@ -80,6 +80,7 @@ public class JavaFeatureRunner
 
       beans.add( kartaRuntime.getConfigurator() );
       beans.add( eventProcessor );
+      beans.add( nodeRegistry );
 
       try
       {
@@ -155,16 +156,15 @@ public class JavaFeatureRunner
          HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
-         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testProperties, testData, variables );
-
          int iterationIndex = -1;
+         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.FEATURE_SETUP, Constants.GENERIC_STEP, testProperties, testData, variables );
 
          HashMap<Method, AtomicInteger> scenarioIterationIndexMap = new HashMap<Method, AtomicInteger>();
          scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario.getObject(), new AtomicInteger() ) );
 
          eventProcessor.raiseEvent( new JavaFeatureStartEvent( runName, featureName ) );
 
-         if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, featureName, true, true, testCaseObject, testExecutionContext, featureSetupMethods, iterationIndex ) )
+         if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, Constants.FEATURE_SETUP, true, true, testCaseObject, testExecutionContext, featureSetupMethods, iterationIndex ) )
          {
             eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName ) );
             return false;
@@ -212,7 +212,10 @@ public class JavaFeatureRunner
          iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
          scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario.getObject() ).set( 0 ) );
 
-         if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, featureName, true, false, testCaseObject, testExecutionContext, featureTearDownMethods, iterationIndex ) )
+         iterationIndex = -1;
+         testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.FEATURE_TEARDOWN, Constants.GENERIC_STEP, testProperties, testData, variables );
+
+         if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, Constants.FEATURE_TEARDOWN, true, false, testCaseObject, testExecutionContext, featureTearDownMethods, iterationIndex ) )
          {
             eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName ) );
             return false;
@@ -288,12 +291,12 @@ public class JavaFeatureRunner
          }
          else
          {
-            result = new StepResult( ( returnType == boolean.class ) ? ( (boolean) resultReturned ) : true, null, null );
+            result = StepResult.builder().successsful( ( returnType == boolean.class ) ? ( (boolean) resultReturned ) : true ).build();
          }
       }
       catch ( Throwable t )
       {
-         result = new StepResult( false, TestIncident.builder().thrownCause( t ).build(), null );
+         result = StandardStepResults.failure( t );
          log.error( t );
       }
 
@@ -310,6 +313,13 @@ public class JavaFeatureRunner
 
       for ( Method methodToInvoke : methodsOfSequence )
       {
+         String scenarioPrefixName = testExecutionContext.getScenarioName();
+         if ( StringUtils.isEmpty( scenarioPrefixName ) )
+         {
+            scenarioPrefixName = ( featureOrScenarioLevel ? Constants.GENERIC_FEATURE : Constants.GENERIC_SCENARIO );
+         }
+         scenarioPrefixName = scenarioPrefixName + ( setupOrTearDown ? Constants._SETUP_ : Constants._TEARDOWN_ );
+         testExecutionContext.setScenarioName( scenarioPrefixName + methodToInvoke.getName() );
          if ( !runTestMethod( eventProcessor, testDataSources, runName, featureName, scenarioName, featureOrScenarioLevel, setupOrTearDown, testCaseObject, testExecutionContext, methodToInvoke, iterationNumber ) )
          {
             return false;

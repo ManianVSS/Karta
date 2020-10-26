@@ -3,6 +3,7 @@ package org.mvss.karta.samples.tests;
 import java.util.HashSet;
 
 import org.mvss.karta.framework.core.KartaAutoWired;
+import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.javatest.Feature;
@@ -38,32 +39,32 @@ public class Test1
    public StepResult myFeatureSetup( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
-      return new StepResult( true, null, null );
+      return StandardStepResults.passed;
    }
 
    @ScenarioSetup
    public StepResult myScenarioSetupMethod( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
-      return new StepResult( true, null, null );
+      return StandardStepResults.passed;
    }
 
    @Scenario( value = "Scenario2", sequence = 2 )
    public StepResult myScenarioMethod2( TestExecutionContext testExecutionContext )
    {
       log.info( username + " " + variable2 );
-      return new StepResult( true, null, null );
+      return StandardStepResults.passed;
    }
 
    @Scenario( value = "Scenario1", sequence = 1 )
    public StepResult myScenarioMethod( TestExecutionContext testExecutionContext )
    {
       log.info( username + " " + variable1 );
-      return new StepResult( true, null, null );
+      return StandardStepResults.passed;
    }
 
    @Scenario( value = "Scenario3" )
-   public StepResult myScenarioMethod3( TestExecutionContext testExecutionContext )
+   public StepResult myScenarioMethod3( TestExecutionContext context )
    {
       log.info( username + " " + variable2 );
       HashSet<String> failureTags = new HashSet<String>();
@@ -71,21 +72,21 @@ public class Test1
       failureTags.add( "failure" );
       failureTags.add( "java" );
       failureTags.add( "tags" );
-      eventProcessor.raiseIncident( testExecutionContext.getRunName(), TestIncident.builder().message( "Sample test incident" ).tags( failureTags ).build() );
-      return new StepResult( true, null, null );
+      eventProcessor.raiseIncident( context.getRunName(), context.getFeatureName(), context.getIterationIndex(), context.getScenarioName(), context.getStepIdentifier(), TestIncident.builder().message( "Sample test incident" ).tags( failureTags ).build() );
+      return StandardStepResults.passed;
    }
 
    @ScenarioTearDown
    public StepResult myScenarioTearDownMethod( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
-      return new StepResult( true, null, null );
+      return StandardStepResults.passed;
    }
 
    @FeatureTearDown
    public StepResult myFeatureTearDownMethod( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
-      return new StepResult( true, null, null );
+      return StandardStepResults.passed;
    }
 }

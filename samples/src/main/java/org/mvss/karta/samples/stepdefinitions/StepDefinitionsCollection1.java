@@ -41,7 +41,7 @@ public class StepDefinitionsCollection1
       failureTags.add( "sample" );
       failureTags.add( "failure" );
       failureTags.add( "tags" );
-      eventProcessor.raiseIncident( context.getRunName(), TestIncident.builder().message( "Sample test incident" ).tags( failureTags ).build() );
+      eventProcessor.raiseIncident( context.getRunName(), context.getFeatureName(), context.getIterationIndex(), context.getScenarioName(), context.getStepIdentifier(), TestIncident.builder().message( "Sample test incident" ).tags( failureTags ).build() );
    }
 
    @StepDefinition( "the calculator should display \"\"" )
