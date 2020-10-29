@@ -1,5 +1,6 @@
 package org.mvss.karta.framework.runtime;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -11,6 +12,7 @@ import org.mvss.karta.framework.runtime.event.ScenarioCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioStartEvent;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
+import org.mvss.karta.framework.utils.DataUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -44,6 +46,9 @@ public class IterationRunner implements Runnable
 
    private HashMap<TestScenario, AtomicInteger> scenarioIterationIndexMap;
 
+   @Builder.Default
+   private HashMap<String, Serializable>        variables = new HashMap<String, Serializable>();;
+
    @Override
    public void run()
    {
@@ -57,7 +62,7 @@ public class IterationRunner implements Runnable
 
          eventProcessor.raiseEvent( new ScenarioStartEvent( runName, feature, iterationIndex, testScenario ) );
          ScenarioRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).feature( feature ).runName( runName ).iterationIndex( iterationIndex ).testScenario( testScenario )
-                  .scenarioIterationNumber( scenarioIterationNumber ).build().run();
+                  .scenarioIterationNumber( scenarioIterationNumber ).variables( DataUtils.cloneMap( variables ) ).build().run();
 
          eventProcessor.raiseEvent( new ScenarioCompleteEvent( runName, feature, iterationIndex, testScenario ) );
       }

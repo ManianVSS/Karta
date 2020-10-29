@@ -33,13 +33,15 @@ public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion,
    }
 
    @Override
-   public boolean runFeature( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, long numberOfIterations, int numberOfIterationsInParallel ) throws RemoteException
+   public boolean runFeature( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration, long numberOfIterations,
+                              int numberOfIterationsInParallel )
+            throws RemoteException
    {
-      return kartaRuntime.runFeature( stepRunnerPlugin, testDataSourcePlugins, runName, feature, numberOfIterations, numberOfIterationsInParallel );
+      return kartaRuntime.runFeature( stepRunnerPlugin, testDataSourcePlugins, runName, feature, chanceBasedScenarioExecution, exclusiveScenarioPerIteration, numberOfIterations, numberOfIterationsInParallel );
    }
 
    @Override
-   public boolean runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, int iterationIndex, TestScenario testScenario, int scenarioIterationNumber ) throws RemoteException
+   public StepResult runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, int iterationIndex, TestScenario testScenario, int scenarioIterationNumber ) throws RemoteException
    {
       return kartaRuntime.runTestScenario( stepRunnerPlugin, testDataSourcePlugins, runName, feature, iterationIndex, testScenario, scenarioIterationNumber );
    }

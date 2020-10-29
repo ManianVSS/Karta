@@ -26,10 +26,13 @@ tests:
     tags:
       - cycle
     featureFileName: SampleFeatureFile2.yaml
+    chanceBasedScenarioExecution: true
+    exclusiveScenarioPerIteration: true
     numberOfIterations: 10
     numberOfThreads: 5
 
   - name: SampleFeatureFile3
+    priority: 4
     description: sample feature file3
     tags:
       - remote
@@ -37,6 +40,7 @@ tests:
     numberOfIterations: 1
 
   - name: SampleFeatureFile4
+    priority: 3
     description: sample feature file4
     tags:
       - remote
@@ -44,12 +48,24 @@ tests:
     featureFileName: SampleFeatureFile4.yaml
     numberOfIterations: 1
 
+  - name: SampleGherkinFile5
+    priority: 2
+    description: sample Gherkin feature file4
+    featureSourceParserPlugin: Gherkin
+    tags:
+      - Gherkin
+    featureFileName: SampleFeatureFile5.feature
+    numberOfIterations: 4
+
   - testType: JAVA_TEST
+    priority: 1
     name: SampleJavaTest
     description: sample java test
     tags:
       - javaTests
     javaTestClass: org.mvss.karta.samples.tests.Test1
+    chanceBasedScenarioExecution: true
+    exclusiveScenarioPerIteration: true
     numberOfIterations: 10
     numberOfThreads: 5
 

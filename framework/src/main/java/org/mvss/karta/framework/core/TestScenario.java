@@ -20,26 +20,23 @@ public class TestScenario implements Serializable, ObjectWithChance
    /**
     * 
     */
-   private static final long   serialVersionUID       = 1L;
+   private static final long   serialVersionUID = 1L;
 
    private String              name;
 
    private String              description;
-   //
-   // @Builder.Default
-   // private Integer priority = Integer.MAX_VALUE;
 
    @Builder.Default
-   private float               probability            = 1.0f;
+   private float               probability      = 1.0f;
 
    @Builder.Default
-   private ArrayList<TestStep> scenarioSetupSteps     = new ArrayList<TestStep>();
+   private ArrayList<TestStep> setupSteps       = new ArrayList<TestStep>();
 
    private ChaosActionTreeNode chaosConfiguration;
 
    @Builder.Default
-   private ArrayList<TestStep> scenarioExecutionSteps = new ArrayList<TestStep>();
+   private ArrayList<TestStep> executionSteps   = new ArrayList<TestStep>();
 
    @Builder.Default
-   private ArrayList<TestStep> scenarioTearDownSteps  = new ArrayList<TestStep>();
+   private ArrayList<TestStep> tearDownSteps    = new ArrayList<TestStep>();
 }

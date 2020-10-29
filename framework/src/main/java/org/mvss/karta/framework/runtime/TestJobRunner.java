@@ -30,7 +30,7 @@ public class TestJobRunner
    public static boolean run( KartaRuntime kartaRuntime, StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, TestFeature feature, TestJob job, int iterationIndex ) throws Throwable
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-      HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
+      // HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
       KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
 
       log.debug( "Running job: " + job );
@@ -55,7 +55,7 @@ public class TestJobRunner
 
                for ( ChaosAction chaosAction : chaosActionsToPerform )
                {
-                  TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, Constants.JOB + job.getName(), chaosAction.getName(), testProperties, testData, variables );
+                  TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, Constants.JOB + job.getName(), chaosAction.getName(), testData, variables );
 
                   testData = KartaRuntime.getMergedTestData( runName, null, testDataSources, new ExecutionStepPointer( feature.getName(), job.getName(), chaosAction.getName(), iterationIndex, 0 ) );
                   // log.debug( "Step test data is " + testData.toString() );
@@ -99,7 +99,7 @@ public class TestJobRunner
             {
                testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( feature.getName(), job.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
                // log.debug( "Step test data is " + testData.toString() );
-               TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, Constants.JOB + job.getName(), step.getIdentifier(), testProperties, testData, variables );
+               TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, Constants.JOB + job.getName(), step.getIdentifier(), testData, variables );
 
                testExecutionContext.setData( testData );
                eventProcessor.raiseEvent( new JobStepStartEvent( runName, feature, job, iterationIndex, step ) );

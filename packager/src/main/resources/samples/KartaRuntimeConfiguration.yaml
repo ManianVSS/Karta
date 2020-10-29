@@ -1,5 +1,5 @@
 pluginsDirectories:
-  - "${KARTA_HOME}/plugins/" 
+  - "${KARTA_HOME}/plugins/"
   - "."
 enabledPlugins:
   - Kriya
@@ -10,6 +10,7 @@ enabledPlugins:
   - LoggingTestEventListener
   - DumpToFileTestEventListener
   #- RabbitMQTestEventListener
+  - GherkinPlugin
   - CSVTestDataSourcePlugin
 
 defaultFeatureSourceParserPlugin: Kriya

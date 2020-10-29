@@ -6,3 +6,6 @@
 
 - pluginName: CSVTestDataSourcePlugin
   className: org.mvss.karta.samples.plugins.CSVTestDataSourcePlugin
+
+- pluginName: Gherkin
+  className: org.mvss.karta.samples.plugins.GherkinPlugin

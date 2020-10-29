@@ -160,6 +160,12 @@ public class DataFilesTestDataSource implements TestDataSource
                stepName = Constants.GENERIC_STEP;
             }
 
+            int iterationIndex = executionStepPointer.getIterationIndex();
+            if ( iterationIndex <= 0 )
+            {
+               iterationIndex = 0;
+            }
+
             if ( dataStore.containsKey( featureName ) )
             {
                HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>> featureData = dataStore.get( featureName );
@@ -177,11 +183,6 @@ public class DataFilesTestDataSource implements TestDataSource
                         ArrayList<Serializable> possibleValues = stepData.get( dataKey );
                         if ( ( possibleValues != null ) && !possibleValues.isEmpty() )
                         {
-                           int iterationIndex = executionStepPointer.getIterationIndex();
-                           if ( iterationIndex <= 0 )
-                           {
-                              iterationIndex = 0;
-                           }
                            int valueIndex = iterationIndex % possibleValues.size();
                            testData.put( dataKey, possibleValues.get( valueIndex ) );
                         }

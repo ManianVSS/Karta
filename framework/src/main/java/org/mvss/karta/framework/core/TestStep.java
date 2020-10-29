@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.core;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import lombok.AllArgsConstructor;
@@ -17,11 +18,11 @@ public class TestStep implements Serializable
    /**
     * 
     */
-   private static final long             serialVersionUID = 1L;
+   private static final long                        serialVersionUID = 1L;
 
-   private String                        identifier;
+   private String                                   identifier;
 
-   private HashMap<String, Serializable> testData;
+   private HashMap<String, ArrayList<Serializable>> testData;
 
-   private String                        node;
+   private String                                   node;
 }

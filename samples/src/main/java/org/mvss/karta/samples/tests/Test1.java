@@ -49,21 +49,21 @@ public class Test1
       return StandardStepResults.passed;
    }
 
-   @Scenario( value = "Scenario2", sequence = 2 )
+   @Scenario( value = "Scenario2", sequence = 2, probability = 0.33f )
    public StepResult myScenarioMethod2( TestExecutionContext testExecutionContext )
    {
       log.info( username + " " + variable2 );
       return StandardStepResults.passed;
    }
 
-   @Scenario( value = "Scenario1", sequence = 1 )
+   @Scenario( value = "Scenario1", sequence = 1, probability = 0.33f )
    public StepResult myScenarioMethod( TestExecutionContext testExecutionContext )
    {
       log.info( username + " " + variable1 );
       return StandardStepResults.passed;
    }
 
-   @Scenario( value = "Scenario3" )
+   @Scenario( value = "Scenario3", probability = 0.34f )
    public StepResult myScenarioMethod3( TestExecutionContext context )
    {
       log.info( username + " " + variable2 );

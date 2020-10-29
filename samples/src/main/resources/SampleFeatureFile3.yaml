@@ -14,7 +14,7 @@ scenarioSetupSteps:
 testScenarios:
   - name: Scenario1
     probability: 0.5
-    scenarioExecutionSteps:
+    executionSteps:
       - identifier: When the button "2" is pressed
         node: Node2
       - identifier: And the button "+" is pressed
@@ -28,12 +28,12 @@ testScenarios:
 
   - name: Scenario2
     probability: 0.5
-    scenarioExecutionSteps:
+    executionSteps:
       - identifier: When a binary operation is perfomed on the calculator
         testData:
-          operand1: 200
-          operation: "/"
-          operand2: 800
+          operand1: [200]
+          operation: ["/"]
+          operand2: [800]
         node: Node1
       - identifier: And the calculator should display "0.25"
         node: Node2

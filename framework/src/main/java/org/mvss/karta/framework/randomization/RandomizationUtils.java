@@ -89,6 +89,7 @@ public class RandomizationUtils
          return null;
       }
 
+      // TODO: Check for consistency in probability
       float probabilityCovered = 0;
       float randomChance = ( 1 + random.nextInt( 1000000 ) ) / 1000000.0f;
 

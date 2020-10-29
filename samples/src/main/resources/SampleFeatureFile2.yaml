@@ -1,8 +1,6 @@
 ---
 name: CalculatorTest2
 description: This is a sample 2 YAML format feature file testing a calculator's function
-chanceBasedScenarioExecution: true
-exclusiveScenarioPerIteration: true
 
 testJobs:
   - name: job1
@@ -11,8 +9,8 @@ testJobs:
     steps:
       - identifier: authenticate to get new token
         testData:
-          userName: "admin"
-          password: "password@123"
+          userName: ["admin"]
+          password: ["password@123"]
 
       - identifier: reserve use of calculator for next "1500" milliseconds
 
@@ -33,7 +31,7 @@ scenarioSetupSteps:
 testScenarios:
   - name: Scenario1
     probability: 0.5
-    scenarioExecutionSteps:
+    executionSteps:
       - identifier: When the button "2" is pressed
       - identifier: And the button "+" is pressed
       - identifier: And the button "3" is pressed
@@ -42,12 +40,12 @@ testScenarios:
 
   - name: Scenario2
     probability: 0.5
-    scenarioExecutionSteps:
+    executionSteps:
       - identifier: When a binary operation is perfomed on the calculator
         testData:
-          operand1: 200
-          operation: "/"
-          operand2: 800
+          operand1: [200]
+          operation: ["/"]
+          operand2: [800]
       - identifier: And the calculator should display "0.25"
 
 scenarioTearDownSteps:

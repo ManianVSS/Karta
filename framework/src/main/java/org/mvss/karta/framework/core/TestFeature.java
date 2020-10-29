@@ -12,49 +12,31 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TestFeature implements Serializable, Comparable<TestFeature>
+public class TestFeature implements Serializable
 {
    /**
     * 
     */
-   private static final long       serialVersionUID              = 1L;
+   private static final long       serialVersionUID      = 1L;
 
    private String                  name;
    private String                  description;
 
    @Builder.Default
-   private Integer                 priority                      = Integer.MAX_VALUE;
+   private ArrayList<TestJob>      testJobs              = new ArrayList<TestJob>();
 
    @Builder.Default
-   private Boolean                 chanceBasedScenarioExecution  = false;
+   private ArrayList<TestStep>     setupSteps            = new ArrayList<TestStep>();
 
    @Builder.Default
-   private Boolean                 exclusiveScenarioPerIteration = false;
+   private ArrayList<TestStep>     scenarioSetupSteps    = new ArrayList<TestStep>();
 
    @Builder.Default
-   private ArrayList<TestJob>      testJobs                      = new ArrayList<TestJob>();
+   private ArrayList<TestScenario> testScenarios         = new ArrayList<TestScenario>();
 
    @Builder.Default
-   private ArrayList<TestStep>     setupSteps                    = new ArrayList<TestStep>();
+   private ArrayList<TestStep>     scenarioTearDownSteps = new ArrayList<TestStep>();
 
    @Builder.Default
-   private ArrayList<TestStep>     scenarioSetupSteps            = new ArrayList<TestStep>();
-
-   @Builder.Default
-   private ArrayList<TestScenario> testScenarios                 = new ArrayList<TestScenario>();
-
-   @Builder.Default
-   private ArrayList<TestStep>     scenarioTearDownSteps         = new ArrayList<TestStep>();
-
-   @Builder.Default
-   private ArrayList<TestStep>     tearDownSteps                 = new ArrayList<TestStep>();
-
-   @Override
-   public int compareTo( TestFeature other )
-   {
-      int lhs = ( priority == null ) ? 0 : priority;
-      int rhs = ( other.priority == null ) ? 0 : other.priority;
-      return lhs - rhs;
-      // return ( priorityComparision == 0 ) ? name.compareTo( other.name ) : priorityComparision;
-   }
+   private ArrayList<TestStep>     tearDownSteps         = new ArrayList<TestStep>();
 }

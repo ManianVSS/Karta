@@ -50,11 +50,17 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class FeatureRunner
 {
-   private static Random             random = new Random();
+   private static Random             random                        = new Random();
 
    private KartaRuntime              kartaRuntime;
    private StepRunner                stepRunner;
    private ArrayList<TestDataSource> testDataSources;
+
+   @Builder.Default
+   private Boolean                   chanceBasedScenarioExecution  = false;
+
+   @Builder.Default
+   private Boolean                   exclusiveScenarioPerIteration = false;
 
    public boolean run( String runName, TestFeature testFeature ) throws Throwable
    {
@@ -64,7 +70,7 @@ public class FeatureRunner
    public boolean run( String runName, TestFeature testFeature, long numberOfIterations, int numberOfIterationsInParallel ) throws Throwable
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-      HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
+      // HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
       KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
 
       ArrayList<Integer> runningJobs = new ArrayList<Integer>();
@@ -105,7 +111,7 @@ public class FeatureRunner
       stepIndex = 0;
       for ( TestStep step : testFeature.getSetupSteps() )
       {
-         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.FEATURE_SETUP, step.getIdentifier(), testProperties, testData, variables );
+         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.FEATURE_SETUP, step.getIdentifier(), testData, variables );
 
          testData = KartaRuntime
                   .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.FEATURE_SETUP, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
@@ -113,6 +119,7 @@ public class FeatureRunner
          testExecutionContext.setData( testData );
 
          StepResult stepResult = new StepResult();
+         stepResult.setSuccesssful( true );
 
          eventProcessor.raiseEvent( new FeatureSetupStepStartEvent( runName, testFeature, step ) );
 
@@ -121,7 +128,8 @@ public class FeatureRunner
             if ( StringUtils.isNotEmpty( step.getNode() ) )
             {
                stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-               DataUtils.mergeVariables( stepResult.getResults(), testExecutionContext.getVariables() );
+               DataUtils.mergeVariables( testExecutionContext.getVariables(), variables );
+               DataUtils.mergeVariables( stepResult.getResults(), variables );
             }
             else
             {
@@ -162,11 +170,20 @@ public class FeatureRunner
       {
          ArrayList<TestScenario> scenariosToRun = new ArrayList<TestScenario>();
 
-         if ( testFeature.getChanceBasedScenarioExecution() )
+         if ( chanceBasedScenarioExecution )
          {
-            if ( testFeature.getExclusiveScenarioPerIteration() )
+            if ( exclusiveScenarioPerIteration )
             {
-               scenariosToRun.add( RandomizationUtils.generateNextMutexComposition( random, testFeature.getTestScenarios() ) );
+               TestScenario scenarioToRun = RandomizationUtils.generateNextMutexComposition( random, testFeature.getTestScenarios() );
+
+               if ( scenarioToRun != null )
+               {
+                  scenariosToRun.add( scenarioToRun );
+               }
+               else
+               {
+                  continue;
+               }
             }
             else
             {
@@ -179,7 +196,7 @@ public class FeatureRunner
          }
 
          IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).feature( testFeature ).runName( runName ).scenariosToRun( scenariosToRun )
-                  .iterationIndex( iterationIndex ).scenarioIterationIndexMap( scenarioIterationIndexMap ).build();
+                  .iterationIndex( iterationIndex ).scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) ).build();
 
          if ( numberOfIterationsInParallel == 1 )
          {
@@ -202,7 +219,7 @@ public class FeatureRunner
       stepIndex = 0;
       for ( TestStep step : testFeature.getTearDownSteps() )
       {
-         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.FEATURE_TEARDOWN, step.getIdentifier(), testProperties, testData, variables );
+         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.FEATURE_TEARDOWN, step.getIdentifier(), testData, variables );
 
          testData = KartaRuntime
                   .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.FEATURE_TEARDOWN, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
@@ -210,6 +227,7 @@ public class FeatureRunner
          testExecutionContext.setData( testData );
 
          StepResult stepResult = new StepResult();
+         stepResult.setSuccesssful( true );
 
          eventProcessor.raiseEvent( new FeatureTearDownStepStartEvent( runName, testFeature, step ) );
 
@@ -218,7 +236,8 @@ public class FeatureRunner
             if ( StringUtils.isNotEmpty( step.getNode() ) )
             {
                stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-               DataUtils.mergeVariables( stepResult.getResults(), testExecutionContext.getVariables() );
+               DataUtils.mergeVariables( testExecutionContext.getVariables(), variables );
+               DataUtils.mergeVariables( stepResult.getResults(), variables );
             }
             else
             {

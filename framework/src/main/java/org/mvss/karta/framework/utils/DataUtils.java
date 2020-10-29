@@ -1,16 +1,22 @@
 package org.mvss.karta.framework.utils;
 
-import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Map;
 
 public class DataUtils
 {
+   public static <K, V> HashMap<K, V> cloneMap( HashMap<K, V> source )
+   {
+      HashMap<K, V> clone = new HashMap<K, V>();
+      clone.putAll( source );
+      return clone;
+   }
 
-   public static void mergeVariables( HashMap<String, Serializable> sourceVars, HashMap<String, Serializable> destinationVars )
+   public static <K, V> void mergeVariables( Map<K, V> sourceVars, Map<K, V> destinationVars )
    {
       if ( ( sourceVars != null ) && ( sourceVars != destinationVars ) )
       {
-         for ( String variableName : sourceVars.keySet() )
+         for ( K variableName : sourceVars.keySet() )
          {
             destinationVars.put( variableName, sourceVars.get( variableName ) );
          }

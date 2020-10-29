@@ -22,7 +22,7 @@ testScenarios:
           chaosLevel: 50
           chaosUnit: PERCENTAGE
 
-    scenarioExecutionSteps:
+    executionSteps:
       - identifier: When the all clear button is pressed
       - identifier: Then the calculator should display "0"
 

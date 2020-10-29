@@ -18,23 +18,23 @@ public class TestExecutionContext implements Serializable
    /**
     * 
     */
-   private static final long                              serialVersionUID = 1L;
+   private static final long             serialVersionUID = 1L;
 
-   private String                                         runName;
-   private String                                         featureName;
-
-   @Builder.Default
-   private int                                            iterationIndex   = -1;
-
-   private String                                         scenarioName;
-   private String                                         stepIdentifier;
+   private String                        runName;
+   private String                        featureName;
 
    @Builder.Default
-   private HashMap<String, HashMap<String, Serializable>> properties       = null;
+   private int                           iterationIndex   = -1;
+
+   private String                        scenarioName;
+   private String                        stepIdentifier;
+
+   // @Builder.Default
+   // private HashMap<String, HashMap<String, Serializable>> properties = null;
 
    @Builder.Default
-   private HashMap<String, Serializable>                  data             = null;
+   private HashMap<String, Serializable> data             = null;
 
    @Builder.Default
-   private HashMap<String, Serializable>                  variables        = new HashMap<String, Serializable>();
+   private HashMap<String, Serializable> variables        = new HashMap<String, Serializable>();
 }

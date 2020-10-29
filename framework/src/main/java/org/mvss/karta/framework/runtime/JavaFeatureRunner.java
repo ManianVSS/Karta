@@ -1,8 +1,11 @@
 package org.mvss.karta.framework.runtime;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,6 +42,7 @@ import org.mvss.karta.framework.runtime.event.JavaScenarioTearDownStartEvent;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
+import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -60,17 +64,25 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class JavaFeatureRunner
 {
-   private static Random             random = new Random();
+   private static Random             random                        = new Random();
 
    private KartaRuntime              kartaRuntime;
    private ArrayList<TestDataSource> testDataSources;
 
+   @Builder.Default
+   private Boolean                   chanceBasedScenarioExecution  = false;
+
+   @Builder.Default
+   private Boolean                   exclusiveScenarioPerIteration = false;
+
    public boolean run( String runName, String javaTest, String javaTestJarFile )
+            throws KartaFrameworkException, ClassNotFoundException, MalformedURLException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, URISyntaxException
    {
       return run( runName, javaTest, javaTestJarFile, 1, 1 );
    }
 
    public boolean run( String runName, String javaTest, String javaTestJarFile, long numberOfIterations, int numberOfIterationsInParallel )
+            throws KartaFrameworkException, ClassNotFoundException, MalformedURLException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, URISyntaxException
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
       HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
@@ -82,158 +94,159 @@ public class JavaFeatureRunner
       beans.add( eventProcessor );
       beans.add( nodeRegistry );
 
-      try
+      Class<?> testCaseClass = StringUtils.isNotBlank( javaTestJarFile ) ? (Class<?>) DynamicClassLoader.loadClass( javaTestJarFile, javaTest ) : (Class<?>) Class.forName( javaTest );
+
+      Feature featureAnnotation = testCaseClass.getAnnotation( Feature.class );
+
+      if ( featureAnnotation == null )
       {
-         Class<?> testCaseClass = StringUtils.isNotBlank( javaTestJarFile ) ? (Class<?>) DynamicClassLoader.loadClass( javaTestJarFile, javaTest ) : (Class<?>) Class.forName( javaTest );
+         throw new KartaFrameworkException( "The class " + testCaseClass + " is not annotated as a feature. " );
+      }
 
-         Feature featureAnnotation = testCaseClass.getAnnotation( Feature.class );
+      String featureName = featureAnnotation.value();
+      String featureDescription = featureAnnotation.description();
 
-         if ( featureAnnotation == null )
+      Method[] classMethods = testCaseClass.getMethods();
+      TreeMap<Integer, ArrayList<Method>> featureSetupMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
+      TreeMap<Integer, ArrayList<Method>> scenarioSetupMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
+      TreeMap<Integer, ArrayList<GenericObjectWithChance<Method>>> scenarioMethodsMap = new TreeMap<Integer, ArrayList<GenericObjectWithChance<Method>>>();
+      TreeMap<Integer, ArrayList<Method>> scenarioTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
+      TreeMap<Integer, ArrayList<Method>> featureTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
+
+      Object testCaseObject = testCaseClass.newInstance();
+      Configurator.loadBeans( testCaseObject, beans );
+
+      for ( Method classMethod : classMethods )
+      {
+         if ( classMethod.getReturnType() == StepResult.class )
          {
-            // TODO: Error not an feature
-            return false;
-         }
-
-         String featureName = featureAnnotation.value();
-         String featureDescription = featureAnnotation.description();
-         boolean chanceBasedScenarioExecution = featureAnnotation.chanceBasedScenarioExecution();
-         boolean exclusiveScenarioPerIteration = featureAnnotation.exclusiveScenarioPerIteration();
-
-         Method[] classMethods = testCaseClass.getMethods();
-         TreeMap<Integer, ArrayList<Method>> featureSetupMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
-         TreeMap<Integer, ArrayList<Method>> scenarioSetupMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
-         TreeMap<Integer, ArrayList<GenericObjectWithChance<Method>>> scenarioMethodsMap = new TreeMap<Integer, ArrayList<GenericObjectWithChance<Method>>>();
-         TreeMap<Integer, ArrayList<Method>> scenarioTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
-         TreeMap<Integer, ArrayList<Method>> featureTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
-
-         Object testCaseObject = testCaseClass.newInstance();
-         Configurator.loadBeans( testCaseObject, beans );
-
-         for ( Method classMethod : classMethods )
-         {
-            if ( classMethod.getReturnType() == StepResult.class )
+            Parameter[] parameters = classMethod.getParameters();
+            if ( ( parameters.length == 1 ) && ( parameters[0].getType() == TestExecutionContext.class ) )
             {
-               Parameter[] parameters = classMethod.getParameters();
-               if ( ( parameters.length == 1 ) && ( parameters[0].getType() == TestExecutionContext.class ) )
+               if ( classMethod.isAnnotationPresent( FeatureSetup.class ) )
                {
-                  if ( classMethod.isAnnotationPresent( FeatureSetup.class ) )
-                  {
-                     FeatureSetup annotation = classMethod.getAnnotation( FeatureSetup.class );
-                     addMethodToMapInSequence( classMethod, featureSetupMethodsMap, annotation.sequence(), 1.0f );
-                  }
-                  if ( classMethod.isAnnotationPresent( ScenarioSetup.class ) )
-                  {
-                     ScenarioSetup annotation = classMethod.getAnnotation( ScenarioSetup.class );
-                     addMethodToMapInSequence( classMethod, scenarioSetupMethodsMap, annotation.sequence(), 1.0f );
-                  }
-                  if ( classMethod.isAnnotationPresent( Scenario.class ) )
-                  {
-                     Scenario annotation = classMethod.getAnnotation( Scenario.class );
-                     addMethodToMapInSequence( new GenericObjectWithChance<Method>( classMethod, annotation.probability() ), scenarioMethodsMap, annotation.sequence(), annotation.probability() );
-                  }
-                  if ( classMethod.isAnnotationPresent( ScenarioTearDown.class ) )
-                  {
-                     ScenarioTearDown annotation = classMethod.getAnnotation( ScenarioTearDown.class );
-                     addMethodToMapInSequence( classMethod, scenarioTearDownMethodsMap, annotation.sequence(), 1.0f );
-                  }
-                  if ( classMethod.isAnnotationPresent( FeatureTearDown.class ) )
-                  {
-                     FeatureTearDown annotation = classMethod.getAnnotation( FeatureTearDown.class );
-                     addMethodToMapInSequence( classMethod, featureTearDownMethodsMap, annotation.sequence(), 1.0f );
-                  }
+                  FeatureSetup annotation = classMethod.getAnnotation( FeatureSetup.class );
+                  addMethodToMapInSequence( classMethod, featureSetupMethodsMap, annotation.sequence(), 1.0f );
+               }
+               if ( classMethod.isAnnotationPresent( ScenarioSetup.class ) )
+               {
+                  ScenarioSetup annotation = classMethod.getAnnotation( ScenarioSetup.class );
+                  addMethodToMapInSequence( classMethod, scenarioSetupMethodsMap, annotation.sequence(), 1.0f );
+               }
+               if ( classMethod.isAnnotationPresent( Scenario.class ) )
+               {
+                  Scenario annotation = classMethod.getAnnotation( Scenario.class );
+                  addMethodToMapInSequence( new GenericObjectWithChance<Method>( classMethod, annotation.probability() ), scenarioMethodsMap, annotation.sequence(), annotation.probability() );
+               }
+               if ( classMethod.isAnnotationPresent( ScenarioTearDown.class ) )
+               {
+                  ScenarioTearDown annotation = classMethod.getAnnotation( ScenarioTearDown.class );
+                  addMethodToMapInSequence( classMethod, scenarioTearDownMethodsMap, annotation.sequence(), 1.0f );
+               }
+               if ( classMethod.isAnnotationPresent( FeatureTearDown.class ) )
+               {
+                  FeatureTearDown annotation = classMethod.getAnnotation( FeatureTearDown.class );
+                  addMethodToMapInSequence( classMethod, featureTearDownMethodsMap, annotation.sequence(), 1.0f );
                }
             }
          }
+      }
 
-         ArrayList<Method> featureSetupMethods = generateStageMethodSequence( featureSetupMethodsMap );
-         ArrayList<Method> scenarioSetupMethods = generateStageMethodSequence( scenarioSetupMethodsMap );
-         ArrayList<GenericObjectWithChance<Method>> scenarioMethods = generateStageMethodSequence( scenarioMethodsMap );
-         ArrayList<Method> scenarioTearDownMethods = generateStageMethodSequence( scenarioTearDownMethodsMap );
-         ArrayList<Method> featureTearDownMethods = generateStageMethodSequence( featureTearDownMethodsMap );
+      ArrayList<Method> featureSetupMethods = generateStageMethodSequence( featureSetupMethodsMap );
+      ArrayList<Method> scenarioSetupMethods = generateStageMethodSequence( scenarioSetupMethodsMap );
+      ArrayList<GenericObjectWithChance<Method>> scenarioMethods = generateStageMethodSequence( scenarioMethodsMap );
+      ArrayList<Method> scenarioTearDownMethods = generateStageMethodSequence( scenarioTearDownMethodsMap );
+      ArrayList<Method> featureTearDownMethods = generateStageMethodSequence( featureTearDownMethodsMap );
 
-         Configurator.loadProperties( testProperties, testCaseObject );
+      Configurator.loadProperties( testProperties, testCaseObject );
 
-         HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
-         HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
+      HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
+      HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
-         int iterationIndex = -1;
-         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.FEATURE_SETUP, Constants.GENERIC_STEP, testProperties, testData, variables );
+      int iterationIndex = -1;
+      TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.FEATURE_SETUP, Constants.GENERIC_STEP, testData, variables );
 
-         HashMap<Method, AtomicInteger> scenarioIterationIndexMap = new HashMap<Method, AtomicInteger>();
-         scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario.getObject(), new AtomicInteger() ) );
+      HashMap<Method, AtomicInteger> scenarioIterationIndexMap = new HashMap<Method, AtomicInteger>();
+      scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario.getObject(), new AtomicInteger() ) );
 
-         eventProcessor.raiseEvent( new JavaFeatureStartEvent( runName, featureName ) );
+      eventProcessor.raiseEvent( new JavaFeatureStartEvent( runName, featureName ) );
 
-         if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, Constants.FEATURE_SETUP, true, true, testCaseObject, testExecutionContext, featureSetupMethods, iterationIndex ) )
+      if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, Constants.FEATURE_SETUP, true, true, testCaseObject, testExecutionContext, featureSetupMethods, iterationIndex ) )
+      {
+         eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName ) );
+         return false;
+      }
+
+      boolean scenariosResult = true;
+
+      ExecutorService iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfIterationsInParallel ) );
+
+      for ( iterationIndex = 0; ( numberOfIterations <= 0 ) || ( iterationIndex < numberOfIterations ); iterationIndex++ )
+      {
+         ArrayList<Method> scenariosMethodsToRun = new ArrayList<Method>();;
+
+         if ( chanceBasedScenarioExecution )
          {
-            eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName ) );
-            return false;
-         }
-
-         boolean scenariosResult = true;
-
-         ExecutorService iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfIterationsInParallel ) );
-
-         for ( iterationIndex = 0; ( numberOfIterations <= 0 ) || ( iterationIndex < numberOfIterations ); iterationIndex++ )
-         {
-            ArrayList<Method> scenariosMethodsToRun = new ArrayList<Method>();;
-
-            if ( chanceBasedScenarioExecution )
+            if ( exclusiveScenarioPerIteration )
             {
-               if ( exclusiveScenarioPerIteration )
+               GenericObjectWithChance<Method> scenarioMethodSelected = RandomizationUtils.generateNextMutexComposition( random, scenarioMethods );
+               if ( scenarioMethodSelected != null )
                {
-                  scenariosMethodsToRun.add( RandomizationUtils.generateNextMutexComposition( random, scenarioMethods ).object );
+                  scenariosMethodsToRun.add( scenarioMethodSelected.object );
                }
                else
                {
-                  scenariosMethodsToRun.addAll( GenericObjectWithChance.extractObjects( RandomizationUtils.generateNextComposition( random, scenarioMethods ) ) );
+                  continue;
                }
             }
             else
             {
-               scenariosMethodsToRun = GenericObjectWithChance.extractObjects( scenarioMethods );
-            }
-
-            JavaIterationRunner iterationRunner = JavaIterationRunner.builder().kartaRuntime( kartaRuntime ).testDataSources( testDataSources ).testCaseObject( testCaseObject ).scenarioSetupMethods( scenarioSetupMethods )
-                     .scenariosMethodsToRun( scenariosMethodsToRun ).scenarioTearDownMethods( scenarioTearDownMethods ).runName( runName ).featureName( featureName ).featureDescription( featureDescription ).iterationIndex( iterationIndex )
-                     .scenarioIterationIndexMap( scenarioIterationIndexMap ).build();
-
-            if ( numberOfIterationsInParallel == 1 )
-            {
-               iterationRunner.run();
-            }
-            else
-            {
-               iterationExecutionService.submit( iterationRunner );
+               scenariosMethodsToRun.addAll( GenericObjectWithChance.extractObjects( RandomizationUtils.generateNextComposition( random, scenarioMethods ) ) );
             }
          }
-
-         iterationExecutionService.shutdown();
-         iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
-         scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario.getObject() ).set( 0 ) );
-
-         iterationIndex = -1;
-         testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.FEATURE_TEARDOWN, Constants.GENERIC_STEP, testProperties, testData, variables );
-
-         if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, Constants.FEATURE_TEARDOWN, true, false, testCaseObject, testExecutionContext, featureTearDownMethods, iterationIndex ) )
+         else
          {
-            eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName ) );
-            return false;
+            scenariosMethodsToRun = GenericObjectWithChance.extractObjects( scenarioMethods );
          }
 
+         JavaIterationRunner iterationRunner = JavaIterationRunner.builder().kartaRuntime( kartaRuntime ).testDataSources( testDataSources ).testCaseObject( testCaseObject ).scenarioSetupMethods( scenarioSetupMethods )
+                  .scenariosMethodsToRun( scenariosMethodsToRun ).scenarioTearDownMethods( scenarioTearDownMethods ).runName( runName ).featureName( featureName ).featureDescription( featureDescription ).iterationIndex( iterationIndex )
+                  .scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) ).build();
+
+         if ( numberOfIterationsInParallel == 1 )
+         {
+            iterationRunner.run();
+         }
+         else
+         {
+            iterationExecutionService.submit( iterationRunner );
+         }
+      }
+
+      iterationExecutionService.shutdown();
+
+      try
+      {
+         iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
+      }
+      catch ( InterruptedException ie )
+      {
+         // Ignore termination and continue on interruption
+      }
+
+      scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario.getObject() ).set( 0 ) );
+
+      iterationIndex = -1;
+      testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.FEATURE_TEARDOWN, Constants.GENERIC_STEP, testData, variables );
+
+      if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, Constants.FEATURE_TEARDOWN, true, false, testCaseObject, testExecutionContext, featureTearDownMethods, iterationIndex ) )
+      {
          eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName ) );
-         return scenariosResult;
-      }
-      catch ( ClassNotFoundException cnfe )
-      {
-         log.error( "class " + javaTest + " could not be loaded" );
          return false;
       }
-      catch ( Throwable t )
-      {
-         log.error( "Exception occured when trying to run java feature test", t );
-         return false;
-      }
+
+      eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName ) );
+      return scenariosResult;
    }
 
    public static <T> void addMethodToMapInSequence( T method, TreeMap<Integer, ArrayList<T>> map, Integer sequence, float probability )

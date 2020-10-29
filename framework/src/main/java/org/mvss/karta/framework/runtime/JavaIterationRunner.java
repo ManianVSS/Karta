@@ -50,14 +50,16 @@ public class JavaIterationRunner implements Runnable
 
    private HashMap<Method, AtomicInteger> scenarioIterationIndexMap;
 
+   @Builder.Default
+   private HashMap<String, Serializable>  variables = new HashMap<String, Serializable>();
+
    @Override
    public void run()
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-      HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
+      // HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
 
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
-      HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
       nextScenarioMethod: for ( Method scenarioMethod : scenariosMethodsToRun )
       {
@@ -69,7 +71,7 @@ public class JavaIterationRunner implements Runnable
             scenarioName = scenarioMethod.getAnnotation( Scenario.class ).value();
          }
 
-         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, Constants.GENERIC_STEP, testProperties, testData, variables );
+         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, Constants.GENERIC_STEP, testData, variables );
 
          StepResult result;
          try

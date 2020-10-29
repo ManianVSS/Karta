@@ -45,29 +45,33 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class ScenarioRunner
 {
-   private KartaRuntime              kartaRuntime;
-   private StepRunner                stepRunner;
-   private ArrayList<TestDataSource> testDataSources;
+   private KartaRuntime                  kartaRuntime;
+   private StepRunner                    stepRunner;
+   private ArrayList<TestDataSource>     testDataSources;
 
-   private String                    runName;
-   private TestFeature               feature;
-   private int                       iterationIndex;
+   private String                        runName;
+   private TestFeature                   feature;
+   private int                           iterationIndex;
 
-   private TestScenario              testScenario;
-   private int                       scenarioIterationNumber;
+   private TestScenario                  testScenario;
+   private int                           scenarioIterationNumber;
+
+   @Builder.Default
+   private HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
    @SuppressWarnings( "resource" )
-   public boolean run()
+   public StepResult run()
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-      HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
+      // HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
       KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
+
+      StepResult scenarioResult = new StepResult();
+      scenarioResult.setSuccesssful( true );
 
       log.debug( "Running Scenario: " + testScenario );
       int stepIndex = 0;
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
-      HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
-      // TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testProperties, testData, variables );
 
       String featureName = ( feature != null ) ? feature.getName() : Constants.UNNAMED;
 
@@ -79,14 +83,14 @@ public class ScenarioRunner
          {
             mergedSetupSteps.addAll( feature.getScenarioSetupSteps() );
          }
-         if ( testScenario.getScenarioSetupSteps() != null )
+         if ( testScenario.getSetupSteps() != null )
          {
-            mergedSetupSteps.addAll( testScenario.getScenarioSetupSteps() );
+            mergedSetupSteps.addAll( testScenario.getSetupSteps() );
          }
 
          for ( TestStep step : mergedSetupSteps )
          {
-            TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, testScenario.getName(), step.getIdentifier(), testProperties, testData, variables );
+            TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, testScenario.getName(), step.getIdentifier(), testData, variables );
 
             testData = KartaRuntime
                      .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
@@ -95,12 +99,12 @@ public class ScenarioRunner
 
             eventProcessor.raiseEvent( new ScenarioSetupStepStartEvent( runName, feature, iterationIndex, testScenario, step ) );
 
-            StepResult result = new StepResult();
-
+            StepResult result = null;
             if ( StringUtils.isNotEmpty( step.getNode() ) )
             {
                result = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-               DataUtils.mergeVariables( result.getResults(), testExecutionContext.getVariables() );
+               DataUtils.mergeVariables( testExecutionContext.getVariables(), variables );
+               DataUtils.mergeVariables( result.getResults(), variables );
             }
             else
             {
@@ -108,78 +112,92 @@ public class ScenarioRunner
             }
 
             eventProcessor.raiseEvent( new ScenarioSetupStepCompleteEvent( runName, feature, iterationIndex, testScenario, step, result ) );
+            scenarioResult.merge( result );
 
             if ( !result.isSuccesssful() )
             {
-               return false;
+               break;
             }
 
          }
 
-         ChaosActionTreeNode chaosConfiguration = testScenario.getChaosConfiguration();
-         if ( chaosConfiguration != null )
+         if ( scenarioResult.isSuccesssful() )
          {
-            if ( !chaosConfiguration.checkForValidity() )
+            ChaosActionTreeNode chaosConfiguration = testScenario.getChaosConfiguration();
+            if ( chaosConfiguration != null )
             {
-               log.error( "Chaos configuration has errors " + chaosConfiguration );
-            }
-
-            ArrayList<ChaosAction> chaosActionsToPerform = chaosConfiguration.nextChaosActions( kartaRuntime.getRandom() );
-            // TODO: Handle chaos action being empty
-
-            for ( ChaosAction chaosAction : chaosActionsToPerform )
-            {
-               TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, testScenario.getName(), chaosAction.getName(), testProperties, testData, variables );
-
-               log.debug( "Performing chaos action: " + chaosAction );
-
-               testData = KartaRuntime.getMergedTestData( runName, null, testDataSources, new ExecutionStepPointer( feature.getName(), testScenario.getName(), chaosAction.getName(), iterationIndex, 0 ) );
-               // log.debug( "Chaos test data is " + testData.toString() );
-
-               eventProcessor.raiseEvent( new ScenarioChaosActionStartEvent( runName, feature, iterationIndex, testScenario, chaosAction ) );
-
-               StepResult result = new StepResult();
-               if ( StringUtils.isNotEmpty( chaosAction.getNode() ) )
+               if ( !chaosConfiguration.checkForValidity() )
                {
-                  result = nodeRegistry.getNode( chaosAction.getNode() ).performChaosAction( stepRunner.getPluginName(), chaosAction, testExecutionContext );
-                  DataUtils.mergeVariables( result.getResults(), testExecutionContext.getVariables() );
-               }
-               else
-               {
-                  result = stepRunner.performChaosAction( chaosAction, testExecutionContext );
+                  log.error( "Chaos configuration has errors " + chaosConfiguration );
                }
 
-               eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, feature, iterationIndex, testScenario, chaosAction, result ) );
+               ArrayList<ChaosAction> chaosActionsToPerform = chaosConfiguration.nextChaosActions( kartaRuntime.getRandom() );
+               // TODO: Handle chaos action being empty
+
+               for ( ChaosAction chaosAction : chaosActionsToPerform )
+               {
+                  TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, testScenario.getName(), chaosAction.getName(), testData, variables );
+
+                  log.debug( "Performing chaos action: " + chaosAction );
+
+                  testData = KartaRuntime.getMergedTestData( runName, null, testDataSources, new ExecutionStepPointer( feature.getName(), testScenario.getName(), chaosAction.getName(), iterationIndex, 0 ) );
+                  // log.debug( "Chaos test data is " + testData.toString() );
+
+                  eventProcessor.raiseEvent( new ScenarioChaosActionStartEvent( runName, feature, iterationIndex, testScenario, chaosAction ) );
+
+                  StepResult result = null;
+                  if ( StringUtils.isNotEmpty( chaosAction.getNode() ) )
+                  {
+                     result = nodeRegistry.getNode( chaosAction.getNode() ).performChaosAction( stepRunner.getPluginName(), chaosAction, testExecutionContext );
+                     DataUtils.mergeVariables( result.getResults(), testExecutionContext.getVariables() );
+                  }
+                  else
+                  {
+                     result = stepRunner.performChaosAction( chaosAction, testExecutionContext );
+                  }
+
+                  eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, feature, iterationIndex, testScenario, chaosAction, result ) );
+                  scenarioResult.merge( result );
+
+                  if ( !result.isSuccesssful() )
+                  {
+                     break;
+                  }
+               }
             }
-         }
 
-         for ( TestStep step : testScenario.getScenarioExecutionSteps() )
-         {
-            TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, testScenario.getName(), step.getIdentifier(), testProperties, testData, variables );
-
-            testData = KartaRuntime
-                     .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
-            // log.debug( "Step test data is " + testData.toString() );
-            testExecutionContext.setData( testData );
-            eventProcessor.raiseEvent( new ScenarioStepStartEvent( runName, feature, iterationIndex, testScenario, step ) );
-            StepResult result = new StepResult();
-
-            if ( StringUtils.isNotEmpty( step.getNode() ) )
+            if ( scenarioResult.isSuccesssful() )
             {
-               // TODO: Handle missing node info
-               result = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-               DataUtils.mergeVariables( result.getResults(), testExecutionContext.getVariables() );
-            }
-            else
-            {
-               result = stepRunner.runStep( step, testExecutionContext );
-            }
+               for ( TestStep step : testScenario.getExecutionSteps() )
+               {
+                  TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, testScenario.getName(), step.getIdentifier(), testData, variables );
 
-            eventProcessor.raiseEvent( new ScenarioStepCompleteEvent( runName, feature, iterationIndex, testScenario, step, result ) );
+                  testData = KartaRuntime
+                           .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
+                  // log.debug( "Step test data is " + testData.toString() );
+                  testExecutionContext.setData( testData );
+                  eventProcessor.raiseEvent( new ScenarioStepStartEvent( runName, feature, iterationIndex, testScenario, step ) );
 
-            if ( !result.isSuccesssful() )
-            {
-               return false;
+                  StepResult result = null;
+                  if ( StringUtils.isNotEmpty( step.getNode() ) )
+                  {
+                     // TODO: Handle missing node info
+                     result = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+                     DataUtils.mergeVariables( result.getResults(), testExecutionContext.getVariables() );
+                  }
+                  else
+                  {
+                     result = stepRunner.runStep( step, testExecutionContext );
+                  }
+
+                  eventProcessor.raiseEvent( new ScenarioStepCompleteEvent( runName, feature, iterationIndex, testScenario, step, result ) );
+                  scenarioResult.merge( result );
+
+                  if ( !result.isSuccesssful() )
+                  {
+                     break;
+                  }
+               }
             }
          }
       }
@@ -193,9 +211,9 @@ public class ScenarioRunner
          {
             ArrayList<TestStep> mergedTearDownSteps = new ArrayList<TestStep>();
 
-            if ( testScenario.getScenarioTearDownSteps() != null )
+            if ( testScenario.getTearDownSteps() != null )
             {
-               mergedTearDownSteps.addAll( testScenario.getScenarioTearDownSteps() );
+               mergedTearDownSteps.addAll( testScenario.getTearDownSteps() );
             }
             if ( ( feature != null ) && ( feature.getScenarioTearDownSteps() != null ) )
             {
@@ -207,7 +225,7 @@ public class ScenarioRunner
                testData = KartaRuntime
                         .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
 
-               TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, testScenario.getName(), step.getIdentifier(), testProperties, testData, variables );
+               TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, testScenario.getName(), step.getIdentifier(), testData, variables );
 
                // log.debug( "Step test data is " + testData.toString() );
                testExecutionContext.setData( testData );
@@ -226,10 +244,11 @@ public class ScenarioRunner
                }
 
                eventProcessor.raiseEvent( new ScenarioTearDownStepCompleteEvent( runName, feature, iterationIndex, testScenario, step, result ) );
+               scenarioResult.merge( result );
 
                if ( !result.isSuccesssful() )
                {
-                  return false;
+                  return scenarioResult;
                }
             }
          }
@@ -238,6 +257,6 @@ public class ScenarioRunner
             log.error( t );
          }
       }
-      return true;
+      return scenarioResult;
    }
 }

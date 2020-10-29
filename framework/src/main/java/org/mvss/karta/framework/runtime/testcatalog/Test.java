@@ -14,22 +14,25 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Test implements Serializable
+public class Test implements Serializable, Comparable<Test>
 {
 
    /**
     * 
     */
-   private static final long serialVersionUID      = 1L;
+   private static final long serialVersionUID              = 1L;
 
    @Builder.Default
-   private TestType          testType              = TestType.FEATURE;
+   private TestType          testType                      = TestType.FEATURE;
 
    private String            name;
    private String            description;
 
    @Builder.Default
-   private HashSet<String>   tags                  = new HashSet<String>();
+   private Integer           priority                      = Integer.MAX_VALUE;
+
+   @Builder.Default
+   private HashSet<String>   tags                          = new HashSet<String>();
 
    private String            sourceArchive;
 
@@ -37,17 +40,23 @@ public class Test implements Serializable
    private String            stepRunnerPlugin;
 
    @Builder.Default
-   private HashSet<String>   testDataSourcePlugins = new HashSet<String>();
+   private HashSet<String>   testDataSourcePlugins         = new HashSet<String>();
 
    private String            featureFileName;
 
    private String            javaTestClass;
 
    @Builder.Default
-   private long              numberOfIterations    = 1;
+   private Boolean           chanceBasedScenarioExecution  = false;
 
    @Builder.Default
-   private int               numberOfThreads       = 1;
+   private Boolean           exclusiveScenarioPerIteration = false;
+
+   @Builder.Default
+   private long              numberOfIterations            = 1;
+
+   @Builder.Default
+   private int               numberOfThreads               = 1;
 
    public void propogateSourceArchive( String sa, String fspp, String srp, HashSet<String> tdsp )
    {
@@ -109,5 +118,14 @@ public class Test implements Serializable
       {
          testDataSourcePlugins.addAll( test.testDataSourcePlugins );
       }
+   }
+
+   @Override
+   public int compareTo( Test other )
+   {
+      int lhs = ( priority == null ) ? 0 : priority;
+      int rhs = ( other.priority == null ) ? 0 : other.priority;
+      return lhs - rhs;
+      // return ( priorityComparision == 0 ) ? name.compareTo( other.name ) : priorityComparision;
    }
 }

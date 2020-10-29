@@ -45,4 +45,43 @@ public class StepResult implements Serializable
       }
       incidents.add( testIncident );
    }
+
+   public void merge( StepResult stepResult )
+   {
+      if ( stepResult == null )
+      {
+         return;
+      }
+
+      successsful = successsful && stepResult.successsful;
+      error = error && stepResult.error;
+
+      if ( stepResult.incidents != null )
+      {
+         if ( incidents == null )
+         {
+            incidents = new ArrayList<TestIncident>();
+         }
+         incidents.addAll( stepResult.incidents );
+      }
+
+      if ( stepResult.results != null )
+      {
+         if ( results == null )
+         {
+            results = new HashMap<String, Serializable>();
+         }
+         this.results.putAll( stepResult.results );
+      }
+
+      if ( stepResult.events != null )
+      {
+         if ( events == null )
+         {
+            events = new ArrayList<Event>();
+         }
+         events.addAll( stepResult.events );
+      }
+
+   }
 }

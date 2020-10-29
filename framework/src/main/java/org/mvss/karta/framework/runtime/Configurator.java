@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
@@ -104,9 +105,13 @@ public class Configurator
 
       if ( propertyMapping != null )
       {
-         // TODO: Default property name to field name if blank
          String propertyGroup = propertyMapping.group();
          String propertyName = propertyMapping.value();
+
+         if ( StringUtils.isEmpty( propertyName ) )
+         {
+            propertyName = field.getName();
+         }
 
          Serializable propertyValue = getPropertyValue( propertiesStore, propertyGroup, propertyName );
 

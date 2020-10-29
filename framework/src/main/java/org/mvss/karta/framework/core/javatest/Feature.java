@@ -12,8 +12,4 @@ public @interface Feature
    public String value();
 
    public String description() default "";
-
-   public boolean chanceBasedScenarioExecution() default false;
-
-   public boolean exclusiveScenarioPerIteration() default false;
 }

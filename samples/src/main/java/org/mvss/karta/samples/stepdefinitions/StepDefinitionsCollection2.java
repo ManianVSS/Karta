@@ -1,5 +1,7 @@
 package org.mvss.karta.samples.stepdefinitions;
 
+import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Random;
 
 import org.mvss.karta.framework.core.NamedParameter;
@@ -24,9 +26,10 @@ public class StepDefinitionsCollection2
    public StepResult a_binary_operation_is_performed_on_the_calculator( TestExecutionContext context ) throws Throwable
    {
       log.info( "a binary operation is perfomed on the calculator with token " + token + " and  data: " + context.getData() );
-      context.getVariables().put( "BinaryOperationResult", context.getProperties() );
       WaitUtil.sleep( 1000 );
-      return StepResult.builder().successsful( true ).results( context.getVariables() ).build();
+      HashMap<String, Serializable> results = new HashMap<String, Serializable>();
+      results.put( "BinaryOperationResult", random.nextInt( 100 ) );
+      return StepResult.builder().successsful( true ).results( results ).build();
    }
 
    @StepDefinition( value = "authenticate to get new token", parameterMapping = ParameterMapping.NAMED )

@@ -17,7 +17,7 @@ public class RunTarget implements Serializable
    /**
     * 
     */
-   private static final long serialVersionUID   = 1L;
+   private static final long serialVersionUID              = 1L;
 
    private String            featureFile;
 
@@ -25,10 +25,16 @@ public class RunTarget implements Serializable
    private String            javaTestJarFile;
 
    @Builder.Default
-   private long              numberOfIterations = 1;
+   private long              numberOfIterations            = 1;
 
    @Builder.Default
-   private int               numberOfThreads    = 1;
+   private int               numberOfThreads               = 1;
 
    private HashSet<String>   tags;
+
+   @Builder.Default
+   private Boolean           chanceBasedScenarioExecution  = false;
+
+   @Builder.Default
+   private Boolean           exclusiveScenarioPerIteration = false;
 }
