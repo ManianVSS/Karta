@@ -19,8 +19,8 @@ import lombok.extern.log4j.Log4j2;
 @NoArgsConstructor
 public class StepDefinitionsCollection2
 {
-   private Random random = new Random();
-   private String token  = RandomizationUtils.randomAlphaNumericString( random, 10 );
+   private Random          random = new Random();
+   private volatile String token  = RandomizationUtils.randomAlphaNumericString( random, 10 );
 
    @StepDefinition( "a binary operation is perfomed on the calculator" )
    public StepResult a_binary_operation_is_performed_on_the_calculator( TestExecutionContext context ) throws Throwable
@@ -54,5 +54,4 @@ public class StepDefinitionsCollection2
       String oldToken = (String) context.getVariables().get( "oldToken" );
       log.info( "Logging off old token: " + oldToken );
    }
-
 }

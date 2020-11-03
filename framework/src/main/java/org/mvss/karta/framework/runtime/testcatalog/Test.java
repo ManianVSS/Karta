@@ -52,38 +52,45 @@ public class Test implements Serializable, Comparable<Test>
    @Builder.Default
    private Boolean           exclusiveScenarioPerIteration = false;
 
+   private String            threadGroup;
+
    @Builder.Default
    private long              numberOfIterations            = 1;
 
    @Builder.Default
    private int               numberOfThreads               = 1;
 
-   public void propogateSourceArchive( String sa, String fspp, String srp, HashSet<String> tdsp )
+   public void propogateAttributes( String sourceArchive, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String threadGroup )
    {
-      if ( StringUtils.isEmpty( featureSourceParserPlugin ) && StringUtils.isNotEmpty( fspp ) )
+      if ( StringUtils.isEmpty( this.sourceArchive ) && StringUtils.isNotEmpty( sourceArchive ) )
       {
-         featureSourceParserPlugin = fspp;
+         this.sourceArchive = sourceArchive;
       }
 
-      if ( StringUtils.isEmpty( stepRunnerPlugin ) && StringUtils.isNotEmpty( srp ) )
+      if ( StringUtils.isEmpty( this.featureSourceParserPlugin ) && StringUtils.isNotEmpty( featureSourceParserPlugin ) )
       {
-         stepRunnerPlugin = srp;
+         this.featureSourceParserPlugin = featureSourceParserPlugin;
       }
 
-      if ( tdsp != null )
+      if ( StringUtils.isEmpty( this.stepRunnerPlugin ) && StringUtils.isNotEmpty( stepRunnerPlugin ) )
       {
-         for ( String testDataSourcePlugin : tdsp )
+         this.stepRunnerPlugin = stepRunnerPlugin;
+      }
+
+      if ( testDataSourcePlugins != null )
+      {
+         for ( String testDataSourcePlugin : testDataSourcePlugins )
          {
-            if ( !testDataSourcePlugins.contains( testDataSourcePlugin ) )
+            if ( !this.testDataSourcePlugins.contains( testDataSourcePlugin ) )
             {
-               testDataSourcePlugins.add( testDataSourcePlugin );
+               this.testDataSourcePlugins.add( testDataSourcePlugin );
             }
          }
       }
 
-      if ( StringUtils.isEmpty( sourceArchive ) && StringUtils.isNotEmpty( sa ) )
+      if ( StringUtils.isEmpty( this.threadGroup ) && StringUtils.isNotEmpty( threadGroup ) )
       {
-         sourceArchive = sa;
+         this.threadGroup = threadGroup;
       }
    }
 
@@ -117,6 +124,11 @@ public class Test implements Serializable, Comparable<Test>
       if ( testDataSourcePlugins.isEmpty() && !test.testDataSourcePlugins.isEmpty() )
       {
          testDataSourcePlugins.addAll( test.testDataSourcePlugins );
+      }
+
+      if ( StringUtils.isEmpty( threadGroup ) && StringUtils.isNotEmpty( test.threadGroup ) )
+      {
+         threadGroup = test.threadGroup;
       }
    }
 

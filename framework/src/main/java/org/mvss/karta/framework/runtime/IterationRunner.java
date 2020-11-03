@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
@@ -49,9 +50,16 @@ public class IterationRunner implements Runnable
    @Builder.Default
    private HashMap<String, Serializable>        variables = new HashMap<String, Serializable>();;
 
+   // private HashMap<TestScenario, ScenarioResult> result;
+
    @Override
    public void run()
    {
+      // if ( result == null )
+      // {
+      // result = new HashMap<TestScenario, ScenarioResult>();
+      // }
+
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
       log.debug( "Iteration " + iterationIndex + " with scenarios " + scenariosToRun );
 
@@ -61,11 +69,19 @@ public class IterationRunner implements Runnable
          log.debug( "Running Scenario: " + testScenario.getName() + "[" + scenarioIterationNumber + "]:" );
 
          eventProcessor.raiseEvent( new ScenarioStartEvent( runName, feature, iterationIndex, testScenario ) );
-         ScenarioRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).feature( feature ).runName( runName ).iterationIndex( iterationIndex ).testScenario( testScenario )
-                  .scenarioIterationNumber( scenarioIterationNumber ).variables( DataUtils.cloneMap( variables ) ).build().run();
 
-         eventProcessor.raiseEvent( new ScenarioCompleteEvent( runName, feature, iterationIndex, testScenario ) );
+         ScenarioRunner scenario = ScenarioRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).feature( feature ).runName( runName ).iterationIndex( iterationIndex ).testScenario( testScenario )
+                  .scenarioIterationNumber( scenarioIterationNumber ).variables( DataUtils.cloneMap( variables ) ).build();
+         scenario.run();
+         ScenarioResult scenarioResult = scenario.getResult();
+
+         if ( scenarioResult != null )
+         {
+            // result.put( testScenario, scenarioResult );
+
+         }
+
+         eventProcessor.raiseEvent( new ScenarioCompleteEvent( runName, feature, iterationIndex, testScenario, scenarioResult ) );
       }
-      // TODO: Scenario passed handler;
    }
 }

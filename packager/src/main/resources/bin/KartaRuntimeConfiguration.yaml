@@ -25,3 +25,5 @@ sslProperties:
 nodeName: local
 
 nodes: {}
+
+testThreadCount: 1

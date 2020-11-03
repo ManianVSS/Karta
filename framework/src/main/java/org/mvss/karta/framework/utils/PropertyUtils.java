@@ -19,6 +19,14 @@ public class PropertyUtils
       System.getProperties().forEach( ( key, value ) -> systemPropertyMap.put( key.toString(), value.toString() ) );
    }
 
+   public static <V> void expandEnvVarsForMap( Map<String, V> valueMap )
+   {
+      HashMap<String, V> expandedValue = new HashMap<String, V>();
+      valueMap.forEach( ( key, value ) -> expandedValue.put( expandEnvVars( key ), value ) );
+      valueMap.clear();
+      valueMap.putAll( expandedValue );
+   }
+
    public static void expandEnvVars( Map<String, String> valueMap )
    {
       HashMap<String, String> expandedValue = new HashMap<String, String>();

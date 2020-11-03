@@ -30,7 +30,6 @@ public class TestJobRunner
    public static boolean run( KartaRuntime kartaRuntime, StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, TestFeature feature, TestJob job, int iterationIndex ) throws Throwable
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-      // HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
       KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
 
       log.debug( "Running job: " + job );
