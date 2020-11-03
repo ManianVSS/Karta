@@ -41,6 +41,8 @@ public class TestCategory implements Serializable
    @Builder.Default
    private ArrayList<Test>         tests                 = new ArrayList<Test>();
 
+   private String                  threadGroup;
+
    public Test findTestByName( String name )
    {
       for ( Test test : tests )
@@ -104,7 +106,7 @@ public class TestCategory implements Serializable
       return null;
    }
 
-   public void propogateSourceArchive( String sourceArchive, String fspp, String srp, HashSet<String> tdsp )
+   public void propogateAttributes( String sourceArchive, String fspp, String srp, HashSet<String> tdsp, String tg )
    {
       if ( StringUtils.isEmpty( featureSourceParserPlugin ) && StringUtils.isNotEmpty( fspp ) )
       {
@@ -127,14 +129,24 @@ public class TestCategory implements Serializable
          }
       }
 
+      if ( StringUtils.isEmpty( threadGroup ) && StringUtils.isNotEmpty( tg ) )
+      {
+         threadGroup = tg;
+      }
+
       for ( TestCategory testCategory : subCategories )
       {
-         testCategory.propogateSourceArchive( sourceArchive, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins );
+         testCategory.propogateAttributes( sourceArchive, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, threadGroup );
       }
 
       for ( Test test : tests )
       {
-         test.propogateSourceArchive( sourceArchive, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins );
+         test.propogateAttributes( sourceArchive, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, threadGroup );
+      }
+
+      if ( StringUtils.isEmpty( threadGroup ) && StringUtils.isNotEmpty( tg ) )
+      {
+         threadGroup = tg;
       }
    }
 
@@ -186,6 +198,11 @@ public class TestCategory implements Serializable
       for ( Test test : testCategory.getTests() )
       {
          mergeTest( test );
+      }
+
+      if ( StringUtils.isEmpty( threadGroup ) && StringUtils.isNotEmpty( testCategory.threadGroup ) )
+      {
+         threadGroup = testCategory.threadGroup;
       }
    }
 

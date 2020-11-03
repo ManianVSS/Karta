@@ -34,12 +34,15 @@ public class Constants
 
    public static final String   UNNAMED                          = "Unnamed";
 
-   public static final String   GENERIC_FEATURE                  = "__generic_feature__";
-   public static final String   FEATURE_SETUP                    = "__feature_setup__";
-   public static final String   GENERIC_SCENARIO                 = "__generic_scenario__";
-   public static final String   GENERIC_STEP                     = "__generic_step__";
-   public static final String   FEATURE_TEARDOWN                 = "__feature_teardown__";
+   public static final String   __GENERIC_FEATURE__              = "__generic_feature__";
+   public static final String   __FEATURE_SETUP__                = "__feature_setup__";
+   public static final String   __GENERIC_SCENARIO__             = "__generic_scenario__";
+   public static final String   __GENERIC_STEP__                 = "__generic_step__";
+   public static final String   __FEATURE_TEARDOWN__             = "__feature_teardown__";
+
    public static final String   JOB                              = "job:";
    public static final String   _SETUP_                          = ":Setup:";
    public static final String   _TEARDOWN_                       = ":TearDown:";
+
+   public static final String   __TESTS__                        = "__tests__";
 }

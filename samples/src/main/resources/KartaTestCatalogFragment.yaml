@@ -20,6 +20,7 @@ tests:
       - cycle
     featureFileName: SampleFeatureFile.yaml
     numberOfIterations: 3
+    threadGroup: calculator
 
   - name: SampleFeatureFile2
     description: sample feature file2
@@ -30,6 +31,7 @@ tests:
     exclusiveScenarioPerIteration: true
     numberOfIterations: 10
     numberOfThreads: 5
+    threadGroup: calculator
 
   - name: SampleFeatureFile3
     priority: 4
@@ -38,6 +40,7 @@ tests:
       - remote
     featureFileName: SampleFeatureFile3.yaml
     numberOfIterations: 1
+    threadGroup: calculator
 
   - name: SampleFeatureFile4
     priority: 3
@@ -47,6 +50,7 @@ tests:
       - chaos
     featureFileName: SampleFeatureFile4.yaml
     numberOfIterations: 1
+    threadGroup: calcChaos
 
   - name: SampleGherkinFile5
     priority: 2

@@ -40,12 +40,18 @@ public class KartaRuntimeConfiguration implements Serializable
    @Builder.Default
    private ArrayList<String>                         propertyFiles                = new ArrayList<String>();
 
+   @Builder.Default
+   private ArrayList<String>                         testCatalogFragmentFiles     = new ArrayList<String>();
+
    private SSLProperties                             sslProperties;
 
    private String                                    nodeName;
 
    @Builder.Default
    private HashMap<String, KartaMinionConfiguration> nodes                        = new HashMap<String, KartaMinionConfiguration>();
+
+   @Builder.Default
+   private int                                       testThreadCount              = 1;
 
    // @Builder.Default
    // private Boolean enableMinions = true;
@@ -61,6 +67,7 @@ public class KartaRuntimeConfiguration implements Serializable
       PropertyUtils.expandEnvVars( defaultTestDataSourcePlugins );
       PropertyUtils.expandEnvVars( enabledPlugins );
       PropertyUtils.expandEnvVars( propertyFiles );
+      PropertyUtils.expandEnvVars( testCatalogFragmentFiles );
       sslProperties.expandSystemAndEnvProperties();
       nodeName = PropertyUtils.expandEnvVars( nodeName );
    }

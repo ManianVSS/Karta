@@ -143,21 +143,21 @@ public class DataFilesTestDataSource implements TestDataSource
 
             if ( featureName == null )
             {
-               featureName = Constants.GENERIC_FEATURE;
+               featureName = Constants.__GENERIC_FEATURE__;
             }
 
             String scenarioName = executionStepPointer.getScenario();
 
             if ( scenarioName == null )
             {
-               scenarioName = Constants.GENERIC_SCENARIO;
+               scenarioName = Constants.__GENERIC_SCENARIO__;
             }
 
             String stepName = executionStepPointer.getStep();
 
             if ( stepName == null )
             {
-               stepName = Constants.GENERIC_STEP;
+               stepName = Constants.__GENERIC_STEP__;
             }
 
             int iterationIndex = executionStepPointer.getIterationIndex();

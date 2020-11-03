@@ -4,12 +4,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
@@ -48,13 +50,20 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @JsonInclude( value = Include.NON_ABSENT, content = Include.NON_ABSENT )
 @Builder
-public class FeatureRunner
+public class FeatureRunner implements Callable<Boolean>
 {
    private static Random             random                        = new Random();
 
    private KartaRuntime              kartaRuntime;
    private StepRunner                stepRunner;
    private ArrayList<TestDataSource> testDataSources;
+   private String                    runName;
+   private TestFeature               testFeature;
+
+   @Builder.Default
+   private long                      numberOfIterations            = 1;
+   @Builder.Default
+   private int                       numberOfIterationsInParallel  = 1;
 
    @Builder.Default
    private Boolean                   chanceBasedScenarioExecution  = false;
@@ -62,213 +71,232 @@ public class FeatureRunner
    @Builder.Default
    private Boolean                   exclusiveScenarioPerIteration = false;
 
-   public boolean run( String runName, TestFeature testFeature ) throws Throwable
+   @Builder.Default
+   private boolean                   successful                    = true;
+
+   @Override
+   public Boolean call()
    {
-      return run( runName, testFeature, 1, 1 );
-   }
-
-   public boolean run( String runName, TestFeature testFeature, long numberOfIterations, int numberOfIterationsInParallel ) throws Throwable
-   {
-      EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-      // HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
-      KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
-
-      ArrayList<Integer> runningJobs = new ArrayList<Integer>();
-
-      eventProcessor.raiseEvent( new FeatureStartEvent( runName, testFeature ) );
-
-      HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
-      HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
-
-      for ( TestJob job : testFeature.getTestJobs() )
+      try
       {
-         long jobInterval = job.getInterval();
+         successful = true;
 
-         if ( jobInterval > 0 )
+         EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
+         KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
+
+         ArrayList<Integer> runningJobs = new ArrayList<Integer>();
+
+         eventProcessor.raiseEvent( new FeatureStartEvent( runName, testFeature ) );
+
+         HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
+         HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
+
+         for ( TestJob job : testFeature.getTestJobs() )
          {
-            HashMap<String, Object> jobData = new HashMap<String, Object>();
-            jobData.put( "kartaRuntime", kartaRuntime );
-            jobData.put( "stepRunner", stepRunner );
-            jobData.put( "testDataSources", testDataSources );
-            jobData.put( "runName", runName );
-            jobData.put( "testFeature", testFeature );
-            jobData.put( "testJob", job );
-            jobData.put( "iterationCounter", new AtomicInteger() );
-            runningJobs.add( QuartzJobScheduler.scheduleJob( QuartzTestJob.class, jobInterval, jobData ) );
-         }
-         else
-         {
-            TestJobRunner.run( kartaRuntime, stepRunner, testDataSources, runName, testFeature, job, 0 );
-         }
-      }
+            long jobInterval = job.getInterval();
 
-      int iterationIndex = -1;
-      int stepIndex = 0;
-
-      HashMap<TestScenario, AtomicInteger> scenarioIterationIndexMap = new HashMap<TestScenario, AtomicInteger>();
-      testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario, new AtomicInteger() ) );
-
-      stepIndex = 0;
-      for ( TestStep step : testFeature.getSetupSteps() )
-      {
-         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.FEATURE_SETUP, step.getIdentifier(), testData, variables );
-
-         testData = KartaRuntime
-                  .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.FEATURE_SETUP, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
-         // log.debug( "Step test data is " + testData.toString() );
-         testExecutionContext.setData( testData );
-
-         StepResult stepResult = new StepResult();
-         stepResult.setSuccesssful( true );
-
-         eventProcessor.raiseEvent( new FeatureSetupStepStartEvent( runName, testFeature, step ) );
-
-         try
-         {
-            if ( StringUtils.isNotEmpty( step.getNode() ) )
+            if ( jobInterval > 0 )
             {
-               stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-               DataUtils.mergeVariables( testExecutionContext.getVariables(), variables );
-               DataUtils.mergeVariables( stepResult.getResults(), variables );
+               HashMap<String, Object> jobData = new HashMap<String, Object>();
+               jobData.put( "kartaRuntime", kartaRuntime );
+               jobData.put( "stepRunner", stepRunner );
+               jobData.put( "testDataSources", testDataSources );
+               jobData.put( "runName", runName );
+               jobData.put( "testFeature", testFeature );
+               jobData.put( "testJob", job );
+               jobData.put( "iterationCounter", new AtomicInteger() );
+               runningJobs.add( QuartzJobScheduler.scheduleJob( QuartzTestJob.class, jobInterval, jobData ) );
             }
             else
             {
-               stepResult = stepRunner.runStep( step, testExecutionContext );
+               TestJobRunner.run( kartaRuntime, stepRunner, testDataSources, runName, testFeature, job, 0 );
             }
          }
-         catch ( TestFailureException tfe )
-         {
-            log.error( "Exception in test failure ", tfe );
-            stepResult.setSuccesssful( false );
-            stepResult.addIncident( TestIncident.builder().thrownCause( tfe ).build() );
-         }
-         finally
-         {
-            eventProcessor.raiseEvent( new FeatureSetupStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-            if ( !stepResult.isSuccesssful() )
+         int iterationIndex = -1;
+         int stepIndex = 0;
+
+         HashMap<TestScenario, AtomicInteger> scenarioIterationIndexMap = new HashMap<TestScenario, AtomicInteger>();
+         testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario, new AtomicInteger() ) );
+
+         stepIndex = 0;
+         for ( TestStep step : testFeature.getSetupSteps() )
+         {
+            TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, step.getIdentifier(), testData, variables );
+
+            testData = KartaRuntime
+                     .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.__FEATURE_SETUP__, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
+            // log.debug( "Step test data is " + testData.toString() );
+            testExecutionContext.setData( testData );
+
+            StepResult stepResult = new StepResult();
+            stepResult.setSuccesssful( true );
+
+            eventProcessor.raiseEvent( new FeatureSetupStepStartEvent( runName, testFeature, step ) );
+
+            try
             {
-               // log.error( "Feature \"" + testFeature.getName() + "\" failed at setup step " + step );
-               if ( !QuartzJobScheduler.deleteJobs( runningJobs ) )
+               if ( StringUtils.isNotEmpty( step.getNode() ) )
                {
-                  log.error( "Failed to delete test jobs" );
-               }
-
-               eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature ) );
-               return false;
-            }
-         }
-      }
-
-      // TODO Check for valid number number of iterations
-
-      // TODO check numberOfIterationsInParallel for invalid values
-
-      ExecutorService iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfIterationsInParallel ) );
-
-      for ( iterationIndex = 0; ( numberOfIterations <= 0 ) || ( iterationIndex < numberOfIterations ); iterationIndex++ )
-      {
-         ArrayList<TestScenario> scenariosToRun = new ArrayList<TestScenario>();
-
-         if ( chanceBasedScenarioExecution )
-         {
-            if ( exclusiveScenarioPerIteration )
-            {
-               TestScenario scenarioToRun = RandomizationUtils.generateNextMutexComposition( random, testFeature.getTestScenarios() );
-
-               if ( scenarioToRun != null )
-               {
-                  scenariosToRun.add( scenarioToRun );
+                  stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+                  DataUtils.mergeVariables( testExecutionContext.getVariables(), variables );
+                  DataUtils.mergeVariables( stepResult.getResults(), variables );
                }
                else
                {
-                  continue;
+                  stepResult = stepRunner.runStep( step, testExecutionContext );
+               }
+            }
+            catch ( TestFailureException tfe )
+            {
+               log.error( "Exception in test failure ", tfe );
+               stepResult.setSuccesssful( false );
+               TestIncident incident = TestIncident.builder().thrownCause( tfe ).build();
+               stepResult.addIncident( incident );
+            }
+            finally
+            {
+               eventProcessor.raiseEvent( new FeatureSetupStepCompleteEvent( runName, testFeature, step, stepResult ) );
+
+               if ( !stepResult.isSuccesssful() )
+               {
+                  successful = false;
+
+                  if ( !QuartzJobScheduler.deleteJobs( runningJobs ) )
+                  {
+                     log.error( "Failed to delete test jobs" );
+                     successful = false;
+                  }
+
+                  eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature ) );
+                  return successful;
+               }
+            }
+         }
+
+         if ( !DataUtils.inRange( numberOfIterations, 1, Integer.MAX_VALUE ) )
+         {
+            log.error( "Configuration error: invalid number of iterations: " + numberOfIterations );
+            numberOfIterations = 1;
+         }
+
+         if ( !DataUtils.inRange( numberOfIterationsInParallel, 1, Integer.MAX_VALUE ) )
+         {
+            log.error( "Configuration error: invalid number of threads: " + numberOfIterationsInParallel );
+            numberOfIterationsInParallel = 1;
+         }
+
+         ExecutorService iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfIterationsInParallel ) );
+
+         for ( iterationIndex = 0; ( numberOfIterations <= 0 ) || ( iterationIndex < numberOfIterations ); iterationIndex++ )
+         {
+            ArrayList<TestScenario> scenariosToRun = new ArrayList<TestScenario>();
+
+            if ( chanceBasedScenarioExecution )
+            {
+               if ( exclusiveScenarioPerIteration )
+               {
+                  TestScenario scenarioToRun = RandomizationUtils.generateNextMutexComposition( random, testFeature.getTestScenarios() );
+
+                  if ( scenarioToRun != null )
+                  {
+                     scenariosToRun.add( scenarioToRun );
+                  }
+                  else
+                  {
+                     continue;
+                  }
+               }
+               else
+               {
+                  scenariosToRun.addAll( RandomizationUtils.generateNextComposition( random, testFeature.getTestScenarios() ) );
                }
             }
             else
             {
-               scenariosToRun.addAll( RandomizationUtils.generateNextComposition( random, testFeature.getTestScenarios() ) );
+               scenariosToRun = testFeature.getTestScenarios();
             }
-         }
-         else
-         {
-            scenariosToRun = testFeature.getTestScenarios();
-         }
 
-         IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).feature( testFeature ).runName( runName ).scenariosToRun( scenariosToRun )
-                  .iterationIndex( iterationIndex ).scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) ).build();
+            IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).feature( testFeature ).runName( runName ).scenariosToRun( scenariosToRun )
+                     .iterationIndex( iterationIndex ).scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) ).build();
 
-         if ( numberOfIterationsInParallel == 1 )
-         {
-            log.debug( "Iteration start " + iterationIndex + " with scenarios " + scenariosToRun );
-            iterationRunner.run();
-         }
-         else
-         {
-            log.debug( "Iteration queued " + iterationIndex + " with scenarios " + scenariosToRun );
-            iterationExecutionService.submit( iterationRunner );
-         }
-      }
-
-      iterationExecutionService.shutdown();
-      iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
-
-      testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario ).set( 0 ) );
-
-      iterationIndex = -1;
-      stepIndex = 0;
-      for ( TestStep step : testFeature.getTearDownSteps() )
-      {
-         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.FEATURE_TEARDOWN, step.getIdentifier(), testData, variables );
-
-         testData = KartaRuntime
-                  .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.FEATURE_TEARDOWN, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
-         // log.debug( "Step test data is " + testData.toString() );
-         testExecutionContext.setData( testData );
-
-         StepResult stepResult = new StepResult();
-         stepResult.setSuccesssful( true );
-
-         eventProcessor.raiseEvent( new FeatureTearDownStepStartEvent( runName, testFeature, step ) );
-
-         try
-         {
-            if ( StringUtils.isNotEmpty( step.getNode() ) )
+            if ( numberOfIterationsInParallel == 1 )
             {
-               stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-               DataUtils.mergeVariables( testExecutionContext.getVariables(), variables );
-               DataUtils.mergeVariables( stepResult.getResults(), variables );
+               log.debug( "Iteration start " + iterationIndex + " with scenarios " + scenariosToRun );
+               iterationRunner.run();
             }
             else
             {
-               stepResult = stepRunner.runStep( step, testExecutionContext );
+               log.debug( "Iteration queued " + iterationIndex + " with scenarios " + scenariosToRun );
+               iterationExecutionService.submit( iterationRunner );
             }
          }
-         catch ( TestFailureException tfe )
-         {
-            log.error( "Exception in test failure ", tfe );
-            stepResult.setSuccesssful( false );
-            stepResult.addIncident( TestIncident.builder().thrownCause( tfe ).build() );
-         }
-         finally
-         {
-            eventProcessor.raiseEvent( new FeatureTearDownStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-            if ( !stepResult.isSuccesssful() )
+         iterationExecutionService.shutdown();
+         iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
+
+         testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario ).set( 0 ) );
+
+         iterationIndex = -1;
+         stepIndex = 0;
+         for ( TestStep step : testFeature.getTearDownSteps() )
+         {
+            TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, step.getIdentifier(), testData, variables );
+
+            testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.__FEATURE_TEARDOWN__, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex,
+                                                                                                                               stepIndex++ ) );
+            // log.debug( "Step test data is " + testData.toString() );
+            testExecutionContext.setData( testData );
+
+            StepResult stepResult = new StepResult();
+            eventProcessor.raiseEvent( new FeatureTearDownStepStartEvent( runName, testFeature, step ) );
+
+            try
             {
-               // log.error( "Feature \"" + testFeature.getName() + "\" failed at teardown " + step );
-               continue;
+               if ( StringUtils.isNotEmpty( step.getNode() ) )
+               {
+                  stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+                  DataUtils.mergeVariables( testExecutionContext.getVariables(), variables );
+                  DataUtils.mergeVariables( stepResult.getResults(), variables );
+               }
+               else
+               {
+                  stepResult = stepRunner.runStep( step, testExecutionContext );
+               }
+            }
+            catch ( TestFailureException tfe )
+            {
+               log.error( "Exception in test failure ", tfe );
+               stepResult.setSuccesssful( false );
+               TestIncident incident = TestIncident.builder().thrownCause( tfe ).build();
+               stepResult.addIncident( incident );
+            }
+            finally
+            {
+               eventProcessor.raiseEvent( new FeatureTearDownStepCompleteEvent( runName, testFeature, step, stepResult ) );
+
+               if ( !stepResult.isSuccesssful() )
+               {
+                  successful = false;
+                  continue;
+               }
             }
          }
+
+         eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature ) );
+
+         if ( !QuartzJobScheduler.deleteJobs( runningJobs ) )
+         {
+            log.error( "Failed to delete test jobs" );
+            successful = false;
+         }
       }
-
-      eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature ) );
-
-      if ( !QuartzJobScheduler.deleteJobs( runningJobs ) )
+      catch ( Throwable t )
       {
-         log.error( "Failed to delete test jobs" );
+         log.error( t );
+         log.error( ExceptionUtils.getStackTrace( t ) );
+         successful = false;
       }
-
-      return true;
+      return successful;
    }
 }

@@ -43,3 +43,5 @@ nodes:
     host: localhost
     port: 17171
     enableSSL: true
+
+testThreadCount: 10

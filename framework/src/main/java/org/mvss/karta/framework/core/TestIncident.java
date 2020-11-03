@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.core;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.HashSet;
 
 import lombok.AllArgsConstructor;
@@ -23,6 +24,9 @@ public class TestIncident implements Serializable
    private HashSet<String>   tags;
    private String            message;
    private Throwable         thrownCause;
+
+   @Builder.Default
+   private Date              timeOfOccurance  = new Date();
 
    public TestIncident( String message, Throwable thrownCause, String... tags )
    {

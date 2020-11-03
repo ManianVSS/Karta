@@ -2,9 +2,12 @@ package org.mvss.karta.framework.runtime;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class KartaThreadFactory implements ThreadFactory
 {
+   private AtomicInteger                            threadCounter          = new AtomicInteger();
+
    private ConcurrentHashMap<KartaRunnable, Thread> kartaRunnableThreadMap = new ConcurrentHashMap<KartaRunnable, Thread>();
 
    private Object                                   lock                   = new Object();
@@ -12,7 +15,7 @@ public class KartaThreadFactory implements ThreadFactory
    @Override
    public Thread newThread( Runnable r )
    {
-      Thread thread = new Thread( r );
+      Thread thread = new Thread( r, Constants.KARTA + "-" + threadCounter.incrementAndGet() );
 
       synchronized ( lock )
       {

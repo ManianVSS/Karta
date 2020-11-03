@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.javatest.Scenario;
@@ -65,13 +66,13 @@ public class JavaIterationRunner implements Runnable
       {
          int scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( scenarioMethod ) ) ) ? scenarioIterationIndexMap.get( scenarioMethod ).getAndIncrement() : 0;
 
-         String scenarioName = Constants.GENERIC_SCENARIO;
+         String scenarioName = Constants.__GENERIC_SCENARIO__;
          if ( scenarioMethod.isAnnotationPresent( Scenario.class ) )
          {
             scenarioName = scenarioMethod.getAnnotation( Scenario.class ).value();
          }
 
-         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, Constants.GENERIC_STEP, testData, variables );
+         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, Constants.__GENERIC_STEP__, testData, variables );
 
          StepResult result;
          try
@@ -114,6 +115,7 @@ public class JavaIterationRunner implements Runnable
          catch ( Throwable t )
          {
             log.error( t );
+            log.error( ExceptionUtils.getStackTrace( t ) );
             result = StandardStepResults.failure( t );
          }
       }

@@ -6,6 +6,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -317,6 +318,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
          result = StandardStepResults.error( t );
       }
 
+      result.setEndTime( new Date() );
       return result;
    }
 
@@ -361,6 +363,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
          result = StandardStepResults.error( t );
       }
 
+      result.setEndTime( new Date() );
       return result;
    }
 }

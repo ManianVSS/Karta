@@ -2,13 +2,17 @@ package org.mvss.karta.framework.runtime;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
+import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
+import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
@@ -43,7 +47,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @JsonInclude( value = Include.NON_ABSENT, content = Include.NON_ABSENT )
 @Builder
-public class ScenarioRunner
+public class ScenarioRunner implements Runnable
 {
    private KartaRuntime                  kartaRuntime;
    private StepRunner                    stepRunner;
@@ -56,18 +60,20 @@ public class ScenarioRunner
    private TestScenario                  testScenario;
    private int                           scenarioIterationNumber;
 
+   private ScenarioResult                result;
+
    @Builder.Default
    private HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
-   @SuppressWarnings( "resource" )
-   public StepResult run()
+   // @SuppressWarnings( "resource" )
+   @Override
+   public void run()
    {
-      EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-      // HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
-      KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
+      result = new ScenarioResult();
+      result.setIterationIndex( iterationIndex );
 
-      StepResult scenarioResult = new StepResult();
-      scenarioResult.setSuccesssful( true );
+      EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
+      KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
 
       log.debug( "Running Scenario: " + testScenario );
       int stepIndex = 0;
@@ -99,29 +105,30 @@ public class ScenarioRunner
 
             eventProcessor.raiseEvent( new ScenarioSetupStepStartEvent( runName, feature, iterationIndex, testScenario, step ) );
 
-            StepResult result = null;
+            StepResult stepResult = null;
             if ( StringUtils.isNotEmpty( step.getNode() ) )
             {
-               result = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+               stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
                DataUtils.mergeVariables( testExecutionContext.getVariables(), variables );
-               DataUtils.mergeVariables( result.getResults(), variables );
+               DataUtils.mergeVariables( stepResult.getResults(), variables );
             }
             else
             {
-               result = stepRunner.runStep( step, testExecutionContext );
+               stepResult = stepRunner.runStep( step, testExecutionContext );
             }
 
-            eventProcessor.raiseEvent( new ScenarioSetupStepCompleteEvent( runName, feature, iterationIndex, testScenario, step, result ) );
-            scenarioResult.merge( result );
+            eventProcessor.raiseEvent( new ScenarioSetupStepCompleteEvent( runName, feature, iterationIndex, testScenario, step, stepResult ) );
+            result.getSetupResults().put( step, stepResult );
 
-            if ( !result.isSuccesssful() )
+            if ( !stepResult.isSuccesssful() )
             {
+               result.setSuccesssful( false );
                break;
             }
 
          }
 
-         if ( scenarioResult.isSuccesssful() )
+         if ( result.isSuccesssful() )
          {
             ChaosActionTreeNode chaosConfiguration = testScenario.getChaosConfiguration();
             if ( chaosConfiguration != null )
@@ -145,28 +152,29 @@ public class ScenarioRunner
 
                   eventProcessor.raiseEvent( new ScenarioChaosActionStartEvent( runName, feature, iterationIndex, testScenario, chaosAction ) );
 
-                  StepResult result = null;
+                  StepResult stepResult = null;
                   if ( StringUtils.isNotEmpty( chaosAction.getNode() ) )
                   {
-                     result = nodeRegistry.getNode( chaosAction.getNode() ).performChaosAction( stepRunner.getPluginName(), chaosAction, testExecutionContext );
-                     DataUtils.mergeVariables( result.getResults(), testExecutionContext.getVariables() );
+                     stepResult = nodeRegistry.getNode( chaosAction.getNode() ).performChaosAction( stepRunner.getPluginName(), chaosAction, testExecutionContext );
+                     DataUtils.mergeVariables( stepResult.getResults(), testExecutionContext.getVariables() );
                   }
                   else
                   {
-                     result = stepRunner.performChaosAction( chaosAction, testExecutionContext );
+                     stepResult = stepRunner.performChaosAction( chaosAction, testExecutionContext );
                   }
 
-                  eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, feature, iterationIndex, testScenario, chaosAction, result ) );
-                  scenarioResult.merge( result );
+                  eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, feature, iterationIndex, testScenario, chaosAction, stepResult ) );
+                  result.getChaosActionResults().put( chaosAction, stepResult );
 
-                  if ( !result.isSuccesssful() )
+                  if ( !stepResult.isSuccesssful() )
                   {
+                     result.setSuccesssful( false );
                      break;
                   }
                }
             }
 
-            if ( scenarioResult.isSuccesssful() )
+            if ( result.isSuccesssful() )
             {
                for ( TestStep step : testScenario.getExecutionSteps() )
                {
@@ -178,23 +186,24 @@ public class ScenarioRunner
                   testExecutionContext.setData( testData );
                   eventProcessor.raiseEvent( new ScenarioStepStartEvent( runName, feature, iterationIndex, testScenario, step ) );
 
-                  StepResult result = null;
+                  StepResult stepResult = null;
                   if ( StringUtils.isNotEmpty( step.getNode() ) )
                   {
                      // TODO: Handle missing node info
-                     result = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-                     DataUtils.mergeVariables( result.getResults(), testExecutionContext.getVariables() );
+                     stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+                     DataUtils.mergeVariables( stepResult.getResults(), testExecutionContext.getVariables() );
                   }
                   else
                   {
-                     result = stepRunner.runStep( step, testExecutionContext );
+                     stepResult = stepRunner.runStep( step, testExecutionContext );
                   }
 
-                  eventProcessor.raiseEvent( new ScenarioStepCompleteEvent( runName, feature, iterationIndex, testScenario, step, result ) );
-                  scenarioResult.merge( result );
+                  eventProcessor.raiseEvent( new ScenarioStepCompleteEvent( runName, feature, iterationIndex, testScenario, step, stepResult ) );
+                  result.getRunResults().put( step, stepResult );
 
-                  if ( !result.isSuccesssful() )
+                  if ( !stepResult.isSuccesssful() )
                   {
+                     result.setSuccesssful( false );
                      break;
                   }
                }
@@ -204,6 +213,9 @@ public class ScenarioRunner
       catch ( Throwable t )
       {
          log.error( t );
+         log.error( ExceptionUtils.getStackTrace( t ) );
+         result.setError( true );
+         result.getIncidents().add( TestIncident.builder().thrownCause( t ).build() );
       }
       finally
       {
@@ -231,32 +243,38 @@ public class ScenarioRunner
                testExecutionContext.setData( testData );
 
                eventProcessor.raiseEvent( new ScenarioTearDownStepStartEvent( runName, feature, iterationIndex, testScenario, step ) );
-               StepResult result = new StepResult();
+               StepResult stepResult = new StepResult();
 
                if ( StringUtils.isNotEmpty( step.getNode() ) )
                {
-                  result = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-                  DataUtils.mergeVariables( result.getResults(), testExecutionContext.getVariables() );
+                  stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
+                  DataUtils.mergeVariables( stepResult.getResults(), testExecutionContext.getVariables() );
                }
                else
                {
-                  result = stepRunner.runStep( step, testExecutionContext );
+                  stepResult = stepRunner.runStep( step, testExecutionContext );
                }
 
-               eventProcessor.raiseEvent( new ScenarioTearDownStepCompleteEvent( runName, feature, iterationIndex, testScenario, step, result ) );
-               scenarioResult.merge( result );
+               eventProcessor.raiseEvent( new ScenarioTearDownStepCompleteEvent( runName, feature, iterationIndex, testScenario, step, stepResult ) );
+               result.getTearDownResults().put( step, stepResult );
 
-               if ( !result.isSuccesssful() )
+               if ( !stepResult.isSuccesssful() )
                {
-                  return scenarioResult;
+                  result.setSuccesssful( false );
                }
             }
          }
          catch ( Throwable t )
          {
             log.error( t );
+            log.error( ExceptionUtils.getStackTrace( t ) );
+            result.setError( true );
+            result.getIncidents().add( TestIncident.builder().thrownCause( t ).build() );
+         }
+         finally
+         {
+            result.setEndTime( new Date() );
          }
       }
-      return scenarioResult;
    }
 }

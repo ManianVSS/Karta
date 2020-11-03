@@ -2,6 +2,7 @@ package org.mvss.karta.framework.core;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.mvss.karta.framework.runtime.event.Event;
@@ -23,7 +24,12 @@ public class StepResult implements Serializable
    private static final long             serialVersionUID = 1L;
 
    @Builder.Default
-   private boolean                       successsful      = false;
+   private Date                          startTime        = new Date();
+
+   private Date                          endTime;
+
+   @Builder.Default
+   private boolean                       successsful      = true;
 
    @Builder.Default
    private boolean                       error            = false;
@@ -51,6 +57,16 @@ public class StepResult implements Serializable
       if ( stepResult == null )
       {
          return;
+      }
+
+      if ( stepResult.startTime != null )
+      {
+         this.startTime = stepResult.startTime;
+      }
+
+      if ( stepResult.endTime != null )
+      {
+         this.endTime = stepResult.endTime;
       }
 
       successsful = successsful && stepResult.successsful;

@@ -1,5 +1,7 @@
 package org.mvss.karta.framework.core;
 
+import java.util.Date;
+
 public class StandardStepResults
 {
    public final static StepResult passed = StepResult.builder().successsful( true ).build();
@@ -13,6 +15,7 @@ public class StandardStepResults
    public static StepResult error( TestIncident incident )
    {
       StepResult result = StepResult.builder().error( true ).build();
+      result.setEndTime( new Date() );
       result.getIncidents().add( incident );
       return result;
    }
@@ -25,6 +28,7 @@ public class StandardStepResults
    public static StepResult failure( TestIncident incident )
    {
       StepResult result = StepResult.builder().successsful( false ).build();
+      result.setEndTime( new Date() );
       result.getIncidents().add( incident );
       return result;
    }
