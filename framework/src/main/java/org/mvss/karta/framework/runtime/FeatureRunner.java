@@ -27,6 +27,7 @@ import org.mvss.karta.framework.runtime.event.FeatureSetupStepStartEvent;
 import org.mvss.karta.framework.runtime.event.FeatureStartEvent;
 import org.mvss.karta.framework.runtime.event.FeatureTearDownStepCompleteEvent;
 import org.mvss.karta.framework.runtime.event.FeatureTearDownStepStartEvent;
+import org.mvss.karta.framework.runtime.event.TestIncidentOccurenceEvent;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
@@ -80,6 +81,7 @@ public class FeatureRunner implements Callable<Boolean>
       try
       {
          successful = true;
+         // testFeature = testFeature.getFeatureMergedWithCommonSteps();
 
          EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
          KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
@@ -139,13 +141,18 @@ public class FeatureRunner implements Callable<Boolean>
                if ( StringUtils.isNotEmpty( step.getNode() ) )
                {
                   stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-                  DataUtils.mergeVariables( testExecutionContext.getVariables(), variables );
-                  DataUtils.mergeVariables( stepResult.getResults(), variables );
                }
                else
                {
                   stepResult = stepRunner.runStep( step, testExecutionContext );
                }
+
+               for ( TestIncident incident : stepResult.getIncidents() )
+               {
+                  eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, step.getIdentifier(), incident ) );
+               }
+
+               DataUtils.mergeVariables( stepResult.getResults(), variables );
             }
             catch ( TestFailureException tfe )
             {
@@ -256,13 +263,18 @@ public class FeatureRunner implements Callable<Boolean>
                if ( StringUtils.isNotEmpty( step.getNode() ) )
                {
                   stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-                  DataUtils.mergeVariables( testExecutionContext.getVariables(), variables );
-                  DataUtils.mergeVariables( stepResult.getResults(), variables );
                }
                else
                {
                   stepResult = stepRunner.runStep( step, testExecutionContext );
                }
+
+               for ( TestIncident incident : stepResult.getIncidents() )
+               {
+                  eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, step.getIdentifier(), incident ) );
+               }
+
+               DataUtils.mergeVariables( stepResult.getResults(), variables );
             }
             catch ( TestFailureException tfe )
             {

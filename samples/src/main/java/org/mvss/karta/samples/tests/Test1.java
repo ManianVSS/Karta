@@ -2,7 +2,6 @@ package org.mvss.karta.samples.tests;
 
 import java.util.HashSet;
 
-import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestIncident;
@@ -13,7 +12,6 @@ import org.mvss.karta.framework.core.javatest.Scenario;
 import org.mvss.karta.framework.core.javatest.ScenarioSetup;
 import org.mvss.karta.framework.core.javatest.ScenarioTearDown;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
-import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.samples.stepdefinitions.SamplePropertyType;
 
@@ -31,9 +29,6 @@ public class Test1
 
    @PropertyMapping( group = "groupName", value = "variable2" )
    private SamplePropertyType variable2;
-
-   @KartaAutoWired
-   EventProcessor             eventProcessor;
 
    @FeatureSetup
    public StepResult myFeatureSetup( TestExecutionContext testExecutionContext )
@@ -72,8 +67,9 @@ public class Test1
       failureTags.add( "failure" );
       failureTags.add( "java" );
       failureTags.add( "tags" );
-      eventProcessor.raiseIncident( context.getRunName(), context.getFeatureName(), context.getIterationIndex(), context.getScenarioName(), context.getStepIdentifier(), TestIncident.builder().message( "Sample test incident" ).tags( failureTags ).build() );
-      return StandardStepResults.passed;
+      StepResult result = new StepResult();
+      result.getIncidents().add( TestIncident.builder().message( "Sample test incident" ).tags( failureTags ).build() );
+      return result;
    }
 
    @ScenarioTearDown

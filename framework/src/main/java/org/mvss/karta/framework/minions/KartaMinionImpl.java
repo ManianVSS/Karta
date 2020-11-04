@@ -3,6 +3,7 @@ package org.mvss.karta.framework.minions;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.HashSet;
 
 import org.mvss.karta.framework.chaos.ChaosAction;
@@ -34,17 +35,19 @@ public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion,
    }
 
    @Override
-   public void runFeature( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration, long numberOfIterations,
-                           int numberOfIterationsInParallel )
+   public boolean runFeature( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration, long numberOfIterations,
+                              int numberOfIterationsInParallel )
             throws RemoteException
    {
-      kartaRuntime.runFeature( stepRunnerPlugin, testDataSourcePlugins, runName, feature, chanceBasedScenarioExecution, exclusiveScenarioPerIteration, numberOfIterations, numberOfIterationsInParallel );
+      return kartaRuntime.runFeature( stepRunnerPlugin, testDataSourcePlugins, runName, feature, chanceBasedScenarioExecution, exclusiveScenarioPerIteration, numberOfIterations, numberOfIterationsInParallel );
    }
 
    @Override
-   public ScenarioResult runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, int iterationIndex, TestScenario testScenario, int scenarioIterationNumber ) throws RemoteException
+   public ScenarioResult runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, int iterationIndex, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
+                                          ArrayList<TestStep> scenarioTearDownSteps, int scenarioIterationNumber )
+            throws RemoteException
    {
-      return kartaRuntime.runTestScenario( stepRunnerPlugin, testDataSourcePlugins, runName, feature, iterationIndex, testScenario, scenarioIterationNumber );
+      return kartaRuntime.runTestScenario( stepRunnerPlugin, testDataSourcePlugins, runName, featureName, iterationIndex, scenarioSetupSteps, testScenario, scenarioTearDownSteps, scenarioIterationNumber );
    }
 
    @Override

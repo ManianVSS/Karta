@@ -307,8 +307,14 @@ public class KartaRuntime implements AutoCloseable
    {
       try
       {
-         return runFeatureSource( runName, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, ClassPathLoaderUtils
-                  .readAllText( featureFileName ), chanceBasedScenarioExecution, exclusiveScenarioPerIteration, numberOfIterations, numberOfIterationsInParallel );
+         String featureSource = ClassPathLoaderUtils.readAllText( featureFileName );
+
+         if ( StringUtils.isEmpty( featureSource ) )
+         {
+            log.error( "Feature file invalid: " + featureFileName );
+            return false;
+         }
+         return runFeatureSource( runName, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, featureSource, chanceBasedScenarioExecution, exclusiveScenarioPerIteration, numberOfIterations, numberOfIterationsInParallel );
       }
       catch ( Throwable t )
       {
@@ -375,7 +381,7 @@ public class KartaRuntime implements AutoCloseable
       try
       {
          FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).testDataSources( testDataSources ).chanceBasedScenarioExecution( chanceBasedScenarioExecution )
-                  .exclusiveScenarioPerIteration( exclusiveScenarioPerIteration ).runName( runName ).numberOfIterations( numberOfIterations ).numberOfIterationsInParallel( numberOfIterationsInParallel ).build();
+                  .exclusiveScenarioPerIteration( exclusiveScenarioPerIteration ).runName( runName ).testFeature( feature ).numberOfIterations( numberOfIterations ).numberOfIterationsInParallel( numberOfIterationsInParallel ).build();
          return featureRunner.call();
       }
       catch ( Throwable t )
@@ -548,17 +554,18 @@ public class KartaRuntime implements AutoCloseable
       return successful;
    }
 
-   public StepResult runStep( String stepRunnerPlugin, TestStep step, TestExecutionContext context ) throws TestFailureException
+   public StepResult runStep( String stepRunnerPlugin, TestStep testStep, TestExecutionContext testExecutionContext ) throws TestFailureException
    {
       StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin, StepRunner.class );
       if ( stepRunner == null )
       {
          return StandardStepResults.error( TestIncident.builder().message( "Step runner plugin not found: " + stepRunnerPlugin ).build() );
       }
-      return stepRunner.runStep( step, context );
+      return stepRunner.runStep( testStep, testExecutionContext );
    }
 
-   public ScenarioResult runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, int iterationIndex, TestScenario testScenario, int scenarioIterationNumber )
+   public ScenarioResult runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, int iterationIndex, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
+                                          ArrayList<TestStep> scenarioTearDownSteps, int scenarioIterationNumber )
    {
       StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin, StepRunner.class );
       ArrayList<TestDataSource> testDataSources = getTestDataSourcePlugins( testDataSourcePlugins );
@@ -568,13 +575,14 @@ public class KartaRuntime implements AutoCloseable
          return StandardScenarioResults.error( TestIncident.builder().message( "Plugin(s) not found: " + stepRunnerPlugin + testDataSourcePlugins ).build() );
       }
 
-      return runTestScenario( stepRunner, testDataSources, runName, feature, iterationIndex, testScenario, scenarioIterationNumber );
+      return runTestScenario( stepRunner, testDataSources, runName, featureName, iterationIndex, scenarioSetupSteps, testScenario, scenarioTearDownSteps, scenarioIterationNumber );
    }
 
-   public ScenarioResult runTestScenario( StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, TestFeature feature, int iterationIndex, TestScenario testScenario, int scenarioIterationNumber )
+   public ScenarioResult runTestScenario( StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, String featureName, int iterationIndex, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
+                                          ArrayList<TestStep> scenarioTearDownSteps, int scenarioIterationNumber )
    {
-      ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).testDataSources( testDataSources ).runName( runName ).feature( feature ).iterationIndex( iterationIndex ).testScenario( testScenario )
-               .scenarioIterationNumber( scenarioIterationNumber ).build();
+      ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).testDataSources( testDataSources ).runName( runName ).featureName( featureName ).iterationIndex( iterationIndex )
+               .scenarioSetupSteps( scenarioSetupSteps ).testScenario( testScenario ).scenarioTearDownSteps( scenarioTearDownSteps ).scenarioIterationNumber( scenarioIterationNumber ).build();
       scenarioRunner.run();
       return scenarioRunner.getResult();
    }

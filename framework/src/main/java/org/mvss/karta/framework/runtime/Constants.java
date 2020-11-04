@@ -45,4 +45,15 @@ public class Constants
    public static final String   _TEARDOWN_                       = ":TearDown:";
 
    public static final String   __TESTS__                        = "__tests__";
+
+   public static final String   CONTENT_TYPE                     = "Content-Type";
+   public static final String   APPLICATION_JSON                 = "application/json";
+   public static final String   ACCEPT                           = "Accept";
+
+   public static final String   PATH_HEALTH                      = "/health";
+   public static final String   PATH_RUN_STEP                    = "/run/step";
+   public static final String   PATH_RUN_CHAOS_ACTION            = "/run/choasAction";
+   public static final String   PATH_RUN_SCENARIO                = "/run/scenario";
+   public static final String   PATH_RUN_JOB                     = "/run/job";
+   public static final String   PATH_RUN_FEATURE                 = "/run/feature";
 }

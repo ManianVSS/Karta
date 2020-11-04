@@ -17,7 +17,7 @@
 	<parent>
 		<groupId>org.mvss</groupId>
 		<artifactId>karta</artifactId>
-		<version>${project.version}</version>
+		<version>0.0.3</version>
 	</parent>
 
 	<dependencies>
@@ -100,6 +100,11 @@
 			<artifactId>quartz</artifactId>
 		</dependency>
 
+		<!-- https://mvnrepository.com/artifact/io.rest-assured/rest-assured -->
+		<dependency>
+			<groupId>io.rest-assured</groupId>
+			<artifactId>rest-assured</artifactId>
+		</dependency>
 	</dependencies>
 
 </project>

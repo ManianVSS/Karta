@@ -17,14 +17,14 @@
 	<parent>
 		<groupId>org.mvss</groupId>
 		<artifactId>karta</artifactId>
-		<version>${project.version}</version>
+		<version>0.0.3</version>
 	</parent>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.mvss.karta</groupId>
 			<artifactId>framework</artifactId>
-			<version>${project.version}</version>
+			<version>0.0.3</version>
 		</dependency>
 	</dependencies>
 

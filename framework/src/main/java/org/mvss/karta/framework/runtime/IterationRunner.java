@@ -68,10 +68,11 @@ public class IterationRunner implements Runnable
          int scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( testScenario ) ) ) ? scenarioIterationIndexMap.get( testScenario ).getAndIncrement() : 0;
          log.debug( "Running Scenario: " + testScenario.getName() + "[" + scenarioIterationNumber + "]:" );
 
-         eventProcessor.raiseEvent( new ScenarioStartEvent( runName, feature, iterationIndex, testScenario ) );
+         eventProcessor.raiseEvent( new ScenarioStartEvent( runName, feature.getName(), iterationIndex, testScenario ) );
 
-         ScenarioRunner scenario = ScenarioRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).feature( feature ).runName( runName ).iterationIndex( iterationIndex ).testScenario( testScenario )
-                  .scenarioIterationNumber( scenarioIterationNumber ).variables( DataUtils.cloneMap( variables ) ).build();
+         ScenarioRunner scenario = ScenarioRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).featureName( feature.getName() ).runName( runName ).iterationIndex( iterationIndex )
+                  .scenarioSetupSteps( feature.getScenarioSetupSteps() ).testScenario( testScenario ).scenarioTearDownSteps( feature.getScenarioTearDownSteps() ).scenarioIterationNumber( scenarioIterationNumber )
+                  .variables( DataUtils.cloneMap( variables ) ).build();
          scenario.run();
          ScenarioResult scenarioResult = scenario.getResult();
 
@@ -81,7 +82,7 @@ public class IterationRunner implements Runnable
 
          }
 
-         eventProcessor.raiseEvent( new ScenarioCompleteEvent( runName, feature, iterationIndex, testScenario, scenarioResult ) );
+         eventProcessor.raiseEvent( new ScenarioCompleteEvent( runName, feature.getName(), iterationIndex, testScenario, scenarioResult ) );
       }
    }
 }

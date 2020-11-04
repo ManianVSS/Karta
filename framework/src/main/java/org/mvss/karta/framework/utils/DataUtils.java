@@ -1,5 +1,7 @@
 package org.mvss.karta.framework.utils;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,6 +12,20 @@ public class DataUtils
       HashMap<K, V> clone = new HashMap<K, V>();
       clone.putAll( source );
       return clone;
+   }
+
+   public static <K> ArrayList<K> mergeLists( Collection<K> list1, Collection<K> list2 )
+   {
+      ArrayList<K> mergedList = new ArrayList<K>();
+      if ( list1 != null )
+      {
+         mergedList.addAll( list1 );
+      }
+      if ( list2 != null )
+      {
+         mergedList.addAll( list2 );
+      }
+      return mergedList;
    }
 
    public static <K, V> void mergeVariables( Map<K, V> sourceVars, Map<K, V> destinationVars )

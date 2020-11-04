@@ -26,8 +26,24 @@ public class KartaMinionRegistry
          {
             if ( !nodes.containsKey( name ) )
             {
-               Registry nodeRegistry = RMIUtils.getRemoteRegistry( minionConfiguration.getHost(), minionConfiguration.getPort(), minionConfiguration.isEnableSSL() );
-               KartaMinion kartaNode = (KartaMinion) nodeRegistry.lookup( KartaMinion.class.getName() );
+               KartaMinion kartaNode = null;
+
+               switch ( minionConfiguration.getNodeType() )
+               {
+                  case RMI:
+
+                     Registry nodeRegistry = RMIUtils.getRemoteRegistry( minionConfiguration.getHost(), minionConfiguration.getPort(), minionConfiguration.isEnableSSL() );
+                     kartaNode = (KartaMinion) nodeRegistry.lookup( KartaMinion.class.getName() );
+                     break;
+
+                  case REST:
+                     String url = ( minionConfiguration.isEnableSSL() ? "https://" : "http//" ) + minionConfiguration.getHost() + ":" + minionConfiguration.getPort();
+                     kartaNode = new KartaRestMinion( url, true );
+                     break;
+
+                  default:
+                     break;
+               }
 
                if ( kartaNode.healthCheck() )
                {

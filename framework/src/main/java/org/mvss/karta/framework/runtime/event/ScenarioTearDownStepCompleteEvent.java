@@ -4,8 +4,6 @@ import java.util.Date;
 import java.util.UUID;
 
 import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 
 import lombok.Builder;
@@ -26,29 +24,29 @@ public class ScenarioTearDownStepCompleteEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private TestFeature       feature;
+   private String            featureName;
    private int               iterationNumber;
-   private TestScenario      scenario;
+   private String            scenarioName;
    private TestStep          scenarioTearDownStep;
    private StepResult        result;
 
-   public ScenarioTearDownStepCompleteEvent( String runName, TestFeature feature, int iterationNumber, TestScenario scenario, TestStep scenarioTearDownStep, StepResult result )
+   public ScenarioTearDownStepCompleteEvent( String runName, String featureName, int iterationNumber, String scenarioName, TestStep scenarioTearDownStep, StepResult result )
    {
       super( StandardEventsTypes.SCENARIO_TEARDOWN_STEP_COMPLETE_EVENT, runName );
-      this.feature = feature;
+      this.featureName = featureName;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
+      this.scenarioName = scenarioName;
       this.scenarioTearDownStep = scenarioTearDownStep;
       this.result = result;
    }
 
    @Builder
-   public ScenarioTearDownStepCompleteEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, int iterationNumber, TestScenario scenario, TestStep scenarioTearDownStep, StepResult result )
+   public ScenarioTearDownStepCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, int iterationNumber, String scenarioName, TestStep scenarioTearDownStep, StepResult result )
    {
       super( StandardEventsTypes.SCENARIO_TEARDOWN_STEP_COMPLETE_EVENT, runName, id, timeOfOccurrence );
-      this.feature = feature;
+      this.featureName = featureName;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
+      this.scenarioName = scenarioName;
       this.scenarioTearDownStep = scenarioTearDownStep;
       this.result = result;
    }

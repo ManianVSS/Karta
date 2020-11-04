@@ -2,6 +2,8 @@ package org.mvss.karta.framework.minions;
 
 import java.io.Serializable;
 
+import org.mvss.karta.framework.enums.NodeType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,4 +31,7 @@ public class KartaMinionConfiguration implements Serializable
 
    @Builder.Default
    private boolean           minion           = false;
+
+   @Builder.Default
+   private NodeType          nodeType         = NodeType.RMI;
 }
