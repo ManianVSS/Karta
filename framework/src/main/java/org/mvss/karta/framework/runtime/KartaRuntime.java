@@ -29,6 +29,7 @@ import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
+import org.mvss.karta.framework.minions.KartaMinion;
 import org.mvss.karta.framework.minions.KartaMinionConfiguration;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
@@ -89,9 +90,6 @@ public class KartaRuntime implements AutoCloseable
 
    @Getter
    private HashSet<Object>           beans;
-
-   @Getter
-   private KartaMinionRegistry       minionRegistry;
 
    @Getter
    private ExecutorServiceManager    executorServiceManager;
@@ -474,6 +472,8 @@ public class KartaRuntime implements AutoCloseable
 
       boolean successful = true;
 
+      boolean enabledMinions = kartaRuntimeConfiguration.isMinionsEnabled() && !nodeRegistry.getMinions().isEmpty();
+
       for ( Test test : tests )
       {
          switch ( test.getTestType() )
@@ -515,10 +515,25 @@ public class KartaRuntime implements AutoCloseable
                   featureTestDataSources.add( testDataSource );
                }
 
+               ExecutorService testExecutorService = executorServiceManager.getExecutorServiceForGroup( test.getThreadGroup() );
+
+               if ( enabledMinions )
+               {
+                  KartaMinion minion = nodeRegistry.getNextMinion();
+
+                  if ( minion != null )
+                  {
+                     futures.add( testExecutorService.submit( () -> {
+                        return minion.runFeature( test.getStepRunnerPlugin(), test.getTestDataSourcePlugins(), runName, testFeature, test.getChanceBasedScenarioExecution(), test.getExclusiveScenarioPerIteration(), test.getNumberOfIterations(), test
+                                 .getNumberOfThreads() );
+                     } ) );
+                  }
+               }
+
                FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).testDataSources( featureTestDataSources ).chanceBasedScenarioExecution( test.getChanceBasedScenarioExecution() )
                         .exclusiveScenarioPerIteration( test.getExclusiveScenarioPerIteration() ).runName( runName ).testFeature( testFeature ).numberOfIterations( test.getNumberOfIterations() ).numberOfIterationsInParallel( test.getNumberOfThreads() )
                         .build();
-               ExecutorService testExecutorService = executorServiceManager.getExecutorServiceForGroup( test.getThreadGroup() );
+
                futures.add( testExecutorService.submit( featureRunner ) );
                break;
 

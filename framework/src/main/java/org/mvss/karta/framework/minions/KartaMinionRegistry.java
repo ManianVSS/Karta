@@ -6,12 +6,16 @@ import java.util.HashMap;
 
 import org.mvss.karta.framework.utils.RMIUtils;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class KartaMinionRegistry
 {
+   @Getter
    private ArrayList<KartaMinion>       minions            = new ArrayList<KartaMinion>();
+
+   @Getter
    private HashMap<String, KartaMinion> nodes              = new HashMap<String, KartaMinion>();
 
    private volatile int                 lastMinonIndexUsed = -1;

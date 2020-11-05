@@ -140,6 +140,7 @@ public class FeatureRunner implements Callable<Boolean>
             {
                if ( StringUtils.isNotEmpty( step.getNode() ) )
                {
+                  // TODO: Handle null node error
                   stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
                }
                else

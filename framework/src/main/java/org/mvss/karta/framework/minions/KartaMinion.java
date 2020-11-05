@@ -15,6 +15,7 @@ import org.mvss.karta.framework.runtime.TestExecutionContext;
 
 public interface KartaMinion extends Remote
 {
+   // TODO: Events and incidents should be passed back to caller rather than being raised locally
    boolean runFeature( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration, long numberOfIterations,
                        int numberOfIterationsInParallel )
             throws RemoteException;

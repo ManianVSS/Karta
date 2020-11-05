@@ -53,8 +53,8 @@ public class KartaRuntimeConfiguration implements Serializable
    @Builder.Default
    private int                                       testThreadCount              = 1;
 
-   // @Builder.Default
-   // private Boolean enableMinions = true;
+   @Builder.Default
+   private boolean                                   minionsEnabled               = true;
 
    // @Builder.Default
    // private HashMap<String, KartaMinionConfiguration> minions = new HashMap<String, KartaMinionConfiguration>();
