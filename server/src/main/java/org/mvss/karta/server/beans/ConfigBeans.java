@@ -17,6 +17,7 @@ public class ConfigBeans
    {
       try
       {
+         KartaRuntime.initializeNodes = false;
          return KartaRuntime.getInstance();
       }
       catch ( Throwable e )

@@ -1,5 +1,6 @@
 package org.mvss.karta.framework.minions;
 
+import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,12 +23,13 @@ public class KartaMinionRegistry
 
    private Object                       lock               = new Object();
 
-   public boolean addNode( String name, KartaMinionConfiguration minionConfiguration )
+   public boolean addNode( KartaMinionConfiguration minionConfiguration )
    {
       try
       {
          synchronized ( lock )
          {
+            String name = minionConfiguration.getName();
             if ( !nodes.containsKey( name ) )
             {
                KartaMinion kartaNode = null;
@@ -69,6 +71,10 @@ public class KartaMinionRegistry
                return true;
             }
          }
+      }
+      catch ( RemoteException ce )
+      {
+         log.error( "Connection could not be estabished to node " + minionConfiguration );
       }
       catch ( Throwable t )
       {

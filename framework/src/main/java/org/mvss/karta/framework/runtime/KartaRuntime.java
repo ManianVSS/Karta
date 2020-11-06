@@ -94,6 +94,8 @@ public class KartaRuntime implements AutoCloseable
    @Getter
    private ExecutorServiceManager    executorServiceManager;
 
+   public static boolean             initializeNodes  = true;
+
    @SuppressWarnings( "unchecked" )
    public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException, ClassNotFoundException
    {
@@ -163,11 +165,9 @@ public class KartaRuntime implements AutoCloseable
       // TODO: Add task pulling worker minions to support minions as clients rather than open server sockets
       nodeRegistry = new KartaMinionRegistry();
 
-      HashMap<String, KartaMinionConfiguration> nodeMap = kartaRuntimeConfiguration.getNodes();
-
-      for ( String nodeName : nodeMap.keySet() )
+      if ( initializeNodes )
       {
-         nodeRegistry.addNode( nodeName, nodeMap.get( nodeName ) );
+         addNodes();
       }
 
       testCatalogManager = new TestCatalogManager();
@@ -206,6 +206,16 @@ public class KartaRuntime implements AutoCloseable
       }
 
       return true;
+   }
+
+   public void addNodes()
+   {
+      ArrayList<KartaMinionConfiguration> nodes = kartaRuntimeConfiguration.getNodes();
+
+      for ( KartaMinionConfiguration node : nodes )
+      {
+         nodeRegistry.addNode( node );
+      }
    }
 
    @Override
@@ -524,10 +534,15 @@ public class KartaRuntime implements AutoCloseable
 
                   if ( minion != null )
                   {
-                     futures.add( testExecutorService.submit( () -> {
-                        return minion.runFeature( test.getStepRunnerPlugin(), test.getTestDataSourcePlugins(), runName, testFeature, test.getChanceBasedScenarioExecution(), test.getExclusiveScenarioPerIteration(), test.getNumberOfIterations(), test
-                                 .getNumberOfThreads() );
-                     } ) );
+                     // futures.add( testExecutorService.submit( () -> {
+                     // return minion.runFeature( test.getStepRunnerPlugin(), test.getTestDataSourcePlugins(), runName, testFeature, test.getChanceBasedScenarioExecution(), test.getExclusiveScenarioPerIteration(), test.getNumberOfIterations(), test
+                     // .getNumberOfThreads() );
+                     // } ) );
+                     RemoteFeatureRunner remoteFeatureRunner = RemoteFeatureRunner.builder().kartaRuntime( this ).stepRunner( test.getStepRunnerPlugin() ).testDataSources( test.getTestDataSourcePlugins() )
+                              .chanceBasedScenarioExecution( test.getChanceBasedScenarioExecution() ).exclusiveScenarioPerIteration( test.getExclusiveScenarioPerIteration() ).runName( runName ).testFeature( testFeature )
+                              .numberOfIterations( test.getNumberOfIterations() ).numberOfIterationsInParallel( test.getNumberOfThreads() ).minionToUse( minion ).build();
+                     futures.add( testExecutorService.submit( remoteFeatureRunner ) );
+                     break;
                   }
                }
 

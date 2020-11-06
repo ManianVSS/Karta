@@ -2,7 +2,6 @@ package org.mvss.karta.framework.runtime;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 
 import org.mvss.karta.framework.minions.KartaMinionConfiguration;
@@ -23,38 +22,38 @@ public class KartaRuntimeConfiguration implements Serializable
    /**
     * 
     */
-   private static final long                         serialVersionUID             = 1L;
+   private static final long                   serialVersionUID             = 1L;
 
    @Builder.Default
-   private ArrayList<String>                         pluginsDirectories           = new ArrayList<String>();
+   private ArrayList<String>                   pluginsDirectories           = new ArrayList<String>();
 
-   private String                                    defaultFeatureSourceParserPlugin;
+   private String                              defaultFeatureSourceParserPlugin;
 
-   private String                                    defaultStepRunnerPlugin;
-
-   @Builder.Default
-   private HashSet<String>                           defaultTestDataSourcePlugins = new HashSet<String>();
-
-   private HashSet<String>                           enabledPlugins;
+   private String                              defaultStepRunnerPlugin;
 
    @Builder.Default
-   private ArrayList<String>                         propertyFiles                = new ArrayList<String>();
+   private HashSet<String>                     defaultTestDataSourcePlugins = new HashSet<String>();
+
+   private HashSet<String>                     enabledPlugins;
 
    @Builder.Default
-   private ArrayList<String>                         testCatalogFragmentFiles     = new ArrayList<String>();
-
-   private SSLProperties                             sslProperties;
-
-   private String                                    nodeName;
+   private ArrayList<String>                   propertyFiles                = new ArrayList<String>();
 
    @Builder.Default
-   private HashMap<String, KartaMinionConfiguration> nodes                        = new HashMap<String, KartaMinionConfiguration>();
+   private ArrayList<String>                   testCatalogFragmentFiles     = new ArrayList<String>();
+
+   private SSLProperties                       sslProperties;
+
+   private String                              nodeName;
 
    @Builder.Default
-   private int                                       testThreadCount              = 1;
+   private ArrayList<KartaMinionConfiguration> nodes                        = new ArrayList<KartaMinionConfiguration>();
 
    @Builder.Default
-   private boolean                                   minionsEnabled               = true;
+   private int                                 testThreadCount              = 1;
+
+   @Builder.Default
+   private boolean                             minionsEnabled               = true;
 
    // @Builder.Default
    // private HashMap<String, KartaMinionConfiguration> minions = new HashMap<String, KartaMinionConfiguration>();

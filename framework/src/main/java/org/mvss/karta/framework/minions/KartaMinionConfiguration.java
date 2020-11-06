@@ -21,6 +21,9 @@ public class KartaMinionConfiguration implements Serializable
    private static final long serialVersionUID = 1L;
 
    @Builder.Default
+   private String            name             = "local";
+
+   @Builder.Default
    private String            host             = "localhost";
 
    @Builder.Default

@@ -35,13 +35,19 @@ sslProperties:
 nodeName: local
 
 nodes:
-  Node1:
+  - name: Node1
     host: localhost
     port: 17171
     enableSSL: true
-  Node2:
+    nodeType: RMI
+    minion: true
+    
+  - name: Node2
     host: localhost
     port: 17171
     enableSSL: true
+    nodeType: RMI
+    minion: true
+
 
 testThreadCount: 10

@@ -1,19 +1,29 @@
+# The Karta runtime configuration file. Refer to the comments on each field.
+### Environment and java system properties passed are expanded for the template variables with syntax ${varName} example: ${KARTA_HOME}
+
+### List of directories where plugin jars are to be loaded from
 pluginsDirectories:
   - "${KARTA_HOME}/plugins/"
   - "."
+### The list of plugin names which are to be enabled. Only enabled plugins are intialized and closed
 enabledPlugins:
   - Kriya
   - DataFilesTestDataSource
   - LoggingTestEventListener
 
+### The default feature source parser plugin name
 defaultFeatureSourceParserPlugin: Kriya
+### The default step runner plugin name
 defaultStepRunnerPlugin: Kriya
+### The default list of test data source plugin name
 defaultTestDataSourcePlugins:
   - DataFilesTestDataSource
 
+### The list of property files to load properties from (YAML/JSON/XML based on file extention)
 propertyFiles:
   - KartaRuntimeProperties.yaml
 
+### The SSL connection properties for Karta if enabling SSL for node communication
 sslProperties:
   trustStoreType: jks
   trustStore: "${KARTA_HOME}/bin/trustStore.jks"
@@ -22,8 +32,25 @@ sslProperties:
   keyStore: "${KARTA_HOME}/bin/keyStore.p12"
   keyStorePassword: changeit
 
+### The name of this node
 nodeName: local
 
-nodes: {}
+### List of nodes/minions
+### nodes:
+###   - name: Node1
+###     host: localhost
+###     port: 17171
+###     enableSSL: true
+###     nodeType: RMI
+###     minion: true
+    
+###   - name: Node2
+###     host: localhost
+###     port: 18090
+###     enableSSL: true
+###     nodeType: REST
+###     minion: true
+nodes: []
 
+### Number of threads to use to run tests with
 testThreadCount: 1

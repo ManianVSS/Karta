@@ -9,16 +9,10 @@
 	</formats>
 	<includeBaseDirectory>false</includeBaseDirectory>
 	<dependencySets>
-		<dependencySet>
-			<useTransitiveDependencies>false</useTransitiveDependencies>
-			<includes>
-				<include>org.mvss.karta:framework</include>
-			</includes>
-			<outputDirectory>lib/</outputDirectory>
-			<outputFileNameMapping>framework.jar</outputFileNameMapping>
-			<useProjectArtifact>false</useProjectArtifact>
-		</dependencySet>
-
+	<!-- <dependencySet> <useTransitiveDependencies>false</useTransitiveDependencies> 
+		<includes> <include>org.mvss.karta:framework</include> </includes> <outputDirectory>lib/</outputDirectory> 
+		<outputFileNameMapping>framework.jar</outputFileNameMapping> <useProjectArtifact>false</useProjectArtifact> 
+		</dependencySet> -->
 		<dependencySet>
 			<useTransitiveDependencies>false</useTransitiveDependencies>
 			<includes>
