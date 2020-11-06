@@ -34,8 +34,8 @@ public class KartaMinionRegistry
 
                switch ( minionConfiguration.getNodeType() )
                {
+                  // TODO: Handle local node
                   case RMI:
-
                      Registry nodeRegistry = RMIUtils.getRemoteRegistry( minionConfiguration.getHost(), minionConfiguration.getPort(), minionConfiguration.isEnableSSL() );
                      kartaNode = (KartaMinion) nodeRegistry.lookup( KartaMinion.class.getName() );
                      break;

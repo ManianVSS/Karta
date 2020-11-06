@@ -160,6 +160,7 @@ public class KartaRuntime implements AutoCloseable
       configurator.loadProperties( eventProcessor );
       eventProcessor.start();
 
+      // TODO: Add task pulling worker minions to support minions as clients rather than open server sockets
       nodeRegistry = new KartaMinionRegistry();
 
       HashMap<String, KartaMinionConfiguration> nodeMap = kartaRuntimeConfiguration.getNodes();

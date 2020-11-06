@@ -7,6 +7,11 @@ public class StandardStepResults
    public final static StepResult passed = StepResult.builder().successsful( true ).build();
    public final static StepResult failed = StepResult.builder().successsful( false ).build();
 
+   public static StepResult error( String message )
+   {
+      return error( TestIncident.builder().message( message ).build() );
+   }
+
    public static StepResult error( Throwable t )
    {
       return error( TestIncident.builder().thrownCause( t ).build() );

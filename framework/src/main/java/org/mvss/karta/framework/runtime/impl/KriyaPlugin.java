@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.text.StringEscapeUtils;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.ChaosActionDefinition;
 import org.mvss.karta.framework.core.KartaAutoWired;
@@ -243,9 +244,29 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
 
       String stepIdentifier = sanitizeStepDefinition( testStep.getIdentifier() );
 
+      // Fetch the positional argument names
+      ArrayList<String> inlineStepDefinitionParameterNames = new ArrayList<String>();
+      Matcher matcher = testDataPattern.matcher( testStep.getIdentifier().trim() );
+      while ( matcher.find() )
+      {
+         inlineStepDefinitionParameterNames.add( matcher.group() );
+      }
+
       if ( !stepHandlerMap.containsKey( stepIdentifier ) )
       {
-         return result;
+         // TODO: Handling undefined step to ask manual action(other configured handlers) if possible
+         log.error( "Missing step definition: " + stepIdentifier );
+         log.error( "Suggestion:" );
+         String positionalParameters = "";
+
+         int i = 0;
+         for ( String inlineStepDefinitionParameterName : inlineStepDefinitionParameterNames )
+         {
+            positionalParameters = positionalParameters + ", Serializable posArg" + ( i++ ) + " /*= " + inlineStepDefinitionParameterName + "*/";
+         }
+         log.error( "\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava( stepIdentifier ) + "\" )\r\n" + "   public StepResult " + stepIdentifier.replaceAll( "\\s", "_" ) + "( TestExecutionContext context " + positionalParameters
+                    + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
+         return StandardStepResults.error( "Missing step definition " + stepIdentifier );
       }
 
       try
@@ -262,14 +283,6 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
          Parameter[] parametersObj = stepDefMethodToInvoke.getParameters();
 
          values.add( testExecutionContext );
-
-         // Fetch the positional argument names
-         ArrayList<String> inlineStepDefinitionParameterNames = new ArrayList<String>();
-         Matcher matcher = testDataPattern.matcher( testStep.getIdentifier().trim() );
-         while ( matcher.find() )
-         {
-            inlineStepDefinitionParameterNames.add( matcher.group() );
-         }
 
          if ( parametersObj.length > 1 )
          {
