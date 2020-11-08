@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -28,6 +27,7 @@ import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
+import org.mvss.karta.framework.runtime.BeanRegistry;
 import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.TestFailureException;
@@ -73,6 +73,9 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
    private ArrayList<String>                            chaosActionDefinitionPackageNames      = new ArrayList<String>();
 
    @KartaAutoWired
+   private BeanRegistry                                 beanRegistry;
+
+   @KartaAutoWired
    private Configurator                                 configurator;
 
    @KartaAutoWired
@@ -95,12 +98,6 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
          return true;
       }
       log.info( "Initializing " + PLUGIN_NAME + " plugin" );
-
-      HashSet<Object> beans = new HashSet<Object>();
-
-      beans.add( configurator );
-      beans.add( eventProcessor );
-      beans.add( minionRegistry );
 
       for ( String stepDefinitionPackageName : stepDefinitionPackageNames )
       {
@@ -142,7 +139,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
                      {
                         Object stepDefClassObj = stepDefinitionClass.newInstance();
                         configurator.loadProperties( stepDefClassObj );
-                        Configurator.loadBeans( stepDefClassObj, beans );
+                        beanRegistry.loadBeans( stepDefClassObj );
                         stepDefinitionClassObjectMap.put( stepDefinitionClass, stepDefClassObj );
                      }
                      stepHandlerMap.put( stepDefString, new MutablePair<Object, Method>( stepDefinitionClassObjectMap.get( stepDefinitionClass ), candidateStepDefinitionMethod ) );
@@ -155,51 +152,51 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner
          {
             log.error( "Exception while parsing step definition package " + stepDefinitionPackageName, t );
          }
+      }
 
-         for ( String actionGroupPackageName : chaosActionDefinitionPackageNames )
+      for ( String actionGroupPackageName : chaosActionDefinitionPackageNames )
+      {
+         try
          {
-            try
+            Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( actionGroupPackageName ) ).setScanners( new MethodAnnotationsScanner() ) );
+            Set<Method> chaosActionDefinitionMethods = reflections.getMethodsAnnotatedWith( ChaosActionDefinition.class );
+            HashMap<Class<?>, Object> chaosActionDefinitionClassObjectMap = new HashMap<Class<?>, Object>();
+
+            for ( Method candidateChaosActionMethod : chaosActionDefinitionMethods )
             {
-               Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( actionGroupPackageName ) ).setScanners( new MethodAnnotationsScanner() ) );
-               Set<Method> chaosActionDefinitionMethods = reflections.getMethodsAnnotatedWith( ChaosActionDefinition.class );
-               HashMap<Class<?>, Object> chaosActionDefinitionClassObjectMap = new HashMap<Class<?>, Object>();
-
-               for ( Method candidateChaosActionMethod : chaosActionDefinitionMethods )
+               if ( Modifier.isPublic( candidateChaosActionMethod.getModifiers() ) )
                {
-                  if ( Modifier.isPublic( candidateChaosActionMethod.getModifiers() ) )
+                  for ( ChaosActionDefinition chaosActionDefinition : candidateChaosActionMethod.getAnnotationsByType( ChaosActionDefinition.class ) )
                   {
-                     for ( ChaosActionDefinition chaosActionDefinition : candidateChaosActionMethod.getAnnotationsByType( ChaosActionDefinition.class ) )
+                     String methodDescription = candidateChaosActionMethod.toString();
+                     String chaosActionName = chaosActionDefinition.value();
+                     Class<?>[] params = candidateChaosActionMethod.getParameterTypes();
+
+                     if ( !( ( params.length == 2 ) && ( TestExecutionContext.class == params[0] ) && ( ChaosAction.class == params[1] ) ) )
                      {
-                        String methodDescription = candidateChaosActionMethod.toString();
-                        String chaosActionName = chaosActionDefinition.value();
-                        Class<?>[] params = candidateChaosActionMethod.getParameterTypes();
-
-                        if ( !( ( params.length == 2 ) && ( TestExecutionContext.class == params[0] ) && ( ChaosAction.class == params[1] ) ) )
-                        {
-                           log.error( "Chaos action definition method " + methodDescription + " should have two parameters of types(" + TestExecutionContext.class.getName() + ", " + ChaosAction.class.getName() + ")" );
-                           continue;
-                        }
-
-                        log.debug( "Mapping choas action definition " + chaosActionName + " to " + methodDescription );
-
-                        Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
-                        if ( !chaosActionDefinitionClassObjectMap.containsKey( chaosActionDefinitionClass ) )
-                        {
-                           Object chaosActionDefClassObj = chaosActionDefinitionClass.newInstance();
-                           configurator.loadProperties( chaosActionDefClassObj );
-                           Configurator.loadBeans( chaosActionDefClassObj, beans );
-                           chaosActionDefinitionClassObjectMap.put( chaosActionDefinitionClass, chaosActionDefClassObj );
-                        }
-                        chaosActionHandlerMap.put( chaosActionName, new MutablePair<Object, Method>( chaosActionDefinitionClassObjectMap.get( chaosActionDefinitionClass ), candidateChaosActionMethod ) );
+                        log.error( "Chaos action definition method " + methodDescription + " should have two parameters of types(" + TestExecutionContext.class.getName() + ", " + ChaosAction.class.getName() + ")" );
+                        continue;
                      }
+
+                     log.debug( "Mapping choas action definition " + chaosActionName + " to " + methodDescription );
+
+                     Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
+                     if ( !chaosActionDefinitionClassObjectMap.containsKey( chaosActionDefinitionClass ) )
+                     {
+                        Object chaosActionDefClassObj = chaosActionDefinitionClass.newInstance();
+                        configurator.loadProperties( chaosActionDefClassObj );
+                        beanRegistry.loadBeans( chaosActionDefClassObj );
+                        chaosActionDefinitionClassObjectMap.put( chaosActionDefinitionClass, chaosActionDefClassObj );
+                     }
+                     chaosActionHandlerMap.put( chaosActionName, new MutablePair<Object, Method>( chaosActionDefinitionClassObjectMap.get( chaosActionDefinitionClass ), candidateChaosActionMethod ) );
                   }
                }
+            }
 
-            }
-            catch ( Throwable t )
-            {
-               log.error( "Exception while parsing step definition package " + actionGroupPackageName, t );
-            }
+         }
+         catch ( Throwable t )
+         {
+            log.error( "Exception while parsing step definition package " + actionGroupPackageName, t );
          }
       }
 

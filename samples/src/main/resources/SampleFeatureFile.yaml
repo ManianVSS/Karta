@@ -10,7 +10,7 @@ scenarioSetupSteps:
   - identifier: Then the calculator should display "0"
 
 testScenarios:
-  - name: Scenario1 
+  - name: Scenario1
     executionSteps:
       - identifier: When the button "1" is pressed
       - identifier: And the button "+" is pressed
@@ -23,9 +23,9 @@ testScenarios:
     executionSteps:
       - identifier: When a binary operation is perfomed on the calculator
         testData:
-          operand1: [100]
-          operation: ["/"]
-          operand2: [200]
+          operand1: 100
+          operation: "/"
+          operand2: 200
       - identifier: And the calculator should display "0.5"
 
 scenarioTearDownSteps:

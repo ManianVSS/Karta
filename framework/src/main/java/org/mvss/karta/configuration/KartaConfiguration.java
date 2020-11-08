@@ -1,4 +1,4 @@
-package org.mvss.karta.framework.runtime;
+package org.mvss.karta.configuration;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class KartaRuntimeConfiguration implements Serializable
+public class KartaConfiguration implements Serializable
 {
    /**
     * 

@@ -56,7 +56,7 @@ public class TestJobRunner
                {
                   TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, Constants.JOB + job.getName(), chaosAction.getName(), testData, variables );
 
-                  testData = KartaRuntime.getMergedTestData( runName, null, testDataSources, new ExecutionStepPointer( feature.getName(), job.getName(), chaosAction.getName(), iterationIndex, 0 ) );
+                  testData = KartaRuntime.getMergedTestData( runName, null, null, testDataSources, new ExecutionStepPointer( feature.getName(), job.getName(), chaosAction.getName(), iterationIndex, 0 ) );
                   // log.debug( "Step test data is " + testData.toString() );
                   testExecutionContext.setData( testData );
 
@@ -96,7 +96,8 @@ public class TestJobRunner
 
             for ( TestStep step : steps )
             {
-               testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( feature.getName(), job.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
+               testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), step.getTestDataSet(), testDataSources, new ExecutionStepPointer( feature.getName(), job.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ),
+                                                                                                                                                         iterationIndex, stepIndex++ ) );
                // log.debug( "Step test data is " + testData.toString() );
                TestExecutionContext testExecutionContext = new TestExecutionContext( runName, feature.getName(), iterationIndex, Constants.JOB + job.getName(), step.getIdentifier(), testData, variables );
 

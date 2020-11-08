@@ -126,8 +126,8 @@ public class FeatureRunner implements Callable<Boolean>
          {
             TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, step.getIdentifier(), testData, variables );
 
-            testData = KartaRuntime
-                     .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.__FEATURE_SETUP__, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
+            testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), step.getTestDataSet(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.__FEATURE_SETUP__,
+                                                                                                                                                      stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
             // log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setData( testData );
 
@@ -251,8 +251,8 @@ public class FeatureRunner implements Callable<Boolean>
          {
             TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, step.getIdentifier(), testData, variables );
 
-            testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.__FEATURE_TEARDOWN__, stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex,
-                                                                                                                               stepIndex++ ) );
+            testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), step.getTestDataSet(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.__FEATURE_TEARDOWN__,
+                                                                                                                                                      stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
             // log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setData( testData );
 

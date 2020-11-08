@@ -30,7 +30,6 @@ public class ClassLoaderTest
       }
       catch ( ClassNotFoundException | MalformedURLException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | URISyntaxException e )
       {
-         // TODO Auto-generated catch block
          e.printStackTrace();
       }
 

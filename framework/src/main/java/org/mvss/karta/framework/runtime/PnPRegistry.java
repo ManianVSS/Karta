@@ -19,10 +19,13 @@ import org.apache.commons.io.IOUtils;
 import org.mvss.karta.configuration.PluginConfig;
 import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.interfaces.Plugin;
+import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -31,66 +34,64 @@ import lombok.extern.log4j.Log4j2;
 public class PnPRegistry implements AutoCloseable
 {
    @Getter
-   private static TypeReference<ArrayList<PluginConfig>>             pluginConfigArrayListType = new TypeReference<ArrayList<PluginConfig>>()
-                                                                                               {
-                                                                                               };
+   private static TypeReference<ArrayList<PluginConfig>> pluginConfigArrayListType = new TypeReference<ArrayList<PluginConfig>>()
+                                                                                   {
+                                                                                   };
 
-   private HashMap<Class<? extends Plugin>, HashMap<String, Plugin>> pluginMap                 = new HashMap<Class<? extends Plugin>, HashMap<String, Plugin>>();
-   private HashMap<String, Plugin>                                   registeredPlugins         = new HashMap<String, Plugin>();
-   private HashMap<String, Plugin>                                   enabledPlugins            = new HashMap<String, Plugin>();
-   // private HashSet<Plugin> enabledPlugins = new HashSet<Plugin>();
+   private HashMap<String, Plugin>                       registeredPlugins         = new HashMap<String, Plugin>();
+   private HashMap<String, Plugin>                       enabledPlugins            = new HashMap<String, Plugin>();
 
-   private ArrayList<Class<? extends Plugin>>                        pluginTypes               = new ArrayList<Class<? extends Plugin>>();
-
-   public void addPluginType( Class<? extends Plugin> pluginType )
+   public static ArrayList<PluginConfig> readPluginsConfig( String fileName ) throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException
    {
-      pluginTypes.add( pluginType );
+      return ParserUtils.getYamlObjectMapper().readValue( ClassPathLoaderUtils.readAllText( fileName ), pluginConfigArrayListType );
+   }
+
+   public boolean registerPlugin( Plugin plugin )
+   {
+      if ( plugin == null )
+      {
+         return false;
+      }
+
+      String pluginName = plugin.getPluginName();
+
+      log.info( "Registering plugin " + pluginName );
+
+      if ( registeredPlugins.containsKey( pluginName ) )
+      {
+         log.warn( "Plugin already registered: " + pluginName );
+         return false;
+      }
+
+      registeredPlugins.put( pluginName, plugin );
+
+      return true;
    }
 
    public boolean registerPlugin( File jarFile, PluginConfig pluginConfig ) throws Throwable
    {
-      log.debug( "Registering plugin " + pluginConfig );
-
-      @SuppressWarnings( "unchecked" )
-      Class<? extends Plugin> pluginClass = ( jarFile != null ) ? (Class<? extends Plugin>) DynamicClassLoader.loadClass( jarFile, pluginConfig.getClassName() ) : (Class<? extends Plugin>) Class.forName( pluginConfig.getClassName() );
-
-      boolean isRegisteredPluginType = false;
-
-      for ( Class<? extends Plugin> pluginType : pluginTypes )
+      if ( pluginConfig == null )
       {
-         if ( pluginType.isAssignableFrom( pluginClass ) )
-         {
-            isRegisteredPluginType = true;
-
-            if ( !pluginMap.containsKey( pluginType ) )
-            {
-               pluginMap.put( pluginType, new HashMap<String, Plugin>() );
-            }
-
-            HashMap<String, Plugin> pluginsOfSpecifiedType = pluginMap.get( pluginType );
-
-            if ( pluginsOfSpecifiedType.containsKey( pluginConfig.getPluginName() ) )
-            {
-               return false;
-            }
-
-            Plugin plugin = null;
-
-            if ( registeredPlugins.containsKey( pluginConfig.getPluginName() ) )
-            {
-               plugin = registeredPlugins.get( pluginConfig.getPluginName() );
-            }
-            else
-            {
-               plugin = pluginClass.newInstance();
-               registeredPlugins.put( pluginConfig.getPluginName(), plugin );
-            }
-            pluginsOfSpecifiedType.put( pluginConfig.getPluginName(), plugin );
-         }
+         return false;
       }
 
-      // Unregistered pluggin type
-      return isRegisteredPluginType;
+      String pluginName = pluginConfig.getPluginName();
+
+      if ( pluginName == null )
+      {
+         return false;
+      }
+
+      if ( registeredPlugins.containsKey( pluginName ) )
+      {
+         return false;
+      }
+
+      log.debug( "Registering plugin from configuration " + pluginConfig );
+      @SuppressWarnings( "unchecked" )
+      Class<? extends Plugin> pluginClass = ( jarFile != null ) ? (Class<? extends Plugin>) DynamicClassLoader.loadClass( jarFile, pluginConfig.getClassName() ) : (Class<? extends Plugin>) Class.forName( pluginConfig.getClassName() );
+      Plugin plugin = pluginClass.newInstance();
+      return registerPlugin( plugin );
    }
 
    public void addPluginConfiguration( File jarFile, ArrayList<PluginConfig> pluginConfigs )
@@ -165,30 +166,39 @@ public class PnPRegistry implements AutoCloseable
       }
    }
 
+   public void enablePlugin( String pluginName )
+   {
+      Plugin pluginToEnable = registeredPlugins.get( pluginName );
+
+      if ( pluginToEnable != null )
+      {
+         enabledPlugins.put( pluginName, pluginToEnable );
+      }
+   }
+
    public void enablePlugins( HashSet<String> pluginNamesToEnable )
    {
       for ( String pluginName : pluginNamesToEnable )
       {
-         Plugin pluginToEnable = registeredPlugins.get( pluginName );
-
-         if ( pluginToEnable != null )
-         {
-            enabledPlugins.put( pluginName, pluginToEnable );
-         }
+         enablePlugin( pluginName );
       }
    }
 
-   public boolean initializePlugins( KartaRuntime kartaRunTime )
+   public boolean initializePlugins( BeanRegistry beanRegistry, Configurator configurator )
    {
       for ( Entry<String, Plugin> pluginEntry : enabledPlugins.entrySet() )
       {
          Plugin plugin = pluginEntry.getValue();
          try
          {
-            if ( kartaRunTime != null )
+            if ( beanRegistry != null )
             {
-               kartaRunTime.loadRuntimeObjects( plugin );
-               kartaRunTime.getConfigurator().loadProperties( plugin );
+               beanRegistry.loadBeans( plugin );
+            }
+
+            if ( configurator != null )
+            {
+               configurator.loadProperties( plugin );
             }
             plugin.initialize();
          }
@@ -218,9 +228,9 @@ public class PnPRegistry implements AutoCloseable
       }
    }
 
-   public Plugin getPlugin( String name, Class<? extends Plugin> pluginType )
+   public Plugin getPlugin( String name )
    {
-      return pluginMap.containsKey( pluginType ) ? pluginMap.get( pluginType ).get( name ) : null;
+      return registeredPlugins.get( name );
    }
 
    public Collection<Plugin> getEnabledPluginsOfType( Class<? extends Plugin> pluginType )
@@ -230,6 +240,15 @@ public class PnPRegistry implements AutoCloseable
 
    public Collection<Plugin> getPluginsOfType( Class<? extends Plugin> pluginType )
    {
-      return pluginMap.get( pluginType ).values();
+      ArrayList<Plugin> plugins = new ArrayList<Plugin>();
+
+      for ( Plugin plugin : registeredPlugins.values() )
+      {
+         if ( pluginType.isAssignableFrom( plugin.getClass() ) )
+         {
+            plugins.add( plugin );
+         }
+      }
+      return plugins;
    }
 }

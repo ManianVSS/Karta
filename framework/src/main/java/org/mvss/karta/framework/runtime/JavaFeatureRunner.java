@@ -96,6 +96,7 @@ public class JavaFeatureRunner implements Callable<Boolean>
          EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
          HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
          KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
+         BeanRegistry beanRegistry = kartaRuntime.getBeanRegistry();
 
          HashSet<Object> beans = new HashSet<Object>();
 
@@ -123,7 +124,7 @@ public class JavaFeatureRunner implements Callable<Boolean>
          TreeMap<Integer, ArrayList<Method>> featureTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
 
          Object testCaseObject = testCaseClass.newInstance();
-         Configurator.loadBeans( testCaseObject, beans );
+         beanRegistry.loadBeans( testCaseObject );
 
          for ( Method classMethod : classMethods )
          {
@@ -308,7 +309,7 @@ public class JavaFeatureRunner implements Callable<Boolean>
 
       try
       {
-         HashMap<String, Serializable> testData = KartaRuntime.getMergedTestData( runName, null, testDataSources, new ExecutionStepPointer( featureName, methodToInvoke.getName(), null, iterationNumber, -1 ) );
+         HashMap<String, Serializable> testData = KartaRuntime.getMergedTestData( runName, null, null, testDataSources, new ExecutionStepPointer( featureName, methodToInvoke.getName(), null, iterationNumber, -1 ) );
          testExecutionContext.setData( testData );
 
          Object resultReturned = methodToInvoke.invoke( testCaseObject, testExecutionContext );

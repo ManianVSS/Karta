@@ -9,8 +9,8 @@ testJobs:
     steps:
       - identifier: authenticate to get new token
         testData:
-          userName: ["admin"]
-          password: ["password@123"]
+          userName: "admin"
+          password: "password@123"
 
       - identifier: reserve use of calculator for next "1500" milliseconds
 
@@ -43,9 +43,9 @@ testScenarios:
     executionSteps:
       - identifier: When a binary operation is perfomed on the calculator
         testData:
-          operand1: [200]
-          operation: ["/"]
-          operand2: [800]
+          operand1: 200
+          operation: "/"
+          operand2: 800
       - identifier: And the calculator should display "0.25"
 
 scenarioTearDownSteps:

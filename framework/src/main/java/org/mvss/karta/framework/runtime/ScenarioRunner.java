@@ -91,8 +91,8 @@ public class ScenarioRunner implements Runnable
          {
             TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, testScenario.getName(), step.getIdentifier(), testData, variables );
 
-            testData = KartaRuntime
-                     .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
+            testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), step.getTestDataSet(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ),
+                                                                                                                                                      scenarioIterationNumber, stepIndex++ ) );
             // log.debug( "Step test data is " + testData.toString() );
             testExecutionContext.setData( testData );
 
@@ -145,7 +145,7 @@ public class ScenarioRunner implements Runnable
 
                   log.debug( "Performing chaos action: " + chaosAction );
 
-                  testData = KartaRuntime.getMergedTestData( runName, null, testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), chaosAction.getName(), iterationIndex, 0 ) );
+                  testData = KartaRuntime.getMergedTestData( runName, null, null, testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), chaosAction.getName(), iterationIndex, 0 ) );
                   // log.debug( "Chaos test data is " + testData.toString() );
 
                   eventProcessor.raiseEvent( new ScenarioChaosActionStartEvent( runName, featureName, iterationIndex, testScenario.getName(), chaosAction ) );
@@ -184,8 +184,8 @@ public class ScenarioRunner implements Runnable
                {
                   TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, testScenario.getName(), step.getIdentifier(), testData, variables );
 
-                  testData = KartaRuntime
-                           .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
+                  testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), step.getTestDataSet(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ),
+                                                                                                                                                            scenarioIterationNumber, stepIndex++ ) );
                   // log.debug( "Step test data is " + testData.toString() );
                   testExecutionContext.setData( testData );
                   eventProcessor.raiseEvent( new ScenarioStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
@@ -233,8 +233,8 @@ public class ScenarioRunner implements Runnable
          {
             for ( TestStep step : DataUtils.mergeLists( testScenario.getTearDownSteps(), scenarioTearDownSteps ) )
             {
-               testData = KartaRuntime
-                        .getMergedTestData( runName, step.getTestData(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), scenarioIterationNumber, stepIndex++ ) );
+               testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), step.getTestDataSet(), testDataSources, new ExecutionStepPointer( featureName, testScenario.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ),
+                                                                                                                                                         scenarioIterationNumber, stepIndex++ ) );
 
                TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, testScenario.getName(), step.getIdentifier(), testData, variables );
 
