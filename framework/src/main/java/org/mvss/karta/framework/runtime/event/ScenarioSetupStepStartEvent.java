@@ -3,8 +3,6 @@ package org.mvss.karta.framework.runtime.event;
 import java.util.Date;
 import java.util.UUID;
 
-import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 
 import lombok.Builder;
@@ -25,27 +23,27 @@ public class ScenarioSetupStepStartEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private TestFeature       feature;
+   private String            featureName;
    private int               iterationNumber;
-   private TestScenario      scenario;
+   private String            scenarioName;
    private TestStep          scenarioSetupStep;
 
-   public ScenarioSetupStepStartEvent( String runName, TestFeature feature, int iterationNumber, TestScenario scenario, TestStep scenarioSetupStep )
+   public ScenarioSetupStepStartEvent( String runName, String featureName, int iterationNumber, String scenarioName, TestStep scenarioSetupStep )
    {
       super( StandardEventsTypes.SCENARIO_SETUP_STEP_START_EVENT, runName );
-      this.feature = feature;
+      this.featureName = featureName;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
+      this.scenarioName = scenarioName;
       this.scenarioSetupStep = scenarioSetupStep;
    }
 
    @Builder
-   public ScenarioSetupStepStartEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, int iterationNumber, TestScenario scenario, TestStep scenarioSetupStep )
+   public ScenarioSetupStepStartEvent( String runName, UUID id, Date timeOfOccurrence, String feature, int iterationNumber, String scenario, TestStep scenarioSetupStep )
    {
       super( StandardEventsTypes.SCENARIO_SETUP_STEP_START_EVENT, runName, id, timeOfOccurrence );
-      this.feature = feature;
+      this.featureName = feature;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
+      this.scenarioName = scenario;
       this.scenarioSetupStep = scenarioSetupStep;
    }
 }

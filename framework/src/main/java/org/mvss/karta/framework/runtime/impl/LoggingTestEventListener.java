@@ -1,5 +1,8 @@
 package org.mvss.karta.framework.runtime.impl;
 
+import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.ScenarioResult;
+import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.FeatureCompleteEvent;
 import org.mvss.karta.framework.runtime.event.FeatureSetupStepCompleteEvent;
@@ -55,6 +58,7 @@ public class LoggingTestEventListener implements TestEventListener
    public static final String STARTED      = "started";
    public static final String FAILED       = "failed";
    public static final String PASSED       = "passed";
+   public static final String ERROR        = "threw error";
    public static final String COMPLETED    = "completed";
 
    private boolean            initialized  = false;
@@ -79,6 +83,21 @@ public class LoggingTestEventListener implements TestEventListener
       return true;
    }
 
+   public String getFeatureResultLog( FeatureResult result )
+   {
+      return result.isError() ? ERROR : ( result.isPassed() ? PASSED : FAILED );
+   }
+
+   public String getScenarioResultLog( ScenarioResult result )
+   {
+      return result.isError() ? ERROR : ( result.isPassed() ? PASSED : FAILED );
+   }
+
+   public String getStepResultLog( StepResult result )
+   {
+      return result.isError() ? ERROR : ( result.isPassed() ? PASSED : FAILED );
+   }
+
    @Override
    public void processEvent( Event event )
    {
@@ -97,8 +116,8 @@ public class LoggingTestEventListener implements TestEventListener
       }
       else if ( event instanceof FeatureCompleteEvent )
       {
-         FeatureCompleteEvent featureStartEvent = (FeatureCompleteEvent) event;
-         log.info( "{" + featureStartEvent.getRunName() + "}{" + featureStartEvent.getFeature().getName() + "}" + SPACE + COMPLETED );
+         FeatureCompleteEvent featureCompleteEvent = (FeatureCompleteEvent) event;
+         log.info( "{" + featureCompleteEvent.getRunName() + "}{" + featureCompleteEvent.getFeature().getName() + "}" + SPACE + getFeatureResultLog( featureCompleteEvent.getResult() ) );
       }
       else if ( event instanceof FeatureSetupStepStartEvent )
       {
@@ -108,66 +127,65 @@ public class LoggingTestEventListener implements TestEventListener
       else if ( event instanceof FeatureSetupStepCompleteEvent )
       {
          FeatureSetupStepCompleteEvent stepCompleteEvent = (FeatureSetupStepCompleteEvent) event;
-         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeature().getName() + "}{setup(" + stepCompleteEvent.getSetupStep().getIdentifier() + ")}" + SPACE
-                   + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeature().getName() + "}{setup(" + stepCompleteEvent.getSetupStep().getIdentifier() + ")}" + SPACE + getStepResultLog( stepCompleteEvent.getResult() ) );
       }
       else if ( event instanceof ScenarioStartEvent )
       {
          ScenarioStartEvent scenarioStartEvent = (ScenarioStartEvent) event;
-         log.info( "{" + scenarioStartEvent.getRunName() + "}{" + scenarioStartEvent.getFeature().getName() + "}{" + scenarioStartEvent.getIterationNumber() + "}{" + scenarioStartEvent.getScenario().getName() + "}" + SPACE + STARTED );
+         log.info( "{" + scenarioStartEvent.getRunName() + "}{" + scenarioStartEvent.getFeatureName() + "}{" + scenarioStartEvent.getIterationNumber() + "}{" + scenarioStartEvent.getScenario().getName() + "}" + SPACE + STARTED );
       }
       else if ( event instanceof ScenarioSetupStepStartEvent )
       {
          ScenarioSetupStepStartEvent stepStartEvent = (ScenarioSetupStepStartEvent) event;
-         log.info( "{" + stepStartEvent.getRunName() + "}{" + stepStartEvent.getFeature().getName() + "}{" + stepStartEvent.getScenario().getName() + "}{" + stepStartEvent.getIterationNumber() + "}{setup("
-                   + stepStartEvent.getScenarioSetupStep().getIdentifier() + ")}" + SPACE + STARTED );
+         log.info( "{" + stepStartEvent.getRunName() + "}{" + stepStartEvent.getFeatureName() + "}{" + stepStartEvent.getScenarioName() + "}{" + stepStartEvent.getIterationNumber() + "}{setup(" + stepStartEvent.getScenarioSetupStep().getIdentifier() + ")}"
+                   + SPACE + STARTED );
       }
       else if ( event instanceof ScenarioSetupStepCompleteEvent )
       {
          ScenarioSetupStepCompleteEvent stepCompleteEvent = (ScenarioSetupStepCompleteEvent) event;
-         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeature().getName() + "}{" + stepCompleteEvent.getScenario().getName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{setup("
-                   + stepCompleteEvent.getScenarioSetupStep().getIdentifier() + ")}" + SPACE + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeatureName() + "}{" + stepCompleteEvent.getScenarioName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{setup("
+                   + stepCompleteEvent.getScenarioSetupStep().getIdentifier() + ")}" + SPACE + getStepResultLog( stepCompleteEvent.getResult() ) );
       }
       else if ( event instanceof ScenarioChaosActionStartEvent )
       {
          ScenarioChaosActionStartEvent chaosActionStartEvent = (ScenarioChaosActionStartEvent) event;
-         log.info( "{" + chaosActionStartEvent.getRunName() + "}{" + chaosActionStartEvent.getFeature().getName() + "}{" + chaosActionStartEvent.getScenario().getName() + "}{" + chaosActionStartEvent.getIterationNumber() + "}{chaosAction("
+         log.info( "{" + chaosActionStartEvent.getRunName() + "}{" + chaosActionStartEvent.getFeatureName() + "}{" + chaosActionStartEvent.getScenarioName() + "}{" + chaosActionStartEvent.getIterationNumber() + "}{chaosAction("
                    + chaosActionStartEvent.getChaosAction().getName() + ")}" + SPACE + STARTED );
       }
       else if ( event instanceof ScenarioChaosActionCompleteEvent )
       {
          ScenarioChaosActionCompleteEvent chaosActionCopmleteEvent = (ScenarioChaosActionCompleteEvent) event;
-         log.info( "{" + chaosActionCopmleteEvent.getRunName() + "}{" + chaosActionCopmleteEvent.getFeature().getName() + "}{" + chaosActionCopmleteEvent.getScenario().getName() + "}{" + chaosActionCopmleteEvent.getIterationNumber() + "}{chaosAction("
-                   + chaosActionCopmleteEvent.getChaosAction().getName() + ")}" + SPACE + ( chaosActionCopmleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+         log.info( "{" + chaosActionCopmleteEvent.getRunName() + "}{" + chaosActionCopmleteEvent.getFeatureName() + "}{" + chaosActionCopmleteEvent.getScenarioName() + "}{" + chaosActionCopmleteEvent.getIterationNumber() + "}{chaosAction("
+                   + chaosActionCopmleteEvent.getChaosAction().getName() + ")}" + SPACE + getStepResultLog( chaosActionCopmleteEvent.getResult() ) );
       }
       else if ( event instanceof ScenarioStepStartEvent )
       {
          ScenarioStepStartEvent stepStartEvent = (ScenarioStepStartEvent) event;
-         log.info( "{" + stepStartEvent.getRunName() + "}{" + stepStartEvent.getFeature().getName() + "}{" + stepStartEvent.getScenario().getName() + "}{" + stepStartEvent.getIterationNumber() + "}{step(" + stepStartEvent.getScenarioStep().getIdentifier()
-                   + ")}" + SPACE + STARTED );
+         log.info( "{" + stepStartEvent.getRunName() + "}{" + stepStartEvent.getFeatureName() + "}{" + stepStartEvent.getScenarioName() + "}{" + stepStartEvent.getIterationNumber() + "}{step(" + stepStartEvent.getScenarioStep().getIdentifier() + ")}"
+                   + SPACE + STARTED );
       }
       else if ( event instanceof ScenarioStepCompleteEvent )
       {
          ScenarioStepCompleteEvent stepCompleteEvent = (ScenarioStepCompleteEvent) event;
-         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeature().getName() + "}{" + stepCompleteEvent.getScenario().getName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{step("
-                   + stepCompleteEvent.getScenarioStep().getIdentifier() + ")}" + SPACE + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeatureName() + "}{" + stepCompleteEvent.getScenarioName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{step("
+                   + stepCompleteEvent.getScenarioStep().getIdentifier() + ")}" + SPACE + getStepResultLog( stepCompleteEvent.getResult() ) );
       }
       else if ( event instanceof ScenarioTearDownStepStartEvent )
       {
          ScenarioTearDownStepStartEvent stepStartEvent = (ScenarioTearDownStepStartEvent) event;
-         log.info( "{" + stepStartEvent.getRunName() + "}{" + stepStartEvent.getFeature().getName() + "}{" + stepStartEvent.getScenario().getName() + "}{" + stepStartEvent.getIterationNumber() + "}{tearDown("
-                   + stepStartEvent.getScenarioTearDownStep().getIdentifier() + ")}" + SPACE + STARTED );
+         log.info( "{" + stepStartEvent.getRunName() + "}{" + stepStartEvent.getFeatureName() + "}{" + stepStartEvent.getScenarioName() + "}{" + stepStartEvent.getIterationNumber() + "}{tearDown(" + stepStartEvent.getScenarioTearDownStep().getIdentifier()
+                   + ")}" + SPACE + STARTED );
       }
       else if ( event instanceof ScenarioTearDownStepCompleteEvent )
       {
          ScenarioTearDownStepCompleteEvent stepCompleteEvent = (ScenarioTearDownStepCompleteEvent) event;
-         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeature().getName() + "}{" + stepCompleteEvent.getScenario().getName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{tearDown("
-                   + stepCompleteEvent.getScenarioTearDownStep().getIdentifier() + ")}" + SPACE + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeatureName() + "}{" + stepCompleteEvent.getScenarioName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{tearDown("
+                   + stepCompleteEvent.getScenarioTearDownStep().getIdentifier() + ")}" + SPACE + getStepResultLog( stepCompleteEvent.getResult() ) );
       }
       else if ( event instanceof ScenarioCompleteEvent )
       {
          ScenarioCompleteEvent scenarioCompleteEvent = (ScenarioCompleteEvent) event;
-         log.info( "{" + scenarioCompleteEvent.getRunName() + "}{" + scenarioCompleteEvent.getFeature().getName() + "}{" + scenarioCompleteEvent.getIterationNumber() + "}{" + scenarioCompleteEvent.getScenario().getName() + "}" + SPACE + COMPLETED );
+         log.info( "{" + scenarioCompleteEvent.getRunName() + "}{" + scenarioCompleteEvent.getFeatureName() + "}{" + scenarioCompleteEvent.getIterationNumber() + "}{" + scenarioCompleteEvent.getScenario().getName() + "}" + SPACE + COMPLETED );
       }
       else if ( event instanceof FeatureTearDownStepStartEvent )
       {
@@ -178,7 +196,7 @@ public class LoggingTestEventListener implements TestEventListener
       {
          FeatureTearDownStepCompleteEvent featureTearDownStepCompleteEvent = (FeatureTearDownStepCompleteEvent) event;
          log.info( "{" + featureTearDownStepCompleteEvent.getRunName() + "}{" + featureTearDownStepCompleteEvent.getFeature().getName() + "}{tearDown(" + featureTearDownStepCompleteEvent.getTearDownStep().getIdentifier() + ")}" + SPACE
-                   + ( featureTearDownStepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+                   + getStepResultLog( featureTearDownStepCompleteEvent.getResult() ) );
       }
       else if ( event instanceof JavaFeatureStartEvent )
       {
@@ -198,7 +216,7 @@ public class LoggingTestEventListener implements TestEventListener
       else if ( event instanceof JavaFeatureSetupCompleteEvent )
       {
          JavaFeatureSetupCompleteEvent stepCompleteEvent = (JavaFeatureSetupCompleteEvent) event;
-         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeatureName() + "}{setup(" + stepCompleteEvent.getMethodName() + ")}" + SPACE + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+         log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeatureName() + "}{setup(" + stepCompleteEvent.getMethodName() + ")}" + SPACE + getStepResultLog( stepCompleteEvent.getResult() ) );
       }
       else if ( event instanceof JavaScenarioSetupStartEvent )
       {
@@ -209,7 +227,7 @@ public class LoggingTestEventListener implements TestEventListener
       {
          JavaScenarioSetupCompleteEvent stepCompleteEvent = (JavaScenarioSetupCompleteEvent) event;
          log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeatureName() + "}{" + stepCompleteEvent.getScenarioName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{setup(" + stepCompleteEvent.getMethod() + ")}" + SPACE
-                   + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+                   + getStepResultLog( stepCompleteEvent.getResult() ) );
       }
       else if ( event instanceof JavaScenarioChaosActionStartEvent )
       {
@@ -221,7 +239,7 @@ public class LoggingTestEventListener implements TestEventListener
       {
          JavaScenarioChaosActionCompleteEvent chaosActionCopmleteEvent = (JavaScenarioChaosActionCompleteEvent) event;
          log.info( "{" + chaosActionCopmleteEvent.getRunName() + "}{" + chaosActionCopmleteEvent.getFeatureName() + "}{" + chaosActionCopmleteEvent.getScenarioName() + "}{" + chaosActionCopmleteEvent.getIterationNumber() + "}{chaosAction("
-                   + chaosActionCopmleteEvent.getChaosAction().getName() + ")}" + SPACE + ( chaosActionCopmleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+                   + chaosActionCopmleteEvent.getChaosAction().getName() + ")}" + SPACE + getStepResultLog( chaosActionCopmleteEvent.getResult() ) );
       }
       else if ( event instanceof JavaScenarioStartEvent )
       {
@@ -232,7 +250,7 @@ public class LoggingTestEventListener implements TestEventListener
       {
          JavaScenarioCompleteEvent stepCompleteEvent = (JavaScenarioCompleteEvent) event;
          log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeatureName() + "}{" + stepCompleteEvent.getScenarioName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{step(" + stepCompleteEvent.getMethod() + ")}" + SPACE
-                   + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+                   + getScenarioResultLog( stepCompleteEvent.getResult() ) );
       }
       else if ( event instanceof JavaScenarioTearDownStartEvent )
       {
@@ -243,7 +261,7 @@ public class LoggingTestEventListener implements TestEventListener
       {
          JavaScenarioTearDownCompleteEvent stepCompleteEvent = (JavaScenarioTearDownCompleteEvent) event;
          log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeatureName() + "}{" + stepCompleteEvent.getScenarioName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{tearDown(" + stepCompleteEvent.getMethod() + ")}" + SPACE
-                   + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+                   + getStepResultLog( stepCompleteEvent.getResult() ) );
       }
       else if ( event instanceof JavaFeatureTearDownStartEvent )
       {
@@ -254,7 +272,7 @@ public class LoggingTestEventListener implements TestEventListener
       {
          JavaFeatureTearDownCompleteEvent featureTearDownStepCompleteEvent = (JavaFeatureTearDownCompleteEvent) event;
          log.info( "{" + featureTearDownStepCompleteEvent.getRunName() + "}{" + featureTearDownStepCompleteEvent.getFeatureName() + "}{tearDown(" + featureTearDownStepCompleteEvent.getMethod() + ")}" + SPACE
-                   + ( featureTearDownStepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+                   + getStepResultLog( featureTearDownStepCompleteEvent.getResult() ) );
       }
       else if ( event instanceof JobStepStartEvent )
       {
@@ -266,7 +284,7 @@ public class LoggingTestEventListener implements TestEventListener
       {
          JobStepCompleteEvent stepCompleteEvent = (JobStepCompleteEvent) event;
          log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeature().getName() + "}{" + stepCompleteEvent.getJob().getName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{step("
-                   + stepCompleteEvent.getStep().getIdentifier() + ")}" + SPACE + ( stepCompleteEvent.getResult().isSuccesssful() ? PASSED : FAILED ) );
+                   + stepCompleteEvent.getStep().getIdentifier() + ")}" + SPACE + getStepResultLog( stepCompleteEvent.getResult() ) );
       }
       else if ( event instanceof TestIncidentOccurenceEvent )
       {

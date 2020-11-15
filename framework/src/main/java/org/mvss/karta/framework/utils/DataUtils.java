@@ -1,7 +1,10 @@
 package org.mvss.karta.framework.utils;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class DataUtils
 {
@@ -10,6 +13,20 @@ public class DataUtils
       HashMap<K, V> clone = new HashMap<K, V>();
       clone.putAll( source );
       return clone;
+   }
+
+   public static <K> ArrayList<K> mergeLists( Collection<K> list1, Collection<K> list2 )
+   {
+      ArrayList<K> mergedList = new ArrayList<K>();
+      if ( list1 != null )
+      {
+         mergedList.addAll( list1 );
+      }
+      if ( list2 != null )
+      {
+         mergedList.addAll( list2 );
+      }
+      return mergedList;
    }
 
    public static <K, V> void mergeVariables( Map<K, V> sourceVars, Map<K, V> destinationVars )
@@ -21,6 +38,43 @@ public class DataUtils
             destinationVars.put( variableName, sourceVars.get( variableName ) );
          }
       }
+   }
+
+   public static <T> void addItemToTreeMapInSequence( T method, TreeMap<Integer, ArrayList<T>> map, Integer sequence )
+   {
+      if ( ( map == null ) || ( method == null ) )
+      {
+         return;
+      }
+
+      if ( sequence == null )
+      {
+         sequence = Integer.MAX_VALUE;
+      }
+
+      if ( !map.containsKey( sequence ) )
+      {
+         map.put( sequence, new ArrayList<T>() );
+      }
+
+      map.get( sequence ).add( method );
+   }
+
+   public static <T> ArrayList<T> generateSequencedList( TreeMap<Integer, ArrayList<T>> itemSequenceMap )
+   {
+      ArrayList<T> itemSequence = new ArrayList<T>();
+
+      if ( itemSequenceMap.containsKey( 0 ) )
+      {
+         itemSequenceMap.put( itemSequenceMap.size(), itemSequenceMap.remove( 0 ) );
+      }
+
+      for ( ArrayList<T> itemsOfSequence : itemSequenceMap.values() )
+      {
+         itemSequence.addAll( itemsOfSequence );
+      }
+
+      return itemSequence;
    }
 
    public static boolean inRange( byte value, byte min, byte max, boolean includeMin, boolean includeMax )

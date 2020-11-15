@@ -4,8 +4,6 @@ import java.util.Date;
 import java.util.UUID;
 
 import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 
 import lombok.Builder;
@@ -26,29 +24,29 @@ public class ScenarioStepCompleteEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private TestFeature       feature;
+   private String            featureName;
    private int               iterationNumber;
-   private TestScenario      scenario;
+   private String            scenarioName;
    private TestStep          scenarioStep;
    private StepResult        result;
 
-   public ScenarioStepCompleteEvent( String runName, TestFeature feature, int iterationNumber, TestScenario scenario, TestStep scenarioStep, StepResult result )
+   public ScenarioStepCompleteEvent( String runName, String feature, int iterationNumber, String scenarioName, TestStep scenarioStep, StepResult result )
    {
       super( StandardEventsTypes.SCENARIO_STEP_COMPLETE_EVENT, runName );
-      this.feature = feature;
+      this.featureName = feature;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
+      this.scenarioName = scenarioName;
       this.scenarioStep = scenarioStep;
       this.result = result;
    }
 
    @Builder
-   public ScenarioStepCompleteEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, int iterationNumber, TestScenario scenario, TestStep scenarioStep, StepResult result )
+   public ScenarioStepCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String feature, int iterationNumber, String scenarioName, TestStep scenarioStep, StepResult result )
    {
       super( StandardEventsTypes.SCENARIO_STEP_COMPLETE_EVENT, runName, id, timeOfOccurrence );
-      this.feature = feature;
+      this.featureName = feature;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
+      this.scenarioName = scenarioName;
       this.scenarioStep = scenarioStep;
       this.result = result;
    }

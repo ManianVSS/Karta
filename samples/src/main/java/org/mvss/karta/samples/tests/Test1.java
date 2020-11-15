@@ -1,11 +1,7 @@
 package org.mvss.karta.samples.tests;
 
-import java.util.HashSet;
-
-import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.javatest.Feature;
 import org.mvss.karta.framework.core.javatest.FeatureSetup;
 import org.mvss.karta.framework.core.javatest.FeatureTearDown;
@@ -13,7 +9,6 @@ import org.mvss.karta.framework.core.javatest.Scenario;
 import org.mvss.karta.framework.core.javatest.ScenarioSetup;
 import org.mvss.karta.framework.core.javatest.ScenarioTearDown;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
-import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.samples.stepdefinitions.SamplePropertyType;
 
@@ -32,17 +27,14 @@ public class Test1
    @PropertyMapping( group = "groupName", value = "variable2" )
    private SamplePropertyType variable2;
 
-   @KartaAutoWired
-   EventProcessor             eventProcessor;
-
-   @FeatureSetup
+   @FeatureSetup( "My feature setup" )
    public StepResult myFeatureSetup( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
       return StandardStepResults.passed;
    }
 
-   @ScenarioSetup
+   @ScenarioSetup( "My scenario setup" )
    public StepResult myScenarioSetupMethod( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
@@ -67,23 +59,25 @@ public class Test1
    public StepResult myScenarioMethod3( TestExecutionContext context )
    {
       log.info( username + " " + variable2 );
-      HashSet<String> failureTags = new HashSet<String>();
-      failureTags.add( "sample" );
-      failureTags.add( "failure" );
-      failureTags.add( "java" );
-      failureTags.add( "tags" );
-      eventProcessor.raiseIncident( context.getRunName(), context.getFeatureName(), context.getIterationIndex(), context.getScenarioName(), context.getStepIdentifier(), TestIncident.builder().message( "Sample test incident" ).tags( failureTags ).build() );
+      // HashSet<String> failureTags = new HashSet<String>();
+      // failureTags.add( "sample" );
+      // failureTags.add( "failure" );
+      // failureTags.add( "java" );
+      // failureTags.add( "tags" );
+      // StepResult result = new StepResult();
+      // result.getIncidents().add( TestIncident.builder().message( "Sample test incident" ).tags( failureTags ).build() );
+      // return result;
       return StandardStepResults.passed;
    }
 
-   @ScenarioTearDown
+   @ScenarioTearDown( "My scenario teardown" )
    public StepResult myScenarioTearDownMethod( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
       return StandardStepResults.passed;
    }
 
-   @FeatureTearDown
+   @FeatureTearDown( "My feature teardown" )
    public StepResult myFeatureTearDownMethod( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );

@@ -1,33 +1,55 @@
 package org.mvss.karta.framework.minions;
 
+import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.mvss.karta.framework.utils.RMIUtils;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class KartaMinionRegistry
 {
+   @Getter
    private ArrayList<KartaMinion>       minions            = new ArrayList<KartaMinion>();
+
+   @Getter
    private HashMap<String, KartaMinion> nodes              = new HashMap<String, KartaMinion>();
 
    private volatile int                 lastMinonIndexUsed = -1;
 
    private Object                       lock               = new Object();
 
-   public boolean addNode( String name, KartaMinionConfiguration minionConfiguration )
+   public boolean addNode( KartaMinionConfiguration minionConfiguration )
    {
       try
       {
          synchronized ( lock )
          {
+            String name = minionConfiguration.getName();
             if ( !nodes.containsKey( name ) )
             {
-               Registry nodeRegistry = RMIUtils.getRemoteRegistry( minionConfiguration.getHost(), minionConfiguration.getPort(), minionConfiguration.isEnableSSL() );
-               KartaMinion kartaNode = (KartaMinion) nodeRegistry.lookup( KartaMinion.class.getName() );
+               KartaMinion kartaNode = null;
+
+               switch ( minionConfiguration.getNodeType() )
+               {
+                  // TODO: Handle local node
+                  case RMI:
+                     Registry nodeRegistry = RMIUtils.getRemoteRegistry( minionConfiguration.getHost(), minionConfiguration.getPort(), minionConfiguration.isEnableSSL() );
+                     kartaNode = (KartaMinion) nodeRegistry.lookup( KartaMinion.class.getName() );
+                     break;
+
+                  case REST:
+                     String url = ( minionConfiguration.isEnableSSL() ? "https://" : "http//" ) + minionConfiguration.getHost() + ":" + minionConfiguration.getPort();
+                     kartaNode = new KartaRestMinion( url, true );
+                     break;
+
+                  default:
+                     break;
+               }
 
                if ( kartaNode.healthCheck() )
                {
@@ -49,6 +71,10 @@ public class KartaMinionRegistry
                return true;
             }
          }
+      }
+      catch ( RemoteException ce )
+      {
+         log.error( "Connection could not be estabished to node " + minionConfiguration );
       }
       catch ( Throwable t )
       {

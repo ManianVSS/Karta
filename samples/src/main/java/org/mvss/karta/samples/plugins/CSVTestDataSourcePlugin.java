@@ -103,7 +103,7 @@ public class CSVTestDataSourcePlugin implements TestDataSource
       }
       catch ( Throwable t )
       {
-         log.error( t );
+         log.error( "", t );
       }
       return testData;
    }

@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -25,6 +27,12 @@ public class KartaApplication implements CommandLineRunner
    {
       // Spring boot start
       SpringApplication.run( KartaApplication.class, args );
+   }
+
+   @EventListener( ApplicationReadyEvent.class )
+   public void applicationStartup()
+   {
+      kartaRuntime.addNodes();
    }
 
    public static List<Runnable> exitHooks = Collections.synchronizedList( new ArrayList<Runnable>() );

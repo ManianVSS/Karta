@@ -4,8 +4,6 @@ import java.util.Date;
 import java.util.UUID;
 
 import org.mvss.karta.framework.chaos.ChaosAction;
-import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.core.TestScenario;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -25,27 +23,27 @@ public class ScenarioChaosActionStartEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private TestFeature       feature;
+   private String            featureName;
    private int               iterationNumber;
-   private TestScenario      scenario;
+   private String            scenarioName;
    private ChaosAction       chaosAction;
 
-   public ScenarioChaosActionStartEvent( String runName, TestFeature feature, int iterationNumber, TestScenario scenario, ChaosAction chaosAction )
+   public ScenarioChaosActionStartEvent( String runName, String featureName, int iterationNumber, String scenarioName, ChaosAction chaosAction )
    {
       super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_START_EVENT, runName );
-      this.feature = feature;
+      this.featureName = featureName;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
+      this.scenarioName = scenarioName;
       this.chaosAction = chaosAction;
    }
 
    @Builder
-   public ScenarioChaosActionStartEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, int iterationNumber, TestScenario scenario, ChaosAction chaosAction )
+   public ScenarioChaosActionStartEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, int iterationNumber, String scenarioName, ChaosAction chaosAction )
    {
       super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_START_EVENT, runName, id, timeOfOccurrence );
-      this.feature = feature;
+      this.featureName = featureName;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
+      this.scenarioName = scenarioName;
       this.chaosAction = chaosAction;
    }
 }

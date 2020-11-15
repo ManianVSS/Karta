@@ -5,8 +5,6 @@ import java.util.UUID;
 
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.core.TestScenario;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -26,29 +24,29 @@ public class ScenarioChaosActionCompleteEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private TestFeature       feature;
+   private String            featureName;
    private int               iterationNumber;
-   private TestScenario      scenario;
+   private String            scenarioName;
    private ChaosAction       chaosAction;
    private StepResult        result;
 
-   public ScenarioChaosActionCompleteEvent( String runName, TestFeature feature, int iterationNumber, TestScenario scenario, ChaosAction chaosAction, StepResult result )
+   public ScenarioChaosActionCompleteEvent( String runName, String feature, int iterationNumber, String scenario, ChaosAction chaosAction, StepResult result )
    {
       super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName );
-      this.feature = feature;
+      this.featureName = feature;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
+      this.scenarioName = scenario;
       this.chaosAction = chaosAction;
       this.result = result;
    }
 
    @Builder
-   public ScenarioChaosActionCompleteEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, int iterationNumber, TestScenario scenario, ChaosAction chaosAction, StepResult result )
+   public ScenarioChaosActionCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String feature, int iterationNumber, String scenario, ChaosAction chaosAction, StepResult result )
    {
       super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName, id, timeOfOccurrence );
-      this.feature = feature;
+      this.featureName = feature;
       this.iterationNumber = iterationNumber;
-      this.scenario = scenario;
+      this.scenarioName = scenario;
       this.chaosAction = chaosAction;
       this.result = result;
    }

@@ -29,7 +29,7 @@ public class StepDefinitionsCollection2
       WaitUtil.sleep( 1000 );
       HashMap<String, Serializable> results = new HashMap<String, Serializable>();
       results.put( "BinaryOperationResult", random.nextInt( 100 ) );
-      return StepResult.builder().successsful( true ).results( results ).build();
+      return StepResult.builder().successful( true ).results( results ).build();
    }
 
    @StepDefinition( value = "authenticate to get new token", parameterMapping = ParameterMapping.NAMED )

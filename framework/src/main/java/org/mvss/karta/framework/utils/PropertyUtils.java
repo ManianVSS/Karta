@@ -1,5 +1,7 @@
 package org.mvss.karta.framework.utils;
 
+import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -7,11 +9,22 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
 public class PropertyUtils
 {
    public static Pattern                 propertyPattern   = Pattern.compile( "\\$\\{([_A-Za-z0-9]+)\\}" );
 
    public static HashMap<String, String> systemPropertyMap = new HashMap<String, String>();
+
+   private static ObjectMapper           objectMapper      = ParserUtils.getObjectMapper();
+   private static ObjectMapper           yamlObjectMapper  = ParserUtils.getYamlObjectMapper();
 
    static
    {
@@ -105,5 +118,70 @@ public class PropertyUtils
    public static String getSystemOrEnvProperty( String key, String defaultValue )
    {
       return systemPropertyMap.containsKey( key ) ? systemPropertyMap.get( key ) : defaultValue;
+   }
+
+   public static void setFieldValue( Object object, Field field, Serializable propertyValue, Class<?> castAsType )
+   {
+      try
+      {
+         field.setAccessible( true );
+
+         if ( propertyValue != null )
+         {
+            if ( castAsType == null )
+            {
+               castAsType = field.getType();
+            }
+
+            if ( castAsType.isAssignableFrom( propertyValue.getClass() ) )
+            {
+               field.set( object, propertyValue );
+            }
+            else
+            {
+               field.set( object, objectMapper.convertValue( propertyValue, castAsType ) );
+            }
+         }
+      }
+      catch ( Throwable t )
+      {
+         log.error( "", t );
+      }
+   }
+
+   public static Serializable getPropertyValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, String group, String name )
+   {
+      String keyForEnvOrSys = group + "." + name;
+      String propertyFromEnvOrSys = systemPropertyMap.get( keyForEnvOrSys );
+
+      if ( propertyFromEnvOrSys != null )
+      {
+         return yamlObjectMapper.convertValue( propertyFromEnvOrSys, Serializable.class );
+      }
+
+      HashMap<String, Serializable> groupStore = propertiesStore.get( group );
+      return ( groupStore == null ) ? null : groupStore.get( name );
+   }
+
+   public static void setFieldValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object, Field field, PropertyMapping propertyMapping )
+   {
+      try
+      {
+         String propertyGroup = propertyMapping.group();
+         String propertyName = propertyMapping.value();
+
+         if ( StringUtils.isEmpty( propertyName ) )
+         {
+            propertyName = field.getName();
+         }
+
+         Serializable propertyValue = getPropertyValue( propertiesStore, propertyGroup, propertyName );
+         Class<?> covertToTypeTo = ( Object.class == propertyMapping.type() ) ? field.getType() : propertyMapping.type();
+         PropertyUtils.setFieldValue( object, field, propertyValue, covertToTypeTo );
+      }
+      catch ( Throwable t )
+      {
+         log.error( "", t );
+      }
    }
 }

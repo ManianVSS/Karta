@@ -29,7 +29,7 @@ public class StepResult implements Serializable
    private Date                          endTime;
 
    @Builder.Default
-   private boolean                       successsful      = true;
+   private boolean                       successful       = true;
 
    @Builder.Default
    private boolean                       error            = false;
@@ -42,6 +42,14 @@ public class StepResult implements Serializable
 
    @Builder.Default
    private ArrayList<Event>              events           = new ArrayList<Event>();
+
+   @Builder.Default
+   private HashMap<String, Serializable> attachments      = new HashMap<String, Serializable>();
+
+   public boolean isPassed()
+   {
+      return successful && !error && incidents.isEmpty();
+   }
 
    public void addIncident( TestIncident testIncident )
    {
@@ -69,7 +77,7 @@ public class StepResult implements Serializable
          this.endTime = stepResult.endTime;
       }
 
-      successsful = successsful && stepResult.successsful;
+      successful = successful && stepResult.successful;
       error = error && stepResult.error;
 
       if ( stepResult.incidents != null )

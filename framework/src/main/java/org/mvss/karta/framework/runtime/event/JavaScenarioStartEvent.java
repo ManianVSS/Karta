@@ -26,20 +26,20 @@ public class JavaScenarioStartEvent extends Event
    private String            method;
    private String            scenarioName;
 
-   public JavaScenarioStartEvent( String runName, String feature, long iterationNumber, String method, String scenarioName )
+   public JavaScenarioStartEvent( String runName, String featureName, long iterationNumber, String method, String scenarioName )
    {
       super( StandardEventsTypes.JAVA_SCENARIO_START_EVENT, runName );
-      this.featureName = feature;
+      this.featureName = featureName;
       this.iterationNumber = iterationNumber;
       this.method = method;
       this.scenarioName = scenarioName;
    }
 
    @Builder
-   public JavaScenarioStartEvent( String runName, UUID id, Date timeOfOccurrence, String feature, long iterationNumber, String method, String scenarioName )
+   public JavaScenarioStartEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, long iterationNumber, String method, String scenarioName )
    {
       super( StandardEventsTypes.JAVA_SCENARIO_START_EVENT, runName, id, timeOfOccurrence );
-      this.featureName = feature;
+      this.featureName = featureName;
       this.iterationNumber = iterationNumber;
       this.method = method;
       this.scenarioName = scenarioName;

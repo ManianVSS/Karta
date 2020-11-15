@@ -128,11 +128,11 @@ public class GherkinPlugin implements FeatureSourceParser
             {
                if ( inDataTable )
                {
-                  if ( currentStep.getTestData() == null )
+                  if ( currentStep.getTestDataSet() == null )
                   {
-                     currentStep.setTestData( new HashMap<String, ArrayList<Serializable>>() );
+                     currentStep.setTestDataSet( new HashMap<String, ArrayList<Serializable>>() );
                   }
-                  DataUtils.mergeVariables( testData, currentStep.getTestData() );
+                  DataUtils.mergeVariables( testData, currentStep.getTestDataSet() );
                }
                else
                {
@@ -140,22 +140,22 @@ public class GherkinPlugin implements FeatureSourceParser
                   {
                      for ( TestStep step : feature.getSetupSteps() )
                      {
-                        if ( step.getTestData() == null )
+                        if ( step.getTestDataSet() == null )
                         {
-                           step.setTestData( new HashMap<String, ArrayList<Serializable>>() );
+                           step.setTestDataSet( new HashMap<String, ArrayList<Serializable>>() );
                         }
-                        DataUtils.mergeVariables( testData, step.getTestData() );
+                        DataUtils.mergeVariables( testData, step.getTestDataSet() );
                      }
                   }
                   else
                   {
                      for ( TestStep step : testScenario.getExecutionSteps() )
                      {
-                        if ( step.getTestData() == null )
+                        if ( step.getTestDataSet() == null )
                         {
-                           step.setTestData( new HashMap<String, ArrayList<Serializable>>() );
+                           step.setTestDataSet( new HashMap<String, ArrayList<Serializable>>() );
                         }
-                        DataUtils.mergeVariables( testData, step.getTestData() );
+                        DataUtils.mergeVariables( testData, step.getTestDataSet() );
                      }
                   }
                }

@@ -31,9 +31,9 @@ testScenarios:
     executionSteps:
       - identifier: When a binary operation is perfomed on the calculator
         testData:
-          operand1: [200]
-          operation: ["/"]
-          operand2: [800]
+          operand1: 200
+          operation: "/"
+          operand2: 800
         node: Node1
       - identifier: And the calculator should display "0.25"
         node: Node2

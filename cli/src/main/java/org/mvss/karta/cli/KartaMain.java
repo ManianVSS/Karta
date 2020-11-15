@@ -81,9 +81,11 @@ public class KartaMain
          }
          else if ( cmd.hasOption( START_MINION ) )
          {
+            KartaRuntime.initializeNodes = false;
             try (KartaRuntime kartaRuntime = KartaRuntime.getInstance())
             {
                KartaMinionServer kartaRMIServer = new KartaMinionServer( kartaRuntime );
+               kartaRuntime.addNodes();
                log.info( "Karta minion started " + kartaRMIServer.getMinionConfig() );
                Thread.currentThread().join();
             }
