@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.concurrent.Callable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -15,6 +16,7 @@ import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
+import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.ScenarioChaosActionCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioChaosActionStartEvent;
@@ -47,7 +49,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @JsonInclude( value = Include.NON_ABSENT, content = Include.NON_ABSENT )
 @Builder
-public class ScenarioRunner implements Runnable
+public class ScenarioRunner implements Callable<ScenarioResult>
 {
    private KartaRuntime                  kartaRuntime;
    private StepRunner                    stepRunner;
@@ -68,9 +70,8 @@ public class ScenarioRunner implements Runnable
    @Builder.Default
    private HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
-   // @SuppressWarnings( "resource" )
    @Override
-   public void run()
+   public ScenarioResult call()
    {
       result = new ScenarioResult();
       result.setIterationIndex( iterationIndex );
@@ -113,20 +114,26 @@ public class ScenarioRunner implements Runnable
                eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iterationIndex, testScenario.getName(), step.getIdentifier(), incident ) );
             }
 
+            for ( Event event : stepResult.getEvents() )
+            {
+               eventProcessor.raiseEvent( event );
+            }
+
             DataUtils.mergeVariables( stepResult.getResults(), variables );
 
             eventProcessor.raiseEvent( new ScenarioSetupStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
-            result.getSetupResults().put( step, stepResult );
+            result.getSetupResults().put( step.getIdentifier(), stepResult.isPassed() );
+            result.getIncidents().addAll( stepResult.getIncidents() );
 
-            if ( !stepResult.isSuccesssful() )
+            if ( !stepResult.isPassed() )
             {
-               result.setSuccesssful( false );
+               result.setSuccessful( false );
                break;
             }
 
          }
 
-         if ( result.isSuccesssful() )
+         if ( result.isSuccessful() )
          {
             ChaosActionTreeNode chaosConfiguration = testScenario.getChaosConfiguration();
             if ( chaosConfiguration != null )
@@ -165,20 +172,26 @@ public class ScenarioRunner implements Runnable
                      eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iterationIndex, testScenario.getName(), chaosAction.getName(), incident ) );
                   }
 
+                  for ( Event event : stepResult.getEvents() )
+                  {
+                     eventProcessor.raiseEvent( event );
+                  }
+
                   DataUtils.mergeVariables( stepResult.getResults(), variables );
 
                   eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), chaosAction, stepResult ) );
-                  result.getChaosActionResults().put( chaosAction, stepResult );
+                  result.getChaosActionResults().put( chaosAction.getName(), stepResult.isPassed() );
+                  result.getIncidents().addAll( stepResult.getIncidents() );
 
-                  if ( !stepResult.isSuccesssful() )
+                  if ( !stepResult.isPassed() )
                   {
-                     result.setSuccesssful( false );
+                     result.setSuccessful( false );
                      break;
                   }
                }
             }
 
-            if ( result.isSuccesssful() )
+            if ( result.isSuccessful() )
             {
                for ( TestStep step : testScenario.getExecutionSteps() )
                {
@@ -206,14 +219,20 @@ public class ScenarioRunner implements Runnable
                      eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iterationIndex, testScenario.getName(), step.getIdentifier(), incident ) );
                   }
 
+                  for ( Event event : stepResult.getEvents() )
+                  {
+                     eventProcessor.raiseEvent( event );
+                  }
+
                   DataUtils.mergeVariables( stepResult.getResults(), variables );
 
                   eventProcessor.raiseEvent( new ScenarioStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
-                  result.getRunResults().put( step, stepResult );
+                  result.getRunResults().put( step.getIdentifier(), stepResult.isPassed() );
+                  result.getIncidents().addAll( stepResult.getIncidents() );
 
-                  if ( !stepResult.isSuccesssful() )
+                  if ( !stepResult.isPassed() )
                   {
-                     result.setSuccesssful( false );
+                     result.setSuccessful( false );
                      break;
                   }
                }
@@ -222,7 +241,7 @@ public class ScenarioRunner implements Runnable
       }
       catch ( Throwable t )
       {
-         log.error( t );
+         log.error( "Exception occured during scenario run", t );
          log.error( ExceptionUtils.getStackTrace( t ) );
          result.setError( true );
          result.getIncidents().add( TestIncident.builder().thrownCause( t ).build() );
@@ -258,20 +277,26 @@ public class ScenarioRunner implements Runnable
                   eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iterationIndex, testScenario.getName(), step.getIdentifier(), incident ) );
                }
 
+               for ( Event event : stepResult.getEvents() )
+               {
+                  eventProcessor.raiseEvent( event );
+               }
+
                DataUtils.mergeVariables( stepResult.getResults(), variables );
 
                eventProcessor.raiseEvent( new ScenarioTearDownStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
-               result.getTearDownResults().put( step, stepResult );
+               result.getTearDownResults().put( step.getIdentifier(), stepResult.isPassed() );
+               result.getIncidents().addAll( stepResult.getIncidents() );
 
-               if ( !stepResult.isSuccesssful() )
+               if ( !stepResult.isPassed() )
                {
-                  result.setSuccesssful( false );
+                  result.setSuccessful( false );
                }
             }
          }
          catch ( Throwable t )
          {
-            log.error( t );
+            log.error( "Exception occured during scenario run", t );
             log.error( ExceptionUtils.getStackTrace( t ) );
             result.setError( true );
             result.getIncidents().add( TestIncident.builder().thrownCause( t ).build() );
@@ -281,5 +306,6 @@ public class ScenarioRunner implements Runnable
             result.setEndTime( new Date() );
          }
       }
+      return result;
    }
 }

@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
@@ -13,20 +12,22 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.mvss.karta.framework.core.StandardStepResults;
+import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.javatest.Feature;
 import org.mvss.karta.framework.core.javatest.FeatureSetup;
 import org.mvss.karta.framework.core.javatest.FeatureTearDown;
 import org.mvss.karta.framework.core.javatest.Scenario;
 import org.mvss.karta.framework.core.javatest.ScenarioSetup;
 import org.mvss.karta.framework.core.javatest.ScenarioTearDown;
-import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.randomization.GenericObjectWithChance;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
+import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.JavaFeatureCompleteEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureSetupCompleteEvent;
@@ -34,10 +35,7 @@ import org.mvss.karta.framework.runtime.event.JavaFeatureSetupStartEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureStartEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureTearDownCompleteEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureTearDownStartEvent;
-import org.mvss.karta.framework.runtime.event.JavaScenarioSetupCompleteEvent;
-import org.mvss.karta.framework.runtime.event.JavaScenarioSetupStartEvent;
-import org.mvss.karta.framework.runtime.event.JavaScenarioTearDownCompleteEvent;
-import org.mvss.karta.framework.runtime.event.JavaScenarioTearDownStartEvent;
+import org.mvss.karta.framework.runtime.event.TestIncidentOccurenceEvent;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
@@ -61,7 +59,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @JsonInclude( value = Include.NON_ABSENT, content = Include.NON_ABSENT )
 @Builder
-public class JavaFeatureRunner implements Callable<Boolean>
+public class JavaFeatureRunner implements Callable<FeatureResult>
 {
    private static Random             random                        = new Random();
 
@@ -83,26 +81,25 @@ public class JavaFeatureRunner implements Callable<Boolean>
    @Builder.Default
    private Boolean                   exclusiveScenarioPerIteration = false;
 
-   @Builder.Default
-   private boolean                   successful                    = true;
+   private Consumer<FeatureResult>   resultConsumer;
+
+   private FeatureResult             result;
+
+   private synchronized void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
+   {
+      result.addIterationResult( iterationResult );
+   }
 
    @Override
-   public Boolean call()
+   public FeatureResult call()
    {
       try
       {
-         successful = true;
+         result = new FeatureResult();
 
          EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
          HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
-         KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
          BeanRegistry beanRegistry = kartaRuntime.getBeanRegistry();
-
-         HashSet<Object> beans = new HashSet<Object>();
-
-         beans.add( kartaRuntime.getConfigurator() );
-         beans.add( eventProcessor );
-         beans.add( nodeRegistry );
 
          Class<?> testCaseClass = StringUtils.isNotBlank( javaTestJarFile ) ? (Class<?>) DynamicClassLoader.loadClass( javaTestJarFile, javaTest ) : (Class<?>) Class.forName( javaTest );
 
@@ -128,45 +125,42 @@ public class JavaFeatureRunner implements Callable<Boolean>
 
          for ( Method classMethod : classMethods )
          {
-            if ( classMethod.getReturnType() == StepResult.class )
+            Parameter[] parameters = classMethod.getParameters();
+            if ( ( parameters.length == 1 ) && ( parameters[0].getType() == TestExecutionContext.class ) )
             {
-               Parameter[] parameters = classMethod.getParameters();
-               if ( ( parameters.length == 1 ) && ( parameters[0].getType() == TestExecutionContext.class ) )
+               if ( classMethod.isAnnotationPresent( FeatureSetup.class ) )
                {
-                  if ( classMethod.isAnnotationPresent( FeatureSetup.class ) )
-                  {
-                     FeatureSetup annotation = classMethod.getAnnotation( FeatureSetup.class );
-                     addMethodToMapInSequence( classMethod, featureSetupMethodsMap, annotation.sequence(), 1.0f );
-                  }
-                  if ( classMethod.isAnnotationPresent( ScenarioSetup.class ) )
-                  {
-                     ScenarioSetup annotation = classMethod.getAnnotation( ScenarioSetup.class );
-                     addMethodToMapInSequence( classMethod, scenarioSetupMethodsMap, annotation.sequence(), 1.0f );
-                  }
-                  if ( classMethod.isAnnotationPresent( Scenario.class ) )
-                  {
-                     Scenario annotation = classMethod.getAnnotation( Scenario.class );
-                     addMethodToMapInSequence( new GenericObjectWithChance<Method>( classMethod, annotation.probability() ), scenarioMethodsMap, annotation.sequence(), annotation.probability() );
-                  }
-                  if ( classMethod.isAnnotationPresent( ScenarioTearDown.class ) )
-                  {
-                     ScenarioTearDown annotation = classMethod.getAnnotation( ScenarioTearDown.class );
-                     addMethodToMapInSequence( classMethod, scenarioTearDownMethodsMap, annotation.sequence(), 1.0f );
-                  }
-                  if ( classMethod.isAnnotationPresent( FeatureTearDown.class ) )
-                  {
-                     FeatureTearDown annotation = classMethod.getAnnotation( FeatureTearDown.class );
-                     addMethodToMapInSequence( classMethod, featureTearDownMethodsMap, annotation.sequence(), 1.0f );
-                  }
+                  FeatureSetup annotation = classMethod.getAnnotation( FeatureSetup.class );
+                  DataUtils.addItemToTreeMapInSequence( classMethod, featureSetupMethodsMap, annotation.sequence() );
+               }
+               if ( classMethod.isAnnotationPresent( ScenarioSetup.class ) )
+               {
+                  ScenarioSetup annotation = classMethod.getAnnotation( ScenarioSetup.class );
+                  DataUtils.addItemToTreeMapInSequence( classMethod, scenarioSetupMethodsMap, annotation.sequence() );
+               }
+               if ( classMethod.isAnnotationPresent( Scenario.class ) )
+               {
+                  Scenario annotation = classMethod.getAnnotation( Scenario.class );
+                  DataUtils.addItemToTreeMapInSequence( new GenericObjectWithChance<Method>( classMethod, annotation.probability() ), scenarioMethodsMap, annotation.sequence() );
+               }
+               if ( classMethod.isAnnotationPresent( ScenarioTearDown.class ) )
+               {
+                  ScenarioTearDown annotation = classMethod.getAnnotation( ScenarioTearDown.class );
+                  DataUtils.addItemToTreeMapInSequence( classMethod, scenarioTearDownMethodsMap, annotation.sequence() );
+               }
+               if ( classMethod.isAnnotationPresent( FeatureTearDown.class ) )
+               {
+                  FeatureTearDown annotation = classMethod.getAnnotation( FeatureTearDown.class );
+                  DataUtils.addItemToTreeMapInSequence( classMethod, featureTearDownMethodsMap, annotation.sequence() );
                }
             }
          }
 
-         ArrayList<Method> featureSetupMethods = generateStageMethodSequence( featureSetupMethodsMap );
-         ArrayList<Method> scenarioSetupMethods = generateStageMethodSequence( scenarioSetupMethodsMap );
-         ArrayList<GenericObjectWithChance<Method>> scenarioMethods = generateStageMethodSequence( scenarioMethodsMap );
-         ArrayList<Method> scenarioTearDownMethods = generateStageMethodSequence( scenarioTearDownMethodsMap );
-         ArrayList<Method> featureTearDownMethods = generateStageMethodSequence( featureTearDownMethodsMap );
+         ArrayList<Method> featureSetupMethods = DataUtils.generateSequencedList( featureSetupMethodsMap );
+         ArrayList<Method> scenarioSetupMethods = DataUtils.generateSequencedList( scenarioSetupMethodsMap );
+         ArrayList<GenericObjectWithChance<Method>> scenarioMethods = DataUtils.generateSequencedList( scenarioMethodsMap );
+         ArrayList<Method> scenarioTearDownMethods = DataUtils.generateSequencedList( scenarioTearDownMethodsMap );
+         ArrayList<Method> featureTearDownMethods = DataUtils.generateSequencedList( featureTearDownMethodsMap );
 
          Configurator.loadProperties( testProperties, testCaseObject );
 
@@ -181,11 +175,45 @@ public class JavaFeatureRunner implements Callable<Boolean>
 
          eventProcessor.raiseEvent( new JavaFeatureStartEvent( runName, featureName ) );
 
-         if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, Constants.__FEATURE_SETUP__, true, true, testCaseObject, testExecutionContext, featureSetupMethods, iterationIndex ) )
+         for ( Method methodToInvoke : featureSetupMethods )
          {
-            eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName ) );
-            successful = false;
-            return successful;
+            String scenarioPrefixName = testExecutionContext.getScenarioName();
+            if ( StringUtils.isEmpty( scenarioPrefixName ) )
+            {
+               scenarioPrefixName = Constants.__GENERIC_FEATURE__;
+            }
+            scenarioPrefixName = scenarioPrefixName + Constants._SETUP_;
+            testExecutionContext.setScenarioName( scenarioPrefixName + methodToInvoke.getName() );
+
+            FeatureSetup annotation = methodToInvoke.getAnnotation( FeatureSetup.class );
+            String stepName = methodToInvoke.getName();
+            if ( annotation != null )
+            {
+               if ( StringUtils.isNotBlank( annotation.value() ) )
+               {
+                  stepName = annotation.value();
+               }
+            }
+            eventProcessor.raiseEvent( new JavaFeatureSetupStartEvent( runName, featureName, stepName ) );
+
+            StepResult stepResult = runTestMethod( eventProcessor, testDataSources, runName, featureName, Constants.__FEATURE_SETUP__, testCaseObject, testExecutionContext, methodToInvoke, iterationIndex, stepName );
+
+            eventProcessor.raiseEvent( new JavaFeatureSetupCompleteEvent( runName, featureName, stepName, stepResult ) );
+            result.getSetupResultMap().put( stepName, stepResult.isPassed() );
+            result.getIncidents().addAll( stepResult.getIncidents() );
+
+            if ( !stepResult.isPassed() )
+            {
+               eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName, result ) );
+               result.setSuccessful( false );
+
+               if ( resultConsumer != null )
+               {
+                  resultConsumer.accept( result );
+               }
+
+               return result;
+            }
          }
 
          ExecutorService iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfIterationsInParallel ) );
@@ -220,11 +248,11 @@ public class JavaFeatureRunner implements Callable<Boolean>
 
             JavaIterationRunner iterationRunner = JavaIterationRunner.builder().kartaRuntime( kartaRuntime ).testDataSources( testDataSources ).testCaseObject( testCaseObject ).scenarioSetupMethods( scenarioSetupMethods )
                      .scenariosMethodsToRun( scenariosMethodsToRun ).scenarioTearDownMethods( scenarioTearDownMethods ).runName( runName ).featureName( featureName ).featureDescription( featureDescription ).iterationIndex( iterationIndex )
-                     .scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) ).build();
+                     .scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) ).resultConsumer( ( iterationResult ) -> accumulateIterationResult( iterationResult ) ).build();
 
             if ( numberOfIterationsInParallel == 1 )
             {
-               iterationRunner.run();
+               iterationRunner.call();
             }
             else
             {
@@ -248,115 +276,97 @@ public class JavaFeatureRunner implements Callable<Boolean>
          iterationIndex = -1;
          testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.__FEATURE_TEARDOWN__, Constants.__GENERIC_STEP__, testData, variables );
 
-         if ( !runTestMethods( eventProcessor, testDataSources, runName, featureName, Constants.__FEATURE_TEARDOWN__, true, false, testCaseObject, testExecutionContext, featureTearDownMethods, iterationIndex ) )
+         for ( Method methodToInvoke : featureTearDownMethods )
          {
-            eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName ) );
-            successful = false;
-            return successful;
+            String scenarioPrefixName = testExecutionContext.getScenarioName();
+            if ( StringUtils.isEmpty( scenarioPrefixName ) )
+            {
+               scenarioPrefixName = Constants.__GENERIC_FEATURE__;
+            }
+            scenarioPrefixName = scenarioPrefixName + Constants._TEARDOWN_;
+            testExecutionContext.setScenarioName( scenarioPrefixName + methodToInvoke.getName() );
+
+            FeatureTearDown annotation = methodToInvoke.getAnnotation( FeatureTearDown.class );
+            String stepName = methodToInvoke.getName();
+
+            if ( annotation != null )
+            {
+               if ( StringUtils.isNotBlank( annotation.value() ) )
+               {
+                  stepName = annotation.value();
+               }
+            }
+            eventProcessor.raiseEvent( new JavaFeatureTearDownStartEvent( runName, featureName, stepName ) );
+
+            StepResult stepResult = runTestMethod( eventProcessor, testDataSources, runName, featureName, Constants.__FEATURE_TEARDOWN__, testCaseObject, testExecutionContext, methodToInvoke, iterationIndex, stepName );
+
+            eventProcessor.raiseEvent( new JavaFeatureTearDownCompleteEvent( runName, featureName, stepName, stepResult ) );
+            result.getTearDownResultMap().put( stepName, stepResult.isPassed() );
+            result.getIncidents().addAll( stepResult.getIncidents() );
+
+            if ( !stepResult.isPassed() )
+            {
+               eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName, result ) );
+               result.setSuccessful( false );
+
+               if ( resultConsumer != null )
+               {
+                  resultConsumer.accept( result );
+               }
+
+               return result;
+            }
          }
 
-         eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName ) );
+         eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName, result ) );
       }
       catch ( Throwable t )
       {
-         log.error( t );
-         log.error( ExceptionUtils.getStackTrace( t ) );
-         successful = false;
+         log.error( "", t );
+         result.setError( true );
       }
-      return successful;
+
+      if ( resultConsumer != null )
+      {
+         resultConsumer.accept( result );
+      }
+
+      return result;
    }
 
-   public static <T> void addMethodToMapInSequence( T method, TreeMap<Integer, ArrayList<T>> map, Integer sequence, float probability )
+   public static StepResult runTestMethod( EventProcessor eventProcessor, ArrayList<TestDataSource> testDataSources, String runName, String featureName, String scenarioName, Object testCaseObject,
+
+                                           TestExecutionContext testExecutionContext, Method methodToInvoke, int iterationIndex, String stepName )
+            throws Throwable
+
    {
-      if ( map == null )
+      StepResult stepResult;
+      HashMap<String, Serializable> testData = KartaRuntime.getMergedTestData( runName, null, null, testDataSources, new ExecutionStepPointer( featureName, Constants.__FEATURE_TEARDOWN__, stepName, iterationIndex, -1 ) );
+      testExecutionContext.setData( testData );
+
+      Object resultReturned = methodToInvoke.invoke( testCaseObject, testExecutionContext );
+
+      Class<?> returnType = methodToInvoke.getReturnType();
+      if ( returnType == StepResult.class )
       {
-         map = new TreeMap<Integer, ArrayList<T>>();
+         stepResult = (StepResult) resultReturned;
+      }
+      else
+      {
+         stepResult = StepResult.builder().successful( ( returnType == boolean.class ) ? ( (boolean) resultReturned ) : true ).build();
       }
 
-      if ( !map.containsKey( sequence ) )
+      for ( TestIncident incident : stepResult.getIncidents() )
       {
-         map.put( sequence, new ArrayList<T>() );
+         eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iterationIndex, scenarioName, stepName, incident ) );
       }
 
-      map.get( sequence ).add( method );
-   }
-
-   public static <T> ArrayList<T> generateStageMethodSequence( TreeMap<Integer, ArrayList<T>> stageMethodMap )
-   {
-      ArrayList<T> stageMethodSequence = new ArrayList<T>();
-
-      if ( stageMethodMap.containsKey( 0 ) )
+      for ( Event stepEvent : stepResult.getEvents() )
       {
-         stageMethodMap.put( stageMethodMap.size(), stageMethodMap.remove( 0 ) );
+         eventProcessor.raiseEvent( stepEvent );
       }
 
-      for ( ArrayList<T> methodsOfSequence : stageMethodMap.values() )
-      {
-         stageMethodSequence.addAll( methodsOfSequence );
-      }
-
-      return stageMethodSequence;
-   }
-
-   public static boolean runTestMethod( EventProcessor eventProcessor, ArrayList<TestDataSource> testDataSources, String runName, String featureName, String scenarioName, boolean featureOrScenarioLevel, boolean setupOrTearDown, Object testCaseObject,
-                                        TestExecutionContext testExecutionContext, Method methodToInvoke, int iterationNumber )
-   {
-      StepResult result;
-
-      eventProcessor.raiseEvent( featureOrScenarioLevel ? ( setupOrTearDown ? new JavaFeatureSetupStartEvent( runName, featureName, methodToInvoke.getName() ) : new JavaFeatureTearDownStartEvent( runName, featureName, methodToInvoke.getName() ) )
-               : ( setupOrTearDown ? new JavaScenarioSetupStartEvent( runName, featureName, iterationNumber, methodToInvoke.getName(), scenarioName )
-                        : new JavaScenarioTearDownStartEvent( runName, featureName, iterationNumber, methodToInvoke.getName(), scenarioName ) ) );
-
-      try
-      {
-         HashMap<String, Serializable> testData = KartaRuntime.getMergedTestData( runName, null, null, testDataSources, new ExecutionStepPointer( featureName, methodToInvoke.getName(), null, iterationNumber, -1 ) );
-         testExecutionContext.setData( testData );
-
-         Object resultReturned = methodToInvoke.invoke( testCaseObject, testExecutionContext );
-
-         Class<?> returnType = methodToInvoke.getReturnType();
-         if ( returnType == StepResult.class )
-         {
-            result = (StepResult) resultReturned;
-         }
-         else
-         {
-            result = StepResult.builder().successsful( ( returnType == boolean.class ) ? ( (boolean) resultReturned ) : true ).build();
-         }
-      }
-      catch ( Throwable t )
-      {
-         result = StandardStepResults.failure( t );
-         log.error( t );
-         log.error( ExceptionUtils.getStackTrace( t ) );
-      }
-
-      eventProcessor.raiseEvent( featureOrScenarioLevel
-               ? ( setupOrTearDown ? new JavaFeatureSetupCompleteEvent( runName, featureName, methodToInvoke.getName(), result ) : new JavaFeatureTearDownCompleteEvent( runName, featureName, methodToInvoke.getName(), result ) )
-               : ( setupOrTearDown ? new JavaScenarioSetupCompleteEvent( runName, featureName, iterationNumber, methodToInvoke.getName(), scenarioName, result )
-                        : new JavaScenarioTearDownCompleteEvent( runName, featureName, iterationNumber, methodToInvoke.getName(), scenarioName, result ) ) );
-      return result.isSuccesssful();
-   }
-
-   public static boolean runTestMethods( EventProcessor eventProcessor, ArrayList<TestDataSource> testDataSources, String runName, String featureName, String scenarioName, boolean featureOrScenarioLevel, boolean setupOrTearDown, Object testCaseObject,
-                                         TestExecutionContext testExecutionContext, ArrayList<Method> methodsOfSequence, int iterationNumber )
-   {
-
-      for ( Method methodToInvoke : methodsOfSequence )
-      {
-         String scenarioPrefixName = testExecutionContext.getScenarioName();
-         if ( StringUtils.isEmpty( scenarioPrefixName ) )
-         {
-            scenarioPrefixName = ( featureOrScenarioLevel ? Constants.__GENERIC_FEATURE__ : Constants.__GENERIC_SCENARIO__ );
-         }
-         scenarioPrefixName = scenarioPrefixName + ( setupOrTearDown ? Constants._SETUP_ : Constants._TEARDOWN_ );
-         testExecutionContext.setScenarioName( scenarioPrefixName + methodToInvoke.getName() );
-         if ( !runTestMethod( eventProcessor, testDataSources, runName, featureName, scenarioName, featureOrScenarioLevel, setupOrTearDown, testCaseObject, testExecutionContext, methodToInvoke, iterationNumber ) )
-         {
-            return false;
-         }
-      }
-
-      return true;
+      DataUtils.mergeVariables( stepResult.getResults(), testExecutionContext.getVariables() );
+      return stepResult;
    }
 }

@@ -2,16 +2,14 @@ package org.mvss.karta.framework.runtime;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
+import org.mvss.karta.framework.utils.AnnotationScanner;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
 import org.mvss.karta.framework.utils.PropertyUtils;
@@ -19,21 +17,17 @@ import org.mvss.karta.framework.utils.PropertyUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
 
 public class Configurator
 {
-   public static final TypeReference<HashMap<String, HashMap<String, Serializable>>> propertiesType   = new TypeReference<HashMap<String, HashMap<String, Serializable>>>()
-                                                                                                      {
-                                                                                                      };
-
-   private static ObjectMapper                                                       objectMapper     = ParserUtils.getObjectMapper();
-   private static ObjectMapper                                                       yamlObjectMapper = ParserUtils.getYamlObjectMapper();
+   public static final TypeReference<HashMap<String, HashMap<String, Serializable>>> propertiesType  = new TypeReference<HashMap<String, HashMap<String, Serializable>>>()
+                                                                                                     {
+                                                                                                     };
 
    @Getter
-   private HashMap<String, HashMap<String, Serializable>>                            propertiesStore  = new HashMap<String, HashMap<String, Serializable>>();
+   private HashMap<String, HashMap<String, Serializable>>                            propertiesStore = new HashMap<String, HashMap<String, Serializable>>();
 
    public void mergeProperties( HashMap<String, HashMap<String, Serializable>> propertiesToMerge )
    {
@@ -73,93 +67,17 @@ public class Configurator
       }
    }
 
-   public static Serializable getPropertyValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, String group, String name )
-   {
-      String keyForEnvOrSys = group + "." + name;
-      String propertyFromEnvOrSys = PropertyUtils.systemPropertyMap.get( keyForEnvOrSys );
-
-      if ( propertyFromEnvOrSys != null )
-      {
-         return yamlObjectMapper.convertValue( propertyFromEnvOrSys, Serializable.class );
-      }
-
-      HashMap<String, Serializable> groupStore = propertiesStore.get( group );
-      return ( groupStore == null ) ? null : groupStore.get( name );
-   }
-
    public static Map<String, String> envPropMap    = System.getenv();
    public static Properties          systemPropMap = System.getProperties();
 
    public Serializable getPropertyValue( String group, String name )
    {
-      return getPropertyValue( propertiesStore, group, name );
-   }
-
-   public static void setFieldValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object, Field field ) throws IllegalArgumentException, IllegalAccessException
-   {
-      field.setAccessible( true );
-
-      PropertyMapping propertyMapping = field.getDeclaredAnnotation( PropertyMapping.class );
-
-      if ( propertyMapping != null )
-      {
-         String propertyGroup = propertyMapping.group();
-         String propertyName = propertyMapping.value();
-
-         if ( StringUtils.isEmpty( propertyName ) )
-         {
-            propertyName = field.getName();
-         }
-
-         Serializable propertyValue = getPropertyValue( propertiesStore, propertyGroup, propertyName );
-
-         if ( propertyValue != null )
-         {
-            Class<?> covertToTypeTo = ( propertyMapping.type() == Object.class ) ? field.getType() : propertyMapping.type();
-
-            if ( covertToTypeTo.isAssignableFrom( propertyValue.getClass() ) )
-            {
-               field.set( object, propertyValue );
-            }
-            else
-            {
-               field.set( object, objectMapper.convertValue( propertyValue, covertToTypeTo ) );
-            }
-         }
-      }
-   }
-
-   public void setFieldValue( Object object, Field field ) throws IllegalArgumentException, IllegalAccessException
-   {
-      setFieldValue( propertiesStore, object, field );
+      return PropertyUtils.getPropertyValue( propertiesStore, group, name );
    }
 
    public static void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object ) throws IllegalArgumentException, IllegalAccessException
    {
-      loadProperties( propertiesStore, object, object.getClass() );
-   }
-
-   public static void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object, Class<?> theClassOfObject ) throws IllegalArgumentException, IllegalAccessException
-   {
-      if ( ( object == null ) || ( theClassOfObject == null ) || theClassOfObject.getName().equals( Object.class.getName() ) || !theClassOfObject.isAssignableFrom( object.getClass() ) )
-      {
-         return;
-      }
-
-      for ( Field fieldOfClass : theClassOfObject.getDeclaredFields() )
-      {
-         setFieldValue( propertiesStore, object, fieldOfClass );
-      }
-
-      Class<?> superClass = theClassOfObject.getSuperclass();
-      if ( superClass.getName().equals( Object.class.getName() ) )
-      {
-         return;
-      }
-      else
-      {
-         loadProperties( propertiesStore, object, superClass );
-      }
+      AnnotationScanner.forEachField( object.getClass(), PropertyMapping.class, AnnotationScanner.IS_NON_STATIC, null, ( type, field, annotation ) -> PropertyUtils.setFieldValue( propertiesStore, object, field, (PropertyMapping) annotation ) );
    }
 
    public void loadProperties( Object... objects ) throws IllegalArgumentException, IllegalAccessException
@@ -170,22 +88,16 @@ public class Configurator
       }
    }
 
-   public void loadStaticProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Class<?> classToLoadPropertiesWith ) throws IllegalArgumentException, IllegalAccessException
+   public void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Class<?> classToLoadPropertiesWith ) throws IllegalArgumentException, IllegalAccessException
    {
-      for ( Field fieldOfClass : classToLoadPropertiesWith.getDeclaredFields() )
-      {
-         if ( Modifier.isStatic( fieldOfClass.getModifiers() ) )
-         {
-            setFieldValue( null, fieldOfClass );
-         }
-      }
+      AnnotationScanner.forEachField( classToLoadPropertiesWith, PropertyMapping.class, AnnotationScanner.IS_STATIC, null, ( type, field, annotation ) -> PropertyUtils.setFieldValue( propertiesStore, null, field, (PropertyMapping) annotation ) );
    }
 
-   public void loadStaticProperties( Class<?>... classesToLoadPropertiesWith ) throws IllegalArgumentException, IllegalAccessException
+   public void loadProperties( Class<?>... classesToLoadPropertiesWith ) throws IllegalArgumentException, IllegalAccessException
    {
       for ( Class<?> classToLoadPropertiesWith : classesToLoadPropertiesWith )
       {
-         loadStaticProperties( propertiesStore, classToLoadPropertiesWith );
+         loadProperties( propertiesStore, classToLoadPropertiesWith );
       }
    }
 

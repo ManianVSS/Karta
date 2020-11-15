@@ -3,7 +3,7 @@ package org.mvss.karta.framework.runtime.event;
 import java.util.Date;
 import java.util.UUID;
 
-import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.core.ScenarioResult;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -27,9 +27,9 @@ public class JavaScenarioCompleteEvent extends Event
    private long              iterationNumber;
    private String            method;
    private String            scenarioName;
-   private StepResult        result;
+   private ScenarioResult    result;
 
-   public JavaScenarioCompleteEvent( String runName, String featureName, long iterationNumber, String method, String scenarioName, StepResult result )
+   public JavaScenarioCompleteEvent( String runName, String featureName, long iterationNumber, String method, String scenarioName, ScenarioResult result )
    {
       super( StandardEventsTypes.JAVA_SCENARIO_COMPLETE_EVENT, runName );
       this.featureName = featureName;
@@ -40,7 +40,7 @@ public class JavaScenarioCompleteEvent extends Event
    }
 
    @Builder
-   public JavaScenarioCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, long iterationNumber, String method, String scenarioName, StepResult result )
+   public JavaScenarioCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, long iterationNumber, String method, String scenarioName, ScenarioResult result )
    {
       super( StandardEventsTypes.JAVA_SCENARIO_COMPLETE_EVENT, runName, id, timeOfOccurrence );
       this.featureName = featureName;

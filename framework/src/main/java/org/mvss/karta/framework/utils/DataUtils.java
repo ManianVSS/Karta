@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class DataUtils
 {
@@ -37,6 +38,43 @@ public class DataUtils
             destinationVars.put( variableName, sourceVars.get( variableName ) );
          }
       }
+   }
+
+   public static <T> void addItemToTreeMapInSequence( T method, TreeMap<Integer, ArrayList<T>> map, Integer sequence )
+   {
+      if ( ( map == null ) || ( method == null ) )
+      {
+         return;
+      }
+
+      if ( sequence == null )
+      {
+         sequence = Integer.MAX_VALUE;
+      }
+
+      if ( !map.containsKey( sequence ) )
+      {
+         map.put( sequence, new ArrayList<T>() );
+      }
+
+      map.get( sequence ).add( method );
+   }
+
+   public static <T> ArrayList<T> generateSequencedList( TreeMap<Integer, ArrayList<T>> itemSequenceMap )
+   {
+      ArrayList<T> itemSequence = new ArrayList<T>();
+
+      if ( itemSequenceMap.containsKey( 0 ) )
+      {
+         itemSequenceMap.put( itemSequenceMap.size(), itemSequenceMap.remove( 0 ) );
+      }
+
+      for ( ArrayList<T> itemsOfSequence : itemSequenceMap.values() )
+      {
+         itemSequence.addAll( itemsOfSequence );
+      }
+
+      return itemSequence;
    }
 
    public static boolean inRange( byte value, byte min, byte max, boolean includeMin, boolean includeMax )

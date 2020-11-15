@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
-import org.mvss.karta.framework.chaos.ChaosAction;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,36 +19,41 @@ public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
    /**
     * 
     */
-   private static final long                serialVersionUID   = 1L;
+   private static final long        serialVersionUID   = 1L;
 
    @Builder.Default
-   private int                              iterationIndex     = 0;
+   private int                      iterationIndex     = 0;
 
    @Builder.Default
-   private Date                             startTime          = new Date();
+   private Date                     startTime          = new Date();
 
-   private Date                             endTime;
-
-   @Builder.Default
-   private boolean                          successsful        = true;
+   private Date                     endTime;
 
    @Builder.Default
-   private boolean                          error              = false;
+   private boolean                  successful         = true;
 
    @Builder.Default
-   private ArrayList<TestIncident>          incidents          = new ArrayList<TestIncident>();
+   private boolean                  error              = false;
 
    @Builder.Default
-   private HashMap<TestStep, StepResult>    setupResults       = new HashMap<TestStep, StepResult>();
+   private ArrayList<TestIncident>  incidents          = new ArrayList<TestIncident>();
 
    @Builder.Default
-   private HashMap<ChaosAction, StepResult> chaosActionResults = new HashMap<ChaosAction, StepResult>();
+   private HashMap<String, Boolean> setupResults       = new HashMap<String, Boolean>();
 
    @Builder.Default
-   private HashMap<TestStep, StepResult>    runResults         = new HashMap<TestStep, StepResult>();
+   private HashMap<String, Boolean> chaosActionResults = new HashMap<String, Boolean>();
 
    @Builder.Default
-   private HashMap<TestStep, StepResult>    tearDownResults    = new HashMap<TestStep, StepResult>();
+   private HashMap<String, Boolean> runResults         = new HashMap<String, Boolean>();
+
+   @Builder.Default
+   private HashMap<String, Boolean> tearDownResults    = new HashMap<String, Boolean>();
+
+   public boolean isPassed()
+   {
+      return successful && !error && incidents.isEmpty();
+   }
 
    @Override
    public int compareTo( ScenarioResult other )

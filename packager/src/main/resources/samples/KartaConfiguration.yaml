@@ -3,7 +3,6 @@ pluginsDirectories:
   - "."
 enabledPlugins:
   - Kriya
-  - KriyaExt
   - DataFilesTestDataSource
   - ObjectGenTestDataSource
   - RandomTestDataSource
@@ -12,6 +11,7 @@ enabledPlugins:
   #- RabbitMQTestEventListener
   - GherkinPlugin
   - CSVTestDataSourcePlugin
+  - HTMLReportTestEventListener
 
 defaultFeatureSourceParserPlugin: Kriya
 defaultStepRunnerPlugin: Kriya
@@ -41,7 +41,7 @@ nodes:
     enableSSL: true
     nodeType: RMI
     minion: true
-    
+
   - name: Node2
     host: localhost
     port: 17171
@@ -49,5 +49,9 @@ nodes:
     nodeType: RMI
     minion: true
 
+minionsEnabled: true
 
 testThreadCount: 10
+
+configurationScanPackages:
+  - org.mvss.karta.samples.config

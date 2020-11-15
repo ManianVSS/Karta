@@ -5,8 +5,8 @@ description: sample tests category
 tags:
   - sample
 
-featureSourceParserPlugin: KriyaExt
-stepRunnerPlugin: KriyaExt
+featureSourceParserPlugin: Kriya
+stepRunnerPlugin: Kriya
 testDataSourcePlugins:
   - DataFilesTestDataSource
   - ObjectGenTestDataSource
@@ -48,6 +48,7 @@ tests:
     tags:
       - remote
       - chaos
+      - UI
     featureFileName: SampleFeatureFile4.yaml
     numberOfIterations: 1
     threadGroup: calcChaos
@@ -58,6 +59,7 @@ tests:
     featureSourceParserPlugin: Gherkin
     tags:
       - Gherkin
+      - UI
     featureFileName: SampleFeatureFile5.feature
     numberOfIterations: 4
 

@@ -18,24 +18,24 @@ public class TestJobResult implements Serializable, Comparable<TestJobResult>
    /**
     * 
     */
-   private static final long             serialVersionUID = 1L;
+   private static final long          serialVersionUID = 1L;
 
    @Builder.Default
-   private int                           iterationIndex   = 0;
+   private int                        iterationIndex   = 0;
 
    @Builder.Default
-   private Date                          startTime        = new Date();
+   private Date                       startTime        = new Date();
 
-   private Date                          endTime;
-
-   @Builder.Default
-   private boolean                       successsful      = true;
+   private Date                       endTime;
 
    @Builder.Default
-   private boolean                       error            = false;
+   private boolean                    successsful      = true;
 
    @Builder.Default
-   private HashMap<TestStep, StepResult> stepResults      = new HashMap<TestStep, StepResult>();
+   private boolean                    error            = false;
+
+   @Builder.Default
+   private HashMap<TestStep, Boolean> stepResults      = new HashMap<TestStep, Boolean>();
 
    @Override
    public int compareTo( TestJobResult other )

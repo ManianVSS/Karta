@@ -58,7 +58,7 @@ public class RemoteFeatureRunner implements Callable<Boolean>
       }
       catch ( Throwable t )
       {
-         log.error( t );
+         log.error( "", t );
          log.error( ExceptionUtils.getStackTrace( t ) );
          successful = false;
       }

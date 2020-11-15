@@ -81,7 +81,7 @@ public class RabbitMQTestEventListener implements TestEventListener
       }
       catch ( Throwable t )
       {
-         log.error( t );
+         log.error( "", t );
       }
 
    }
@@ -110,7 +110,7 @@ public class RabbitMQTestEventListener implements TestEventListener
       }
       catch ( Throwable t )
       {
-         log.error( t );
+         log.error( "", t );
       }
    }
 }

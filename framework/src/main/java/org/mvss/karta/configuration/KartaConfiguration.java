@@ -55,8 +55,8 @@ public class KartaConfiguration implements Serializable
    @Builder.Default
    private boolean                             minionsEnabled               = true;
 
-   // @Builder.Default
-   // private HashMap<String, KartaMinionConfiguration> minions = new HashMap<String, KartaMinionConfiguration>();
+   @Builder.Default
+   private ArrayList<String>                   configurationScanPackages    = new ArrayList<String>();
 
    public synchronized void expandSystemAndEnvProperties()
    {
@@ -69,5 +69,6 @@ public class KartaConfiguration implements Serializable
       PropertyUtils.expandEnvVars( testCatalogFragmentFiles );
       sslProperties.expandSystemAndEnvProperties();
       nodeName = PropertyUtils.expandEnvVars( nodeName );
+      PropertyUtils.expandEnvVars( configurationScanPackages );
    }
 }

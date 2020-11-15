@@ -5,10 +5,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
+import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.runtime.TestFailureException;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
+import org.mvss.karta.framework.runtime.interfaces.TestLifeCycleHook;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.WaitUtil;
 
@@ -32,6 +35,9 @@ public class EventProcessor implements AutoCloseable
    private int                        maxEventQueueSize                  = 100;
 
    private ExecutorService            eventListenerExecutorService       = null;
+
+   private HashSet<TestLifeCycleHook> lifeCycleHooks                     = new HashSet<TestLifeCycleHook>();
+
    private HashSet<TestEventListener> testEventListeners                 = new HashSet<TestEventListener>();
 
    private BlockingRunnableQueue      eventProcessingQueue;
@@ -44,6 +50,16 @@ public class EventProcessor implements AutoCloseable
    public boolean removeEventListener( TestEventListener testEventListener )
    {
       return testEventListeners.remove( testEventListener );
+   }
+
+   public boolean addLifeCycleHook( TestLifeCycleHook testEventListener )
+   {
+      return lifeCycleHooks.add( testEventListener );
+   }
+
+   public boolean removeLifeCycleHook( TestLifeCycleHook testEventListener )
+   {
+      return lifeCycleHooks.remove( testEventListener );
    }
 
    public void start()
@@ -102,5 +118,35 @@ public class EventProcessor implements AutoCloseable
       {
          raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iteration, scenarioName, stepIdentifier, incident ) );
       }
+   }
+
+   public void runStart( String runName )
+   {
+      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.runStart( runName ) );
+   }
+
+   public void featureStart( String runName, TestFeature feature, HashSet<String> tags )
+   {
+      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.featureStart( runName, feature, tags ) );
+   }
+
+   public void scenarioStart( String runName, String featureName, TestScenario scenario, HashSet<String> tags )
+   {
+      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.scenarioStart( runName, featureName, scenario, tags ) );
+   }
+
+   public void scenarioStop( String runName, String featureName, TestScenario scenario, HashSet<String> tags )
+   {
+      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.scenarioStop( runName, featureName, scenario, tags ) );
+   }
+
+   public void featureStop( String runName, TestFeature feature, HashSet<String> tags )
+   {
+      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.featureStop( runName, feature, tags ) );
+   }
+
+   public void runStop( String runName )
+   {
+      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.runStop( runName ) );
    }
 }

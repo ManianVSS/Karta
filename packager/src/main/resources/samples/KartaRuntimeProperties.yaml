@@ -28,6 +28,9 @@ DataFilesTestDataSource:
     - dataFile1.yaml
     - testDataFolder
 
+HTMLReportTestEventListener:
+  runReportsBaseFolderName: sampleReports
+
 ObjectGenTestDataSource:
   objectRuleMap:
     employee:

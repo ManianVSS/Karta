@@ -1,5 +1,7 @@
 package org.mvss.karta.framework.runtime.impl;
 
+import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.FeatureCompleteEvent;
@@ -81,9 +83,19 @@ public class LoggingTestEventListener implements TestEventListener
       return true;
    }
 
+   public String getFeatureResultLog( FeatureResult result )
+   {
+      return result.isError() ? ERROR : ( result.isPassed() ? PASSED : FAILED );
+   }
+
+   public String getScenarioResultLog( ScenarioResult result )
+   {
+      return result.isError() ? ERROR : ( result.isPassed() ? PASSED : FAILED );
+   }
+
    public String getStepResultLog( StepResult result )
    {
-      return result.isError() ? ERROR : ( result.isSuccesssful() ? PASSED : FAILED );
+      return result.isError() ? ERROR : ( result.isPassed() ? PASSED : FAILED );
    }
 
    @Override
@@ -104,8 +116,8 @@ public class LoggingTestEventListener implements TestEventListener
       }
       else if ( event instanceof FeatureCompleteEvent )
       {
-         FeatureCompleteEvent featureStartEvent = (FeatureCompleteEvent) event;
-         log.info( "{" + featureStartEvent.getRunName() + "}{" + featureStartEvent.getFeature().getName() + "}" + SPACE + COMPLETED );
+         FeatureCompleteEvent featureCompleteEvent = (FeatureCompleteEvent) event;
+         log.info( "{" + featureCompleteEvent.getRunName() + "}{" + featureCompleteEvent.getFeature().getName() + "}" + SPACE + getFeatureResultLog( featureCompleteEvent.getResult() ) );
       }
       else if ( event instanceof FeatureSetupStepStartEvent )
       {
@@ -238,7 +250,7 @@ public class LoggingTestEventListener implements TestEventListener
       {
          JavaScenarioCompleteEvent stepCompleteEvent = (JavaScenarioCompleteEvent) event;
          log.info( "{" + stepCompleteEvent.getRunName() + "}{" + stepCompleteEvent.getFeatureName() + "}{" + stepCompleteEvent.getScenarioName() + "}{" + stepCompleteEvent.getIterationNumber() + "}{step(" + stepCompleteEvent.getMethod() + ")}" + SPACE
-                   + getStepResultLog( stepCompleteEvent.getResult() ) );
+                   + getScenarioResultLog( stepCompleteEvent.getResult() ) );
       }
       else if ( event instanceof JavaScenarioTearDownStartEvent )
       {

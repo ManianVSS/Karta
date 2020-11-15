@@ -17,6 +17,9 @@ Kriya:
 DumpToFileTestEventListener:
   fileName: KartaEventsRawDump.bin
 
+HTMLReportTestEventListener:
+  runReportsBaseFolderName: reports
+
 RabbitMQTestEventListener:
   queueName: KartaEvents
   userName: guest

@@ -106,7 +106,7 @@ public class TestCategory implements Serializable
       return null;
    }
 
-   public void propogateAttributes( String sourceArchive, String fspp, String srp, HashSet<String> tdsp, String tg )
+   public void propogateAttributes( String sourceArchive, String fspp, String srp, HashSet<String> tdsp, String tg, HashSet<String> tags )
    {
       if ( StringUtils.isEmpty( featureSourceParserPlugin ) && StringUtils.isNotEmpty( fspp ) )
       {
@@ -134,19 +134,25 @@ public class TestCategory implements Serializable
          threadGroup = tg;
       }
 
+      if ( tags != null )
+      {
+         for ( String tag : tags )
+         {
+            if ( !tags.contains( tag ) )
+            {
+               tags.add( tag );
+            }
+         }
+      }
+
       for ( TestCategory testCategory : subCategories )
       {
-         testCategory.propogateAttributes( sourceArchive, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, threadGroup );
+         testCategory.propogateAttributes( sourceArchive, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, threadGroup, tags );
       }
 
       for ( Test test : tests )
       {
-         test.propogateAttributes( sourceArchive, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, threadGroup );
-      }
-
-      if ( StringUtils.isEmpty( threadGroup ) && StringUtils.isNotEmpty( tg ) )
-      {
-         threadGroup = tg;
+         test.propogateAttributes( sourceArchive, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, threadGroup, tags );
       }
    }
 

@@ -193,7 +193,7 @@ public class DataFilesTestDataSource implements TestDataSource
          }
          catch ( Throwable t )
          {
-            log.error( t );
+            log.error( "", t );
          }
       }
       return testData;

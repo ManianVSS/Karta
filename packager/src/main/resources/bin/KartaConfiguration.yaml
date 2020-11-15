@@ -10,6 +10,7 @@ enabledPlugins:
   - Kriya
   - DataFilesTestDataSource
   - LoggingTestEventListener
+  - HTMLReportTestEventListener
 
 ### The default feature source parser plugin name
 defaultFeatureSourceParserPlugin: Kriya
@@ -43,7 +44,7 @@ nodeName: local
 ###     enableSSL: true
 ###     nodeType: RMI
 ###     minion: true
-    
+
 ###   - name: Node2
 ###     host: localhost
 ###     port: 18090
@@ -52,5 +53,11 @@ nodeName: local
 ###     minion: true
 nodes: []
 
+### If minions are to be enabled
+minionsEnabled: true
+
 ### Number of threads to use to run tests with
 testThreadCount: 1
+
+### The packages to look for configuration objects like Beans
+configurationScanPackages: []

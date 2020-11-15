@@ -2,7 +2,7 @@
 name: CalculatorTest
 description: This is a sample YAML format feature file testing a calculator's function
 setupSteps:
-  - identifier: Then the missing step definition "123" and "465"
+  # - identifier: Then the missing step definition "123" and "465"
   - identifier: Given the calculator is powered on
 
 scenarioSetupSteps:
@@ -17,7 +17,7 @@ testScenarios:
       - identifier: And the button "2" is pressed
       - identifier: And the button "=" is pressed
       - identifier: And the calculator should display "3"
-      - identifier: Then the missing step definition "xyz" should display accept another parameter "abc"
+      # - identifier: Then the missing step definition "xyz" should display accept another parameter "abc"
 
   - name: Scenario2
     executionSteps:

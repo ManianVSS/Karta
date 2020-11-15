@@ -4,8 +4,8 @@ import java.util.Date;
 
 public class StandardStepResults
 {
-   public final static StepResult passed = StepResult.builder().successsful( true ).build();
-   public final static StepResult failed = StepResult.builder().successsful( false ).build();
+   public final static StepResult passed = StepResult.builder().successful( true ).build();
+   public final static StepResult failed = StepResult.builder().successful( false ).build();
 
    public static StepResult error( String message )
    {
@@ -32,7 +32,7 @@ public class StandardStepResults
 
    public static StepResult failure( TestIncident incident )
    {
-      StepResult result = StepResult.builder().successsful( false ).build();
+      StepResult result = StepResult.builder().successful( false ).build();
       result.setEndTime( new Date() );
       result.getIncidents().add( incident );
       return result;

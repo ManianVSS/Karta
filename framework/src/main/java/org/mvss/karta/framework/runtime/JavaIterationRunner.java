@@ -4,17 +4,24 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.mvss.karta.framework.core.StandardStepResults;
+import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.javatest.Scenario;
+import org.mvss.karta.framework.core.javatest.ScenarioSetup;
+import org.mvss.karta.framework.core.javatest.ScenarioTearDown;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.JavaScenarioCompleteEvent;
+import org.mvss.karta.framework.runtime.event.JavaScenarioSetupCompleteEvent;
+import org.mvss.karta.framework.runtime.event.JavaScenarioSetupStartEvent;
 import org.mvss.karta.framework.runtime.event.JavaScenarioStartEvent;
+import org.mvss.karta.framework.runtime.event.JavaScenarioTearDownCompleteEvent;
+import org.mvss.karta.framework.runtime.event.JavaScenarioTearDownStartEvent;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
-import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -33,32 +40,37 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @JsonInclude( value = Include.NON_ABSENT, content = Include.NON_ABSENT )
 @Builder
-public class JavaIterationRunner implements Runnable
+public class JavaIterationRunner implements Callable<HashMap<String, ScenarioResult>>
 {
-   private KartaRuntime                   kartaRuntime;
-   private ArrayList<TestDataSource>      testDataSources;
+   private KartaRuntime                              kartaRuntime;
+   private ArrayList<TestDataSource>                 testDataSources;
 
-   private Object                         testCaseObject;
-   private ArrayList<Method>              scenarioSetupMethods;
-   private ArrayList<Method>              scenariosMethodsToRun;
-   private ArrayList<Method>              scenarioTearDownMethods;
+   private Object                                    testCaseObject;
+   private ArrayList<Method>                         scenarioSetupMethods;
+   private ArrayList<Method>                         scenariosMethodsToRun;
+   private ArrayList<Method>                         scenarioTearDownMethods;
 
-   private String                         runName;
-   private String                         featureName;
-   private String                         featureDescription;
+   private String                                    runName;
+   private String                                    featureName;
+   private String                                    featureDescription;
 
-   private int                            iterationIndex;
+   private int                                       iterationIndex;
 
-   private HashMap<Method, AtomicInteger> scenarioIterationIndexMap;
+   private HashMap<Method, AtomicInteger>            scenarioIterationIndexMap;
 
    @Builder.Default
-   private HashMap<String, Serializable>  variables = new HashMap<String, Serializable>();
+   private HashMap<String, Serializable>             variables = new HashMap<String, Serializable>();
+
+   private HashMap<String, ScenarioResult>           result;
+
+   private Consumer<HashMap<String, ScenarioResult>> resultConsumer;
 
    @Override
-   public void run()
+   public HashMap<String, ScenarioResult> call()
    {
+      result = new HashMap<String, ScenarioResult>();
+
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-      // HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
 
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
 
@@ -66,58 +78,131 @@ public class JavaIterationRunner implements Runnable
       {
          int scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( scenarioMethod ) ) ) ? scenarioIterationIndexMap.get( scenarioMethod ).getAndIncrement() : 0;
 
-         String scenarioName = Constants.__GENERIC_SCENARIO__;
-         if ( scenarioMethod.isAnnotationPresent( Scenario.class ) )
+         String scenarioName = scenarioMethod.getName();
+         Scenario scenarioAnnotation = scenarioMethod.getAnnotation( Scenario.class );
+         if ( scenarioAnnotation != null )
          {
-            scenarioName = scenarioMethod.getAnnotation( Scenario.class ).value();
+            if ( StringUtils.isNotBlank( scenarioAnnotation.value() ) )
+            {
+               scenarioName = scenarioAnnotation.value();
+            }
          }
 
          TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, Constants.__GENERIC_STEP__, testData, variables );
 
-         StepResult result;
+         ScenarioResult scenarioResult = new ScenarioResult();
+         scenarioResult.setIterationIndex( scenarioIterationNumber );
+         result.put( scenarioName, scenarioResult );
          try
          {
+            eventProcessor.raiseEvent( new JavaScenarioStartEvent( runName, featureName, iterationIndex, scenarioName, scenarioName ) );
+
             if ( scenarioSetupMethods != null )
             {
-               if ( !JavaFeatureRunner.runTestMethods( eventProcessor, testDataSources, runName, featureName, scenarioName, false, true, testCaseObject, testExecutionContext, scenarioSetupMethods, scenarioIterationNumber ) )
+               for ( Method methodToInvoke : scenarioSetupMethods )
                {
-                  continue nextScenarioMethod;
+                  String scenarioPrefixName = testExecutionContext.getScenarioName();
+                  if ( StringUtils.isEmpty( scenarioPrefixName ) )
+                  {
+                     scenarioPrefixName = Constants.__GENERIC_SCENARIO__;
+                  }
+                  scenarioPrefixName = scenarioPrefixName + Constants._SETUP_;
+
+                  String stepName = methodToInvoke.getName();
+                  ScenarioSetup annotation = methodToInvoke.getAnnotation( ScenarioSetup.class );
+                  if ( annotation != null )
+                  {
+                     if ( StringUtils.isNotBlank( annotation.value() ) )
+                     {
+                        stepName = annotation.value();
+                     }
+                  }
+
+                  testExecutionContext.setStepIdentifier( stepName );
+
+                  eventProcessor.raiseEvent( new JavaScenarioSetupStartEvent( runName, featureName, scenarioIterationNumber, stepName, scenarioName ) );
+
+                  StepResult stepResult = JavaFeatureRunner.runTestMethod( eventProcessor, testDataSources, runName, featureName, scenarioName, testCaseObject, testExecutionContext, methodToInvoke, iterationIndex, stepName );
+
+                  eventProcessor.raiseEvent( new JavaScenarioSetupCompleteEvent( runName, featureName, scenarioIterationNumber, stepName, scenarioName, stepResult ) );
+                  scenarioResult.getSetupResults().put( stepName, stepResult.isPassed() );
+                  scenarioResult.getIncidents().addAll( stepResult.getIncidents() );
+
+                  if ( !stepResult.isPassed() )
+                  {
+                     scenarioResult.setSuccessful( false );
+                     continue nextScenarioMethod;
+                  }
                }
+
             }
 
-            eventProcessor.raiseEvent( new JavaScenarioStartEvent( scenarioName, featureName, iterationIndex, scenarioMethod.getName(), scenarioName ) );
+            String stepName = scenarioName;
 
-            testData = KartaRuntime.getMergedTestData( runName, null, null, testDataSources, new ExecutionStepPointer( featureName, scenarioName, null, scenarioIterationNumber, 0 ) );
-            testExecutionContext.setData( testData );
+            testExecutionContext.setStepIdentifier( stepName );
 
-            Object resultReturned = scenarioMethod.invoke( testCaseObject, testExecutionContext );
+            StepResult stepResult = JavaFeatureRunner.runTestMethod( eventProcessor, testDataSources, runName, featureName, scenarioName, testCaseObject, testExecutionContext, scenarioMethod, iterationIndex, stepName );
 
-            Class<?> returnType = scenarioMethod.getReturnType();
-            if ( returnType == StepResult.class )
+            scenarioResult.getRunResults().put( stepName, stepResult.isPassed() );
+            scenarioResult.getIncidents().addAll( stepResult.getIncidents() );
+
+            if ( !stepResult.isPassed() )
             {
-               result = (StepResult) resultReturned;
+               scenarioResult.setSuccessful( false );
             }
-            else
-            {
-               result = StepResult.builder().successsful( ( returnType == boolean.class ) ? ( (boolean) resultReturned ) : true ).build();
-            }
-
-            eventProcessor.raiseEvent( new JavaScenarioCompleteEvent( scenarioName, scenarioName, iterationIndex, scenarioMethod.getName(), scenarioName, result ) );
 
             if ( scenarioTearDownMethods != null )
             {
-               if ( !JavaFeatureRunner.runTestMethods( eventProcessor, testDataSources, runName, featureName, scenarioName, false, false, testCaseObject, testExecutionContext, scenarioTearDownMethods, scenarioIterationNumber ) )
+               for ( Method methodToInvoke : scenarioTearDownMethods )
                {
-                  continue nextScenarioMethod;
+                  String scenarioPrefixName = testExecutionContext.getScenarioName();
+                  if ( StringUtils.isEmpty( scenarioPrefixName ) )
+                  {
+                     scenarioPrefixName = Constants.__GENERIC_SCENARIO__;
+                  }
+                  scenarioPrefixName = scenarioPrefixName + Constants._TEARDOWN_;
+
+                  ScenarioTearDown annotation = methodToInvoke.getAnnotation( ScenarioTearDown.class );
+                  stepName = methodToInvoke.getName();
+                  if ( annotation != null )
+                  {
+                     if ( StringUtils.isNotBlank( annotation.value() ) )
+                     {
+                        stepName = annotation.value();
+                     }
+                  }
+
+                  testExecutionContext.setStepIdentifier( stepName );
+                  eventProcessor.raiseEvent( new JavaScenarioTearDownStartEvent( runName, featureName, scenarioIterationNumber, stepName, scenarioName ) );
+
+                  stepResult = JavaFeatureRunner.runTestMethod( eventProcessor, testDataSources, runName, featureName, scenarioName, testCaseObject, testExecutionContext, methodToInvoke, iterationIndex, stepName );
+
+                  eventProcessor.raiseEvent( new JavaScenarioTearDownCompleteEvent( runName, featureName, scenarioIterationNumber, stepName, scenarioName, stepResult ) );
+                  scenarioResult.getTearDownResults().put( stepName, stepResult.isPassed() );
+                  scenarioResult.getIncidents().addAll( stepResult.getIncidents() );
+
+                  if ( !stepResult.isPassed() )
+                  {
+                     scenarioResult.setSuccessful( false );
+                     continue nextScenarioMethod;
+                  }
                }
             }
+
+            eventProcessor.raiseEvent( new JavaScenarioCompleteEvent( runName, featureName, iterationIndex, scenarioName, scenarioName, scenarioResult ) );
          }
          catch ( Throwable t )
          {
-            log.error( t );
-            log.error( ExceptionUtils.getStackTrace( t ) );
-            result = StandardStepResults.failure( t );
+            log.error( "", t );
+            scenarioResult.setError( true );
          }
       }
+
+      if ( resultConsumer != null )
+      {
+         resultConsumer.accept( result );
+      }
+
+      return result;
    }
 }

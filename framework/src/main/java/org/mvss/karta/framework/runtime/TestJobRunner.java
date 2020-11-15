@@ -117,7 +117,7 @@ public class TestJobRunner
 
                eventProcessor.raiseEvent( new JobStepCompleteEvent( runName, feature, job, iterationIndex, step, result ) );
 
-               if ( !result.isSuccesssful() )
+               if ( !result.isPassed() )
                {
                   return false;
                }

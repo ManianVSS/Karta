@@ -3,6 +3,7 @@ package org.mvss.karta.framework.runtime.event;
 import java.util.Date;
 import java.util.UUID;
 
+import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.TestFeature;
 
 import lombok.Builder;
@@ -25,16 +26,20 @@ public class FeatureCompleteEvent extends Event
 
    private TestFeature       feature;
 
-   public FeatureCompleteEvent( String runName, TestFeature feature )
+   private FeatureResult     result;
+
+   public FeatureCompleteEvent( String runName, TestFeature feature, FeatureResult result )
    {
       super( StandardEventsTypes.FEATURE_COMPLETE_EVENT, runName );
       this.feature = feature;
+      this.result = result;
    }
 
    @Builder
-   public FeatureCompleteEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature )
+   public FeatureCompleteEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, FeatureResult result )
    {
       super( StandardEventsTypes.FEATURE_COMPLETE_EVENT, runName, id, timeOfOccurrence );
       this.feature = feature;
+      this.result = result;
    }
 }

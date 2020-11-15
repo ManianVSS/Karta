@@ -60,7 +60,7 @@ public class Test implements Serializable, Comparable<Test>
    @Builder.Default
    private int               numberOfThreads               = 1;
 
-   public void propogateAttributes( String sourceArchive, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String threadGroup )
+   public void propogateAttributes( String sourceArchive, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String threadGroup, HashSet<String> tags )
    {
       if ( StringUtils.isEmpty( this.sourceArchive ) && StringUtils.isNotEmpty( sourceArchive ) )
       {
@@ -91,6 +91,17 @@ public class Test implements Serializable, Comparable<Test>
       if ( StringUtils.isEmpty( this.threadGroup ) && StringUtils.isNotEmpty( threadGroup ) )
       {
          this.threadGroup = threadGroup;
+      }
+
+      if ( tags != null )
+      {
+         for ( String tag : tags )
+         {
+            if ( !tags.contains( tag ) )
+            {
+               tags.add( tag );
+            }
+         }
       }
    }
 

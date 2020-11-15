@@ -4,8 +4,8 @@ import java.util.Date;
 
 public class StandardScenarioResults
 {
-   public final static ScenarioResult passed = ScenarioResult.builder().successsful( true ).build();
-   public final static ScenarioResult failed = ScenarioResult.builder().successsful( false ).build();
+   public final static ScenarioResult passed = ScenarioResult.builder().successful( true ).build();
+   public final static ScenarioResult failed = ScenarioResult.builder().successful( false ).build();
 
    public static ScenarioResult error( Throwable t )
    {
@@ -27,7 +27,7 @@ public class StandardScenarioResults
 
    public static ScenarioResult failure( TestIncident incident )
    {
-      ScenarioResult result = ScenarioResult.builder().successsful( false ).build();
+      ScenarioResult result = ScenarioResult.builder().successful( false ).build();
       result.setEndTime( new Date() );
       result.getIncidents().add( incident );
       return result;

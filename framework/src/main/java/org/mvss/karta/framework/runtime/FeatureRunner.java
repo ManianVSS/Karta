@@ -3,23 +3,29 @@ package org.mvss.karta.framework.runtime;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
+import org.mvss.karta.framework.minions.KartaMinion;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
+import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.FeatureCompleteEvent;
 import org.mvss.karta.framework.runtime.event.FeatureSetupStepCompleteEvent;
@@ -51,7 +57,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @JsonInclude( value = Include.NON_ABSENT, content = Include.NON_ABSENT )
 @Builder
-public class FeatureRunner implements Callable<Boolean>
+public class FeatureRunner implements Callable<FeatureResult>
 {
    private static Random             random                        = new Random();
 
@@ -72,22 +78,31 @@ public class FeatureRunner implements Callable<Boolean>
    @Builder.Default
    private Boolean                   exclusiveScenarioPerIteration = false;
 
-   @Builder.Default
-   private boolean                   successful                    = true;
+   private Consumer<FeatureResult>   resultConsumer;
+
+   private FeatureResult             result;
+
+   private HashSet<String>           tags;
+
+   private synchronized void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
+   {
+      result.addIterationResult( iterationResult );
+   }
 
    @Override
-   public Boolean call()
+   public FeatureResult call()
    {
       try
       {
-         successful = true;
-         // testFeature = testFeature.getFeatureMergedWithCommonSteps();
+         result = new FeatureResult();
 
          EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
          KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
-
          ArrayList<Integer> runningJobs = new ArrayList<Integer>();
 
+         boolean useMinions = kartaRuntime.getKartaConfiguration().isMinionsEnabled() && !nodeRegistry.getMinions().isEmpty();;
+
+         eventProcessor.featureStart( runName, testFeature, tags );
          eventProcessor.raiseEvent( new FeatureStartEvent( runName, testFeature ) );
 
          HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
@@ -132,7 +147,7 @@ public class FeatureRunner implements Callable<Boolean>
             testExecutionContext.setData( testData );
 
             StepResult stepResult = new StepResult();
-            stepResult.setSuccesssful( true );
+            stepResult.setSuccessful( true );
 
             eventProcessor.raiseEvent( new FeatureSetupStepStartEvent( runName, testFeature, step ) );
 
@@ -153,12 +168,17 @@ public class FeatureRunner implements Callable<Boolean>
                   eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, step.getIdentifier(), incident ) );
                }
 
+               for ( Event event : stepResult.getEvents() )
+               {
+                  eventProcessor.raiseEvent( event );
+               }
+
                DataUtils.mergeVariables( stepResult.getResults(), variables );
             }
             catch ( TestFailureException tfe )
             {
                log.error( "Exception in test failure ", tfe );
-               stepResult.setSuccesssful( false );
+               stepResult.setSuccessful( false );
                TestIncident incident = TestIncident.builder().thrownCause( tfe ).build();
                stepResult.addIncident( incident );
             }
@@ -166,18 +186,22 @@ public class FeatureRunner implements Callable<Boolean>
             {
                eventProcessor.raiseEvent( new FeatureSetupStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-               if ( !stepResult.isSuccesssful() )
+               result.getSetupResultMap().put( step.getIdentifier(), stepResult.isPassed() );
+               result.getIncidents().addAll( stepResult.getIncidents() );
+
+               if ( !stepResult.isPassed() )
                {
-                  successful = false;
+                  result.setSuccessful( false );
 
                   if ( !QuartzJobScheduler.deleteJobs( runningJobs ) )
                   {
                      log.error( "Failed to delete test jobs" );
-                     successful = false;
+                     result.setSuccessful( false );
                   }
 
-                  eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature ) );
-                  return successful;
+                  eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature, result ) );
+                  eventProcessor.featureStop( runName, testFeature, tags );
+                  return result;
                }
             }
          }
@@ -225,13 +249,24 @@ public class FeatureRunner implements Callable<Boolean>
                scenariosToRun = testFeature.getTestScenarios();
             }
 
-            IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).feature( testFeature ).runName( runName ).scenariosToRun( scenariosToRun )
-                     .iterationIndex( iterationIndex ).scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) ).build();
+            IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).runName( runName ).featureName( testFeature.getName() )
+                     .scenarioSetupSteps( testFeature.getScenarioSetupSteps() ).scenariosToRun( scenariosToRun ).scenarioTearDownSteps( testFeature.getScenarioTearDownSteps() ).iterationIndex( iterationIndex )
+                     .scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) ).resultConsumer( ( iterationResult ) -> accumulateIterationResult( iterationResult ) ).tags( tags ).build();
+
+            if ( useMinions )
+            {
+               KartaMinion minion = nodeRegistry.getNextMinion();
+
+               if ( minion != null )
+               {
+                  iterationRunner.setMinionToUse( minion );
+               }
+            }
 
             if ( numberOfIterationsInParallel == 1 )
             {
                log.debug( "Iteration start " + iterationIndex + " with scenarios " + scenariosToRun );
-               iterationRunner.run();
+               iterationRunner.call();
             }
             else
             {
@@ -275,12 +310,17 @@ public class FeatureRunner implements Callable<Boolean>
                   eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, step.getIdentifier(), incident ) );
                }
 
+               for ( Event event : stepResult.getEvents() )
+               {
+                  eventProcessor.raiseEvent( event );
+               }
+
                DataUtils.mergeVariables( stepResult.getResults(), variables );
             }
             catch ( TestFailureException tfe )
             {
                log.error( "Exception in test failure ", tfe );
-               stepResult.setSuccesssful( false );
+               stepResult.setSuccessful( false );
                TestIncident incident = TestIncident.builder().thrownCause( tfe ).build();
                stepResult.addIncident( incident );
             }
@@ -288,28 +328,37 @@ public class FeatureRunner implements Callable<Boolean>
             {
                eventProcessor.raiseEvent( new FeatureTearDownStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-               if ( !stepResult.isSuccesssful() )
+               result.getTearDownResultMap().put( step.getIdentifier(), stepResult.isPassed() );
+               result.getIncidents().addAll( stepResult.getIncidents() );
+
+               if ( !stepResult.isPassed() )
                {
-                  successful = false;
+                  result.setSuccessful( false );
                   continue;
                }
             }
          }
 
-         eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature ) );
-
          if ( !QuartzJobScheduler.deleteJobs( runningJobs ) )
          {
             log.error( "Failed to delete test jobs" );
-            successful = false;
+            result.setSuccessful( false );
          }
+
+         eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature, result ) );
+         eventProcessor.featureStop( runName, testFeature, tags );
       }
       catch ( Throwable t )
       {
-         log.error( t );
+         log.error( "Exception occured during feature run", t );
          log.error( ExceptionUtils.getStackTrace( t ) );
-         successful = false;
+         result.setError( true );
       }
-      return successful;
+
+      if ( resultConsumer != null )
+      {
+         resultConsumer.accept( result );
+      }
+      return result;
    }
 }

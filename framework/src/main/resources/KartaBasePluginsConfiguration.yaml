@@ -15,3 +15,6 @@
 
 - pluginName: RabbitMQTestEventListener
   className: org.mvss.karta.framework.runtime.impl.RabbitMQTestEventListener
+
+- pluginName: HTMLReportTestEventListener
+  className: org.mvss.karta.framework.runtime.impl.HTMLReportTestEventListener

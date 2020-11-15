@@ -1,13 +1,18 @@
 package org.mvss.karta.framework.runtime;
 
 import java.io.Serializable;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import org.mvss.karta.framework.core.ScenarioResult;
-import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
+import org.mvss.karta.framework.core.TestStep;
+import org.mvss.karta.framework.minions.KartaMinion;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.ScenarioCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioStartEvent;
@@ -32,33 +37,38 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @JsonInclude( value = Include.NON_ABSENT, content = Include.NON_ABSENT )
 @Builder
-public class IterationRunner implements Runnable
+public class IterationRunner implements Callable<HashMap<String, ScenarioResult>>
 {
-   private KartaRuntime                         kartaRuntime;
-   private StepRunner                           stepRunner;
-   private ArrayList<TestDataSource>            testDataSources;
+   private KartaRuntime                              kartaRuntime;
+   private StepRunner                                stepRunner;
+   private ArrayList<TestDataSource>                 testDataSources;
 
-   private TestFeature                          feature;
-   private String                               runName;
+   private String                                    runName;
+   private String                                    featureName;
 
-   private int                                  iterationIndex;
+   private int                                       iterationIndex;
 
-   private ArrayList<TestScenario>              scenariosToRun;
-
-   private HashMap<TestScenario, AtomicInteger> scenarioIterationIndexMap;
+   private ArrayList<TestStep>                       scenarioSetupSteps;
+   private ArrayList<TestScenario>                   scenariosToRun;
+   private ArrayList<TestStep>                       scenarioTearDownSteps;
 
    @Builder.Default
-   private HashMap<String, Serializable>        variables = new HashMap<String, Serializable>();;
+   private KartaMinion                               minionToUse = null;
 
-   // private HashMap<TestScenario, ScenarioResult> result;
+   private HashMap<TestScenario, AtomicInteger>      scenarioIterationIndexMap;
+
+   @Builder.Default
+   private HashMap<String, Serializable>             variables   = new HashMap<String, Serializable>();;
+
+   private HashMap<String, ScenarioResult>           result;
+
+   private Consumer<HashMap<String, ScenarioResult>> resultConsumer;
+   private HashSet<String>                           tags;
 
    @Override
-   public void run()
+   public HashMap<String, ScenarioResult> call()
    {
-      // if ( result == null )
-      // {
-      // result = new HashMap<TestScenario, ScenarioResult>();
-      // }
+      result = new HashMap<String, ScenarioResult>();
 
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
       log.debug( "Iteration " + iterationIndex + " with scenarios " + scenariosToRun );
@@ -68,21 +78,45 @@ public class IterationRunner implements Runnable
          int scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( testScenario ) ) ) ? scenarioIterationIndexMap.get( testScenario ).getAndIncrement() : 0;
          log.debug( "Running Scenario: " + testScenario.getName() + "[" + scenarioIterationNumber + "]:" );
 
-         eventProcessor.raiseEvent( new ScenarioStartEvent( runName, feature.getName(), iterationIndex, testScenario ) );
+         eventProcessor.scenarioStart( runName, featureName, testScenario, tags );
+         eventProcessor.raiseEvent( new ScenarioStartEvent( runName, featureName, iterationIndex, testScenario ) );
 
-         ScenarioRunner scenario = ScenarioRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).featureName( feature.getName() ).runName( runName ).iterationIndex( iterationIndex )
-                  .scenarioSetupSteps( feature.getScenarioSetupSteps() ).testScenario( testScenario ).scenarioTearDownSteps( feature.getScenarioTearDownSteps() ).scenarioIterationNumber( scenarioIterationNumber )
-                  .variables( DataUtils.cloneMap( variables ) ).build();
-         scenario.run();
-         ScenarioResult scenarioResult = scenario.getResult();
+         ScenarioResult scenarioResult = null;
+
+         if ( minionToUse == null )
+         {
+            ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).featureName( featureName ).runName( runName ).iterationIndex( iterationIndex )
+                     .scenarioSetupSteps( scenarioSetupSteps ).testScenario( testScenario ).scenarioTearDownSteps( scenarioTearDownSteps ).scenarioIterationNumber( scenarioIterationNumber ).variables( DataUtils.cloneMap( variables ) ).build();
+            scenarioResult = scenarioRunner.call();
+         }
+         else
+         {
+            HashSet<String> testDataSourcePluginNames = new HashSet<String>();
+            testDataSources.forEach( ( testDataSource ) -> testDataSourcePluginNames.add( testDataSource.getPluginName() ) );
+            try
+            {
+               scenarioResult = minionToUse.runTestScenario( stepRunner.getPluginName(), testDataSourcePluginNames, runName, featureName, scenarioIterationNumber, scenarioSetupSteps, testScenario, scenarioTearDownSteps, scenarioIterationNumber );
+            }
+            catch ( RemoteException e )
+            {
+               log.error( "Exception occured when running scenario " + testScenario + " remotely on minion " + minionToUse, e );
+            }
+         }
 
          if ( scenarioResult != null )
          {
-            // result.put( testScenario, scenarioResult );
-
+            result.put( testScenario.getName(), scenarioResult );
          }
 
-         eventProcessor.raiseEvent( new ScenarioCompleteEvent( runName, feature.getName(), iterationIndex, testScenario, scenarioResult ) );
+         eventProcessor.raiseEvent( new ScenarioCompleteEvent( runName, featureName, iterationIndex, testScenario, scenarioResult ) );
+         eventProcessor.scenarioStop( runName, featureName, testScenario, tags );
       }
+
+      if ( resultConsumer != null )
+      {
+         resultConsumer.accept( result );
+      }
+
+      return result;
    }
 }

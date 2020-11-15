@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -22,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.configuration.KartaConfiguration;
 import org.mvss.karta.configuration.PluginConfig;
 import org.mvss.karta.framework.chaos.ChaosAction;
+import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StandardScenarioResults;
 import org.mvss.karta.framework.core.StandardStepResults;
@@ -30,7 +32,6 @@ import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
-import org.mvss.karta.framework.minions.KartaMinion;
 import org.mvss.karta.framework.minions.KartaMinionConfiguration;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
@@ -40,6 +41,7 @@ import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
+import org.mvss.karta.framework.runtime.interfaces.TestLifeCycleHook;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.runtime.testcatalog.Test;
 import org.mvss.karta.framework.runtime.testcatalog.TestCatalogManager;
@@ -151,6 +153,7 @@ public class KartaRuntime implements AutoCloseable
       eventProcessor = new EventProcessor();
       configurator.loadProperties( eventProcessor );
       pnpRegistry.getEnabledPluginsOfType( TestEventListener.class ).forEach( ( plugin ) -> eventProcessor.addEventListener( (TestEventListener) plugin ) );
+      pnpRegistry.getEnabledPluginsOfType( TestLifeCycleHook.class ).forEach( ( plugin ) -> eventProcessor.addLifeCycleHook( (TestLifeCycleHook) plugin ) );
 
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize node registry
@@ -199,6 +202,11 @@ public class KartaRuntime implements AutoCloseable
       beanRegistry.add( executorServiceManager );
       beanRegistry.add( random );
 
+      ArrayList<String> packagesToScanBeans = kartaConfiguration.getConfigurationScanPackages();
+      if ( packagesToScanBeans != null )
+      {
+         beanRegistry.addBeansFromPackages( packagesToScanBeans );
+      }
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize enabled plug-ins only after all other beans are initialized
       /*---------------------------------------------------------------------------------------------------------------------*/
@@ -339,7 +347,7 @@ public class KartaRuntime implements AutoCloseable
       }
       catch ( Throwable t )
       {
-         log.error( t );
+         log.error( "", t );
          return false;
       }
    }
@@ -368,7 +376,7 @@ public class KartaRuntime implements AutoCloseable
       }
       catch ( Throwable t )
       {
-         log.error( t );
+         log.error( "", t );
          return false;
       }
    }
@@ -403,11 +411,12 @@ public class KartaRuntime implements AutoCloseable
       {
          FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).testDataSources( testDataSources ).chanceBasedScenarioExecution( chanceBasedScenarioExecution )
                   .exclusiveScenarioPerIteration( exclusiveScenarioPerIteration ).runName( runName ).testFeature( feature ).numberOfIterations( numberOfIterations ).numberOfIterationsInParallel( numberOfIterationsInParallel ).build();
-         return featureRunner.call();
+         FeatureResult featureResult = featureRunner.call();
+         return featureResult.isPassed();
       }
       catch ( Throwable t )
       {
-         log.error( t );
+         log.error( "", t );
          return false;
       }
    }
@@ -440,10 +449,12 @@ public class KartaRuntime implements AutoCloseable
       {
          if ( StringUtils.isNotBlank( runTarget.getFeatureFile() ) )
          {
+            eventProcessor.runStart( runName );
             eventProcessor.raiseEvent( new RunStartEvent( runName ) );
             boolean result = runFeatureFile( runName, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, runTarget.getFeatureFile(), runTarget.getChanceBasedScenarioExecution(), runTarget.getExclusiveScenarioPerIteration(), runTarget
                      .getNumberOfIterations(), runTarget.getNumberOfThreads() );
             eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
+            eventProcessor.runStop( runName );
             return result;
          }
          else if ( StringUtils.isNotBlank( runTarget.getJavaTest() ) )
@@ -451,17 +462,18 @@ public class KartaRuntime implements AutoCloseable
             ArrayList<TestDataSource> testDataSources = getTestDataSourcePlugins( testDataSourcePlugins );
             if ( testDataSources == null )
             {
-               eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
                return false;
             }
 
             JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).testDataSources( testDataSources ).runName( runName ).javaTest( runTarget.getJavaTest() ).javaTestJarFile( runTarget.getJavaTestJarFile() )
                      .numberOfIterations( runTarget.getNumberOfIterations() ).numberOfIterationsInParallel( runTarget.getNumberOfThreads() ).chanceBasedScenarioExecution( runTarget.getChanceBasedScenarioExecution() )
                      .exclusiveScenarioPerIteration( runTarget.getExclusiveScenarioPerIteration() ).build();
+            eventProcessor.runStart( runName );
             eventProcessor.raiseEvent( new RunStartEvent( runName ) );
-            boolean result = testRunner.call();
+            FeatureResult result = testRunner.call();
             eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
-            return result;
+            eventProcessor.runStop( runName );
+            return result.isPassed();
          }
          else if ( ( runTarget.getTags() != null && !runTarget.getTags().isEmpty() ) )
          {
@@ -474,28 +486,28 @@ public class KartaRuntime implements AutoCloseable
       }
       catch ( Throwable t )
       {
-         log.error( t );
+         log.error( "", t );
          return false;
       }
    }
 
    public boolean runTestsWithTags( String runName, HashSet<String> tags ) throws Throwable
    {
+      eventProcessor.runStart( runName );
       eventProcessor.raiseEvent( new RunStartEvent( runName ) );
       ArrayList<Test> tests = testCatalogManager.filterTestsByTag( tags );
       Collections.sort( tests );
       boolean result = runTest( runName, tests );
       eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
+      eventProcessor.runStop( runName );
       return result;
    }
 
    public boolean runTest( String runName, Collection<Test> tests ) throws Throwable
    {
-      ArrayList<Future<Boolean>> futures = new ArrayList<Future<Boolean>>();
+      ArrayList<Future<FeatureResult>> futures = new ArrayList<Future<FeatureResult>>();
 
-      boolean successful = true;
-
-      boolean enabledMinions = kartaConfiguration.isMinionsEnabled() && !nodeRegistry.getMinions().isEmpty();
+      AtomicBoolean successful = new AtomicBoolean( true );
 
       for ( Test test : tests )
       {
@@ -507,7 +519,6 @@ public class KartaRuntime implements AutoCloseable
                if ( featureParser == null )
                {
                   log.error( "Failed to get a feature source parser of type: " + test.getFeatureSourceParserPlugin() );
-                  eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
                   return false;
                }
                // TODO: Handle io errors
@@ -518,7 +529,6 @@ public class KartaRuntime implements AutoCloseable
                if ( stepRunner == null )
                {
                   log.error( "Failed to get a step runner of type: " + test.getStepRunnerPlugin() );
-                  eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
                   return false;
                }
 
@@ -531,7 +541,6 @@ public class KartaRuntime implements AutoCloseable
                   if ( testDataSource == null )
                   {
                      log.error( "Failed to get a test data source of type: " + testDataSourcePlugin );
-                     eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
                      return false;
                   }
 
@@ -540,27 +549,9 @@ public class KartaRuntime implements AutoCloseable
 
                ExecutorService testExecutorService = executorServiceManager.getExecutorServiceForGroup( test.getThreadGroup() );
 
-               if ( enabledMinions )
-               {
-                  KartaMinion minion = nodeRegistry.getNextMinion();
-
-                  if ( minion != null )
-                  {
-                     // futures.add( testExecutorService.submit( () -> {
-                     // return minion.runFeature( test.getStepRunnerPlugin(), test.getTestDataSourcePlugins(), runName, testFeature, test.getChanceBasedScenarioExecution(), test.getExclusiveScenarioPerIteration(), test.getNumberOfIterations(), test
-                     // .getNumberOfThreads() );
-                     // } ) );
-                     RemoteFeatureRunner remoteFeatureRunner = RemoteFeatureRunner.builder().kartaRuntime( this ).stepRunner( test.getStepRunnerPlugin() ).testDataSources( test.getTestDataSourcePlugins() )
-                              .chanceBasedScenarioExecution( test.getChanceBasedScenarioExecution() ).exclusiveScenarioPerIteration( test.getExclusiveScenarioPerIteration() ).runName( runName ).testFeature( testFeature )
-                              .numberOfIterations( test.getNumberOfIterations() ).numberOfIterationsInParallel( test.getNumberOfThreads() ).minionToUse( minion ).build();
-                     futures.add( testExecutorService.submit( remoteFeatureRunner ) );
-                     break;
-                  }
-               }
-
                FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).testDataSources( featureTestDataSources ).chanceBasedScenarioExecution( test.getChanceBasedScenarioExecution() )
                         .exclusiveScenarioPerIteration( test.getExclusiveScenarioPerIteration() ).runName( runName ).testFeature( testFeature ).numberOfIterations( test.getNumberOfIterations() ).numberOfIterationsInParallel( test.getNumberOfThreads() )
-                        .build();
+                        .resultConsumer( ( result ) -> successful.set( result.isSuccessful() && successful.get() ) ).tags( test.getTags() ).build();
 
                futures.add( testExecutorService.submit( featureRunner ) );
                break;
@@ -574,7 +565,6 @@ public class KartaRuntime implements AutoCloseable
                   if ( testDataSource == null )
                   {
                      log.error( "Failed to get a test data source of type: " + testDataSourcePlugin );
-                     eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
                      return false;
                   }
 
@@ -582,19 +572,19 @@ public class KartaRuntime implements AutoCloseable
                }
                JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).testDataSources( javaTestDataSources ).runName( runName ).javaTest( test.getJavaTestClass() ).javaTestJarFile( test.getSourceArchive() )
                         .numberOfIterations( test.getNumberOfIterations() ).numberOfIterationsInParallel( test.getNumberOfThreads() ).chanceBasedScenarioExecution( test.getChanceBasedScenarioExecution() )
-                        .exclusiveScenarioPerIteration( test.getExclusiveScenarioPerIteration() ).build();
+                        .exclusiveScenarioPerIteration( test.getExclusiveScenarioPerIteration() ).resultConsumer( ( result ) -> successful.set( result.isSuccessful() && successful.get() ) ).build();
                testExecutorService = executorServiceManager.getExecutorServiceForGroup( test.getThreadGroup() );
                futures.add( testExecutorService.submit( testRunner ) );
                break;
          }
       }
 
-      for ( Future<Boolean> future : futures )
+      for ( Future<FeatureResult> future : futures )
       {
-         successful = successful && future.get();
+         future.get();
       }
 
-      return successful;
+      return successful.get();
    }
 
    public StepResult runStep( String stepRunnerPlugin, TestStep testStep, TestExecutionContext testExecutionContext ) throws TestFailureException
@@ -626,8 +616,7 @@ public class KartaRuntime implements AutoCloseable
    {
       ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).testDataSources( testDataSources ).runName( runName ).featureName( featureName ).iterationIndex( iterationIndex )
                .scenarioSetupSteps( scenarioSetupSteps ).testScenario( testScenario ).scenarioTearDownSteps( scenarioTearDownSteps ).scenarioIterationNumber( scenarioIterationNumber ).build();
-      scenarioRunner.run();
-      return scenarioRunner.getResult();
+      return scenarioRunner.call();
    }
 
    public StepResult runChaosAction( String stepRunnerPlugin, ChaosAction chaosAction, TestExecutionContext context ) throws TestFailureException

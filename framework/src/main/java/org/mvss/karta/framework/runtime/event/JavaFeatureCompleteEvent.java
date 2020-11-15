@@ -3,6 +3,8 @@ package org.mvss.karta.framework.runtime.event;
 import java.util.Date;
 import java.util.UUID;
 
+import org.mvss.karta.framework.core.FeatureResult;
+
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -22,17 +24,20 @@ public class JavaFeatureCompleteEvent extends Event
    private static final long serialVersionUID = 1L;
 
    private String            featureName;
+   private FeatureResult     result;
 
-   public JavaFeatureCompleteEvent( String runName, String featureName )
+   public JavaFeatureCompleteEvent( String runName, String featureName, FeatureResult result )
    {
       super( StandardEventsTypes.JAVA_FEATURE_COMPLETE_EVENT, runName );
       this.featureName = featureName;
+      this.result = result;
    }
 
    @Builder
-   public JavaFeatureCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String featureName )
+   public JavaFeatureCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, FeatureResult result )
    {
       super( StandardEventsTypes.JAVA_FEATURE_COMPLETE_EVENT, runName, id, timeOfOccurrence );
       this.featureName = featureName;
+      this.result = result;
    }
 }
