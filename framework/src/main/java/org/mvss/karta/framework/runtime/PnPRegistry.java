@@ -109,7 +109,7 @@ public class PnPRegistry implements AutoCloseable
          }
          catch ( Throwable t )
          {
-            log.error( "", t );
+            log.error( Constants.EMPTY_STRING, t );
             continue;
          }
       }

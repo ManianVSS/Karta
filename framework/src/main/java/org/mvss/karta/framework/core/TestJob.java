@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.enums.JobType;
+import org.quartz.SimpleTrigger;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,4 +39,8 @@ public class TestJob implements Serializable
 
    private ChaosActionTreeNode chaosConfiguration;
 
+   @Builder.Default
+   private int                 iterationCount   = SimpleTrigger.REPEAT_INDEFINITELY;
+
+   private String              node;
 }

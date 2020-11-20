@@ -7,9 +7,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import org.mvss.karta.framework.chaos.ChaosAction;
+import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
+import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.runtime.Constants;
@@ -44,41 +46,81 @@ public class KartaRestMinion implements KartaMinion
    }
 
    @Override
-   public boolean runFeature( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration, long numberOfIterations,
-                              int numberOfIterationsInParallel )
+   public FeatureResult runFeature( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration, long numberOfIterations,
+                                    int numberOfIterationsInParallel )
             throws RemoteException
    {
       HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
-      parameters.put( "stepRunnerPlugin", stepRunnerPlugin );
-      parameters.put( "testDataSourcePlugins", testDataSourcePlugins );
-      parameters.put( "runName", runName );
-      parameters.put( "feature", feature );
-      parameters.put( "chanceBasedScenarioExecution", chanceBasedScenarioExecution );
-      parameters.put( "exclusiveScenarioPerIteration", exclusiveScenarioPerIteration );
-      parameters.put( "numberOfIterations", numberOfIterations );
-      parameters.put( "numberOfIterationsInParallel", numberOfIterationsInParallel );
+      parameters.put( Constants.STEP_RUNNER_PLUGIN, stepRunnerPlugin );
+      parameters.put( Constants.TEST_DATA_SOURCE_PLUGINS, testDataSourcePlugins );
+      parameters.put( Constants.RUN_NAME, runName );
+      parameters.put( Constants.FEATURE, feature );
+      parameters.put( Constants.CHANCE_BASED_SCENARIO_EXECUTION, chanceBasedScenarioExecution );
+      parameters.put( Constants.EXCLUSIVE_SCENARIO_PER_ITERATION, exclusiveScenarioPerIteration );
+      parameters.put( Constants.NUMBER_OF_ITERATIONS, numberOfIterations );
+      parameters.put( Constants.NUMBER_OF_ITERATIONS_IN_PARALLEL, numberOfIterationsInParallel );
 
       Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_FEATURE );
 
+      FeatureResult result = null;
       int statusCode = response.getStatusCode();
-      return ( ( statusCode == 200 ) || ( statusCode == 201 ) );
+      if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+      {
+         result = response.getBody().as( FeatureResult.class );
+      }
+      return result;
    }
 
    @Override
-   public ScenarioResult runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, int iterationIndex, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
-                                          ArrayList<TestStep> scenarioTearDownSteps, int scenarioIterationNumber )
+   public long scheduleJob( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, TestJob job ) throws RemoteException
+   {
+      HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
+      parameters.put( Constants.STEP_RUNNER_PLUGIN, stepRunnerPlugin );
+      parameters.put( Constants.TEST_DATA_SOURCE_PLUGINS, testDataSourcePlugins );
+      parameters.put( Constants.RUN_NAME, runName );
+      parameters.put( Constants.FEATURE_NAME, featureName );
+      parameters.put( Constants.JOB, job );
+
+      Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_JOB );
+
+      long result = -1;
+      int statusCode = response.getStatusCode();
+      if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+      {
+         result = response.getBody().as( Long.class );
+      }
+      return result;
+   }
+
+   @Override
+   public boolean deleteJob( Long jobId ) throws RemoteException
+   {
+      Response response = RestAssured.given( requestSpecBuilder.build() ).delete( Constants.PATH_RUN_JOB + Constants.SLASH + jobId );
+
+      boolean result = false;
+      int statusCode = response.getStatusCode();
+      if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+      {
+         result = response.getBody().as( Boolean.class );
+      }
+      return result;
+   }
+
+   @Override
+   public ScenarioResult runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, long iterationIndex, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
+                                          ArrayList<TestStep> scenarioTearDownSteps, long scenarioIterationNumber )
             throws RemoteException
    {
       HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
-      parameters.put( "stepRunnerPlugin", stepRunnerPlugin );
-      parameters.put( "testDataSourcePlugins", testDataSourcePlugins );
-      parameters.put( "runName", runName );
-      parameters.put( "featureName", featureName );
-      parameters.put( "iterationIndex", iterationIndex );
-      parameters.put( "scenarioSetupSteps", scenarioSetupSteps );
-      parameters.put( "testScenario", testScenario );
-      parameters.put( "scenarioTearDownSteps", scenarioTearDownSteps );
-      parameters.put( "scenarioIterationNumber", scenarioIterationNumber );
+      parameters.put( Constants.STEP_RUNNER_PLUGIN, stepRunnerPlugin );
+      parameters.put( Constants.TEST_DATA_SOURCE_PLUGINS, testDataSourcePlugins );
+      parameters.put( Constants.RUN_NAME, runName );
+      parameters.put( Constants.FEATURE_NAME, featureName );
+      parameters.put( Constants.ITERATION_INDEX, iterationIndex );
+      parameters.put( Constants.SCENARIO_SETUP_STEPS, scenarioSetupSteps );
+      parameters.put( Constants.TEST_SCENARIO, testScenario );
+      parameters.put( Constants.SCENARIO_TEAR_DOWN_STEPS, scenarioTearDownSteps );
+      parameters.put( Constants.SCENARIO_ITERATION_NUMBER, scenarioIterationNumber );
 
       Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_SCENARIO );
 
@@ -95,9 +137,9 @@ public class KartaRestMinion implements KartaMinion
    public StepResult runStep( String stepRunnerPlugin, TestStep step, TestExecutionContext testExecutionContext ) throws RemoteException
    {
       HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
-      parameters.put( "stepRunnerPlugin", stepRunnerPlugin );
-      parameters.put( "testStep", step );
-      parameters.put( "testExecutionContext", testExecutionContext );
+      parameters.put( Constants.STEP_RUNNER_PLUGIN, stepRunnerPlugin );
+      parameters.put( Constants.TEST_STEP, step );
+      parameters.put( Constants.TEST_EXECUTION_CONTEXT, testExecutionContext );
 
       Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_STEP );
 
@@ -114,9 +156,9 @@ public class KartaRestMinion implements KartaMinion
    public StepResult performChaosAction( String stepRunnerPlugin, ChaosAction chaosAction, TestExecutionContext testExecutionContext ) throws RemoteException
    {
       HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
-      parameters.put( "stepRunnerPlugin", stepRunnerPlugin );
-      parameters.put( "chaosAction", chaosAction );
-      parameters.put( "testExecutionContext", testExecutionContext );
+      parameters.put( Constants.STEP_RUNNER_PLUGIN, stepRunnerPlugin );
+      parameters.put( Constants.CHAOS_ACTION, chaosAction );
+      parameters.put( Constants.TEST_EXECUTION_CONTEXT, testExecutionContext );
 
       Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_CHAOS_ACTION );
 
@@ -136,5 +178,4 @@ public class KartaRestMinion implements KartaMinion
       int statusCode = response.getStatusCode();
       return ( statusCode == 200 ) ? response.as( Boolean.class ) : false;
    }
-
 }

@@ -1,11 +1,10 @@
 package org.mvss.karta.framework.runtime.event;
 
-import java.util.Date;
-import java.util.UUID;
-
 import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.runtime.Constants;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +14,7 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
-public class JavaFeatureCompleteEvent extends Event
+public class JavaFeatureCompleteEvent extends FeatureEvent
 {
 
    /**
@@ -23,21 +22,15 @@ public class JavaFeatureCompleteEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private String            featureName;
-   private FeatureResult     result;
-
    public JavaFeatureCompleteEvent( String runName, String featureName, FeatureResult result )
    {
-      super( StandardEventsTypes.JAVA_FEATURE_COMPLETE_EVENT, runName );
-      this.featureName = featureName;
-      this.result = result;
+      super( StandardEventsTypes.JAVA_FEATURE_COMPLETE_EVENT, runName, featureName );
+      this.parameters.put( Constants.RESULT, result );
    }
 
-   @Builder
-   public JavaFeatureCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, FeatureResult result )
+   @JsonIgnore
+   public FeatureResult getResult()
    {
-      super( StandardEventsTypes.JAVA_FEATURE_COMPLETE_EVENT, runName, id, timeOfOccurrence );
-      this.featureName = featureName;
-      this.result = result;
+      return (FeatureResult) parameters.get( Constants.RESULT );
    }
 }

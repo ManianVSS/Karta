@@ -452,8 +452,9 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       }
       catch ( Throwable t )
       {
-         log.error( "Exception occured while running step " + testStep, t );
-         result = StandardStepResults.error( t );
+         String errorMessage = "Exception occured while running chaos action " + testStep;
+         log.error( errorMessage, t );
+         result = StandardStepResults.error( errorMessage, t );
       }
 
       result.setEndTime( new Date() );
@@ -497,8 +498,9 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       }
       catch ( Throwable t )
       {
-         log.error( "Exception occured while running chaos action " + chaosAction, t );
-         result = StandardStepResults.error( t );
+         String errorMessage = "Exception occured while running chaos action " + chaosAction;
+         log.error( errorMessage, t );
+         result = StandardStepResults.error( errorMessage, t );
       }
 
       result.setEndTime( new Date() );
@@ -554,25 +556,37 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    @Override
    public void featureStart( String runName, TestFeature feature, HashSet<String> tags )
    {
-      invokeTaggedMethods( taggedFeatureStartHooks, tags, runName, feature );
+      if ( tags != null )
+      {
+         invokeTaggedMethods( taggedFeatureStartHooks, tags, runName, feature );
+      }
    }
 
    @Override
    public void scenarioStart( String runName, String featureName, TestScenario scenario, HashSet<String> tags )
    {
-      invokeTaggedMethods( taggedScenarioStartHooks, tags, runName, featureName, scenario );
+      if ( tags != null )
+      {
+         invokeTaggedMethods( taggedScenarioStartHooks, tags, runName, featureName, scenario );
+      }
    }
 
    @Override
    public void scenarioStop( String runName, String featureName, TestScenario scenario, HashSet<String> tags )
    {
-      invokeTaggedMethods( taggedScenarioStopHooks, tags, runName, featureName, scenario );
+      if ( tags != null )
+      {
+         invokeTaggedMethods( taggedScenarioStopHooks, tags, runName, featureName, scenario );
+      }
    }
 
    @Override
    public void featureStop( String runName, TestFeature feature, HashSet<String> tags )
    {
-      invokeTaggedMethods( taggedFeatureStopHooks, tags, runName, feature );
+      if ( tags != null )
+      {
+         invokeTaggedMethods( taggedFeatureStopHooks, tags, runName, feature );
+      }
    }
 
 }

@@ -1,9 +1,5 @@
 package org.mvss.karta.framework.runtime.event;
 
-import java.util.Date;
-import java.util.UUID;
-
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,11 +20,5 @@ public class RunStartEvent extends Event
    public RunStartEvent( String runName )
    {
       super( StandardEventsTypes.RUN_START_EVENT, runName );
-   }
-
-   @Builder
-   public RunStartEvent( String runName, UUID id, Date timeOfOccurrence )
-   {
-      super( StandardEventsTypes.RUN_START_EVENT, runName, id, timeOfOccurrence );
    }
 }

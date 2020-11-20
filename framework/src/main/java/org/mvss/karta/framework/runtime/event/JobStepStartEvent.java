@@ -1,13 +1,11 @@
 package org.mvss.karta.framework.runtime.event;
 
-import java.util.Date;
-import java.util.UUID;
-
-import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.core.TestStep;
+import org.mvss.karta.framework.runtime.Constants;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +15,7 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
-public class JobStepStartEvent extends Event
+public class JobStepStartEvent extends JobEvent
 {
 
    /**
@@ -25,27 +23,15 @@ public class JobStepStartEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private TestFeature       feature;
-   private TestJob           job;
-   private long              iterationNumber;
-   private TestStep          step;
-
-   public JobStepStartEvent( String runName, TestFeature feature, TestJob job, long iterationNumber, TestStep jobStep )
+   public JobStepStartEvent( String runName, String featureName, TestJob job, long iterationNumber, TestStep step )
    {
-      super( StandardEventsTypes.JOB_STEP_START_EVENT, runName );
-      this.feature = feature;
-      this.iterationNumber = iterationNumber;
-      this.job = job;
-      this.step = jobStep;
+      super( StandardEventsTypes.JOB_STEP_START_EVENT, runName, featureName, job, iterationNumber );
+      this.parameters.put( Constants.STEP, step );
    }
 
-   @Builder
-   public JobStepStartEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, TestJob job, long iterationNumber, TestStep jobStep )
+   @JsonIgnore
+   public TestStep getStep()
    {
-      super( StandardEventsTypes.JOB_STEP_START_EVENT, runName, id, timeOfOccurrence );
-      this.feature = feature;
-      this.iterationNumber = iterationNumber;
-      this.job = job;
-      this.step = jobStep;
+      return (TestStep) parameters.get( Constants.STEP );
    }
 }

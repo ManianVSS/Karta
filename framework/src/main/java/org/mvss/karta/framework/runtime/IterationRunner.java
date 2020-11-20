@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import org.mvss.karta.framework.core.ScenarioResult;
@@ -46,7 +46,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
    private String                                    runName;
    private String                                    featureName;
 
-   private int                                       iterationIndex;
+   private long                                      iterationIndex;
 
    private ArrayList<TestStep>                       scenarioSetupSteps;
    private ArrayList<TestScenario>                   scenariosToRun;
@@ -55,7 +55,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
    @Builder.Default
    private KartaMinion                               minionToUse = null;
 
-   private HashMap<TestScenario, AtomicInteger>      scenarioIterationIndexMap;
+   private HashMap<TestScenario, AtomicLong>         scenarioIterationIndexMap;
 
    @Builder.Default
    private HashMap<String, Serializable>             variables   = new HashMap<String, Serializable>();;
@@ -75,10 +75,13 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
 
       for ( TestScenario testScenario : scenariosToRun )
       {
-         int scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( testScenario ) ) ) ? scenarioIterationIndexMap.get( testScenario ).getAndIncrement() : 0;
+         long scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( testScenario ) ) ) ? scenarioIterationIndexMap.get( testScenario ).getAndIncrement() : 0;
          log.debug( "Running Scenario: " + testScenario.getName() + "[" + scenarioIterationNumber + "]:" );
 
-         eventProcessor.scenarioStart( runName, featureName, testScenario, tags );
+         if ( tags != null )
+         {
+            eventProcessor.scenarioStart( runName, featureName, testScenario, tags );
+         }
          eventProcessor.raiseEvent( new ScenarioStartEvent( runName, featureName, iterationIndex, testScenario ) );
 
          ScenarioResult scenarioResult = null;
@@ -109,7 +112,11 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
          }
 
          eventProcessor.raiseEvent( new ScenarioCompleteEvent( runName, featureName, iterationIndex, testScenario, scenarioResult ) );
-         eventProcessor.scenarioStop( runName, featureName, testScenario, tags );
+
+         if ( tags != null )
+         {
+            eventProcessor.scenarioStop( runName, featureName, testScenario, tags );
+         }
       }
 
       if ( resultConsumer != null )

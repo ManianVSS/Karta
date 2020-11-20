@@ -14,7 +14,12 @@ public class StandardStepResults
 
    public static StepResult error( Throwable t )
    {
-      return error( TestIncident.builder().thrownCause( t ).build() );
+      return error( TestIncident.builder().message( t.getMessage() ).thrownCause( t ).build() );
+   }
+
+   public static StepResult error( String message, Throwable t )
+   {
+      return error( TestIncident.builder().message( message ).thrownCause( t ).build() );
    }
 
    public static StepResult error( TestIncident incident )

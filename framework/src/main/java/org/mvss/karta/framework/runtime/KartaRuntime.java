@@ -16,6 +16,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -25,11 +26,13 @@ import org.mvss.karta.configuration.PluginConfig;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.ScenarioResult;
+import org.mvss.karta.framework.core.StandardFeatureResults;
 import org.mvss.karta.framework.core.StandardScenarioResults;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
+import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinionConfiguration;
@@ -302,7 +305,7 @@ public class KartaRuntime implements AutoCloseable
 
       if ( stepTestDataSet != null )
       {
-         int iterationIndex = ( executionStepPointer != null ) ? executionStepPointer.getIterationIndex() : 0;
+         long iterationIndex = ( executionStepPointer != null ) ? executionStepPointer.getIterationIndex() : 0;
          if ( iterationIndex <= 0 )
          {
             iterationIndex = 0;
@@ -312,7 +315,7 @@ public class KartaRuntime implements AutoCloseable
             ArrayList<Serializable> possibleValues = stepTestDataSet.get( dataKey );
             if ( ( possibleValues != null ) && !possibleValues.isEmpty() )
             {
-               int valueIndex = iterationIndex % possibleValues.size();
+               int valueIndex = (int) ( iterationIndex % possibleValues.size() );
                mergedTestData.put( dataKey, possibleValues.get( valueIndex ) );
             }
          }
@@ -331,8 +334,8 @@ public class KartaRuntime implements AutoCloseable
       beanRegistry.loadBeans( object );
    }
 
-   public boolean runFeatureFile( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String featureFileName, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration,
-                                  long numberOfIterations, int numberOfIterationsInParallel )
+   public FeatureResult runFeatureFile( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String featureFileName, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration,
+                                        long numberOfIterations, int numberOfIterationsInParallel )
    {
       try
       {
@@ -340,26 +343,27 @@ public class KartaRuntime implements AutoCloseable
 
          if ( StringUtils.isEmpty( featureSource ) )
          {
-            log.error( "Feature file invalid: " + featureFileName );
-            return false;
+            String errorMsg = "Feature file invalid: " + featureFileName;
+            log.error( errorMsg );
+            return StandardFeatureResults.error( errorMsg );
          }
          return runFeatureSource( runName, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, featureSource, chanceBasedScenarioExecution, exclusiveScenarioPerIteration, numberOfIterations, numberOfIterationsInParallel );
       }
       catch ( Throwable t )
       {
-         log.error( "", t );
-         return false;
+         log.error( Constants.EMPTY_STRING, t );
+         return StandardFeatureResults.error( t );
       }
    }
 
-   public boolean runFeatureSource( String runName, String featureFileSourceString, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration, long numberOfIterations, int numberOfIterationsInParallel )
+   public FeatureResult runFeatureSource( String runName, String featureFileSourceString, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration, long numberOfIterations, int numberOfIterationsInParallel )
    {
       return runFeatureSource( runName, kartaConfiguration.getDefaultFeatureSourceParserPlugin(), kartaConfiguration.getDefaultStepRunnerPlugin(), kartaConfiguration
                .getDefaultTestDataSourcePlugins(), featureFileSourceString, chanceBasedScenarioExecution, exclusiveScenarioPerIteration, numberOfIterations, numberOfIterationsInParallel );
    }
 
-   public boolean runFeatureSource( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String featureFileSourceString, boolean chanceBasedScenarioExecution,
-                                    boolean exclusiveScenarioPerIteration, long numberOfIterations, int numberOfIterationsInParallel )
+   public FeatureResult runFeatureSource( String runName, String featureSourceParserPlugin, String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String featureFileSourceString, boolean chanceBasedScenarioExecution,
+                                          boolean exclusiveScenarioPerIteration, long numberOfIterations, int numberOfIterationsInParallel )
    {
       try
       {
@@ -367,8 +371,9 @@ public class KartaRuntime implements AutoCloseable
 
          if ( featureParser == null )
          {
-            log.error( "Failed to get a feature source parser of type: " + kartaConfiguration.getDefaultFeatureSourceParserPlugin() );
-            return false;
+            String errorMsg = "Failed to get a feature source parser of type: " + kartaConfiguration.getDefaultFeatureSourceParserPlugin();
+            log.error( errorMsg );
+            return StandardFeatureResults.error( errorMsg );
          }
          TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
 
@@ -376,20 +381,21 @@ public class KartaRuntime implements AutoCloseable
       }
       catch ( Throwable t )
       {
-         log.error( "", t );
-         return false;
+         log.error( Constants.EMPTY_STRING, t );
+         return StandardFeatureResults.error( t );
       }
    }
 
-   public boolean runFeature( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration, long numberOfIterations,
-                              int numberOfIterationsInParallel )
+   public FeatureResult runFeature( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration, long numberOfIterations,
+                                    int numberOfIterationsInParallel )
    {
       StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin );
 
       if ( stepRunner == null )
       {
-         log.error( "Failed to get a step runner of type: " + kartaConfiguration.getDefaultStepRunnerPlugin() );
-         return false;
+         String errorMsg = "Failed to get a step runner of type: " + kartaConfiguration.getDefaultStepRunnerPlugin();
+         log.error( errorMsg );
+         return StandardFeatureResults.error( errorMsg );
       }
 
       ArrayList<TestDataSource> testDataSources = new ArrayList<TestDataSource>();
@@ -400,8 +406,9 @@ public class KartaRuntime implements AutoCloseable
 
          if ( testDataSource == null )
          {
-            log.error( "Failed to get a test data source of type: " + testDataSourcePlugin );
-            return false;
+            String errorMsg = "Failed to get a test data source of type: " + testDataSourcePlugin;
+            log.error( errorMsg );
+            return StandardFeatureResults.error( errorMsg );
          }
 
          testDataSources.add( testDataSource );
@@ -412,12 +419,12 @@ public class KartaRuntime implements AutoCloseable
          FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).testDataSources( testDataSources ).chanceBasedScenarioExecution( chanceBasedScenarioExecution )
                   .exclusiveScenarioPerIteration( exclusiveScenarioPerIteration ).runName( runName ).testFeature( feature ).numberOfIterations( numberOfIterations ).numberOfIterationsInParallel( numberOfIterationsInParallel ).build();
          FeatureResult featureResult = featureRunner.call();
-         return featureResult.isPassed();
+         return featureResult;
       }
       catch ( Throwable t )
       {
-         log.error( "", t );
-         return false;
+         log.error( Constants.EMPTY_STRING, t );
+         return StandardFeatureResults.error( t );
       }
    }
 
@@ -451,11 +458,11 @@ public class KartaRuntime implements AutoCloseable
          {
             eventProcessor.runStart( runName );
             eventProcessor.raiseEvent( new RunStartEvent( runName ) );
-            boolean result = runFeatureFile( runName, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, runTarget.getFeatureFile(), runTarget.getChanceBasedScenarioExecution(), runTarget.getExclusiveScenarioPerIteration(), runTarget
+            FeatureResult result = runFeatureFile( runName, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, runTarget.getFeatureFile(), runTarget.getChanceBasedScenarioExecution(), runTarget.getExclusiveScenarioPerIteration(), runTarget
                      .getNumberOfIterations(), runTarget.getNumberOfThreads() );
             eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
             eventProcessor.runStop( runName );
-            return result;
+            return result.isPassed();
          }
          else if ( StringUtils.isNotBlank( runTarget.getJavaTest() ) )
          {
@@ -486,7 +493,7 @@ public class KartaRuntime implements AutoCloseable
       }
       catch ( Throwable t )
       {
-         log.error( "", t );
+         log.error( Constants.EMPTY_STRING, t );
          return false;
       }
    }
@@ -597,8 +604,8 @@ public class KartaRuntime implements AutoCloseable
       return stepRunner.runStep( testStep, testExecutionContext );
    }
 
-   public ScenarioResult runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, int iterationIndex, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
-                                          ArrayList<TestStep> scenarioTearDownSteps, int scenarioIterationNumber )
+   public ScenarioResult runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, long iterationIndex, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
+                                          ArrayList<TestStep> scenarioTearDownSteps, long scenarioIterationNumber )
    {
       StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin );
       ArrayList<TestDataSource> testDataSources = getTestDataSourcePlugins( testDataSourcePlugins );
@@ -611,8 +618,8 @@ public class KartaRuntime implements AutoCloseable
       return runTestScenario( stepRunner, testDataSources, runName, featureName, iterationIndex, scenarioSetupSteps, testScenario, scenarioTearDownSteps, scenarioIterationNumber );
    }
 
-   public ScenarioResult runTestScenario( StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, String featureName, int iterationIndex, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
-                                          ArrayList<TestStep> scenarioTearDownSteps, int scenarioIterationNumber )
+   public ScenarioResult runTestScenario( StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, String featureName, long iterationIndex, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
+                                          ArrayList<TestStep> scenarioTearDownSteps, long scenarioIterationNumber )
    {
       ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).testDataSources( testDataSources ).runName( runName ).featureName( featureName ).iterationIndex( iterationIndex )
                .scenarioSetupSteps( scenarioSetupSteps ).testScenario( testScenario ).scenarioTearDownSteps( scenarioTearDownSteps ).scenarioIterationNumber( scenarioIterationNumber ).build();
@@ -627,6 +634,52 @@ public class KartaRuntime implements AutoCloseable
          return StandardStepResults.error( TestIncident.builder().message( "Step runner plugin not found: " + stepRunnerPlugin ).build() );
       }
       return stepRunner.performChaosAction( chaosAction, context );
+   }
+
+   public long scheduleJob( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, TestJob job ) throws Throwable
+   {
+      StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin );
+      ArrayList<TestDataSource> testDataSources = getTestDataSourcePlugins( testDataSourcePlugins );
+      if ( ( stepRunner == null ) || ( testDataSources == null ) )
+      {
+         log.error( "Plugin(s) not found: " + stepRunnerPlugin + testDataSourcePlugins );
+         return -1;
+      }
+      return startScheduledJob( stepRunner, testDataSources, runName, featureName, job );
+   }
+
+   public long startScheduledJob( StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, String featureName, TestJob job ) throws Throwable
+   {
+      long jobInterval = job.getInterval();
+      int repeatCount = job.getIterationCount();
+
+      if ( jobInterval > 0 )
+      {
+         HashMap<String, Object> jobData = new HashMap<String, Object>();
+         jobData.put( Constants.KARTA_RUNTIME, this );
+         jobData.put( Constants.STEP_RUNNER, stepRunner );
+         jobData.put( Constants.TEST_DATA_SOURCES, testDataSources );
+         jobData.put( Constants.RUN_NAME, runName );
+         jobData.put( Constants.FEATURE_NAME, featureName );
+         jobData.put( Constants.TEST_JOB, job );
+         jobData.put( Constants.ITERATION_COUNTER, new AtomicLong() );
+         return QuartzJobScheduler.scheduleJob( QuartzTestJob.class, jobInterval, repeatCount, jobData );
+      }
+      else
+      {
+         TestJobRunner.run( this, stepRunner, testDataSources, runName, featureName, job, 0 );
+         return -1;
+      }
+   }
+
+   public boolean deleteJob( Long jobId )
+   {
+      return QuartzJobScheduler.deleteJob( jobId );
+   }
+
+   public boolean deleteJobs( ArrayList<Long> jobIds )
+   {
+      return QuartzJobScheduler.deleteJobs( jobIds );
    }
 
    public StepResult runStepOnNode( String nodeName, String stepRunnerPlugin, TestStep step, TestExecutionContext context ) throws RemoteException

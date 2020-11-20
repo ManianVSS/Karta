@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class TestObjectGenerationRule
 {
-   public static boolean testVariableParam( Random random, ObjectGenerationRule vp, int iterations, boolean printObj ) throws Exception
+   public static boolean testVariableParam( Random random, ObjectGenerationRule vp, long iterations, boolean printObj ) throws Exception
    {
       HashMap<Serializable, Integer> objCount = new HashMap<Serializable, Integer>();
 

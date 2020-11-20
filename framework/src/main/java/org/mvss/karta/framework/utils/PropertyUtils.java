@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -145,7 +146,7 @@ public class PropertyUtils
       }
       catch ( Throwable t )
       {
-         log.error( "", t );
+         log.error( Constants.EMPTY_STRING, t );
       }
    }
 
@@ -181,7 +182,7 @@ public class PropertyUtils
       }
       catch ( Throwable t )
       {
-         log.error( "", t );
+         log.error( Constants.EMPTY_STRING, t );
       }
    }
 }

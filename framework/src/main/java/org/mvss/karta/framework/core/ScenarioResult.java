@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,7 +24,7 @@ public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
    private static final long        serialVersionUID   = 1L;
 
    @Builder.Default
-   private int                      iterationIndex     = 0;
+   private long                     iterationIndex     = 0;
 
    @Builder.Default
    private Date                     startTime          = new Date();
@@ -50,6 +52,7 @@ public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
    @Builder.Default
    private HashMap<String, Boolean> tearDownResults    = new HashMap<String, Boolean>();
 
+   @JsonIgnore
    public boolean isPassed()
    {
       return successful && !error && incidents.isEmpty();
@@ -58,6 +61,6 @@ public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
    @Override
    public int compareTo( ScenarioResult other )
    {
-      return iterationIndex - other.iterationIndex;
+      return (int) ( ( iterationIndex - other.iterationIndex ) % Integer.MAX_VALUE );
    }
 }

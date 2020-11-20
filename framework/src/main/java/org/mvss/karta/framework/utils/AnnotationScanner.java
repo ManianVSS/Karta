@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import org.mvss.karta.framework.runtime.Constants;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
@@ -108,7 +109,7 @@ public class AnnotationScanner
          }
          catch ( Throwable t )
          {
-            log.error( "", t );
+            log.error( Constants.EMPTY_STRING, t );
          }
       }
    }
@@ -130,7 +131,7 @@ public class AnnotationScanner
          }
          catch ( Throwable t )
          {
-            log.error( "", t );
+            log.error( Constants.EMPTY_STRING, t );
          }
       }
    }
@@ -154,7 +155,7 @@ public class AnnotationScanner
          }
          catch ( Throwable t )
          {
-            log.error( "", t );
+            log.error( Constants.EMPTY_STRING, t );
          }
       }
    }
