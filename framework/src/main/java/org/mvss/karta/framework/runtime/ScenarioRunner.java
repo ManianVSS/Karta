@@ -26,7 +26,7 @@ import org.mvss.karta.framework.runtime.event.ScenarioStepCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioStepStartEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioTearDownStepCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioTearDownStepStartEvent;
-import org.mvss.karta.framework.runtime.event.TestIncidentOccurenceEvent;
+import org.mvss.karta.framework.runtime.event.TestIncidentOccurrenceEvent;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
@@ -57,13 +57,13 @@ public class ScenarioRunner implements Callable<ScenarioResult>
 
    private String                        runName;
    private String                        featureName;
-   private int                           iterationIndex;
+   private long                          iterationIndex;
 
    private ArrayList<TestStep>           scenarioSetupSteps;
    private TestScenario                  testScenario;
    private ArrayList<TestStep>           scenarioTearDownSteps;
 
-   private int                           scenarioIterationNumber;
+   private long                          scenarioIterationNumber;
 
    private ScenarioResult                result;
 
@@ -111,7 +111,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
 
             for ( TestIncident incident : stepResult.getIncidents() )
             {
-               eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iterationIndex, testScenario.getName(), step.getIdentifier(), incident ) );
+               eventProcessor.raiseEvent( new TestIncidentOccurrenceEvent( runName, featureName, iterationIndex, testScenario.getName(), step.getIdentifier(), incident ) );
             }
 
             for ( Event event : stepResult.getEvents() )
@@ -169,7 +169,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
 
                   for ( TestIncident incident : stepResult.getIncidents() )
                   {
-                     eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iterationIndex, testScenario.getName(), chaosAction.getName(), incident ) );
+                     eventProcessor.raiseEvent( new TestIncidentOccurrenceEvent( runName, featureName, iterationIndex, testScenario.getName(), chaosAction.getName(), incident ) );
                   }
 
                   for ( Event event : stepResult.getEvents() )
@@ -216,7 +216,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
 
                   for ( TestIncident incident : stepResult.getIncidents() )
                   {
-                     eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iterationIndex, testScenario.getName(), step.getIdentifier(), incident ) );
+                     eventProcessor.raiseEvent( new TestIncidentOccurrenceEvent( runName, featureName, iterationIndex, testScenario.getName(), step.getIdentifier(), incident ) );
                   }
 
                   for ( Event event : stepResult.getEvents() )
@@ -274,7 +274,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
 
                for ( TestIncident incident : stepResult.getIncidents() )
                {
-                  eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iterationIndex, testScenario.getName(), step.getIdentifier(), incident ) );
+                  eventProcessor.raiseEvent( new TestIncidentOccurrenceEvent( runName, featureName, iterationIndex, testScenario.getName(), step.getIdentifier(), incident ) );
                }
 
                for ( Event event : stepResult.getEvents() )

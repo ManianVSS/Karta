@@ -7,10 +7,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import org.mvss.karta.framework.chaos.ChaosAction;
+import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
+import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.runtime.KartaRuntime;
@@ -35,16 +37,42 @@ public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion,
    }
 
    @Override
-   public boolean runFeature( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration, long numberOfIterations,
-                              int numberOfIterationsInParallel )
+   public FeatureResult runFeature( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration, long numberOfIterations,
+                                    int numberOfIterationsInParallel )
             throws RemoteException
    {
       return kartaRuntime.runFeature( stepRunnerPlugin, testDataSourcePlugins, runName, feature, chanceBasedScenarioExecution, exclusiveScenarioPerIteration, numberOfIterations, numberOfIterationsInParallel );
    }
 
    @Override
-   public ScenarioResult runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, int iterationIndex, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
-                                          ArrayList<TestStep> scenarioTearDownSteps, int scenarioIterationNumber )
+   public long scheduleJob( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, TestJob job ) throws RemoteException
+   {
+      try
+      {
+         return kartaRuntime.scheduleJob( stepRunnerPlugin, testDataSourcePlugins, runName, featureName, job );
+      }
+      catch ( Throwable e )
+      {
+         throw new RemoteException( "Exception while scheduling job", e );
+      }
+   }
+
+   @Override
+   public boolean deleteJob( Long jobId ) throws RemoteException
+   {
+      try
+      {
+         return kartaRuntime.deleteJob( jobId );
+      }
+      catch ( Throwable e )
+      {
+         throw new RemoteException( "Exception while deleting job", e );
+      }
+   }
+
+   @Override
+   public ScenarioResult runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, long iterationIndex, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
+                                          ArrayList<TestStep> scenarioTearDownSteps, long scenarioIterationNumber )
             throws RemoteException
    {
       return kartaRuntime.runTestScenario( stepRunnerPlugin, testDataSourcePlugins, runName, featureName, iterationIndex, scenarioSetupSteps, testScenario, scenarioTearDownSteps, scenarioIterationNumber );

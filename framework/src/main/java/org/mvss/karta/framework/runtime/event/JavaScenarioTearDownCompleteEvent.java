@@ -1,11 +1,10 @@
 package org.mvss.karta.framework.runtime.event;
 
-import java.util.Date;
-import java.util.UUID;
-
 import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.runtime.Constants;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +14,7 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
-public class JavaScenarioTearDownCompleteEvent extends Event
+public class JavaScenarioTearDownCompleteEvent extends ScenarioEvent
 {
 
    /**
@@ -23,30 +22,22 @@ public class JavaScenarioTearDownCompleteEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private String            featureName;
-   private long              iterationNumber;
-   private String            method;
-   private String            scenarioName;
-   private StepResult        result;
-
-   public JavaScenarioTearDownCompleteEvent( String runName, String featureName, long iterationNumber, String method, String scenarioName, StepResult result )
+   public JavaScenarioTearDownCompleteEvent( String runName, String featureName, long iterationNumber, String scenarioName, String stepIdentifier, StepResult result )
    {
-      super( StandardEventsTypes.JAVA_SCENARIO_TEARDOWN_COMPLETE_EVENT, runName );
-      this.featureName = featureName;
-      this.iterationNumber = iterationNumber;
-      this.method = method;
-      this.scenarioName = scenarioName;
-      this.result = result;
+      super( StandardEventsTypes.JAVA_SCENARIO_TEARDOWN_COMPLETE_EVENT, runName, featureName, iterationNumber, scenarioName );
+      this.parameters.put( Constants.STEP_IDENTIFIER, stepIdentifier );
+      this.parameters.put( Constants.RESULT, result );
    }
 
-   @Builder
-   public JavaScenarioTearDownCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, long iterationNumber, String method, String scenarioName, StepResult result )
+   @JsonIgnore
+   public String getStepIdentifier()
    {
-      super( StandardEventsTypes.JAVA_SCENARIO_TEARDOWN_COMPLETE_EVENT, runName, id, timeOfOccurrence );
-      this.featureName = featureName;
-      this.iterationNumber = iterationNumber;
-      this.method = method;
-      this.scenarioName = scenarioName;
-      this.result = result;
+      return parameters.get( Constants.STEP_IDENTIFIER ).toString();
+   }
+
+   @JsonIgnore
+   public StepResult getResult()
+   {
+      return (StepResult) parameters.get( Constants.RESULT );
    }
 }

@@ -3,7 +3,7 @@ package org.mvss.karta.framework.runtime;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.minions.KartaMinion;
 
@@ -24,7 +24,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @JsonInclude( value = Include.NON_ABSENT, content = Include.NON_ABSENT )
 @Builder
-public class RemoteFeatureRunner implements Callable<Boolean>
+public class RemoteFeatureRunner implements Callable<FeatureResult>
 {
    private KartaRuntime    kartaRuntime;
    private String          stepRunner;
@@ -44,24 +44,22 @@ public class RemoteFeatureRunner implements Callable<Boolean>
    private Boolean         exclusiveScenarioPerIteration = false;
 
    @Builder.Default
-   private boolean         successful                    = true;
-
-   @Builder.Default
    private KartaMinion     minionToUse                   = null;
 
+   private FeatureResult   result;
+
    @Override
-   public Boolean call()
+   public FeatureResult call()
    {
       try
       {
-         return minionToUse.runFeature( stepRunner, testDataSources, runName, testFeature, chanceBasedScenarioExecution, exclusiveScenarioPerIteration, numberOfIterations, numberOfIterationsInParallel );
+         result = minionToUse.runFeature( stepRunner, testDataSources, runName, testFeature, chanceBasedScenarioExecution, exclusiveScenarioPerIteration, numberOfIterations, numberOfIterationsInParallel );
       }
       catch ( Throwable t )
       {
-         log.error( "", t );
-         log.error( ExceptionUtils.getStackTrace( t ) );
-         successful = false;
+         log.error( Constants.EMPTY_STRING, t );
+         result.setSuccessful( false );
       }
-      return successful;
+      return result;
    }
 }

@@ -22,7 +22,6 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class KartaMain
 {
-   private static final String  KARTA         = "Karta";
 
    private static final String  HELP          = "help";
 
@@ -32,8 +31,6 @@ public class KartaMain
 
    private static final String  JAVA_TEST     = "javaTest";
    private static final String  JAVA_TEST_JAR = "javaTestJar";
-
-   private static final String  RUN_NAME      = "runName";
 
    private static final String  START_MINION  = "startMinion";
 
@@ -64,7 +61,7 @@ public class KartaMain
       options.addOption( "j", JAVA_TEST, true, "test case class to run" );
       options.addOption( JAVA_TEST_JAR, true, "jar file which contains the test" );
 
-      options.addOption( RUN_NAME, true, "the name of this test run" );
+      options.addOption( Constants.RUN_NAME, true, "the name of this test run" );
 
       options.addOption( START_MINION, false, "starts Karta minion (rmi node)" );
 
@@ -76,7 +73,7 @@ public class KartaMain
 
          if ( cmd.hasOption( HELP ) )
          {
-            formatter.printHelp( KARTA, options );
+            formatter.printHelp( Constants.KARTA, options );
             System.exit( 0 );
          }
          else if ( cmd.hasOption( START_MINION ) )
@@ -129,13 +126,13 @@ public class KartaMain
                runTarget.setTags( tags );
             }
 
-            if ( cmd.hasOption( RUN_NAME ) )
+            if ( cmd.hasOption( Constants.RUN_NAME ) )
             {
-               runName = cmd.getOptionValue( RUN_NAME );
+               runName = cmd.getOptionValue( Constants.RUN_NAME );
             }
             else
             {
-               runName = runName + "-" + System.currentTimeMillis();
+               runName = runName + Constants.HYPHEN + System.currentTimeMillis();
             }
 
             Runtime.getRuntime().addShutdownHook( new Thread( () -> jvmExitHook() ) );
@@ -159,7 +156,7 @@ public class KartaMain
             {
                if ( optionMissing )
                {
-                  formatter.printHelp( KARTA, options );
+                  formatter.printHelp( Constants.KARTA, options );
                   System.exit( -1 );
                }
             }
@@ -168,13 +165,13 @@ public class KartaMain
       catch ( UnrecognizedOptionException | MissingArgumentException uoe )
       {
          System.err.println( uoe.getMessage() );
-         formatter.printHelp( KARTA, options );
+         formatter.printHelp( Constants.KARTA, options );
          System.exit( -1 );
       }
       catch ( Throwable t )
       {
          log.error( "Exception caught while init", t );
-         formatter.printHelp( KARTA, options );
+         formatter.printHelp( Constants.KARTA, options );
          System.exit( -1 );
       }
    }

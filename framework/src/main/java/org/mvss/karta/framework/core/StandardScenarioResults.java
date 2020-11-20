@@ -7,9 +7,14 @@ public class StandardScenarioResults
    public final static ScenarioResult passed = ScenarioResult.builder().successful( true ).build();
    public final static ScenarioResult failed = ScenarioResult.builder().successful( false ).build();
 
+   public static ScenarioResult error( String message )
+   {
+      return error( TestIncident.builder().message( message ).build() );
+   }
+
    public static ScenarioResult error( Throwable t )
    {
-      return error( TestIncident.builder().thrownCause( t ).build() );
+      return error( TestIncident.builder().message( t.getMessage() ).thrownCause( t ).build() );
    }
 
    public static ScenarioResult error( TestIncident incident )

@@ -25,7 +25,7 @@ public class ExecutionStepPointer implements Serializable
    private String            scenario;
    private String            step;
 
-   private int               iterationIndex;
+   private long              iterationIndex;
    private int               stepIndex;
 
    // private SourcePointer sourcePointer;

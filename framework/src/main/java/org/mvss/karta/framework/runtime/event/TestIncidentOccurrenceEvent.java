@@ -1,6 +1,6 @@
 package org.mvss.karta.framework.runtime.event;
 
-import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.runtime.Constants;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -14,7 +14,7 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
-public class JavaFeatureTearDownCompleteEvent extends FeatureEvent
+public class TestIncidentOccurrenceEvent extends ScenarioEvent
 {
 
    /**
@@ -22,11 +22,11 @@ public class JavaFeatureTearDownCompleteEvent extends FeatureEvent
     */
    private static final long serialVersionUID = 1L;
 
-   public JavaFeatureTearDownCompleteEvent( String runName, String featureName, String stepIdentifier, StepResult result )
+   public TestIncidentOccurrenceEvent( String runName, String featureName, long iterationNumber, String scenarioName, String stepIdentifier, TestIncident incident )
    {
-      super( StandardEventsTypes.JAVA_FEATURE_TEARDOWN_COMPLETE_EVENT, runName, featureName );
+      super( StandardEventsTypes.TEST_INCIDENT_OCCURRENCE_EVENT, runName, featureName, iterationNumber, scenarioName );
       this.parameters.put( Constants.STEP_IDENTIFIER, stepIdentifier );
-      this.parameters.put( Constants.RESULT, result );
+      this.parameters.put( Constants.INCIDENT, incident );
    }
 
    @JsonIgnore
@@ -36,8 +36,8 @@ public class JavaFeatureTearDownCompleteEvent extends FeatureEvent
    }
 
    @JsonIgnore
-   public StepResult getResult()
+   public TestIncident getIncident()
    {
-      return (StepResult) parameters.get( Constants.RESULT );
+      return (TestIncident) parameters.get( Constants.INCIDENT );
    }
 }

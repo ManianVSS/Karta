@@ -1,9 +1,9 @@
 package org.mvss.karta.framework.runtime.event;
 
-import java.util.Date;
-import java.util.UUID;
+import org.mvss.karta.framework.runtime.Constants;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +13,7 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
-public class JavaFeatureSetupStartEvent extends Event
+public class JavaFeatureSetupStartEvent extends FeatureEvent
 {
 
    /**
@@ -21,21 +21,16 @@ public class JavaFeatureSetupStartEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private String            featureName;
-   private String            methodName;
-
-   public JavaFeatureSetupStartEvent( String runName, String featureName, String methodName )
+   public JavaFeatureSetupStartEvent( String runName, String featureName, String stepIdentifier )
    {
-      super( StandardEventsTypes.JAVA_FEATURE_SETUP_START_EVENT, runName );
-      this.featureName = featureName;
-      this.methodName = methodName;
+      super( StandardEventsTypes.JAVA_FEATURE_SETUP_START_EVENT, runName, featureName );
+      this.parameters.put( Constants.STEP_IDENTIFIER, stepIdentifier );
    }
 
-   @Builder
-   public JavaFeatureSetupStartEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, String methodName )
+   @JsonIgnore
+   public String getStepIdentifier()
    {
-      super( StandardEventsTypes.JAVA_FEATURE_SETUP_START_EVENT, runName, id, timeOfOccurrence );
-      this.featureName = featureName;
-      this.methodName = methodName;
+      return parameters.get( Constants.STEP_IDENTIFIER ).toString();
    }
+
 }

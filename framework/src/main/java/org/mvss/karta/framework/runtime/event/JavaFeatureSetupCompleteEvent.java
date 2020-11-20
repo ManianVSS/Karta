@@ -1,11 +1,10 @@
 package org.mvss.karta.framework.runtime.event;
 
-import java.util.Date;
-import java.util.UUID;
-
 import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.runtime.Constants;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +14,7 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
-public class JavaFeatureSetupCompleteEvent extends Event
+public class JavaFeatureSetupCompleteEvent extends FeatureEvent
 {
 
    /**
@@ -23,24 +22,22 @@ public class JavaFeatureSetupCompleteEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private String            featureName;
-   private String            methodName;
-   private StepResult        result;
-
    public JavaFeatureSetupCompleteEvent( String runName, String featureName, String methodName, StepResult result )
    {
-      super( StandardEventsTypes.JAVA_FEATURE_SETUP_COMPLETE_EVENT, runName );
-      this.featureName = featureName;
-      this.methodName = methodName;
-      this.result = result;
+      super( StandardEventsTypes.JAVA_FEATURE_SETUP_COMPLETE_EVENT, runName, featureName );
+      this.parameters.put( Constants.STEP_IDENTIFIER, methodName );
+      this.parameters.put( Constants.RESULT, result );
    }
 
-   @Builder
-   public JavaFeatureSetupCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, String methodName, StepResult result )
+   @JsonIgnore
+   public String getStepIdentifier()
    {
-      super( StandardEventsTypes.JAVA_FEATURE_SETUP_COMPLETE_EVENT, runName, id, timeOfOccurrence );
-      this.featureName = featureName;
-      this.methodName = methodName;
-      this.result = result;
+      return parameters.get( Constants.STEP_IDENTIFIER ).toString();
+   }
+
+   @JsonIgnore
+   public StepResult getResult()
+   {
+      return (StepResult) parameters.get( Constants.RESULT );
    }
 }

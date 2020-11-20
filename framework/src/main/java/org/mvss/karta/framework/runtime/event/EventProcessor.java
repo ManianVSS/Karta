@@ -103,20 +103,20 @@ public class EventProcessor implements AutoCloseable
       }
    }
 
-   public void fail( String runName, String featureName, Integer iteration, String scenarioName, String stepIdentifier, TestIncident incident ) throws TestFailureException
+   public void fail( String runName, String featureName, Long iterationIndex, String scenarioName, String stepIdentifier, TestIncident incident ) throws TestFailureException
    {
       if ( incident != null )
       {
-         raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iteration, scenarioName, stepIdentifier, incident ) );
+         raiseEvent( new TestIncidentOccurrenceEvent( runName, featureName, iterationIndex, scenarioName, stepIdentifier, incident ) );
          throw new TestFailureException( incident.getMessage(), incident.getThrownCause() );
       }
    }
 
-   public void raiseIncident( String runName, String featureName, Integer iteration, String scenarioName, String stepIdentifier, TestIncident incident )
+   public void raiseIncident( String runName, String featureName, Long iterationIndex, String scenarioName, String stepIdentifier, TestIncident incident )
    {
       if ( incident != null )
       {
-         raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iteration, scenarioName, stepIdentifier, incident ) );
+         raiseEvent( new TestIncidentOccurrenceEvent( runName, featureName, iterationIndex, scenarioName, stepIdentifier, incident ) );
       }
    }
 
@@ -127,22 +127,34 @@ public class EventProcessor implements AutoCloseable
 
    public void featureStart( String runName, TestFeature feature, HashSet<String> tags )
    {
-      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.featureStart( runName, feature, tags ) );
+      if ( tags != null )
+      {
+         lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.featureStart( runName, feature, tags ) );
+      }
    }
 
    public void scenarioStart( String runName, String featureName, TestScenario scenario, HashSet<String> tags )
    {
-      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.scenarioStart( runName, featureName, scenario, tags ) );
+      if ( tags != null )
+      {
+         lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.scenarioStart( runName, featureName, scenario, tags ) );
+      }
    }
 
    public void scenarioStop( String runName, String featureName, TestScenario scenario, HashSet<String> tags )
    {
-      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.scenarioStop( runName, featureName, scenario, tags ) );
+      if ( tags != null )
+      {
+         lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.scenarioStop( runName, featureName, scenario, tags ) );
+      }
    }
 
    public void featureStop( String runName, TestFeature feature, HashSet<String> tags )
    {
-      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.featureStop( runName, feature, tags ) );
+      if ( tags != null )
+      {
+         lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.featureStop( runName, feature, tags ) );
+      }
    }
 
    public void runStop( String runName )

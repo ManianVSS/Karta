@@ -3,6 +3,7 @@ package org.mvss.karta.server.api;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 
+import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunTarget;
@@ -20,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class RunController
 {
-
    @Autowired
    private KartaRuntime kartaRuntime;
 
@@ -31,7 +31,7 @@ public class RunController
    {
       if ( runName.equals( Constants.UNNAMED ) )
       {
-         runName = runName + "-" + System.currentTimeMillis();
+         runName = runName + Constants.HYPHEN + System.currentTimeMillis();
       }
 
       HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
@@ -41,12 +41,12 @@ public class RunController
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_FEATURESOURCE )
-   public boolean startFeatureSourceRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestParam( defaultValue = KriyaPlugin.PLUGIN_NAME ) String pluginName, @RequestBody String featureSourceString )
+   public FeatureResult startFeatureSourceRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestParam( defaultValue = KriyaPlugin.PLUGIN_NAME ) String pluginName, @RequestBody String featureSourceString )
             throws IllegalAccessException, InvocationTargetException
    {
       if ( runName.equals( Constants.UNNAMED ) )
       {
-         runName = runName + "-" + System.currentTimeMillis();
+         runName = runName + Constants.HYPHEN + System.currentTimeMillis();
       }
 
       HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
@@ -61,7 +61,7 @@ public class RunController
    // {
    // if ( runName.equals( Constants.UNNAMED ) )
    // {
-   // runName = runName + "-" + System.currentTimeMillis();
+   // runName = runName + Constants.HYPHEN + System.currentTimeMillis();
    // }
    //
    // HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();

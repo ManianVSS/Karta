@@ -1,13 +1,12 @@
 package org.mvss.karta.framework.runtime.event;
 
-import java.util.Date;
-import java.util.UUID;
-
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestJob;
+import org.mvss.karta.framework.runtime.Constants;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +16,7 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
-public class ChaosActionJobCompleteEvent extends Event
+public class ChaosActionJobCompleteEvent extends JobEvent
 {
 
    /**
@@ -25,27 +24,22 @@ public class ChaosActionJobCompleteEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private TestJob           job;
-   private int               iterationNumber;
-   private ChaosAction       chaosAction;
-   private StepResult        result;
-
-   public ChaosActionJobCompleteEvent( String runName, TestJob job, int iterationNumber, ChaosAction chaosAction, StepResult result )
+   public ChaosActionJobCompleteEvent( String runName, String featureName, TestJob job, long iterationNumber, ChaosAction chaosAction, StepResult result )
    {
-      super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName );
-      this.job = job;
-      this.iterationNumber = iterationNumber;
-      this.chaosAction = chaosAction;
-      this.result = result;
+      super( StandardEventsTypes.CHAOS_ACTION_JOB_COMPLETE_EVENT, runName, featureName, job, iterationNumber );
+      this.parameters.put( Constants.CHAOS_ACTION, chaosAction );
+      this.parameters.put( Constants.RESULT, result );
    }
 
-   @Builder
-   public ChaosActionJobCompleteEvent( String runName, UUID id, Date timeOfOccurrence, TestJob job, int iterationNumber, ChaosAction chaosAction, StepResult result )
+   @JsonIgnore
+   public ChaosAction getChaosAction()
    {
-      super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName, id, timeOfOccurrence );
-      this.job = job;
-      this.iterationNumber = iterationNumber;
-      this.chaosAction = chaosAction;
-      this.result = result;
+      return (ChaosAction) parameters.get( Constants.CHAOS_ACTION );
+   }
+
+   @JsonIgnore
+   public StepResult getResult()
+   {
+      return (StepResult) parameters.get( Constants.RESULT );
    }
 }

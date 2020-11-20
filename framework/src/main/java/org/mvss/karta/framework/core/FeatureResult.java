@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -73,6 +75,7 @@ public class FeatureResult implements Serializable
       return jobsResultsMap;
    }
 
+   @JsonIgnore
    public boolean isPassed()
    {
       return successful && !error && incidents.isEmpty();

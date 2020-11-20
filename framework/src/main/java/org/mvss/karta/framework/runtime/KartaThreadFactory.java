@@ -15,7 +15,7 @@ public class KartaThreadFactory implements ThreadFactory
    @Override
    public Thread newThread( Runnable r )
    {
-      Thread thread = new Thread( r, Constants.KARTA + "-" + threadCounter.incrementAndGet() );
+      Thread thread = new Thread( r, Constants.KARTA + Constants.HYPHEN + threadCounter.incrementAndGet() );
 
       synchronized ( lock )
       {

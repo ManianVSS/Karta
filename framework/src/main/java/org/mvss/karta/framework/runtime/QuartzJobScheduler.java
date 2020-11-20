@@ -2,7 +2,7 @@ package org.mvss.karta.framework.runtime;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
@@ -14,7 +14,6 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerFactory;
 import org.quartz.SimpleScheduleBuilder;
-import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
@@ -27,12 +26,12 @@ public class QuartzJobScheduler
 {
    private static SchedulerFactory schedulerFactory    = new StdSchedulerFactory();
    private static Scheduler        scheduler           = null;
-   private static AtomicInteger    jobCounter          = new AtomicInteger();
+   private static AtomicLong       jobCounter          = new AtomicLong();
 
    private static final String     JOB_NAME_PREFIX     = "KartaQuartzJob";
-   private static final String     JOB_GROUP           = "__Karta__";
+   private static final String     JOB_GROUP           = Constants.__KARTA__;
    private static final String     TRIGGER_NAME_PREFIX = "KartaQuartzJobTrigger_";
-   private static final String     TRIGGER_GROUP       = "__Karta__";
+   private static final String     TRIGGER_GROUP       = Constants.__KARTA__;
 
    static
    {
@@ -53,21 +52,21 @@ public class QuartzJobScheduler
       scheduler.start();
    }
 
-   public static int scheduleJob( Class<? extends Job> jobClass, long scheduleInterval, HashMap<String, Object> jobParams ) throws SchedulerException
+   public static long scheduleJob( Class<? extends Job> jobClass, long scheduleInterval, int repeatCount, HashMap<String, Object> jobParams ) throws SchedulerException
    {
       JobBuilder jobBuilder = JobBuilder.newJob( jobClass );
       JobDataMap jobDataMap = new JobDataMap();
       jobDataMap.putAll( jobParams );
 
-      int jobCount = jobCounter.getAndIncrement();
+      long jobCount = jobCounter.getAndIncrement();
       JobDetail jobDetail = jobBuilder.setJobData( jobDataMap ).withIdentity( JOB_NAME_PREFIX + jobCount, JOB_GROUP ).build();
       Trigger trigger = TriggerBuilder.newTrigger().withIdentity( TRIGGER_NAME_PREFIX + jobCount, TRIGGER_GROUP ).startNow()
-               .withSchedule( SimpleScheduleBuilder.simpleSchedule().withRepeatCount( SimpleTrigger.REPEAT_INDEFINITELY ).withMisfireHandlingInstructionIgnoreMisfires().withIntervalInMilliseconds( scheduleInterval ) ).build();
+               .withSchedule( SimpleScheduleBuilder.simpleSchedule().withRepeatCount( repeatCount ).withMisfireHandlingInstructionIgnoreMisfires().withIntervalInMilliseconds( scheduleInterval ) ).build();
       scheduler.scheduleJob( jobDetail, trigger );
       return jobCount;
    }
 
-   public static boolean deleteJob( int jobId )
+   public static boolean deleteJob( long jobId )
    {
       try
       {
@@ -80,13 +79,16 @@ public class QuartzJobScheduler
       }
    }
 
-   public static boolean deleteJobs( List<Integer> jobIds )
+   public static boolean deleteJobs( List<Long> jobIds )
    {
       boolean jobDeletionStatus = true;
 
-      for ( Integer jobId : jobIds )
+      for ( Long jobId : jobIds )
       {
-         jobDeletionStatus = jobDeletionStatus && deleteJob( jobId );
+         if ( jobId >= 0 )
+         {
+            jobDeletionStatus = jobDeletionStatus && deleteJob( jobId );
+         }
       }
 
       return jobDeletionStatus;

@@ -160,7 +160,7 @@ public class DataFilesTestDataSource implements TestDataSource
                stepName = Constants.__GENERIC_STEP__;
             }
 
-            int iterationIndex = executionStepPointer.getIterationIndex();
+            long iterationIndex = executionStepPointer.getIterationIndex();
             if ( iterationIndex <= 0 )
             {
                iterationIndex = 0;
@@ -183,7 +183,7 @@ public class DataFilesTestDataSource implements TestDataSource
                         ArrayList<Serializable> possibleValues = stepData.get( dataKey );
                         if ( ( possibleValues != null ) && !possibleValues.isEmpty() )
                         {
-                           int valueIndex = iterationIndex % possibleValues.size();
+                           int valueIndex = (int) ( iterationIndex % possibleValues.size() );
                            testData.put( dataKey, possibleValues.get( valueIndex ) );
                         }
                      }
@@ -193,7 +193,7 @@ public class DataFilesTestDataSource implements TestDataSource
          }
          catch ( Throwable t )
          {
-            log.error( "", t );
+            log.error( Constants.EMPTY_STRING, t );
          }
       }
       return testData;

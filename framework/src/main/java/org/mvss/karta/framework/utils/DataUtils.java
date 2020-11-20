@@ -1,5 +1,6 @@
 package org.mvss.karta.framework.utils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -125,6 +126,38 @@ public class DataUtils
    public static boolean inRange( double value, double min, double max )
    {
       return inRange( value, min, max, true, true );
+   }
+
+   public static long serializableToLong( Serializable serializable, long defaultValue )
+   {
+      long returnValue = defaultValue;
+
+      try
+      {
+         if ( serializable != null )
+         {
+            if ( serializable instanceof Long )
+            {
+               returnValue = Long.valueOf( (Long) serializable );
+            }
+
+            if ( serializable instanceof Integer )
+            {
+               returnValue = Long.valueOf( (Integer) serializable );
+            }
+
+            if ( serializable instanceof String )
+            {
+               returnValue = Long.valueOf( (String) serializable );
+            }
+         }
+      }
+      catch ( Throwable t )
+      {
+
+      }
+
+      return returnValue;
    }
 
    public static String incrementStringAlphaNumerically( String currentString )

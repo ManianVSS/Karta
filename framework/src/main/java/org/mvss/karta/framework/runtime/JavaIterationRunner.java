@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
@@ -54,9 +54,9 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
    private String                                    featureName;
    private String                                    featureDescription;
 
-   private int                                       iterationIndex;
+   private long                                      iterationIndex;
 
-   private HashMap<Method, AtomicInteger>            scenarioIterationIndexMap;
+   private HashMap<Method, AtomicLong>               scenarioIterationIndexMap;
 
    @Builder.Default
    private HashMap<String, Serializable>             variables = new HashMap<String, Serializable>();
@@ -76,7 +76,7 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
 
       nextScenarioMethod: for ( Method scenarioMethod : scenariosMethodsToRun )
       {
-         int scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( scenarioMethod ) ) ) ? scenarioIterationIndexMap.get( scenarioMethod ).getAndIncrement() : 0;
+         long scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( scenarioMethod ) ) ) ? scenarioIterationIndexMap.get( scenarioMethod ).getAndIncrement() : 0;
 
          String scenarioName = scenarioMethod.getName();
          Scenario scenarioAnnotation = scenarioMethod.getAnnotation( Scenario.class );
@@ -95,7 +95,7 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
          result.put( scenarioName, scenarioResult );
          try
          {
-            eventProcessor.raiseEvent( new JavaScenarioStartEvent( runName, featureName, iterationIndex, scenarioName, scenarioName ) );
+            eventProcessor.raiseEvent( new JavaScenarioStartEvent( runName, featureName, iterationIndex, scenarioName ) );
 
             if ( scenarioSetupMethods != null )
             {
@@ -120,11 +120,11 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
 
                   testExecutionContext.setStepIdentifier( stepName );
 
-                  eventProcessor.raiseEvent( new JavaScenarioSetupStartEvent( runName, featureName, scenarioIterationNumber, stepName, scenarioName ) );
+                  eventProcessor.raiseEvent( new JavaScenarioSetupStartEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName ) );
 
                   StepResult stepResult = JavaFeatureRunner.runTestMethod( eventProcessor, testDataSources, runName, featureName, scenarioName, testCaseObject, testExecutionContext, methodToInvoke, iterationIndex, stepName );
 
-                  eventProcessor.raiseEvent( new JavaScenarioSetupCompleteEvent( runName, featureName, scenarioIterationNumber, stepName, scenarioName, stepResult ) );
+                  eventProcessor.raiseEvent( new JavaScenarioSetupCompleteEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName, stepResult ) );
                   scenarioResult.getSetupResults().put( stepName, stepResult.isPassed() );
                   scenarioResult.getIncidents().addAll( stepResult.getIncidents() );
 
@@ -173,11 +173,11 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
                   }
 
                   testExecutionContext.setStepIdentifier( stepName );
-                  eventProcessor.raiseEvent( new JavaScenarioTearDownStartEvent( runName, featureName, scenarioIterationNumber, stepName, scenarioName ) );
+                  eventProcessor.raiseEvent( new JavaScenarioTearDownStartEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName ) );
 
                   stepResult = JavaFeatureRunner.runTestMethod( eventProcessor, testDataSources, runName, featureName, scenarioName, testCaseObject, testExecutionContext, methodToInvoke, iterationIndex, stepName );
 
-                  eventProcessor.raiseEvent( new JavaScenarioTearDownCompleteEvent( runName, featureName, scenarioIterationNumber, stepName, scenarioName, stepResult ) );
+                  eventProcessor.raiseEvent( new JavaScenarioTearDownCompleteEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName, stepResult ) );
                   scenarioResult.getTearDownResults().put( stepName, stepResult.isPassed() );
                   scenarioResult.getIncidents().addAll( stepResult.getIncidents() );
 
@@ -189,11 +189,11 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
                }
             }
 
-            eventProcessor.raiseEvent( new JavaScenarioCompleteEvent( runName, featureName, iterationIndex, scenarioName, scenarioName, scenarioResult ) );
+            eventProcessor.raiseEvent( new JavaScenarioCompleteEvent( runName, featureName, iterationIndex, scenarioName, scenarioResult ) );
          }
          catch ( Throwable t )
          {
-            log.error( "", t );
+            log.error( Constants.EMPTY_STRING, t );
             scenarioResult.setError( true );
          }
       }

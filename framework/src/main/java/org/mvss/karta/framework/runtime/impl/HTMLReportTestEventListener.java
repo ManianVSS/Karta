@@ -16,9 +16,7 @@ import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.FeatureCompleteEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureCompleteEvent;
-import org.mvss.karta.framework.runtime.event.RunCompleteEvent;
-import org.mvss.karta.framework.runtime.event.RunStartEvent;
-import org.mvss.karta.framework.runtime.event.TestIncidentOccurenceEvent;
+import org.mvss.karta.framework.runtime.event.StandardEventsTypes;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
 
@@ -97,7 +95,7 @@ public class HTMLReportTestEventListener implements TestEventListener
    }
 
    @Override
-   public void processEvent( Event event )
+   public synchronized void processEvent( Event event )
    {
       String runName = event.getRunName();
 
@@ -105,149 +103,112 @@ public class HTMLReportTestEventListener implements TestEventListener
       {
          return;
       }
-      if ( event instanceof RunStartEvent )
+      switch ( event.getEventType() )
       {
-         Path path = Paths.get( runReportsBaseFolder.getPath(), runName );
-         File runDirectory = path.toFile();
-         runDirectory.mkdirs();
-         getOrCreateFeatureMap( runName );
-         return;
-      }
-      if ( event instanceof RunCompleteEvent )
-      {
-         HashMap<String, Boolean> runReport = getOrCreateFeatureMap( runName );
+         case StandardEventsTypes.RUN_START_EVENT:
+            Path path = Paths.get( runReportsBaseFolder.getPath(), runName );
+            File runDirectory = path.toFile();
+            runDirectory.mkdirs();
+            getOrCreateFeatureMap( runName );
+            break;
 
-         Path path = Paths.get( runReportsBaseFolder.getPath(), runName, "index.html" );
-         File runReportFile = path.toFile();
+         case StandardEventsTypes.RUN_COMPLETE_EVENT:
+            HashMap<String, Boolean> runReport = getOrCreateFeatureMap( runName );
 
-         try
-         {
-            StringBuilder runReportBuilder = new StringBuilder();
-            runReportBuilder.append( "<!DOCTYPE html>\r\n" + "<html>\r\n" + "<head>\r\n" + "  <title>" + runName + "</title>\r\n" + "<style>\r\n" + "table, th, td {\r\n" + "  border: 1px solid black;\r\n" + "  border-collapse: collapse;\r\n" + "}\r\n"
-                                     + "th, td {\r\n" + "  padding: 5px;\r\n" + "}\r\n" + "th {\r\n" + "  text-align: left;\r\n" + "}</style></head>\r\n" + "<body><table>\r\n" + "  <tr>\r\n" + "    <th bgcolor=\"blue\">Feature</th>\r\n"
-                                     + "    <th bgcolor=\"blue\">Status</th>\r\n" + "  </tr>" );
+            path = Paths.get( runReportsBaseFolder.getPath(), runName, "index.html" );
+            File runReportFile = path.toFile();
 
-            ArrayList<String> keySet = new ArrayList<String>();
-            keySet.addAll( runReport.keySet() );
-            Collections.sort( keySet );
-
-            for ( String testName : keySet )
+            try
             {
-               boolean passed = runReport.get( testName );
-               String tdText = "<td bgcolor=\"" + ( passed ? "green" : "red" ) + "\">";
-               runReportBuilder.append( "  <tr>\r\n" + "    " + tdText + testName + "</td>\r\n" + "    " + tdText + ( passed ? "PASS" : "FAIL" ) + "</td>\r\n" + "  </tr>" );
-            }
-            runReportBuilder.append( "</table>\r\n" + "</body>\r\n" + "</html>" );
-            FileUtils.write( runReportFile, runReportBuilder.toString(), Charset.defaultCharset() );
+               StringBuilder runReportBuilder = new StringBuilder();
+               runReportBuilder.append( "<!DOCTYPE html>\r\n" + "<html>\r\n" + "<head>\r\n" + "  <title>" + runName + "</title>\r\n" + "<style>\r\n" + "table, th, td {\r\n" + "  border: 1px solid black;\r\n" + "  border-collapse: collapse;\r\n" + "}\r\n"
+                                        + "th, td {\r\n" + "  padding: 5px;\r\n" + "}\r\n" + "th {\r\n" + "  text-align: left;\r\n" + "}</style></head>\r\n" + "<body><table>\r\n" + "  <tr>\r\n" + "    <th bgcolor=\"blue\">Feature</th>\r\n"
+                                        + "    <th bgcolor=\"blue\">Status</th>\r\n" + "  </tr>" );
 
-         }
-         catch ( Throwable e )
-         {
-            log.error( "", e );
-         }
-         return;
-      }
+               ArrayList<String> keySet = new ArrayList<String>();
+               keySet.addAll( runReport.keySet() );
+               Collections.sort( keySet );
 
-      if ( event instanceof FeatureCompleteEvent )
-      {
-         FeatureCompleteEvent featureCompleteEvent = (FeatureCompleteEvent) event;
-         TestFeature feature = featureCompleteEvent.getFeature();
-         String featureName = feature.getName();
-         FeatureResult featureResult = featureCompleteEvent.getResult();
-         Path path = Paths.get( runReportsBaseFolder.getPath(), runName, featureName + ".html" );
-         File featureReportFile = path.toFile();
-         // featureDirectory.mkdirs();
-         HashMap<String, Boolean> featureMap = getOrCreateFeatureMap( runName );
-         featureMap.put( featureName, featureResult.isPassed() );
-         try
-         {
-            featureResult.sortResults();
-            StringBuilder featureReportBuilder = new StringBuilder();
-            featureReportBuilder.append( "<!DOCTYPE html>\r\n" + "<html>\r\n" + "<head>\r\n" + "  <title>" + runName + "</title>\r\n" + "<style>\r\n" + "table, th, td {\r\n" + "  border: 1px solid black;\r\n" + "  border-collapse: collapse;\r\n" + "}\r\n"
-                                         + "th, td {\r\n" + "  padding: 5px;\r\n" + "}\r\n" + "th {\r\n" + "  text-align: left;\r\n" + "}</style></head>\r\n<body>" );
-
-            HashMap<String, ArrayList<ScenarioResult>> scenarioResults = featureResult.getScenarioResultsMap();
-            ArrayList<String> keySet = new ArrayList<String>();
-            keySet.addAll( scenarioResults.keySet() );
-            Collections.sort( keySet );
-
-            // for ( Entry<String, ArrayList<ScenarioResult>> runResultEntrySet : scenarioResults.entrySet() )
-            for ( String scenarioName : keySet )
-            {
-               ArrayList<ScenarioResult> scenarioResult = scenarioResults.get( scenarioName );
-
-               featureReportBuilder.append( "<h3>" + scenarioName + "</h3>\r\n<table>\r\n" + "  <tr>\r\n" + "    <th bgcolor=\"blue\">IterationIndex</th>\r\n" + "    <th bgcolor=\"blue\">Status</th>\r\n" + "  </tr>" );
-
-               for ( ScenarioResult scenarioIterationResult : scenarioResult )
+               for ( String testName : keySet )
                {
-                  boolean passed = scenarioIterationResult.isPassed();
+                  boolean passed = runReport.get( testName );
                   String tdText = "<td bgcolor=\"" + ( passed ? "green" : "red" ) + "\">";
-                  featureReportBuilder.append( "  <tr>\r\n" + "    " + tdText + ( scenarioIterationResult.getIterationIndex() + 1 ) + "</td>\r\n" + "    " + tdText + ( passed ? "PASS" : "FAIL" ) + "</td>\r\n" + "  </tr>" );
+                  runReportBuilder.append( "  <tr>\r\n" + "    " + tdText + testName + "</td>\r\n" + "    " + tdText + ( passed ? "PASS" : "FAIL" ) + "</td>\r\n" + "  </tr>" );
                }
-               featureReportBuilder.append( "</table>\r\n" );
+               runReportBuilder.append( "</table>\r\n" + "</body>\r\n" + "</html>" );
+               FileUtils.write( runReportFile, runReportBuilder.toString(), Charset.defaultCharset() );
+
             }
-
-            featureReportBuilder.append( "</body>\r\n" + "</html>" );
-            FileUtils.write( featureReportFile, featureReportBuilder.toString(), Charset.defaultCharset() );
-         }
-         catch ( Throwable e )
-         {
-            log.error( "", e );
-         }
-         return;
-      }
-      if ( event instanceof JavaFeatureCompleteEvent )
-      {
-         JavaFeatureCompleteEvent featureCompleteEvent = (JavaFeatureCompleteEvent) event;
-         String featureName = featureCompleteEvent.getFeatureName();
-         FeatureResult featureResult = featureCompleteEvent.getResult();
-         Path path = Paths.get( runReportsBaseFolder.getPath(), runName, featureName + ".html" );
-         File featureReportFile = path.toFile();
-         // featureDirectory.mkdirs();
-         HashMap<String, Boolean> featureMap = getOrCreateFeatureMap( runName );
-         featureMap.put( featureName, featureResult.isPassed() );
-         try
-         {
-            featureResult.sortResults();
-            StringBuilder featureReportBuilder = new StringBuilder();
-            featureReportBuilder.append( "<!DOCTYPE html>\r\n" + "<html>\r\n" + "<head>\r\n" + "  <title>" + runName + "</title>\r\n" + "<style>\r\n" + "table, th, td {\r\n" + "  border: 1px solid black;\r\n" + "  border-collapse: collapse;\r\n" + "}\r\n"
-                                         + "th, td {\r\n" + "  padding: 5px;\r\n" + "}\r\n" + "th {\r\n" + "  text-align: left;\r\n" + "}</style></head>\r\n<body>" );
-
-            HashMap<String, ArrayList<ScenarioResult>> scenarioResults = featureResult.getScenarioResultsMap();
-            ArrayList<String> keySet = new ArrayList<String>();
-            keySet.addAll( scenarioResults.keySet() );
-            Collections.sort( keySet );
-
-            // for ( Entry<String, ArrayList<ScenarioResult>> runResultEntrySet : scenarioResults.entrySet() )
-            for ( String scenarioName : keySet )
+            catch ( Throwable e )
             {
-               ArrayList<ScenarioResult> scenarioResult = scenarioResults.get( scenarioName );
-
-               featureReportBuilder.append( "<h3>" + scenarioName + "</h3>\r\n<table>\r\n" + "  <tr>\r\n" + "    <th bgcolor=\"blue\">IterationIndex</th>\r\n" + "    <th bgcolor=\"blue\">Status</th>\r\n" + "  </tr>" );
-
-               for ( ScenarioResult scenarioIterationResult : scenarioResult )
-               {
-                  boolean passed = scenarioIterationResult.isPassed();
-                  String tdText = "<td bgcolor=\"" + ( passed ? "green" : "red" ) + "\">";
-                  featureReportBuilder.append( "  <tr>\r\n" + "    " + tdText + ( scenarioIterationResult.getIterationIndex() + 1 ) + "</td>\r\n" + "    " + tdText + ( passed ? "PASS" : "FAIL" ) + "</td>\r\n" + "  </tr>" );
-               }
-               featureReportBuilder.append( "</table>\r\n" );
+               log.error( "", e );
             }
+            break;
 
-            featureReportBuilder.append( "</body>\r\n" + "</html>" );
-            FileUtils.write( featureReportFile, featureReportBuilder.toString(), Charset.defaultCharset() );
-         }
-         catch ( Throwable e )
-         {
-            log.error( "", e );
-         }
-         return;
-      }
-      if ( event instanceof TestIncidentOccurenceEvent )
-      {
-         TestIncidentOccurenceEvent testIncidentOccurenceEvent = (TestIncidentOccurenceEvent) event;
-         log.info( "Incident occured: " + testIncidentOccurenceEvent.getIncident() );
-         return;
+         case StandardEventsTypes.FEATURE_COMPLETE_EVENT:
+         case StandardEventsTypes.JAVA_FEATURE_COMPLETE_EVENT:
+            FeatureResult featureResult = null;
+            String featureName = null;
+
+            if ( event instanceof FeatureCompleteEvent )
+            {
+               FeatureCompleteEvent featureCompleteEvent = (FeatureCompleteEvent) event;
+               TestFeature feature = featureCompleteEvent.getFeature();
+               featureName = feature.getName();
+               featureResult = featureCompleteEvent.getResult();
+            }
+            else if ( event instanceof JavaFeatureCompleteEvent )
+            {
+               JavaFeatureCompleteEvent featureCompleteEvent = (JavaFeatureCompleteEvent) event;
+               TestFeature feature = featureCompleteEvent.getFeature();
+               featureName = feature.getName();
+               featureResult = featureCompleteEvent.getResult();
+            }
+            else
+            {
+               break;
+            }
+            path = Paths.get( runReportsBaseFolder.getPath(), runName, featureName + ".html" );
+            File featureReportFile = path.toFile();
+            // featureDirectory.mkdirs();
+            HashMap<String, Boolean> featureMap = getOrCreateFeatureMap( runName );
+            featureMap.put( featureName, featureResult.isPassed() );
+            try
+            {
+               featureResult.sortResults();
+               StringBuilder featureReportBuilder = new StringBuilder();
+               featureReportBuilder.append( "<!DOCTYPE html>\r\n" + "<html>\r\n" + "<head>\r\n" + "  <title>" + runName + "</title>\r\n" + "<style>\r\n" + "table, th, td {\r\n" + "  border: 1px solid black;\r\n" + "  border-collapse: collapse;\r\n"
+                                            + "}\r\n" + "th, td {\r\n" + "  padding: 5px;\r\n" + "}\r\n" + "th {\r\n" + "  text-align: left;\r\n" + "}</style></head>\r\n<body>" );
+
+               HashMap<String, ArrayList<ScenarioResult>> scenarioResults = featureResult.getScenarioResultsMap();
+               ArrayList<String> keySet = new ArrayList<String>();
+               keySet.addAll( scenarioResults.keySet() );
+               Collections.sort( keySet );
+
+               // for ( Entry<String, ArrayList<ScenarioResult>> runResultEntrySet : scenarioResults.entrySet() )
+               for ( String scenarioName : keySet )
+               {
+                  ArrayList<ScenarioResult> scenarioResult = scenarioResults.get( scenarioName );
+
+                  featureReportBuilder.append( "<h3>" + scenarioName + "</h3>\r\n<table>\r\n" + "  <tr>\r\n" + "    <th bgcolor=\"blue\">IterationIndex</th>\r\n" + "    <th bgcolor=\"blue\">Status</th>\r\n" + "  </tr>" );
+
+                  for ( ScenarioResult scenarioIterationResult : scenarioResult )
+                  {
+                     boolean passed = scenarioIterationResult.isPassed();
+                     String tdText = "<td bgcolor=\"" + ( passed ? "green" : "red" ) + "\">";
+                     featureReportBuilder.append( "  <tr>\r\n" + "    " + tdText + ( scenarioIterationResult.getIterationIndex() + 1 ) + "</td>\r\n" + "    " + tdText + ( passed ? "PASS" : "FAIL" ) + "</td>\r\n" + "  </tr>" );
+                  }
+                  featureReportBuilder.append( "</table>\r\n" );
+               }
+
+               featureReportBuilder.append( "</body>\r\n" + "</html>" );
+               FileUtils.write( featureReportFile, featureReportBuilder.toString(), Charset.defaultCharset() );
+            }
+            catch ( Throwable e )
+            {
+               log.error( "", e );
+            }
+            break;
       }
    }
 }

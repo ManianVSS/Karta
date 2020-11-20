@@ -11,7 +11,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
@@ -35,7 +35,7 @@ import org.mvss.karta.framework.runtime.event.JavaFeatureSetupStartEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureStartEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureTearDownCompleteEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureTearDownStartEvent;
-import org.mvss.karta.framework.runtime.event.TestIncidentOccurenceEvent;
+import org.mvss.karta.framework.runtime.event.TestIncidentOccurrenceEvent;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
@@ -61,8 +61,6 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class JavaFeatureRunner implements Callable<FeatureResult>
 {
-   private static Random             random                        = new Random();
-
    private KartaRuntime              kartaRuntime;
    private ArrayList<TestDataSource> testDataSources;
    private String                    runName;
@@ -100,7 +98,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
          HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
          BeanRegistry beanRegistry = kartaRuntime.getBeanRegistry();
-
+         Random random = kartaRuntime.getRandom();
          Class<?> testCaseClass = StringUtils.isNotBlank( javaTestJarFile ) ? (Class<?>) DynamicClassLoader.loadClass( javaTestJarFile, javaTest ) : (Class<?>) Class.forName( javaTest );
 
          Feature featureAnnotation = testCaseClass.getAnnotation( Feature.class );
@@ -167,11 +165,11 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
-         int iterationIndex = -1;
+         long iterationIndex = -1;
          TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.__FEATURE_SETUP__, Constants.__GENERIC_STEP__, testData, variables );
 
-         HashMap<Method, AtomicInteger> scenarioIterationIndexMap = new HashMap<Method, AtomicInteger>();
-         scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario.getObject(), new AtomicInteger() ) );
+         HashMap<Method, AtomicLong> scenarioIterationIndexMap = new HashMap<Method, AtomicLong>();
+         scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario.getObject(), new AtomicLong() ) );
 
          eventProcessor.raiseEvent( new JavaFeatureStartEvent( runName, featureName ) );
 
@@ -322,7 +320,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
       }
       catch ( Throwable t )
       {
-         log.error( "", t );
+         log.error( Constants.EMPTY_STRING, t );
          result.setError( true );
       }
 
@@ -336,7 +334,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
    public static StepResult runTestMethod( EventProcessor eventProcessor, ArrayList<TestDataSource> testDataSources, String runName, String featureName, String scenarioName, Object testCaseObject,
 
-                                           TestExecutionContext testExecutionContext, Method methodToInvoke, int iterationIndex, String stepName )
+                                           TestExecutionContext testExecutionContext, Method methodToInvoke, long iterationIndex, String stepName )
             throws Throwable
 
    {
@@ -358,7 +356,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
       for ( TestIncident incident : stepResult.getIncidents() )
       {
-         eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, featureName, iterationIndex, scenarioName, stepName, incident ) );
+         eventProcessor.raiseEvent( new TestIncidentOccurrenceEvent( runName, featureName, iterationIndex, scenarioName, stepName, incident ) );
       }
 
       for ( Event stepEvent : stepResult.getEvents() )

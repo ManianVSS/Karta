@@ -7,6 +7,8 @@ import java.util.HashMap;
 
 import org.mvss.karta.framework.runtime.event.Event;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -46,6 +48,7 @@ public class StepResult implements Serializable
    @Builder.Default
    private HashMap<String, Serializable> attachments      = new HashMap<String, Serializable>();
 
+   @JsonIgnore
    public boolean isPassed()
    {
       return successful && !error && incidents.isEmpty();

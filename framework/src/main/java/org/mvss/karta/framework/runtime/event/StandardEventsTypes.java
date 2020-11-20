@@ -42,4 +42,8 @@ public class StandardEventsTypes
 
    public static final String JOB_STEP_START_EVENT                      = "JobStepStartEvent";
    public static final String JOB_STEP_COMPLETE_EVENT                   = "JobStepCompleteEvent";
+   public static final String CHAOS_ACTION_JOB_COMPLETE_EVENT           = "ChaosActionJobCompleteEvent";
+   public static final String CHAOS_ACTION_JOB_START_EVENT              = "ChaosActionJobStartEvent";
+
+   public static final String TEST_INCIDENT_OCCURRENCE_EVENT            = "TestIncidentOccurrenceEvent";
 }

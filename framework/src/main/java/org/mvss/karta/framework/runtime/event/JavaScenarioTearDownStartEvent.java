@@ -1,9 +1,9 @@
 package org.mvss.karta.framework.runtime.event;
 
-import java.util.Date;
-import java.util.UUID;
+import org.mvss.karta.framework.runtime.Constants;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +13,7 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
-public class JavaScenarioTearDownStartEvent extends Event
+public class JavaScenarioTearDownStartEvent extends ScenarioEvent
 {
 
    /**
@@ -21,27 +21,15 @@ public class JavaScenarioTearDownStartEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private String            featureName;
-   private long              iterationNumber;
-   private String            method;
-   private String            scenarioName;
-
-   public JavaScenarioTearDownStartEvent( String runName, String featureName, long iterationNumber, String method, String scenarioName )
+   public JavaScenarioTearDownStartEvent( String runName, String featureName, long iterationNumber, String scenarioName, String stepIdentifier )
    {
-      super( StandardEventsTypes.JAVA_SCENARIO_TEARDOWN_START_EVENT, runName );
-      this.featureName = featureName;
-      this.iterationNumber = iterationNumber;
-      this.method = method;
-      this.scenarioName = scenarioName;
+      super( StandardEventsTypes.JAVA_SCENARIO_TEARDOWN_START_EVENT, runName, featureName, iterationNumber, scenarioName );
+      this.parameters.put( Constants.STEP_IDENTIFIER, stepIdentifier );
    }
 
-   @Builder
-   public JavaScenarioTearDownStartEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, long iterationNumber, String method, String scenarioName )
+   @JsonIgnore
+   public String getStepIdentifier()
    {
-      super( StandardEventsTypes.JAVA_SCENARIO_TEARDOWN_START_EVENT, runName, id, timeOfOccurrence );
-      this.featureName = featureName;
-      this.iterationNumber = iterationNumber;
-      this.method = method;
-      this.scenarioName = scenarioName;
+      return parameters.get( Constants.STEP_IDENTIFIER ).toString();
    }
 }

@@ -4,12 +4,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
@@ -33,7 +34,7 @@ import org.mvss.karta.framework.runtime.event.FeatureSetupStepStartEvent;
 import org.mvss.karta.framework.runtime.event.FeatureStartEvent;
 import org.mvss.karta.framework.runtime.event.FeatureTearDownStepCompleteEvent;
 import org.mvss.karta.framework.runtime.event.FeatureTearDownStepStartEvent;
-import org.mvss.karta.framework.runtime.event.TestIncidentOccurenceEvent;
+import org.mvss.karta.framework.runtime.event.TestIncidentOccurrenceEvent;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
@@ -59,8 +60,6 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class FeatureRunner implements Callable<FeatureResult>
 {
-   private static Random             random                        = new Random();
-
    private KartaRuntime              kartaRuntime;
    private StepRunner                stepRunner;
    private ArrayList<TestDataSource> testDataSources;
@@ -89,6 +88,40 @@ public class FeatureRunner implements Callable<FeatureResult>
       result.addIterationResult( iterationResult );
    }
 
+   @Builder.Default
+   private ArrayList<Long>            runningJobs   = new ArrayList<Long>();
+
+   @Builder.Default
+   private HashMap<Long, KartaMinion> remoteJobsMap = new HashMap<Long, KartaMinion>();
+
+   private boolean deleteJobs()
+   {
+      boolean deleteJobResults = QuartzJobScheduler.deleteJobs( runningJobs );
+
+      if ( !remoteJobsMap.isEmpty() )
+      {
+         for ( Entry<Long, KartaMinion> entry : remoteJobsMap.entrySet() )
+         {
+            try
+            {
+               deleteJobResults = deleteJobResults && entry.getValue().deleteJob( entry.getKey() );
+            }
+            catch ( Throwable t )
+            {
+               deleteJobResults = false;
+            }
+         }
+      }
+
+      if ( !deleteJobResults )
+      {
+         log.error( "Failed to delete test jobs" );
+         result.setSuccessful( false );
+      }
+
+      return deleteJobResults;
+   }
+
    @Override
    public FeatureResult call()
    {
@@ -98,11 +131,19 @@ public class FeatureRunner implements Callable<FeatureResult>
 
          EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
          KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
-         ArrayList<Integer> runningJobs = new ArrayList<Integer>();
 
-         boolean useMinions = kartaRuntime.getKartaConfiguration().isMinionsEnabled() && !nodeRegistry.getMinions().isEmpty();;
+         Random random = kartaRuntime.getRandom();
 
-         eventProcessor.featureStart( runName, testFeature, tags );
+         HashSet<String> testDataSourcePluginNames = new HashSet<String>();
+         testDataSources.forEach( ( testDataSource ) -> testDataSourcePluginNames.add( testDataSource.getPluginName() ) );
+
+         boolean useMinions = kartaRuntime.getKartaConfiguration().isMinionsEnabled() && !nodeRegistry.getMinions().isEmpty();
+
+         if ( tags != null )
+         {
+            eventProcessor.featureStart( runName, testFeature, tags );
+         }
+
          eventProcessor.raiseEvent( new FeatureStartEvent( runName, testFeature ) );
 
          HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
@@ -110,31 +151,44 @@ public class FeatureRunner implements Callable<FeatureResult>
 
          for ( TestJob job : testFeature.getTestJobs() )
          {
-            long jobInterval = job.getInterval();
+            try
+            {
+               if ( StringUtils.isNotEmpty( job.getNode() ) )
+               {
+                  KartaMinion node = nodeRegistry.getNode( job.getNode() );
+                  long jobId = node.scheduleJob( stepRunner.getPluginName(), testDataSourcePluginNames, runName, testFeature.getName(), job );
 
-            if ( jobInterval > 0 )
-            {
-               HashMap<String, Object> jobData = new HashMap<String, Object>();
-               jobData.put( "kartaRuntime", kartaRuntime );
-               jobData.put( "stepRunner", stepRunner );
-               jobData.put( "testDataSources", testDataSources );
-               jobData.put( "runName", runName );
-               jobData.put( "testFeature", testFeature );
-               jobData.put( "testJob", job );
-               jobData.put( "iterationCounter", new AtomicInteger() );
-               runningJobs.add( QuartzJobScheduler.scheduleJob( QuartzTestJob.class, jobInterval, jobData ) );
+                  if ( jobId != -1 )
+                  {
+                     remoteJobsMap.put( jobId, node );
+                  }
+               }
+               else
+               {
+                  long jobId = kartaRuntime.startScheduledJob( stepRunner, testDataSources, runName, testFeature.getName(), job );
+
+                  if ( jobId != -1 )
+                  {
+                     runningJobs.add( jobId );
+                  }
+               }
             }
-            else
+            catch ( Throwable t )
             {
-               TestJobRunner.run( kartaRuntime, stepRunner, testDataSources, runName, testFeature, job, 0 );
+               log.error( "Exception occured while scheduling jobs ", t );
+               if ( !deleteJobs() )
+               {
+                  log.error( "Failed to delete test jobs" );
+                  result.setSuccessful( false );
+               }
             }
          }
 
-         int iterationIndex = -1;
+         long iterationIndex = -1;
          int stepIndex = 0;
 
-         HashMap<TestScenario, AtomicInteger> scenarioIterationIndexMap = new HashMap<TestScenario, AtomicInteger>();
-         testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario, new AtomicInteger() ) );
+         HashMap<TestScenario, AtomicLong> scenarioIterationIndexMap = new HashMap<TestScenario, AtomicLong>();
+         testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario, new AtomicLong() ) );
 
          stepIndex = 0;
          for ( TestStep step : testFeature.getSetupSteps() )
@@ -165,7 +219,7 @@ public class FeatureRunner implements Callable<FeatureResult>
 
                for ( TestIncident incident : stepResult.getIncidents() )
                {
-                  eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, step.getIdentifier(), incident ) );
+                  eventProcessor.raiseEvent( new TestIncidentOccurrenceEvent( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, step.getIdentifier(), incident ) );
                }
 
                for ( Event event : stepResult.getEvents() )
@@ -193,14 +247,19 @@ public class FeatureRunner implements Callable<FeatureResult>
                {
                   result.setSuccessful( false );
 
-                  if ( !QuartzJobScheduler.deleteJobs( runningJobs ) )
+                  if ( !deleteJobs() )
                   {
                      log.error( "Failed to delete test jobs" );
                      result.setSuccessful( false );
                   }
 
                   eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature, result ) );
-                  eventProcessor.featureStop( runName, testFeature, tags );
+
+                  if ( tags != null )
+                  {
+                     eventProcessor.featureStop( runName, testFeature, tags );
+                  }
+
                   return result;
                }
             }
@@ -307,7 +366,7 @@ public class FeatureRunner implements Callable<FeatureResult>
 
                for ( TestIncident incident : stepResult.getIncidents() )
                {
-                  eventProcessor.raiseEvent( new TestIncidentOccurenceEvent( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, step.getIdentifier(), incident ) );
+                  eventProcessor.raiseEvent( new TestIncidentOccurrenceEvent( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, step.getIdentifier(), incident ) );
                }
 
                for ( Event event : stepResult.getEvents() )
@@ -339,14 +398,17 @@ public class FeatureRunner implements Callable<FeatureResult>
             }
          }
 
-         if ( !QuartzJobScheduler.deleteJobs( runningJobs ) )
+         if ( !deleteJobs() )
          {
             log.error( "Failed to delete test jobs" );
             result.setSuccessful( false );
          }
 
          eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature, result ) );
-         eventProcessor.featureStop( runName, testFeature, tags );
+         if ( tags != null )
+         {
+            eventProcessor.featureStop( runName, testFeature, tags );
+         }
       }
       catch ( Throwable t )
       {

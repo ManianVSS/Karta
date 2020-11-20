@@ -1,14 +1,12 @@
 package org.mvss.karta.framework.runtime.event;
 
-import java.util.Date;
-import java.util.UUID;
-
 import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.core.TestStep;
+import org.mvss.karta.framework.runtime.Constants;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +16,7 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
-public class JobStepCompleteEvent extends Event
+public class JobStepCompleteEvent extends JobEvent
 {
 
    /**
@@ -26,30 +24,22 @@ public class JobStepCompleteEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private TestFeature       feature;
-   private TestJob           job;
-   private long              iterationNumber;
-   private TestStep          step;
-   private StepResult        result;
-
-   public JobStepCompleteEvent( String runName, TestFeature feature, TestJob job, long iterationNumber, TestStep jobStep, StepResult result )
+   public JobStepCompleteEvent( String runName, String featureName, TestJob job, long iterationNumber, TestStep step, StepResult result )
    {
-      super( StandardEventsTypes.JOB_STEP_COMPLETE_EVENT, runName );
-      this.feature = feature;
-      this.iterationNumber = iterationNumber;
-      this.job = job;
-      this.step = jobStep;
-      this.result = result;
+      super( StandardEventsTypes.JOB_STEP_COMPLETE_EVENT, runName, featureName, job, iterationNumber );
+      this.parameters.put( Constants.STEP, step );
+      this.parameters.put( Constants.RESULT, result );
    }
 
-   @Builder
-   public JobStepCompleteEvent( String runName, UUID id, Date timeOfOccurrence, TestFeature feature, TestJob job, long iterationNumber, TestStep step, StepResult result )
+   @JsonIgnore
+   public TestStep getStep()
    {
-      super( StandardEventsTypes.JOB_STEP_COMPLETE_EVENT, runName, id, timeOfOccurrence );
-      this.feature = feature;
-      this.iterationNumber = iterationNumber;
-      this.job = job;
-      this.step = step;
-      this.result = result;
+      return (TestStep) parameters.get( Constants.STEP );
+   }
+
+   @JsonIgnore
+   public StepResult getResult()
+   {
+      return (StepResult) parameters.get( Constants.RESULT );
    }
 }

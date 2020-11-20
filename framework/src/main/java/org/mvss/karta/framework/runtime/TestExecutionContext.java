@@ -24,16 +24,13 @@ public class TestExecutionContext implements Serializable
    private String                        featureName;
 
    @Builder.Default
-   private int                           iterationIndex   = -1;
+   private long                          iterationIndex   = -1;
 
    private String                        scenarioName;
    private String                        stepIdentifier;
 
-   // @Builder.Default
-   // private HashMap<String, HashMap<String, Serializable>> properties = null;
-
    @Builder.Default
-   private HashMap<String, Serializable> data             = null;
+   private HashMap<String, Serializable> data             = new HashMap<String, Serializable>();
 
    @Builder.Default
    private HashMap<String, Serializable> variables        = new HashMap<String, Serializable>();

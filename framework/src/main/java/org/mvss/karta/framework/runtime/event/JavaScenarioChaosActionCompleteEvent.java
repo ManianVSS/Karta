@@ -1,12 +1,11 @@
 package org.mvss.karta.framework.runtime.event;
 
-import java.util.Date;
-import java.util.UUID;
-
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.runtime.Constants;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +15,7 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
-public class JavaScenarioChaosActionCompleteEvent extends Event
+public class JavaScenarioChaosActionCompleteEvent extends ScenarioEvent
 {
 
    /**
@@ -24,30 +23,22 @@ public class JavaScenarioChaosActionCompleteEvent extends Event
     */
    private static final long serialVersionUID = 1L;
 
-   private String            featureName;
-   private long              iterationNumber;
-   private String            scenarioName;
-   private ChaosAction       chaosAction;
-   private StepResult        result;
-
    public JavaScenarioChaosActionCompleteEvent( String runName, String featureName, long iterationNumber, String scenarioName, ChaosAction chaosAction, StepResult result )
    {
-      super( StandardEventsTypes.JAVA_SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName );
-      this.featureName = featureName;
-      this.iterationNumber = iterationNumber;
-      this.scenarioName = scenarioName;
-      this.chaosAction = chaosAction;
-      this.result = result;
+      super( StandardEventsTypes.JAVA_SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName, featureName, iterationNumber, scenarioName );
+      this.parameters.put( Constants.CHAOS_ACTION, chaosAction );
+      this.parameters.put( Constants.RESULT, result );
    }
 
-   @Builder
-   public JavaScenarioChaosActionCompleteEvent( String runName, UUID id, Date timeOfOccurrence, String featureName, long iterationNumber, String scenarioName, ChaosAction chaosAction, StepResult result )
+   @JsonIgnore
+   public ChaosAction getChaosAction()
    {
-      super( StandardEventsTypes.JAVA_SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName, id, timeOfOccurrence );
-      this.featureName = featureName;
-      this.iterationNumber = iterationNumber;
-      this.scenarioName = scenarioName;
-      this.chaosAction = chaosAction;
-      this.result = result;
+      return (ChaosAction) parameters.get( Constants.CHAOS_ACTION );
+   }
+
+   @JsonIgnore
+   public StepResult getResult()
+   {
+      return (StepResult) parameters.get( Constants.RESULT );
    }
 }

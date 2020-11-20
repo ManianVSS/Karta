@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
@@ -103,7 +104,7 @@ public class CSVTestDataSourcePlugin implements TestDataSource
       }
       catch ( Throwable t )
       {
-         log.error( "", t );
+         log.error( Constants.EMPTY_STRING, t );
       }
       return testData;
    }

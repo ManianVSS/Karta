@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.runtime.impl;
 
 import org.apache.commons.lang3.SerializationUtils;
+import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
@@ -81,7 +82,7 @@ public class RabbitMQTestEventListener implements TestEventListener
       }
       catch ( Throwable t )
       {
-         log.error( "", t );
+         log.error( Constants.EMPTY_STRING, t );
       }
 
    }
@@ -110,7 +111,7 @@ public class RabbitMQTestEventListener implements TestEventListener
       }
       catch ( Throwable t )
       {
-         log.error( "", t );
+         log.error( Constants.EMPTY_STRING, t );
       }
    }
 }
