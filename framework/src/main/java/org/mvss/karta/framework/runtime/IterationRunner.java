@@ -9,6 +9,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
+import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
@@ -78,6 +79,18 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
          long scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( testScenario ) ) ) ? scenarioIterationIndexMap.get( testScenario ).getAndIncrement() : 0;
          log.debug( "Running Scenario: " + testScenario.getName() + "[" + scenarioIterationNumber + "]:" );
 
+         PreparedScenario preparedScenario = null;
+
+         try
+         {
+            preparedScenario = kartaRuntime.getPreparedScenario( stepRunner, testDataSources, runName, featureName, scenarioIterationNumber, DataUtils.cloneMap( variables ), scenarioSetupSteps, testScenario, scenarioTearDownSteps );
+         }
+         catch ( Throwable t )
+         {
+            log.error( "Exception occured when preparing scenario " + testScenario + " for running", t );
+            continue;
+         }
+
          if ( tags != null )
          {
             eventProcessor.scenarioStart( runName, featureName, testScenario, tags );
@@ -88,17 +101,15 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
 
          if ( minionToUse == null )
          {
-            ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).testDataSources( testDataSources ).featureName( featureName ).runName( runName ).iterationIndex( iterationIndex )
-                     .scenarioSetupSteps( scenarioSetupSteps ).testScenario( testScenario ).scenarioTearDownSteps( scenarioTearDownSteps ).scenarioIterationNumber( scenarioIterationNumber ).variables( DataUtils.cloneMap( variables ) ).build();
+            ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).featureName( featureName ).runName( runName ).iterationIndex( iterationIndex ).testScenario( preparedScenario )
+                     .scenarioIterationNumber( scenarioIterationNumber ).build();
             scenarioResult = scenarioRunner.call();
          }
          else
          {
-            HashSet<String> testDataSourcePluginNames = new HashSet<String>();
-            testDataSources.forEach( ( testDataSource ) -> testDataSourcePluginNames.add( testDataSource.getPluginName() ) );
             try
             {
-               scenarioResult = minionToUse.runTestScenario( stepRunner.getPluginName(), testDataSourcePluginNames, runName, featureName, scenarioIterationNumber, scenarioSetupSteps, testScenario, scenarioTearDownSteps, scenarioIterationNumber );
+               scenarioResult = minionToUse.runTestScenario( stepRunner.getPluginName(), runName, featureName, scenarioIterationNumber, preparedScenario, scenarioIterationNumber );
             }
             catch ( RemoteException e )
             {

@@ -72,8 +72,6 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
 
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
 
-      HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
-
       nextScenarioMethod: for ( Method scenarioMethod : scenariosMethodsToRun )
       {
          long scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( scenarioMethod ) ) ) ? scenarioIterationIndexMap.get( scenarioMethod ).getAndIncrement() : 0;
@@ -88,8 +86,6 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
             }
          }
 
-         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, Constants.__GENERIC_STEP__, testData, variables );
-
          ScenarioResult scenarioResult = new ScenarioResult();
          scenarioResult.setIterationIndex( scenarioIterationNumber );
          result.put( scenarioName, scenarioResult );
@@ -101,13 +97,6 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
             {
                for ( Method methodToInvoke : scenarioSetupMethods )
                {
-                  String scenarioPrefixName = testExecutionContext.getScenarioName();
-                  if ( StringUtils.isEmpty( scenarioPrefixName ) )
-                  {
-                     scenarioPrefixName = Constants.__GENERIC_SCENARIO__;
-                  }
-                  scenarioPrefixName = scenarioPrefixName + Constants._SETUP_;
-
                   String stepName = methodToInvoke.getName();
                   ScenarioSetup annotation = methodToInvoke.getAnnotation( ScenarioSetup.class );
                   if ( annotation != null )
@@ -118,12 +107,9 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
                      }
                   }
 
-                  testExecutionContext.setStepIdentifier( stepName );
-
+                  TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, stepName, null, variables );
                   eventProcessor.raiseEvent( new JavaScenarioSetupStartEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName ) );
-
-                  StepResult stepResult = JavaFeatureRunner.runTestMethod( eventProcessor, testDataSources, runName, featureName, scenarioName, testCaseObject, testExecutionContext, methodToInvoke, iterationIndex, stepName );
-
+                  StepResult stepResult = JavaFeatureRunner.runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
                   eventProcessor.raiseEvent( new JavaScenarioSetupCompleteEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName, stepResult ) );
                   scenarioResult.getSetupResults().put( stepName, stepResult.isPassed() );
                   scenarioResult.getIncidents().addAll( stepResult.getIncidents() );
@@ -138,11 +124,8 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
             }
 
             String stepName = scenarioName;
-
-            testExecutionContext.setStepIdentifier( stepName );
-
-            StepResult stepResult = JavaFeatureRunner.runTestMethod( eventProcessor, testDataSources, runName, featureName, scenarioName, testCaseObject, testExecutionContext, scenarioMethod, iterationIndex, stepName );
-
+            TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, stepName, null, variables );
+            StepResult stepResult = JavaFeatureRunner.runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, scenarioMethod );
             scenarioResult.getRunResults().put( stepName, stepResult.isPassed() );
             scenarioResult.getIncidents().addAll( stepResult.getIncidents() );
 
@@ -155,13 +138,6 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
             {
                for ( Method methodToInvoke : scenarioTearDownMethods )
                {
-                  String scenarioPrefixName = testExecutionContext.getScenarioName();
-                  if ( StringUtils.isEmpty( scenarioPrefixName ) )
-                  {
-                     scenarioPrefixName = Constants.__GENERIC_SCENARIO__;
-                  }
-                  scenarioPrefixName = scenarioPrefixName + Constants._TEARDOWN_;
-
                   ScenarioTearDown annotation = methodToInvoke.getAnnotation( ScenarioTearDown.class );
                   stepName = methodToInvoke.getName();
                   if ( annotation != null )
@@ -172,11 +148,9 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
                      }
                   }
 
-                  testExecutionContext.setStepIdentifier( stepName );
+                  testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, stepName, null, variables );
                   eventProcessor.raiseEvent( new JavaScenarioTearDownStartEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName ) );
-
-                  stepResult = JavaFeatureRunner.runTestMethod( eventProcessor, testDataSources, runName, featureName, scenarioName, testCaseObject, testExecutionContext, methodToInvoke, iterationIndex, stepName );
-
+                  stepResult = JavaFeatureRunner.runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
                   eventProcessor.raiseEvent( new JavaScenarioTearDownCompleteEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName, stepResult ) );
                   scenarioResult.getTearDownResults().put( stepName, stepResult.isPassed() );
                   scenarioResult.getIncidents().addAll( stepResult.getIncidents() );

@@ -26,7 +26,6 @@ import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinion;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
-import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.FeatureCompleteEvent;
 import org.mvss.karta.framework.runtime.event.FeatureSetupStepCompleteEvent;
@@ -34,10 +33,8 @@ import org.mvss.karta.framework.runtime.event.FeatureSetupStepStartEvent;
 import org.mvss.karta.framework.runtime.event.FeatureStartEvent;
 import org.mvss.karta.framework.runtime.event.FeatureTearDownStepCompleteEvent;
 import org.mvss.karta.framework.runtime.event.FeatureTearDownStepStartEvent;
-import org.mvss.karta.framework.runtime.event.TestIncidentOccurrenceEvent;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
-import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
 
@@ -135,7 +132,11 @@ public class FeatureRunner implements Callable<FeatureResult>
          Random random = kartaRuntime.getRandom();
 
          HashSet<String> testDataSourcePluginNames = new HashSet<String>();
-         testDataSources.forEach( ( testDataSource ) -> testDataSourcePluginNames.add( testDataSource.getPluginName() ) );
+
+         if ( testDataSources != null )
+         {
+            testDataSources.forEach( ( testDataSource ) -> testDataSourcePluginNames.add( testDataSource.getPluginName() ) );
+         }
 
          boolean useMinions = kartaRuntime.getKartaConfiguration().isMinionsEnabled() && !nodeRegistry.getMinions().isEmpty();
 
@@ -146,7 +147,6 @@ public class FeatureRunner implements Callable<FeatureResult>
 
          eventProcessor.raiseEvent( new FeatureStartEvent( runName, testFeature ) );
 
-         HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
          for ( TestJob job : testFeature.getTestJobs() )
@@ -185,21 +185,12 @@ public class FeatureRunner implements Callable<FeatureResult>
          }
 
          long iterationIndex = -1;
-         int stepIndex = 0;
 
          HashMap<TestScenario, AtomicLong> scenarioIterationIndexMap = new HashMap<TestScenario, AtomicLong>();
          testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario, new AtomicLong() ) );
 
-         stepIndex = 0;
          for ( TestStep step : testFeature.getSetupSteps() )
          {
-            TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, step.getIdentifier(), testData, variables );
-
-            testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), step.getTestDataSet(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.__FEATURE_SETUP__,
-                                                                                                                                                      stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
-            // log.debug( "Step test data is " + testData.toString() );
-            testExecutionContext.setData( testData );
-
             StepResult stepResult = new StepResult();
             stepResult.setSuccessful( true );
 
@@ -207,31 +198,11 @@ public class FeatureRunner implements Callable<FeatureResult>
 
             try
             {
-               if ( StringUtils.isNotEmpty( step.getNode() ) )
-               {
-                  // TODO: Handle null node error
-                  stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-               }
-               else
-               {
-                  stepResult = stepRunner.runStep( step, testExecutionContext );
-               }
-
-               for ( TestIncident incident : stepResult.getIncidents() )
-               {
-                  eventProcessor.raiseEvent( new TestIncidentOccurrenceEvent( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, step.getIdentifier(), incident ) );
-               }
-
-               for ( Event event : stepResult.getEvents() )
-               {
-                  eventProcessor.raiseEvent( event );
-               }
-
-               DataUtils.mergeVariables( stepResult.getResults(), variables );
+               stepResult = kartaRuntime.runStep( stepRunner, testDataSources, runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, step );
             }
             catch ( TestFailureException tfe )
             {
-               log.error( "Exception in test failure ", tfe );
+               log.error( "Exception when running step", tfe );
                stepResult.setSuccessful( false );
                TestIncident incident = TestIncident.builder().thrownCause( tfe ).build();
                stepResult.addIncident( incident );
@@ -340,45 +311,18 @@ public class FeatureRunner implements Callable<FeatureResult>
          testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario ).set( 0 ) );
 
          iterationIndex = -1;
-         stepIndex = 0;
          for ( TestStep step : testFeature.getTearDownSteps() )
          {
-            TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, step.getIdentifier(), testData, variables );
-
-            testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), step.getTestDataSet(), testDataSources, new ExecutionStepPointer( testFeature.getName(), Constants.__FEATURE_TEARDOWN__,
-                                                                                                                                                      stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex, stepIndex++ ) );
-            // log.debug( "Step test data is " + testData.toString() );
-            testExecutionContext.setData( testData );
-
             StepResult stepResult = new StepResult();
             eventProcessor.raiseEvent( new FeatureTearDownStepStartEvent( runName, testFeature, step ) );
 
             try
             {
-               if ( StringUtils.isNotEmpty( step.getNode() ) )
-               {
-                  stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-               }
-               else
-               {
-                  stepResult = stepRunner.runStep( step, testExecutionContext );
-               }
-
-               for ( TestIncident incident : stepResult.getIncidents() )
-               {
-                  eventProcessor.raiseEvent( new TestIncidentOccurrenceEvent( runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, step.getIdentifier(), incident ) );
-               }
-
-               for ( Event event : stepResult.getEvents() )
-               {
-                  eventProcessor.raiseEvent( event );
-               }
-
-               DataUtils.mergeVariables( stepResult.getResults(), variables );
+               stepResult = kartaRuntime.runStep( stepRunner, testDataSources, runName, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, step );
             }
             catch ( TestFailureException tfe )
             {
-               log.error( "Exception in test failure ", tfe );
+               log.error( "Exception when running step", tfe );
                stepResult.setSuccessful( false );
                TestIncident incident = TestIncident.builder().thrownCause( tfe ).build();
                stepResult.addIncident( incident );

@@ -7,9 +7,9 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
-import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.utils.ParserUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,7 +74,7 @@ public class CSVTestDataSourcePlugin implements TestDataSource
    }
 
    @Override
-   public HashMap<String, Serializable> getData( ExecutionStepPointer executionStepPointer ) throws Throwable
+   public HashMap<String, Serializable> getData( TestExecutionContext testExecutionContext ) throws Throwable
    {
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
       try

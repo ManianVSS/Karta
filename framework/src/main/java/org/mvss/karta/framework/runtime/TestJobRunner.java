@@ -4,13 +4,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.core.TestStep;
-import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.runtime.event.ChaosActionJobCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ChaosActionJobStartEvent;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
@@ -18,8 +16,6 @@ import org.mvss.karta.framework.runtime.event.JobStepCompleteEvent;
 import org.mvss.karta.framework.runtime.event.JobStepStartEvent;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
-import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
-import org.mvss.karta.framework.utils.DataUtils;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -29,13 +25,10 @@ public class TestJobRunner
    public static boolean run( KartaRuntime kartaRuntime, StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, String featureName, TestJob job, long iterationIndex ) throws Throwable
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-      KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
 
       log.debug( "Running job: " + job );
 
-      HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
       HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
-      // TestExecutionContext testExecutionContext = new TestExecutionContext( runName, testProperties, testData, variables );
 
       switch ( job.getJobType() )
       {
@@ -53,27 +46,8 @@ public class TestJobRunner
 
                for ( ChaosAction chaosAction : chaosActionsToPerform )
                {
-                  TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.JOB + Constants.COLON + job.getName(), chaosAction.getName(), testData, variables );
-
-                  testData = KartaRuntime.getMergedTestData( runName, null, null, testDataSources, new ExecutionStepPointer( featureName, job.getName(), chaosAction.getName(), iterationIndex, 0 ) );
-                  // log.debug( "Step test data is " + testData.toString() );
-                  testExecutionContext.setData( testData );
-
-                  log.debug( "Performing chaos action: " + chaosAction );
-
                   eventProcessor.raiseEvent( new ChaosActionJobStartEvent( runName, featureName, job, iterationIndex, chaosAction ) );
-
-                  StepResult result = new StepResult();
-                  if ( StringUtils.isNotEmpty( chaosAction.getNode() ) )
-                  {
-                     result = nodeRegistry.getNode( chaosAction.getNode() ).performChaosAction( stepRunner.getPluginName(), chaosAction, testExecutionContext );
-                     DataUtils.mergeVariables( result.getResults(), testExecutionContext.getVariables() );
-                  }
-                  else
-                  {
-                     result = stepRunner.performChaosAction( chaosAction, testExecutionContext );
-                  }
-
+                  StepResult result = kartaRuntime.runChaosAction( stepRunner, testDataSources, runName, featureName, iterationIndex, job.getName(), variables, chaosAction );
                   eventProcessor.raiseEvent( new ChaosActionJobCompleteEvent( runName, featureName, job, iterationIndex, chaosAction, result ) );
                }
             }
@@ -91,29 +65,10 @@ public class TestJobRunner
                return false;
             }
 
-            int stepIndex = 0;
-
             for ( TestStep step : steps )
             {
-               testData = KartaRuntime.getMergedTestData( runName, step.getTestData(), step.getTestDataSet(), testDataSources, new ExecutionStepPointer( featureName, job.getName(), stepRunner.sanitizeStepDefinition( step.getIdentifier() ), iterationIndex,
-                                                                                                                                                         stepIndex++ ) );
-               // log.debug( "Step test data is " + testData.toString() );
-               TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.JOB + Constants.COLON + job.getName(), step.getIdentifier(), testData, variables );
-
-               testExecutionContext.setData( testData );
                eventProcessor.raiseEvent( new JobStepStartEvent( runName, featureName, job, iterationIndex, step ) );
-               StepResult result = new StepResult();
-
-               if ( StringUtils.isNotEmpty( step.getNode() ) )
-               {
-                  result = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step, testExecutionContext );
-                  DataUtils.mergeVariables( result.getResults(), testExecutionContext.getVariables() );
-               }
-               else
-               {
-                  result = stepRunner.runStep( step, testExecutionContext );
-               }
-
+               StepResult result = kartaRuntime.runStep( stepRunner, testDataSources, runName, featureName, iterationIndex, job.getName(), variables, step );
                eventProcessor.raiseEvent( new JobStepCompleteEvent( runName, featureName, job, iterationIndex, step, result ) );
 
                if ( !result.isPassed() )

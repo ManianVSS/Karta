@@ -9,9 +9,9 @@ import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
 import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
-import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.utils.ParserUtils;
 import org.mvss.karta.framework.utils.PropertyUtils;
 
@@ -131,36 +131,36 @@ public class DataFilesTestDataSource implements TestDataSource
    }
 
    @Override
-   public HashMap<String, Serializable> getData( ExecutionStepPointer executionStepPointer ) throws Throwable
+   public HashMap<String, Serializable> getData( TestExecutionContext testExecutionContext ) throws Throwable
    {
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
 
-      if ( executionStepPointer != null )
+      if ( testExecutionContext != null )
       {
          try
          {
-            String featureName = executionStepPointer.getFeature();
+            String featureName = testExecutionContext.getFeatureName();
 
             if ( featureName == null )
             {
                featureName = Constants.__GENERIC_FEATURE__;
             }
 
-            String scenarioName = executionStepPointer.getScenario();
+            String scenarioName = testExecutionContext.getScenarioName();
 
             if ( scenarioName == null )
             {
                scenarioName = Constants.__GENERIC_SCENARIO__;
             }
 
-            String stepName = executionStepPointer.getStep();
+            String stepName = testExecutionContext.getStepIdentifier();
 
             if ( stepName == null )
             {
                stepName = Constants.__GENERIC_STEP__;
             }
 
-            long iterationIndex = executionStepPointer.getIterationIndex();
+            long iterationIndex = testExecutionContext.getIterationIndex();
             if ( iterationIndex <= 0 )
             {
                iterationIndex = 0;

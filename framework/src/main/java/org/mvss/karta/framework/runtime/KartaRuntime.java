@@ -24,7 +24,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.configuration.KartaConfiguration;
 import org.mvss.karta.configuration.PluginConfig;
 import org.mvss.karta.framework.chaos.ChaosAction;
+import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.PreparedChaosAction;
+import org.mvss.karta.framework.core.PreparedScenario;
+import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StandardFeatureResults;
 import org.mvss.karta.framework.core.StandardScenarioResults;
@@ -37,19 +41,21 @@ import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinionConfiguration;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
+import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.RunCompleteEvent;
 import org.mvss.karta.framework.runtime.event.RunStartEvent;
+import org.mvss.karta.framework.runtime.event.TestIncidentOccurrenceEvent;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
 import org.mvss.karta.framework.runtime.interfaces.TestLifeCycleHook;
-import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.runtime.testcatalog.Test;
 import org.mvss.karta.framework.runtime.testcatalog.TestCatalogManager;
 import org.mvss.karta.framework.runtime.testcatalog.TestCategory;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
+import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
 import org.mvss.karta.framework.utils.SSLUtils;
@@ -292,43 +298,6 @@ public class KartaRuntime implements AutoCloseable
       return instance;
    }
 
-   public static HashMap<String, Serializable> getMergedTestData( String runName, HashMap<String, Serializable> stepTestData, HashMap<String, ArrayList<Serializable>> stepTestDataSet, ArrayList<TestDataSource> testDataSources,
-                                                                  ExecutionStepPointer executionStepPointer )
-            throws Throwable
-   {
-      HashMap<String, Serializable> mergedTestData = new HashMap<String, Serializable>();
-      for ( TestDataSource tds : testDataSources )
-      {
-         HashMap<String, Serializable> testData = tds.getData( executionStepPointer );
-         testData.forEach( ( key, value ) -> mergedTestData.put( key, value ) );
-      }
-
-      if ( stepTestDataSet != null )
-      {
-         long iterationIndex = ( executionStepPointer != null ) ? executionStepPointer.getIterationIndex() : 0;
-         if ( iterationIndex <= 0 )
-         {
-            iterationIndex = 0;
-         }
-         for ( String dataKey : stepTestDataSet.keySet() )
-         {
-            ArrayList<Serializable> possibleValues = stepTestDataSet.get( dataKey );
-            if ( ( possibleValues != null ) && !possibleValues.isEmpty() )
-            {
-               int valueIndex = (int) ( iterationIndex % possibleValues.size() );
-               mergedTestData.put( dataKey, possibleValues.get( valueIndex ) );
-            }
-         }
-      }
-
-      if ( stepTestData != null )
-      {
-         stepTestData.forEach( ( key, value ) -> mergedTestData.put( key, value ) );
-      }
-
-      return mergedTestData;
-   }
-
    public void loadRuntimeObjects( Object object ) throws IllegalArgumentException, IllegalAccessException
    {
       beanRegistry.loadBeans( object );
@@ -436,16 +405,20 @@ public class KartaRuntime implements AutoCloseable
    public ArrayList<TestDataSource> getTestDataSourcePlugins( HashSet<String> testDataSourcePlugins )
    {
       ArrayList<TestDataSource> testDataSources = new ArrayList<TestDataSource>();
-      for ( String testDataSourcePlugin : testDataSourcePlugins )
-      {
-         TestDataSource testDataSource = (TestDataSource) pnpRegistry.getPlugin( testDataSourcePlugin );
 
-         if ( testDataSource == null )
+      if ( testDataSourcePlugins != null )
+      {
+         for ( String testDataSourcePlugin : testDataSourcePlugins )
          {
-            log.error( "Failed to get a test data source of type: " + testDataSourcePlugin );
-            return null;
+            TestDataSource testDataSource = (TestDataSource) pnpRegistry.getPlugin( testDataSourcePlugin );
+
+            if ( testDataSource == null )
+            {
+               log.error( "Failed to get a test data source of type: " + testDataSourcePlugin );
+               return null;
+            }
+            testDataSources.add( testDataSource );
          }
-         testDataSources.add( testDataSource );
       }
       return testDataSources;
    }
@@ -594,46 +567,44 @@ public class KartaRuntime implements AutoCloseable
       return successful.get();
    }
 
-   public StepResult runStep( String stepRunnerPlugin, TestStep testStep, TestExecutionContext testExecutionContext ) throws TestFailureException
+   public StepResult runStep( String stepRunnerPlugin, PreparedStep step ) throws TestFailureException
    {
       StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin );
       if ( stepRunner == null )
       {
          return StandardStepResults.error( TestIncident.builder().message( "Step runner plugin not found: " + stepRunnerPlugin ).build() );
       }
-      return stepRunner.runStep( testStep, testExecutionContext );
+      return stepRunner.runStep( step );
    }
 
-   public ScenarioResult runTestScenario( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, long iterationIndex, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
-                                          ArrayList<TestStep> scenarioTearDownSteps, long scenarioIterationNumber )
+   public ScenarioResult runTestScenario( String stepRunnerPlugin, String runName, String featureName, long iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber )
    {
       StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin );
-      ArrayList<TestDataSource> testDataSources = getTestDataSourcePlugins( testDataSourcePlugins );
-      if ( ( stepRunner == null ) || ( testDataSources == null ) )
+
+      if ( stepRunner == null )
       {
-         log.error( "Plugin(s) not found: " + stepRunnerPlugin + testDataSourcePlugins );
-         return StandardScenarioResults.error( TestIncident.builder().message( "Plugin(s) not found: " + stepRunnerPlugin + testDataSourcePlugins ).build() );
+         log.error( "Plugin not found: " + stepRunnerPlugin );
+         return StandardScenarioResults.error( TestIncident.builder().message( "Plugin not found: " + stepRunnerPlugin ).build() );
       }
 
-      return runTestScenario( stepRunner, testDataSources, runName, featureName, iterationIndex, scenarioSetupSteps, testScenario, scenarioTearDownSteps, scenarioIterationNumber );
+      return runTestScenario( stepRunner, runName, featureName, iterationIndex, testScenario, scenarioIterationNumber );
    }
 
-   public ScenarioResult runTestScenario( StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, String featureName, long iterationIndex, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
-                                          ArrayList<TestStep> scenarioTearDownSteps, long scenarioIterationNumber )
+   public ScenarioResult runTestScenario( StepRunner stepRunner, String runName, String featureName, long iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber )
    {
-      ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).testDataSources( testDataSources ).runName( runName ).featureName( featureName ).iterationIndex( iterationIndex )
-               .scenarioSetupSteps( scenarioSetupSteps ).testScenario( testScenario ).scenarioTearDownSteps( scenarioTearDownSteps ).scenarioIterationNumber( scenarioIterationNumber ).build();
+      ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( this ).stepRunner( stepRunner ).runName( runName ).featureName( featureName ).iterationIndex( iterationIndex ).testScenario( testScenario )
+               .scenarioIterationNumber( scenarioIterationNumber ).build();
       return scenarioRunner.call();
    }
 
-   public StepResult runChaosAction( String stepRunnerPlugin, ChaosAction chaosAction, TestExecutionContext context ) throws TestFailureException
+   public StepResult runChaosAction( String stepRunnerPlugin, PreparedChaosAction chaosAction ) throws TestFailureException
    {
       StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin );
       if ( stepRunner == null )
       {
          return StandardStepResults.error( TestIncident.builder().message( "Step runner plugin not found: " + stepRunnerPlugin ).build() );
       }
-      return stepRunner.performChaosAction( chaosAction, context );
+      return stepRunner.performChaosAction( chaosAction );
    }
 
    public long scheduleJob( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, TestJob job ) throws Throwable
@@ -682,13 +653,135 @@ public class KartaRuntime implements AutoCloseable
       return QuartzJobScheduler.deleteJobs( jobIds );
    }
 
-   public StepResult runStepOnNode( String nodeName, String stepRunnerPlugin, TestStep step, TestExecutionContext context ) throws RemoteException
+   public void processStepResult( StepResult stepResult, TestExecutionContext testExecutionContext )
    {
-      return nodeRegistry.getNode( nodeName ).runStep( stepRunnerPlugin, step, context );
+      for ( TestIncident incident : stepResult.getIncidents() )
+      {
+         eventProcessor.raiseEvent( new TestIncidentOccurrenceEvent( testExecutionContext, incident ) );
+      }
+
+      for ( Event event : stepResult.getEvents() )
+      {
+         eventProcessor.raiseEvent( event );
+      }
+
+      DataUtils.mergeVariables( stepResult.getResults(), testExecutionContext.getVariables() );
    }
 
-   public StepResult runChaosActionNode( String nodeName, String stepRunnerPlugin, ChaosAction chaosAction, TestExecutionContext context ) throws RemoteException
+   public PreparedStep getPreparedStep( StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, TestStep step )
+            throws Throwable
    {
-      return nodeRegistry.getNode( nodeName ).performChaosAction( stepRunnerPlugin, chaosAction, context );
+      String stepIdentifier = stepRunner.sanitizeStepIdentifier( step.getIdentifier() );
+      TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, stepIdentifier, null, variables );
+      testExecutionContext.mergeTestData( step.getTestData(), step.getTestDataSet(), testDataSources );
+
+      return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).build();
+   }
+
+   public PreparedChaosAction getPreparedChaosAction( StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables,
+                                                      ChaosAction chaosAction )
+            throws Throwable
+   {
+      TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, chaosAction.getName(), null, variables );
+      testExecutionContext.mergeTestData( null, null, testDataSources );
+      return PreparedChaosAction.builder().chaosAction( chaosAction ).testExecutionContext( testExecutionContext ).build();
+   }
+
+   public PreparedScenario getPreparedScenario( StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, String featureName, long iterationIndex, HashMap<String, Serializable> variables, ArrayList<TestStep> scenarioSetupSteps,
+                                                TestScenario testScenario, ArrayList<TestStep> scenarioTearDownSteps )
+            throws Throwable
+   {
+      PreparedScenario preparedScenario = PreparedScenario.builder().name( testScenario.getName() ).description( testScenario.getDescription() ).build();
+
+      ArrayList<PreparedStep> preparedSetupSteps = new ArrayList<PreparedStep>();
+      for ( TestStep step : DataUtils.mergeLists( scenarioSetupSteps, testScenario.getSetupSteps() ) )
+      {
+         preparedSetupSteps.add( getPreparedStep( stepRunner, testDataSources, runName, featureName, iterationIndex, testScenario.getName(), variables, step ) );
+      }
+      preparedScenario.setSetupSteps( preparedSetupSteps );
+
+      ArrayList<PreparedChaosAction> preparedChaosActions = new ArrayList<PreparedChaosAction>();
+      ChaosActionTreeNode chaosConfiguration = testScenario.getChaosConfiguration();
+      if ( chaosConfiguration != null )
+      {
+         if ( chaosConfiguration.checkForValidity() )
+         {
+
+            ArrayList<ChaosAction> chaosActionsToPerform = chaosConfiguration.nextChaosActions( random );
+            // TODO: Handle chaos action being empty
+
+            for ( ChaosAction chaosAction : chaosActionsToPerform )
+            {
+               preparedChaosActions.add( getPreparedChaosAction( stepRunner, testDataSources, runName, featureName, iterationIndex, testScenario.getName(), variables, chaosAction ) );
+            }
+         }
+      }
+      preparedScenario.setChaosActions( preparedChaosActions );
+
+      ArrayList<PreparedStep> preparedExecutionSteps = new ArrayList<PreparedStep>();
+      for ( TestStep step : testScenario.getExecutionSteps() )
+      {
+         preparedSetupSteps.add( getPreparedStep( stepRunner, testDataSources, runName, featureName, iterationIndex, testScenario.getName(), variables, step ) );
+      }
+      preparedScenario.setExecutionSteps( preparedExecutionSteps );
+
+      ArrayList<PreparedStep> preparedTearDownSteps = new ArrayList<PreparedStep>();
+      for ( TestStep step : DataUtils.mergeLists( testScenario.getTearDownSteps(), scenarioTearDownSteps ) )
+      {
+         preparedTearDownSteps.add( getPreparedStep( stepRunner, testDataSources, runName, featureName, iterationIndex, testScenario.getName(), variables, step ) );
+      }
+      preparedScenario.setTearDownSteps( preparedTearDownSteps );
+
+      return preparedScenario;
+   }
+
+   public StepResult runStep( StepRunner stepRunner, PreparedStep step ) throws TestFailureException, RemoteException
+   {
+      StepResult stepResult;
+
+      if ( StringUtils.isNotEmpty( step.getNode() ) )
+      {
+         // TODO: Handle local node
+         // TODO: Handle null node error
+         stepResult = nodeRegistry.getNode( step.getNode() ).runStep( stepRunner.getPluginName(), step );
+      }
+      else
+      {
+         stepResult = stepRunner.runStep( step );
+      }
+
+      processStepResult( stepResult, step.getTestExecutionContext() );
+
+      return stepResult;
+   }
+
+   public StepResult runStep( StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, TestStep step ) throws Throwable
+   {
+      return runStep( stepRunner, getPreparedStep( stepRunner, testDataSources, runName, featureName, iterationIndex, scenarioName, variables, step ) );
+   }
+
+   public StepResult runChaosAction( StepRunner stepRunner, PreparedChaosAction preparedChaosAction ) throws TestFailureException, RemoteException
+   {
+      StepResult stepResult;
+
+      String nodeName = preparedChaosAction.getChaosAction().getNode();
+      if ( StringUtils.isNotEmpty( nodeName ) )
+      {
+         stepResult = nodeRegistry.getNode( nodeName ).performChaosAction( stepRunner.getPluginName(), preparedChaosAction );
+      }
+      else
+      {
+         stepResult = stepRunner.performChaosAction( preparedChaosAction );
+      }
+
+      processStepResult( stepResult, preparedChaosAction.getTestExecutionContext() );
+
+      return stepResult;
+   }
+
+   public StepResult runChaosAction( StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, ChaosAction chaosAction )
+            throws Throwable
+   {
+      return runChaosAction( stepRunner, getPreparedChaosAction( stepRunner, testDataSources, runName, featureName, iterationIndex, scenarioName, variables, chaosAction ) );
    }
 }

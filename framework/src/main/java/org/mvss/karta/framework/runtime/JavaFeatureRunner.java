@@ -18,7 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.javatest.Feature;
 import org.mvss.karta.framework.core.javatest.FeatureSetup;
 import org.mvss.karta.framework.core.javatest.FeatureTearDown;
@@ -27,7 +26,6 @@ import org.mvss.karta.framework.core.javatest.ScenarioSetup;
 import org.mvss.karta.framework.core.javatest.ScenarioTearDown;
 import org.mvss.karta.framework.randomization.GenericObjectWithChance;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
-import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.JavaFeatureCompleteEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureSetupCompleteEvent;
@@ -35,9 +33,7 @@ import org.mvss.karta.framework.runtime.event.JavaFeatureSetupStartEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureStartEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureTearDownCompleteEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureTearDownStartEvent;
-import org.mvss.karta.framework.runtime.event.TestIncidentOccurrenceEvent;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
-import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
@@ -162,11 +158,9 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
          Configurator.loadProperties( testProperties, testCaseObject );
 
-         HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
          long iterationIndex = -1;
-         TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.__FEATURE_SETUP__, Constants.__GENERIC_STEP__, testData, variables );
 
          HashMap<Method, AtomicLong> scenarioIterationIndexMap = new HashMap<Method, AtomicLong>();
          scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario.getObject(), new AtomicLong() ) );
@@ -175,14 +169,6 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
          for ( Method methodToInvoke : featureSetupMethods )
          {
-            String scenarioPrefixName = testExecutionContext.getScenarioName();
-            if ( StringUtils.isEmpty( scenarioPrefixName ) )
-            {
-               scenarioPrefixName = Constants.__GENERIC_FEATURE__;
-            }
-            scenarioPrefixName = scenarioPrefixName + Constants._SETUP_;
-            testExecutionContext.setScenarioName( scenarioPrefixName + methodToInvoke.getName() );
-
             FeatureSetup annotation = methodToInvoke.getAnnotation( FeatureSetup.class );
             String stepName = methodToInvoke.getName();
             if ( annotation != null )
@@ -194,7 +180,8 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
             }
             eventProcessor.raiseEvent( new JavaFeatureSetupStartEvent( runName, featureName, stepName ) );
 
-            StepResult stepResult = runTestMethod( eventProcessor, testDataSources, runName, featureName, Constants.__FEATURE_SETUP__, testCaseObject, testExecutionContext, methodToInvoke, iterationIndex, stepName );
+            TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.__FEATURE_SETUP__, stepName, null, variables );
+            StepResult stepResult = runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
 
             eventProcessor.raiseEvent( new JavaFeatureSetupCompleteEvent( runName, featureName, stepName, stepResult ) );
             result.getSetupResultMap().put( stepName, stepResult.isPassed() );
@@ -272,18 +259,9 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario.getObject() ).set( 0 ) );
 
          iterationIndex = -1;
-         testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.__FEATURE_TEARDOWN__, Constants.__GENERIC_STEP__, testData, variables );
 
          for ( Method methodToInvoke : featureTearDownMethods )
          {
-            String scenarioPrefixName = testExecutionContext.getScenarioName();
-            if ( StringUtils.isEmpty( scenarioPrefixName ) )
-            {
-               scenarioPrefixName = Constants.__GENERIC_FEATURE__;
-            }
-            scenarioPrefixName = scenarioPrefixName + Constants._TEARDOWN_;
-            testExecutionContext.setScenarioName( scenarioPrefixName + methodToInvoke.getName() );
-
             FeatureTearDown annotation = methodToInvoke.getAnnotation( FeatureTearDown.class );
             String stepName = methodToInvoke.getName();
 
@@ -296,7 +274,8 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
             }
             eventProcessor.raiseEvent( new JavaFeatureTearDownStartEvent( runName, featureName, stepName ) );
 
-            StepResult stepResult = runTestMethod( eventProcessor, testDataSources, runName, featureName, Constants.__FEATURE_TEARDOWN__, testCaseObject, testExecutionContext, methodToInvoke, iterationIndex, stepName );
+            TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.__FEATURE_TEARDOWN__, stepName, null, variables );
+            StepResult stepResult = runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
 
             eventProcessor.raiseEvent( new JavaFeatureTearDownCompleteEvent( runName, featureName, stepName, stepResult ) );
             result.getTearDownResultMap().put( stepName, stepResult.isPassed() );
@@ -332,15 +311,10 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
       return result;
    }
 
-   public static StepResult runTestMethod( EventProcessor eventProcessor, ArrayList<TestDataSource> testDataSources, String runName, String featureName, String scenarioName, Object testCaseObject,
-
-                                           TestExecutionContext testExecutionContext, Method methodToInvoke, long iterationIndex, String stepName )
-            throws Throwable
-
+   public static StepResult runTestMethod( KartaRuntime kartaRuntime, ArrayList<TestDataSource> testDataSources, Object testCaseObject, TestExecutionContext testExecutionContext, Method methodToInvoke ) throws Throwable
    {
       StepResult stepResult;
-      HashMap<String, Serializable> testData = KartaRuntime.getMergedTestData( runName, null, null, testDataSources, new ExecutionStepPointer( featureName, Constants.__FEATURE_TEARDOWN__, stepName, iterationIndex, -1 ) );
-      testExecutionContext.setData( testData );
+      testExecutionContext.mergeTestData( null, null, testDataSources );
 
       Object resultReturned = methodToInvoke.invoke( testCaseObject, testExecutionContext );
 
@@ -354,17 +328,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          stepResult = StepResult.builder().successful( ( returnType == boolean.class ) ? ( (boolean) resultReturned ) : true ).build();
       }
 
-      for ( TestIncident incident : stepResult.getIncidents() )
-      {
-         eventProcessor.raiseEvent( new TestIncidentOccurrenceEvent( runName, featureName, iterationIndex, scenarioName, stepName, incident ) );
-      }
-
-      for ( Event stepEvent : stepResult.getEvents() )
-      {
-         eventProcessor.raiseEvent( stepEvent );
-      }
-
-      DataUtils.mergeVariables( stepResult.getResults(), testExecutionContext.getVariables() );
+      kartaRuntime.processStepResult( stepResult, testExecutionContext );
       return stepResult;
    }
 }

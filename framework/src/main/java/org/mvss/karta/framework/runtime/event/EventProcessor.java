@@ -87,7 +87,7 @@ public class EventProcessor implements AutoCloseable
       }
    }
 
-   public void raiseEvent( Event event )
+   private void sendEventsToListeners( Event event )
    {
       for ( TestEventListener testEventListener : testEventListeners )
       {
@@ -101,6 +101,14 @@ public class EventProcessor implements AutoCloseable
             continue;
          }
       }
+   }
+
+   public void raiseEvent( Event event )
+   {
+      // TODO: Track the thread to do graceful exit
+      // TODO: Asynchronous event sender to do events as soon as possible;
+      // new Thread( () -> sendEventsToListeners( event ) ).run();
+      sendEventsToListeners( event );
    }
 
    public void fail( String runName, String featureName, Long iterationIndex, String scenarioName, String stepIdentifier, TestIncident incident ) throws TestFailureException

@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.Random;
 
 import org.mvss.karta.framework.randomization.ObjectGenerationRule;
+import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
-import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.utils.ParserUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -70,7 +70,7 @@ public class ObjectGenTestDataSource implements TestDataSource
    }
 
    @Override
-   public HashMap<String, Serializable> getData( ExecutionStepPointer executionStepPointer ) throws Throwable
+   public HashMap<String, Serializable> getData( TestExecutionContext testExecutionContext ) throws Throwable
    {
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
 

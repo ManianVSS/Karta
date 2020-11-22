@@ -4,9 +4,9 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Random;
 
+import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
-import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -54,7 +54,7 @@ public class RandomTestDataSource implements TestDataSource
    }
 
    @Override
-   public HashMap<String, Serializable> getData( ExecutionStepPointer executionStepPointer ) throws Throwable
+   public HashMap<String, Serializable> getData( TestExecutionContext testExecutionContext ) throws Throwable
    {
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
       testData.put( "randomInt", random.nextInt() );
