@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.minions.KartaMinionServer;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
+import org.mvss.karta.framework.runtime.RunInfo;
 import org.mvss.karta.framework.runtime.RunTarget;
 
 import lombok.extern.log4j.Log4j2;
@@ -93,8 +94,7 @@ public class KartaMain
             boolean optionMissing = true;
             boolean runTargetAvailable = false;
 
-            String runName = Constants.UNNAMED;
-
+            RunInfo runInfo = new RunInfo();
             RunTarget runTarget = new RunTarget();
 
             if ( cmd.hasOption( JAVA_TEST ) )
@@ -123,30 +123,30 @@ public class KartaMain
                {
                   tags.add( tag );
                }
-               runTarget.setTags( tags );
+               runTarget.setRunTags( tags );
             }
 
             if ( cmd.hasOption( Constants.RUN_NAME ) )
             {
-               runName = cmd.getOptionValue( Constants.RUN_NAME );
+               runInfo.setRunName( cmd.getOptionValue( Constants.RUN_NAME ) );
             }
             else
             {
-               runName = runName + Constants.HYPHEN + System.currentTimeMillis();
+               runInfo.setRunName( Constants.UNNAMED + Constants.HYPHEN + System.currentTimeMillis() );
             }
 
             Runtime.getRuntime().addShutdownHook( new Thread( () -> jvmExitHook() ) );
 
             runTargetAvailable = runTargetAvailable || StringUtils.isNotBlank( runTarget.getFeatureFile() );
             runTargetAvailable = runTargetAvailable || StringUtils.isNotBlank( runTarget.getJavaTest() );
-            runTargetAvailable = runTargetAvailable || ( runTarget.getTags() != null && !runTarget.getTags().isEmpty() );
+            runTargetAvailable = runTargetAvailable || ( runTarget.getRunTags() != null && !runTarget.getRunTags().isEmpty() );
 
             if ( runTargetAvailable )
             {
 
                try (KartaRuntime kartaRuntime = KartaRuntime.getInstance())
                {
-                  if ( !kartaRuntime.runTestTarget( runName, runTarget ) )
+                  if ( !kartaRuntime.runTestTarget( runInfo, runTarget ) )
                   {
                      System.exit( 1 );
                   }

@@ -3,7 +3,6 @@ package org.mvss.karta.framework.minions;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.PreparedChaosAction;
@@ -14,6 +13,7 @@ import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.runtime.RunInfo;
 
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
@@ -44,19 +44,11 @@ public class KartaRestMinion implements KartaMinion
    }
 
    @Override
-   public FeatureResult runFeature( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, TestFeature feature, boolean chanceBasedScenarioExecution, boolean exclusiveScenarioPerIteration, long numberOfIterations,
-                                    int numberOfIterationsInParallel )
-            throws RemoteException
+   public FeatureResult runFeature( RunInfo runInfo, TestFeature feature ) throws RemoteException
    {
       HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
-      parameters.put( Constants.STEP_RUNNER_PLUGIN, stepRunnerPlugin );
-      parameters.put( Constants.TEST_DATA_SOURCE_PLUGINS, testDataSourcePlugins );
-      parameters.put( Constants.RUN_NAME, runName );
+      parameters.put( Constants.RUN_INFO, runInfo );
       parameters.put( Constants.FEATURE, feature );
-      parameters.put( Constants.CHANCE_BASED_SCENARIO_EXECUTION, chanceBasedScenarioExecution );
-      parameters.put( Constants.EXCLUSIVE_SCENARIO_PER_ITERATION, exclusiveScenarioPerIteration );
-      parameters.put( Constants.NUMBER_OF_ITERATIONS, numberOfIterations );
-      parameters.put( Constants.NUMBER_OF_ITERATIONS_IN_PARALLEL, numberOfIterationsInParallel );
 
       Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_FEATURE );
 
@@ -70,12 +62,10 @@ public class KartaRestMinion implements KartaMinion
    }
 
    @Override
-   public long scheduleJob( String stepRunnerPlugin, HashSet<String> testDataSourcePlugins, String runName, String featureName, TestJob job ) throws RemoteException
+   public long scheduleJob( RunInfo runInfo, String featureName, TestJob job ) throws RemoteException
    {
       HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
-      parameters.put( Constants.STEP_RUNNER_PLUGIN, stepRunnerPlugin );
-      parameters.put( Constants.TEST_DATA_SOURCE_PLUGINS, testDataSourcePlugins );
-      parameters.put( Constants.RUN_NAME, runName );
+      parameters.put( Constants.RUN_INFO, runInfo );
       parameters.put( Constants.FEATURE_NAME, featureName );
       parameters.put( Constants.JOB, job );
 
@@ -105,11 +95,10 @@ public class KartaRestMinion implements KartaMinion
    }
 
    @Override
-   public ScenarioResult runTestScenario( String stepRunnerPlugin, String runName, String featureName, long iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber ) throws RemoteException
+   public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, long iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber ) throws RemoteException
    {
       HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
-      parameters.put( Constants.STEP_RUNNER_PLUGIN, stepRunnerPlugin );
-      parameters.put( Constants.RUN_NAME, runName );
+      parameters.put( Constants.RUN_INFO, runInfo );
       parameters.put( Constants.FEATURE_NAME, featureName );
       parameters.put( Constants.ITERATION_INDEX, iterationIndex );
       parameters.put( Constants.TEST_SCENARIO, testScenario );
@@ -127,10 +116,10 @@ public class KartaRestMinion implements KartaMinion
    }
 
    @Override
-   public StepResult runStep( String stepRunnerPlugin, PreparedStep step ) throws RemoteException
+   public StepResult runStep( RunInfo runInfo, PreparedStep step ) throws RemoteException
    {
       HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
-      parameters.put( Constants.STEP_RUNNER_PLUGIN, stepRunnerPlugin );
+      parameters.put( Constants.RUN_INFO, runInfo );
       parameters.put( Constants.TEST_STEP, step );
 
       Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_STEP );
@@ -145,10 +134,10 @@ public class KartaRestMinion implements KartaMinion
    }
 
    @Override
-   public StepResult performChaosAction( String stepRunnerPlugin, PreparedChaosAction chaosAction ) throws RemoteException
+   public StepResult performChaosAction( RunInfo runInfo, PreparedChaosAction chaosAction ) throws RemoteException
    {
       HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
-      parameters.put( Constants.STEP_RUNNER_PLUGIN, stepRunnerPlugin );
+      parameters.put( Constants.RUN_INFO, runInfo );
       parameters.put( Constants.CHAOS_ACTION, chaosAction );
 
       Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_CHAOS_ACTION );

@@ -43,14 +43,13 @@ import lombok.extern.log4j.Log4j2;
 public class JavaIterationRunner implements Callable<HashMap<String, ScenarioResult>>
 {
    private KartaRuntime                              kartaRuntime;
-   private ArrayList<TestDataSource>                 testDataSources;
 
    private Object                                    testCaseObject;
    private ArrayList<Method>                         scenarioSetupMethods;
    private ArrayList<Method>                         scenariosMethodsToRun;
    private ArrayList<Method>                         scenarioTearDownMethods;
 
-   private String                                    runName;
+   private RunInfo                                   runInfo;
    private String                                    featureName;
    private String                                    featureDescription;
 
@@ -69,6 +68,9 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
    public HashMap<String, ScenarioResult> call()
    {
       result = new HashMap<String, ScenarioResult>();
+
+      ArrayList<TestDataSource> testDataSources = kartaRuntime.getTestDataSources( runInfo );
+      String runName = runInfo.getRunName();
 
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
 

@@ -17,8 +17,6 @@ import org.mvss.karta.framework.minions.KartaMinion;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.ScenarioCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioStartEvent;
-import org.mvss.karta.framework.runtime.interfaces.StepRunner;
-import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.utils.DataUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -41,10 +39,7 @@ import lombok.extern.log4j.Log4j2;
 public class IterationRunner implements Callable<HashMap<String, ScenarioResult>>
 {
    private KartaRuntime                              kartaRuntime;
-   private StepRunner                                stepRunner;
-   private ArrayList<TestDataSource>                 testDataSources;
-
-   private String                                    runName;
+   private RunInfo                                   runInfo;
    private String                                    featureName;
 
    private long                                      iterationIndex;
@@ -64,11 +59,13 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
    private HashMap<String, ScenarioResult>           result;
 
    private Consumer<HashMap<String, ScenarioResult>> resultConsumer;
-   private HashSet<String>                           tags;
 
    @Override
    public HashMap<String, ScenarioResult> call()
    {
+      String runName = runInfo.getRunName();
+      HashSet<String> tags = runInfo.getTags();
+
       result = new HashMap<String, ScenarioResult>();
 
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
@@ -83,7 +80,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
 
          try
          {
-            preparedScenario = kartaRuntime.getPreparedScenario( stepRunner, testDataSources, runName, featureName, scenarioIterationNumber, DataUtils.cloneMap( variables ), scenarioSetupSteps, testScenario, scenarioTearDownSteps );
+            preparedScenario = kartaRuntime.getPreparedScenario( runInfo, featureName, scenarioIterationNumber, DataUtils.cloneMap( variables ), scenarioSetupSteps, testScenario, scenarioTearDownSteps );
          }
          catch ( Throwable t )
          {
@@ -101,7 +98,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
 
          if ( minionToUse == null )
          {
-            ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( kartaRuntime ).stepRunner( stepRunner ).featureName( featureName ).runName( runName ).iterationIndex( iterationIndex ).testScenario( preparedScenario )
+            ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).featureName( featureName ).iterationIndex( iterationIndex ).testScenario( preparedScenario )
                      .scenarioIterationNumber( scenarioIterationNumber ).build();
             scenarioResult = scenarioRunner.call();
          }
@@ -109,7 +106,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
          {
             try
             {
-               scenarioResult = minionToUse.runTestScenario( stepRunner.getPluginName(), runName, featureName, scenarioIterationNumber, preparedScenario, scenarioIterationNumber );
+               scenarioResult = minionToUse.runTestScenario( runInfo, featureName, scenarioIterationNumber, preparedScenario, scenarioIterationNumber );
             }
             catch ( RemoteException e )
             {

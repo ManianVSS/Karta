@@ -9,10 +9,14 @@ import org.mvss.karta.framework.randomization.RandomizationUtils;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
+@Getter
+@Setter
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -21,13 +25,13 @@ public class ChaosActionTreeNode implements Serializable, ObjectWithChance
    /**
     * 
     */
-   private static final long              serialVersionUID        = 1L;
+   private static final long              serialVersionUID     = 1L;
 
    @Builder.Default
-   private float                          probability = 1.0f;
+   private float                          probability          = 1.0f;
 
    @Builder.Default
-   private SubNodeSelectionType           subNodeSelectionType    = SubNodeSelectionType.MUTUALLY_EXCLUSIVE;
+   private SubNodeSelectionType           subNodeSelectionType = SubNodeSelectionType.MUTUALLY_EXCLUSIVE;
 
    private ArrayList<ChaosActionTreeNode> chaosActionSubNodes;
 

@@ -57,27 +57,15 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class JavaFeatureRunner implements Callable<FeatureResult>
 {
-   private KartaRuntime              kartaRuntime;
-   private ArrayList<TestDataSource> testDataSources;
-   private String                    runName;
-   private String                    javaTest;
-   private String                    javaTestJarFile;
+   private KartaRuntime            kartaRuntime;
+   private RunInfo                 runInfo;
 
-   @Builder.Default
-   private long                      numberOfIterations            = 1;
+   private String                  javaTest;
+   private String                  javaTestJarFile;
 
-   @Builder.Default
-   private int                       numberOfIterationsInParallel  = 1;
+   private Consumer<FeatureResult> resultConsumer;
 
-   @Builder.Default
-   private Boolean                   chanceBasedScenarioExecution  = false;
-
-   @Builder.Default
-   private Boolean                   exclusiveScenarioPerIteration = false;
-
-   private Consumer<FeatureResult>   resultConsumer;
-
-   private FeatureResult             result;
+   private FeatureResult           result;
 
    private synchronized void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
    {
@@ -89,6 +77,14 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
    {
       try
       {
+         String runName = runInfo.getRunName();
+         long numberOfIterations = runInfo.getNumberOfIterations();
+         int numberOfIterationsInParallel = runInfo.getNumberOfIterationsInParallel();
+         boolean chanceBasedScenarioExecution = runInfo.isChanceBasedScenarioExecution();
+         boolean exclusiveScenarioPerIteration = runInfo.isExclusiveScenarioPerIteration();
+
+         ArrayList<TestDataSource> testDataSources = kartaRuntime.getTestDataSources( runInfo );
+
          result = new FeatureResult();
 
          EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
@@ -231,9 +227,9 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
                scenariosMethodsToRun = GenericObjectWithChance.extractObjects( scenarioMethods );
             }
 
-            JavaIterationRunner iterationRunner = JavaIterationRunner.builder().kartaRuntime( kartaRuntime ).testDataSources( testDataSources ).testCaseObject( testCaseObject ).scenarioSetupMethods( scenarioSetupMethods )
-                     .scenariosMethodsToRun( scenariosMethodsToRun ).scenarioTearDownMethods( scenarioTearDownMethods ).runName( runName ).featureName( featureName ).featureDescription( featureDescription ).iterationIndex( iterationIndex )
-                     .scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) ).resultConsumer( ( iterationResult ) -> accumulateIterationResult( iterationResult ) ).build();
+            JavaIterationRunner iterationRunner = JavaIterationRunner.builder().kartaRuntime( kartaRuntime ).testCaseObject( testCaseObject ).scenarioSetupMethods( scenarioSetupMethods ).scenariosMethodsToRun( scenariosMethodsToRun )
+                     .scenarioTearDownMethods( scenarioTearDownMethods ).runInfo( runInfo ).featureName( featureName ).featureDescription( featureDescription ).iterationIndex( iterationIndex ).scenarioIterationIndexMap( scenarioIterationIndexMap )
+                     .variables( DataUtils.cloneMap( variables ) ).resultConsumer( ( iterationResult ) -> accumulateIterationResult( iterationResult ) ).build();
 
             if ( numberOfIterationsInParallel == 1 )
             {

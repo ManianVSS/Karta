@@ -14,18 +14,16 @@ import org.mvss.karta.framework.runtime.event.ChaosActionJobStartEvent;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.JobStepCompleteEvent;
 import org.mvss.karta.framework.runtime.event.JobStepStartEvent;
-import org.mvss.karta.framework.runtime.interfaces.StepRunner;
-import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class TestJobRunner
 {
-   public static boolean run( KartaRuntime kartaRuntime, StepRunner stepRunner, ArrayList<TestDataSource> testDataSources, String runName, String featureName, TestJob job, long iterationIndex ) throws Throwable
+   public static boolean run( KartaRuntime kartaRuntime, RunInfo runInfo, String featureName, TestJob job, long iterationIndex ) throws Throwable
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-
+      String runName = runInfo.getRunName();
       log.debug( "Running job: " + job );
 
       HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
@@ -47,7 +45,7 @@ public class TestJobRunner
                for ( ChaosAction chaosAction : chaosActionsToPerform )
                {
                   eventProcessor.raiseEvent( new ChaosActionJobStartEvent( runName, featureName, job, iterationIndex, chaosAction ) );
-                  StepResult result = kartaRuntime.runChaosAction( stepRunner, testDataSources, runName, featureName, iterationIndex, job.getName(), variables, chaosAction );
+                  StepResult result = kartaRuntime.runChaosAction( runInfo, featureName, iterationIndex, job.getName(), variables, chaosAction );
                   eventProcessor.raiseEvent( new ChaosActionJobCompleteEvent( runName, featureName, job, iterationIndex, chaosAction, result ) );
                }
             }
@@ -68,7 +66,7 @@ public class TestJobRunner
             for ( TestStep step : steps )
             {
                eventProcessor.raiseEvent( new JobStepStartEvent( runName, featureName, job, iterationIndex, step ) );
-               StepResult result = kartaRuntime.runStep( stepRunner, testDataSources, runName, featureName, iterationIndex, job.getName(), variables, step );
+               StepResult result = kartaRuntime.runStep( runInfo, featureName, iterationIndex, job.getName(), variables, step );
                eventProcessor.raiseEvent( new JobStepCompleteEvent( runName, featureName, job, iterationIndex, step, result ) );
 
                if ( !result.isPassed() )

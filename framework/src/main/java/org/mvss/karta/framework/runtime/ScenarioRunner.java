@@ -19,7 +19,6 @@ import org.mvss.karta.framework.runtime.event.ScenarioStepCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioStepStartEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioTearDownStepCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioTearDownStepStartEvent;
-import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -41,9 +40,8 @@ import lombok.extern.log4j.Log4j2;
 public class ScenarioRunner implements Callable<ScenarioResult>
 {
    private KartaRuntime     kartaRuntime;
-   private StepRunner       stepRunner;
+   private RunInfo          runInfo;
 
-   private String           runName;
    private String           featureName;
    private long             iterationIndex;
 
@@ -56,6 +54,8 @@ public class ScenarioRunner implements Callable<ScenarioResult>
    @Override
    public ScenarioResult call()
    {
+      String runName = runInfo.getRunName();
+
       result = new ScenarioResult();
       result.setIterationIndex( iterationIndex );
 
@@ -70,7 +70,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
          {
             eventProcessor.raiseEvent( new ScenarioSetupStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
 
-            StepResult stepResult = kartaRuntime.runStep( stepRunner, step );
+            StepResult stepResult = kartaRuntime.runStep( runInfo, step );
 
             eventProcessor.raiseEvent( new ScenarioSetupStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
             result.getSetupResults().put( step.getIdentifier(), stepResult.isPassed() );
@@ -90,7 +90,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
             {
                eventProcessor.raiseEvent( new ScenarioChaosActionStartEvent( runName, featureName, iterationIndex, testScenario.getName(), preparedChaosAction ) );
 
-               StepResult stepResult = kartaRuntime.runChaosAction( stepRunner, preparedChaosAction );
+               StepResult stepResult = kartaRuntime.runChaosAction( runInfo, preparedChaosAction );
 
                eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), preparedChaosAction, stepResult ) );
                result.getChaosActionResults().put( preparedChaosAction.getChaosAction().getName(), stepResult.isPassed() );
@@ -109,7 +109,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                {
                   eventProcessor.raiseEvent( new ScenarioStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
 
-                  StepResult stepResult = kartaRuntime.runStep( stepRunner, step );
+                  StepResult stepResult = kartaRuntime.runStep( runInfo, step );
 
                   eventProcessor.raiseEvent( new ScenarioStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
                   result.getRunResults().put( step.getIdentifier(), stepResult.isPassed() );
@@ -139,7 +139,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
             {
                eventProcessor.raiseEvent( new ScenarioTearDownStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
 
-               StepResult stepResult = kartaRuntime.runStep( stepRunner, step );
+               StepResult stepResult = kartaRuntime.runStep( runInfo, step );
 
                eventProcessor.raiseEvent( new ScenarioTearDownStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
                result.getTearDownResults().put( step.getIdentifier(), stepResult.isPassed() );

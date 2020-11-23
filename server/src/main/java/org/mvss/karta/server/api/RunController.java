@@ -6,9 +6,9 @@ import java.util.HashSet;
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
+import org.mvss.karta.framework.runtime.RunInfo;
 import org.mvss.karta.framework.runtime.RunTarget;
 import org.mvss.karta.framework.runtime.impl.DataFilesTestDataSource;
-import org.mvss.karta.framework.runtime.impl.KriyaPlugin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,9 +26,9 @@ public class RunController
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_TARGET )
-   public boolean startFeatureFileRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestParam( defaultValue = KriyaPlugin.PLUGIN_NAME ) String pluginName, @RequestBody RunTarget runTarget )
-            throws IllegalAccessException, InvocationTargetException
+   public boolean startFeatureFileRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestBody RunTarget runTarget ) throws IllegalAccessException, InvocationTargetException
    {
+      // @RequestParam( defaultValue = KriyaPlugin.PLUGIN_NAME ) String pluginName
       if ( runName.equals( Constants.UNNAMED ) )
       {
          runName = runName + Constants.HYPHEN + System.currentTimeMillis();
@@ -36,14 +36,15 @@ public class RunController
 
       HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
       testDataSourcePluginHashSet.add( DataFilesTestDataSource.PLUGIN_NAME );
-      return kartaRuntime.runTestTarget( runName, pluginName, pluginName, testDataSourcePluginHashSet, runTarget );
+      RunInfo runInfo = kartaRuntime.getDefaultRunInfo().toBuilder().runName( runName ).build();
+      return kartaRuntime.runTestTarget( runInfo, runTarget );
    }
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_FEATURESOURCE )
-   public FeatureResult startFeatureSourceRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestParam( defaultValue = KriyaPlugin.PLUGIN_NAME ) String pluginName, @RequestBody String featureSourceString )
-            throws IllegalAccessException, InvocationTargetException
+   public FeatureResult startFeatureSourceRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestBody String featureSourceString ) throws IllegalAccessException, InvocationTargetException
    {
+      // @RequestParam( defaultValue = KriyaPlugin.PLUGIN_NAME ) String pluginName
       if ( runName.equals( Constants.UNNAMED ) )
       {
          runName = runName + Constants.HYPHEN + System.currentTimeMillis();
@@ -51,21 +52,7 @@ public class RunController
 
       HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
       testDataSourcePluginHashSet.add( DataFilesTestDataSource.PLUGIN_NAME );
-      return kartaRuntime.runFeatureSource( runName, pluginName, pluginName, testDataSourcePluginHashSet, featureSourceString, false, false, 1, 1 );
+      RunInfo runInfo = kartaRuntime.getDefaultRunInfo().toBuilder().runName( runName ).build();
+      return kartaRuntime.runFeatureSource( runInfo, featureSourceString );
    }
-
-   // @ResponseStatus( HttpStatus.OK )
-   // @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_TARGET )
-   // public boolean startFeatureRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestParam( defaultValue = KriyaPlugin.PLUGIN_NAME ) String pluginName, @RequestBody TestFeature feature )
-   // throws IllegalAccessException, InvocationTargetException
-   // {
-   // if ( runName.equals( Constants.UNNAMED ) )
-   // {
-   // runName = runName + Constants.HYPHEN + System.currentTimeMillis();
-   // }
-   //
-   // HashSet<String> testDataSourcePluginHashSet = new HashSet<String>();
-   // testDataSourcePluginHashSet.add( DataFilesTestDataSource.PLUGIN_NAME );
-   // return kartaRuntime.runFeature( pluginName, testDataSourcePluginHashSet, runName, feature, false, false, 1, 1 );
-   // }
 }
