@@ -179,7 +179,7 @@ public class FeatureRunner implements Callable<FeatureResult>
 
             try
             {
-               stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, step );
+               stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, testFeature.getTestDataSet(), step );
             }
             catch ( TestFailureException tfe )
             {
@@ -265,9 +265,9 @@ public class FeatureRunner implements Callable<FeatureResult>
                scenariosToRun = testFeature.getTestScenarios();
             }
 
-            IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).featureName( testFeature.getName() ).scenarioSetupSteps( testFeature.getScenarioSetupSteps() ).scenariosToRun( scenariosToRun )
-                     .scenarioTearDownSteps( testFeature.getScenarioTearDownSteps() ).iterationIndex( iterationIndex ).scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) )
-                     .resultConsumer( ( iterationResult ) -> accumulateIterationResult( iterationResult ) ).build();
+            IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).featureName( testFeature.getName() ).commonTestDataSet( testFeature.getTestDataSet() )
+                     .scenarioSetupSteps( testFeature.getScenarioSetupSteps() ).scenariosToRun( scenariosToRun ).scenarioTearDownSteps( testFeature.getScenarioTearDownSteps() ).iterationIndex( iterationIndex )
+                     .scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) ).resultConsumer( ( iterationResult ) -> accumulateIterationResult( iterationResult ) ).build();
 
             if ( useMinions )
             {
@@ -310,7 +310,7 @@ public class FeatureRunner implements Callable<FeatureResult>
 
             try
             {
-               stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, step );
+               stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, testFeature.getTestDataSet(), step );
             }
             catch ( TestFailureException tfe )
             {

@@ -103,10 +103,11 @@ public class GherkinPlugin implements FeatureSourceParser
                   testData = new HashMap<String, ArrayList<Serializable>>();
                   for ( String item : line.split( "[|]" ) )
                   {
-                     if ( StringUtils.isNotEmpty( item ) )
+                     String trimmedItem = item.trim();
+                     if ( StringUtils.isNotEmpty( trimmedItem ) )
                      {
-                        headerList.add( item );
-                        testData.put( item, new ArrayList<Serializable>() );
+                        headerList.add( trimmedItem );
+                        testData.put( trimmedItem, new ArrayList<Serializable>() );
                      }
                   }
                }
@@ -115,9 +116,10 @@ public class GherkinPlugin implements FeatureSourceParser
                   int i = 0;
                   for ( String item : line.split( "[|]" ) )
                   {
-                     if ( StringUtils.isNotEmpty( item ) )
+                     String trimmedItem = item.trim();
+                     if ( StringUtils.isNotEmpty( trimmedItem ) )
                      {
-                        testData.get( headerList.get( i ) ).add( item );
+                        testData.get( headerList.get( i ) ).add( trimmedItem );
                         i++;
                      }
                   }
@@ -132,31 +134,25 @@ public class GherkinPlugin implements FeatureSourceParser
                   {
                      currentStep.setTestDataSet( new HashMap<String, ArrayList<Serializable>>() );
                   }
-                  DataUtils.mergeVariables( testData, currentStep.getTestDataSet() );
+                  DataUtils.mergeMapInto( testData, currentStep.getTestDataSet() );
                }
                else
                {
                   if ( testScenario == null )
                   {
-                     for ( TestStep step : feature.getSetupSteps() )
+                     if ( feature.getTestDataSet() == null )
                      {
-                        if ( step.getTestDataSet() == null )
-                        {
-                           step.setTestDataSet( new HashMap<String, ArrayList<Serializable>>() );
-                        }
-                        DataUtils.mergeVariables( testData, step.getTestDataSet() );
+                        feature.setTestDataSet( new HashMap<String, ArrayList<Serializable>>() );
                      }
+                     DataUtils.mergeMapInto( testData, feature.getTestDataSet() );
                   }
                   else
                   {
-                     for ( TestStep step : testScenario.getExecutionSteps() )
+                     if ( testScenario.getTestDataSet() == null )
                      {
-                        if ( step.getTestDataSet() == null )
-                        {
-                           step.setTestDataSet( new HashMap<String, ArrayList<Serializable>>() );
-                        }
-                        DataUtils.mergeVariables( testData, step.getTestDataSet() );
+                        testScenario.setTestDataSet( new HashMap<String, ArrayList<Serializable>>() );
                      }
+                     DataUtils.mergeMapInto( testData, testScenario.getTestDataSet() );
                   }
                }
 

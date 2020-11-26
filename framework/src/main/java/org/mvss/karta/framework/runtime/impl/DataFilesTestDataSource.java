@@ -140,49 +140,32 @@ public class DataFilesTestDataSource implements TestDataSource
          try
          {
             String featureName = testExecutionContext.getFeatureName();
+            HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>> featureData = ( featureName != null ) && dataStore.containsKey( featureName ) ? dataStore.get( featureName ) : dataStore.get( Constants.__GENERIC_FEATURE__ );
 
-            if ( featureName == null )
+            if ( featureData != null )
             {
-               featureName = Constants.__GENERIC_FEATURE__;
-            }
+               String scenarioName = testExecutionContext.getScenarioName();
+               HashMap<String, HashMap<String, ArrayList<Serializable>>> scenarioData = ( scenarioName != null ) && featureData.containsKey( scenarioName ) ? featureData.get( scenarioName ) : featureData.get( Constants.__GENERIC_SCENARIO__ );
 
-            String scenarioName = testExecutionContext.getScenarioName();
-
-            if ( scenarioName == null )
-            {
-               scenarioName = Constants.__GENERIC_SCENARIO__;
-            }
-
-            String stepName = testExecutionContext.getStepIdentifier();
-
-            if ( stepName == null )
-            {
-               stepName = Constants.__GENERIC_STEP__;
-            }
-
-            long iterationIndex = testExecutionContext.getIterationIndex();
-            if ( iterationIndex <= 0 )
-            {
-               iterationIndex = 0;
-            }
-
-            if ( dataStore.containsKey( featureName ) )
-            {
-               HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>> featureData = dataStore.get( featureName );
-
-               if ( featureData.containsKey( scenarioName ) )
+               if ( scenarioData != null )
                {
-                  HashMap<String, HashMap<String, ArrayList<Serializable>>> scenarioData = featureData.get( scenarioName );
+                  String stepName = testExecutionContext.getStepIdentifier();
+                  HashMap<String, ArrayList<Serializable>> stepData = ( stepName != null ) && scenarioData.containsKey( stepName ) ? scenarioData.get( stepName ) : scenarioData.get( Constants.__GENERIC_STEP__ );
 
-                  if ( scenarioData.containsKey( stepName ) )
+                  if ( stepData != null )
                   {
-                     HashMap<String, ArrayList<Serializable>> stepData = scenarioData.get( stepName );
-
                      for ( String dataKey : stepData.keySet() )
                      {
                         ArrayList<Serializable> possibleValues = stepData.get( dataKey );
+
                         if ( ( possibleValues != null ) && !possibleValues.isEmpty() )
                         {
+                           long iterationIndex = testExecutionContext.getIterationIndex();
+                           if ( iterationIndex <= 0 )
+                           {
+                              iterationIndex = 0;
+                           }
+
                            int valueIndex = (int) ( iterationIndex % possibleValues.size() );
                            testData.put( dataKey, possibleValues.get( valueIndex ) );
                         }

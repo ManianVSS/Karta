@@ -44,6 +44,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
 
    private long                                      iterationIndex;
 
+   private HashMap<String, ArrayList<Serializable>>  commonTestDataSet;
    private ArrayList<TestStep>                       scenarioSetupSteps;
    private ArrayList<TestScenario>                   scenariosToRun;
    private ArrayList<TestStep>                       scenarioTearDownSteps;
@@ -80,7 +81,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
 
          try
          {
-            preparedScenario = kartaRuntime.getPreparedScenario( runInfo, featureName, scenarioIterationNumber, DataUtils.cloneMap( variables ), scenarioSetupSteps, testScenario, scenarioTearDownSteps );
+            preparedScenario = kartaRuntime.getPreparedScenario( runInfo, featureName, scenarioIterationNumber, DataUtils.cloneMap( variables ), commonTestDataSet, scenarioSetupSteps, testScenario, scenarioTearDownSteps );
          }
          catch ( Throwable t )
          {

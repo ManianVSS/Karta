@@ -45,7 +45,7 @@ public class TestJobRunner
                for ( ChaosAction chaosAction : chaosActionsToPerform )
                {
                   eventProcessor.raiseEvent( new ChaosActionJobStartEvent( runName, featureName, job, iterationIndex, chaosAction ) );
-                  StepResult result = kartaRuntime.runChaosAction( runInfo, featureName, iterationIndex, job.getName(), variables, chaosAction );
+                  StepResult result = kartaRuntime.runChaosAction( runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), chaosAction );
                   eventProcessor.raiseEvent( new ChaosActionJobCompleteEvent( runName, featureName, job, iterationIndex, chaosAction, result ) );
                }
             }
@@ -66,7 +66,7 @@ public class TestJobRunner
             for ( TestStep step : steps )
             {
                eventProcessor.raiseEvent( new JobStepStartEvent( runName, featureName, job, iterationIndex, step ) );
-               StepResult result = kartaRuntime.runStep( runInfo, featureName, iterationIndex, job.getName(), variables, step );
+               StepResult result = kartaRuntime.runStep( runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), step );
                eventProcessor.raiseEvent( new JobStepCompleteEvent( runName, featureName, job, iterationIndex, step, result ) );
 
                if ( !result.isPassed() )

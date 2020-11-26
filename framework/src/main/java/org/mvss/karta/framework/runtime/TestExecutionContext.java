@@ -41,7 +41,7 @@ public class TestExecutionContext implements Serializable
    @Builder.Default
    private HashMap<String, Serializable> variables        = new HashMap<String, Serializable>();
 
-   public void mergeTestData( HashMap<String, Serializable> stepTestData, HashMap<String, ArrayList<Serializable>> stepTestDataSet, ArrayList<TestDataSource> testDataSources ) throws Throwable
+   public void mergeTestData( HashMap<String, Serializable> stepTestData, HashMap<String, ArrayList<Serializable>> testDataSet, ArrayList<TestDataSource> testDataSources ) throws Throwable
    {
       data = new HashMap<String, Serializable>();
 
@@ -54,18 +54,16 @@ public class TestExecutionContext implements Serializable
          }
       }
 
-      if ( stepTestDataSet != null )
+      long iterationIndexForData = ( this.iterationIndex < 0 ) ? 0 : this.iterationIndex;
+
+      if ( testDataSet != null )
       {
-         if ( iterationIndex <= 0 )
+         for ( String dataKey : testDataSet.keySet() )
          {
-            iterationIndex = 0;
-         }
-         for ( String dataKey : stepTestDataSet.keySet() )
-         {
-            ArrayList<Serializable> possibleValues = stepTestDataSet.get( dataKey );
+            ArrayList<Serializable> possibleValues = testDataSet.get( dataKey );
             if ( ( possibleValues != null ) && !possibleValues.isEmpty() )
             {
-               int valueIndex = (int) ( iterationIndex % possibleValues.size() );
+               int valueIndex = (int) ( iterationIndexForData % possibleValues.size() );
                data.put( dataKey, possibleValues.get( valueIndex ) );
             }
          }
@@ -76,4 +74,5 @@ public class TestExecutionContext implements Serializable
          stepTestData.forEach( ( key, value ) -> data.put( key, value ) );
       }
    }
+
 }

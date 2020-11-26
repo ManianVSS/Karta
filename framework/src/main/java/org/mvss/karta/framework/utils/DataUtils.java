@@ -30,7 +30,22 @@ public class DataUtils
       return mergedList;
    }
 
-   public static <K, V> void mergeVariables( Map<K, V> sourceVars, Map<K, V> destinationVars )
+   public static <K, V> HashMap<K, V> mergeMaps( Map<K, V> map1, Map<K, V> map2 )
+   {
+      HashMap<K, V> mergedMap = new HashMap<K, V>();
+      if ( map1 != null )
+      {
+         map1.forEach( ( key, value ) -> mergedMap.put( key, value ) );
+      }
+
+      if ( map2 != null )
+      {
+         map2.forEach( ( key, value ) -> mergedMap.put( key, value ) );
+      }
+      return mergedMap;
+   }
+
+   public static <K, V> void mergeMapInto( Map<K, V> sourceVars, Map<K, V> destinationVars )
    {
       if ( ( sourceVars != null ) && ( sourceVars != destinationVars ) )
       {

@@ -707,36 +707,40 @@ public class KartaRuntime implements AutoCloseable
          eventProcessor.raiseEvent( event );
       }
 
-      DataUtils.mergeVariables( stepResult.getResults(), testExecutionContext.getVariables() );
+      DataUtils.mergeMapInto( stepResult.getResults(), testExecutionContext.getVariables() );
    }
 
-   public PreparedStep getPreparedStep( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, TestStep step ) throws Throwable
+   public PreparedStep getPreparedStep( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestStep step ) throws Throwable
    {
       StepRunner stepRunner = getStepRunner( runInfo );
       String stepIdentifier = stepRunner.sanitizeStepIdentifier( step.getIdentifier() );
       TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, stepIdentifier, null, variables );
-      testExecutionContext.mergeTestData( step.getTestData(), step.getTestDataSet(), getTestDataSources( runInfo ) );
+      testExecutionContext.mergeTestData( step.getTestData(), DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
 
       return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).build();
    }
 
-   public PreparedChaosAction getPreparedChaosAction( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, ChaosAction chaosAction ) throws Throwable
+   public PreparedChaosAction getPreparedChaosAction( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet,
+                                                      ChaosAction chaosAction )
+            throws Throwable
    {
       TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, chaosAction.getName(), null, variables );
-      testExecutionContext.mergeTestData( null, null, getTestDataSources( runInfo ) );
+      testExecutionContext.mergeTestData( null, commonTestDataSet, getTestDataSources( runInfo ) );
       return PreparedChaosAction.builder().chaosAction( chaosAction ).testExecutionContext( testExecutionContext ).build();
    }
 
-   public PreparedScenario getPreparedScenario( RunInfo runInfo, String featureName, long iterationIndex, HashMap<String, Serializable> variables, ArrayList<TestStep> scenarioSetupSteps, TestScenario testScenario,
-                                                ArrayList<TestStep> scenarioTearDownSteps )
+   public PreparedScenario getPreparedScenario( RunInfo runInfo, String featureName, long iterationIndex, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, ArrayList<TestStep> scenarioSetupSteps,
+                                                TestScenario testScenario, ArrayList<TestStep> scenarioTearDownSteps )
             throws Throwable
    {
       PreparedScenario preparedScenario = PreparedScenario.builder().name( testScenario.getName() ).description( testScenario.getDescription() ).build();
 
+      HashMap<String, ArrayList<Serializable>> mergedCommonTestDataSet = DataUtils.mergeMaps( commonTestDataSet, testScenario.getTestDataSet() );
+
       ArrayList<PreparedStep> preparedSetupSteps = new ArrayList<PreparedStep>();
       for ( TestStep step : DataUtils.mergeLists( scenarioSetupSteps, testScenario.getSetupSteps() ) )
       {
-         preparedSetupSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario.getName(), variables, step ) );
+         preparedSetupSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, step ) );
       }
       preparedScenario.setSetupSteps( preparedSetupSteps );
 
@@ -746,13 +750,12 @@ public class KartaRuntime implements AutoCloseable
       {
          if ( chaosConfiguration.checkForValidity() )
          {
-
             ArrayList<ChaosAction> chaosActionsToPerform = chaosConfiguration.nextChaosActions( random );
             // TODO: Handle chaos action being empty
 
             for ( ChaosAction chaosAction : chaosActionsToPerform )
             {
-               preparedChaosActions.add( getPreparedChaosAction( runInfo, featureName, iterationIndex, testScenario.getName(), variables, chaosAction ) );
+               preparedChaosActions.add( getPreparedChaosAction( runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, chaosAction ) );
             }
          }
       }
@@ -761,14 +764,14 @@ public class KartaRuntime implements AutoCloseable
       ArrayList<PreparedStep> preparedExecutionSteps = new ArrayList<PreparedStep>();
       for ( TestStep step : testScenario.getExecutionSteps() )
       {
-         preparedSetupSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario.getName(), variables, step ) );
+         preparedSetupSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, step ) );
       }
       preparedScenario.setExecutionSteps( preparedExecutionSteps );
 
       ArrayList<PreparedStep> preparedTearDownSteps = new ArrayList<PreparedStep>();
       for ( TestStep step : DataUtils.mergeLists( testScenario.getTearDownSteps(), scenarioTearDownSteps ) )
       {
-         preparedTearDownSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario.getName(), variables, step ) );
+         preparedTearDownSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, step ) );
       }
       preparedScenario.setTearDownSteps( preparedTearDownSteps );
 
@@ -798,9 +801,9 @@ public class KartaRuntime implements AutoCloseable
       return stepResult;
    }
 
-   public StepResult runStep( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, TestStep step ) throws Throwable
+   public StepResult runStep( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestStep step ) throws Throwable
    {
-      return runStep( runInfo, getPreparedStep( runInfo, featureName, iterationIndex, scenarioName, variables, step ) );
+      return runStep( runInfo, getPreparedStep( runInfo, featureName, iterationIndex, scenarioName, variables, commonTestDataSet, step ) );
    }
 
    public StepResult runChaosAction( RunInfo runInfo, PreparedChaosAction preparedChaosAction ) throws TestFailureException, RemoteException
@@ -824,8 +827,9 @@ public class KartaRuntime implements AutoCloseable
       return stepResult;
    }
 
-   public StepResult runChaosAction( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, ChaosAction chaosAction ) throws Throwable
+   public StepResult runChaosAction( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, ChaosAction chaosAction )
+            throws Throwable
    {
-      return runChaosAction( runInfo, getPreparedChaosAction( runInfo, featureName, iterationIndex, scenarioName, variables, chaosAction ) );
+      return runChaosAction( runInfo, getPreparedChaosAction( runInfo, featureName, iterationIndex, scenarioName, variables, commonTestDataSet, chaosAction ) );
    }
 }
