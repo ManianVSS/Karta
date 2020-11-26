@@ -5,10 +5,14 @@ import java.util.HashSet;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
+@Getter
+@Setter
+@ToString
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,24 +21,12 @@ public class RunTarget implements Serializable
    /**
     * 
     */
-   private static final long serialVersionUID              = 1L;
+   private static final long serialVersionUID = 1L;
 
    private String            featureFile;
 
    private String            javaTest;
    private String            javaTestJarFile;
 
-   @Builder.Default
-   private long              numberOfIterations            = 1;
-
-   @Builder.Default
-   private int               numberOfThreads               = 1;
-
-   private HashSet<String>   tags;
-
-   @Builder.Default
-   private Boolean           chanceBasedScenarioExecution  = false;
-
-   @Builder.Default
-   private Boolean           exclusiveScenarioPerIteration = false;
+   private HashSet<String>   runTags;
 }

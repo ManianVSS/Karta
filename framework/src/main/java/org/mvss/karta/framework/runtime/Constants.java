@@ -19,6 +19,7 @@ public class Constants
    public static final String   TEST_JOB                         = "testJob";
    public static final String   ITERATION_COUNTER                = "iterationCounter";
 
+   public static final String   RUN_INFO                         = "runInfo";
    public static final String   STEP_RUNNER_PLUGIN               = "stepRunnerPlugin";
    public static final String   TEST_DATA_SOURCE_PLUGINS         = "testDataSourcePlugins";
 

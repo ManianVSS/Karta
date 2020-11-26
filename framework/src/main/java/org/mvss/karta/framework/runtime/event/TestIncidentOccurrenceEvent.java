@@ -2,6 +2,7 @@ package org.mvss.karta.framework.runtime.event;
 
 import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.runtime.TestExecutionContext;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -27,6 +28,11 @@ public class TestIncidentOccurrenceEvent extends ScenarioEvent
       super( StandardEventsTypes.TEST_INCIDENT_OCCURRENCE_EVENT, runName, featureName, iterationNumber, scenarioName );
       this.parameters.put( Constants.STEP_IDENTIFIER, stepIdentifier );
       this.parameters.put( Constants.INCIDENT, incident );
+   }
+
+   public TestIncidentOccurrenceEvent( TestExecutionContext context, TestIncident incident )
+   {
+      this( context.getRunName(), context.getFeatureName(), context.getIterationIndex(), context.getScenarioName(), context.getStepIdentifier(), incident );
    }
 
    @JsonIgnore

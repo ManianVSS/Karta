@@ -25,12 +25,13 @@ import org.mvss.karta.framework.core.ChaosActionDefinition;
 import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.core.NamedParameter;
 import org.mvss.karta.framework.core.ParameterMapping;
+import org.mvss.karta.framework.core.PreparedChaosAction;
+import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestScenario;
-import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.runtime.BeanRegistry;
 import org.mvss.karta.framework.runtime.Configurator;
@@ -339,7 +340,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    }
 
    @Override
-   public String sanitizeStepDefinition( String stepIdentifier )
+   public String sanitizeStepIdentifier( String stepIdentifier )
    {
       stepIdentifier = stepIdentifier.trim();
       String words[] = stepIdentifier.split( WORD_FETCH_REGEX );
@@ -355,11 +356,12 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    }
 
    @Override
-   public StepResult runStep( TestStep testStep, TestExecutionContext testExecutionContext ) throws TestFailureException
+   public StepResult runStep( PreparedStep testStep ) throws TestFailureException
    {
       StepResult result = new StepResult();
+      TestExecutionContext testExecutionContext = testStep.getTestExecutionContext();
 
-      log.debug( "Step run" + testStep + " with context " + testExecutionContext );
+      log.debug( "Step run" + testStep );
 
       if ( StringUtils.isBlank( testStep.getIdentifier() ) )
       {
@@ -367,7 +369,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          return result;
       }
 
-      String stepIdentifier = sanitizeStepDefinition( testStep.getIdentifier() );
+      // Prepared step should already be sanitized // sanitizeStepIdentifier( testStep.getIdentifier() );
+      String stepIdentifier = testStep.getIdentifier();
 
       // Fetch the positional argument names
       ArrayList<String> inlineStepDefinitionParameterNames = new ArrayList<String>();
@@ -462,11 +465,14 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    }
 
    @Override
-   public StepResult performChaosAction( ChaosAction chaosAction, TestExecutionContext testExecutionContext ) throws TestFailureException
+   public StepResult performChaosAction( PreparedChaosAction preparedChaosAction ) throws TestFailureException
    {
       StepResult result = new StepResult();
 
-      log.debug( "Chaos actions run" + chaosAction + " with context " + testExecutionContext );
+      ChaosAction chaosAction = preparedChaosAction.getChaosAction();
+      TestExecutionContext testExecutionContext = preparedChaosAction.getTestExecutionContext();
+
+      log.debug( "Chaos actions run" + chaosAction );
 
       if ( StringUtils.isBlank( chaosAction.getName() ) )
       {
@@ -546,7 +552,6 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             }
             catch ( Throwable e )
             {
-               // TODO Auto-generated catch block
                log.error( "", e );
             }
          }

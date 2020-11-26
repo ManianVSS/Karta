@@ -1,6 +1,5 @@
 package org.mvss.karta.framework.runtime;
 
-import java.util.HashSet;
 import java.util.concurrent.Callable;
 
 import org.mvss.karta.framework.core.FeatureResult;
@@ -26,34 +25,20 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class RemoteFeatureRunner implements Callable<FeatureResult>
 {
-   private KartaRuntime    kartaRuntime;
-   private String          stepRunner;
-   private HashSet<String> testDataSources;
-   private String          runName;
-   private TestFeature     testFeature;
+   private RunInfo       runInfo;
+   private TestFeature   testFeature;
 
    @Builder.Default
-   private long            numberOfIterations            = 1;
-   @Builder.Default
-   private int             numberOfIterationsInParallel  = 1;
+   private KartaMinion   minionToUse = null;
 
-   @Builder.Default
-   private Boolean         chanceBasedScenarioExecution  = false;
-
-   @Builder.Default
-   private Boolean         exclusiveScenarioPerIteration = false;
-
-   @Builder.Default
-   private KartaMinion     minionToUse                   = null;
-
-   private FeatureResult   result;
+   private FeatureResult result;
 
    @Override
    public FeatureResult call()
    {
       try
       {
-         result = minionToUse.runFeature( stepRunner, testDataSources, runName, testFeature, chanceBasedScenarioExecution, exclusiveScenarioPerIteration, numberOfIterations, numberOfIterationsInParallel );
+         result = minionToUse.runFeature( runInfo, testFeature );
       }
       catch ( Throwable t )
       {

@@ -5,14 +5,20 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
+import org.mvss.karta.framework.runtime.event.Event;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
+@Getter
+@Setter
+@ToString
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -51,6 +57,9 @@ public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
 
    @Builder.Default
    private HashMap<String, Boolean> tearDownResults    = new HashMap<String, Boolean>();
+
+   @Builder.Default
+   private ArrayList<Event>         events             = new ArrayList<Event>();
 
    @JsonIgnore
    public boolean isPassed()

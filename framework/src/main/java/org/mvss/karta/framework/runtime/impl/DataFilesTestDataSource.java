@@ -9,9 +9,9 @@ import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
 import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
-import org.mvss.karta.framework.runtime.models.ExecutionStepPointer;
 import org.mvss.karta.framework.utils.ParserUtils;
 import org.mvss.karta.framework.utils.PropertyUtils;
 
@@ -131,58 +131,41 @@ public class DataFilesTestDataSource implements TestDataSource
    }
 
    @Override
-   public HashMap<String, Serializable> getData( ExecutionStepPointer executionStepPointer ) throws Throwable
+   public HashMap<String, Serializable> getData( TestExecutionContext testExecutionContext ) throws Throwable
    {
       HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
 
-      if ( executionStepPointer != null )
+      if ( testExecutionContext != null )
       {
          try
          {
-            String featureName = executionStepPointer.getFeature();
+            String featureName = testExecutionContext.getFeatureName();
+            HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>> featureData = ( featureName != null ) && dataStore.containsKey( featureName ) ? dataStore.get( featureName ) : dataStore.get( Constants.__GENERIC_FEATURE__ );
 
-            if ( featureName == null )
+            if ( featureData != null )
             {
-               featureName = Constants.__GENERIC_FEATURE__;
-            }
+               String scenarioName = testExecutionContext.getScenarioName();
+               HashMap<String, HashMap<String, ArrayList<Serializable>>> scenarioData = ( scenarioName != null ) && featureData.containsKey( scenarioName ) ? featureData.get( scenarioName ) : featureData.get( Constants.__GENERIC_SCENARIO__ );
 
-            String scenarioName = executionStepPointer.getScenario();
-
-            if ( scenarioName == null )
-            {
-               scenarioName = Constants.__GENERIC_SCENARIO__;
-            }
-
-            String stepName = executionStepPointer.getStep();
-
-            if ( stepName == null )
-            {
-               stepName = Constants.__GENERIC_STEP__;
-            }
-
-            long iterationIndex = executionStepPointer.getIterationIndex();
-            if ( iterationIndex <= 0 )
-            {
-               iterationIndex = 0;
-            }
-
-            if ( dataStore.containsKey( featureName ) )
-            {
-               HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>> featureData = dataStore.get( featureName );
-
-               if ( featureData.containsKey( scenarioName ) )
+               if ( scenarioData != null )
                {
-                  HashMap<String, HashMap<String, ArrayList<Serializable>>> scenarioData = featureData.get( scenarioName );
+                  String stepName = testExecutionContext.getStepIdentifier();
+                  HashMap<String, ArrayList<Serializable>> stepData = ( stepName != null ) && scenarioData.containsKey( stepName ) ? scenarioData.get( stepName ) : scenarioData.get( Constants.__GENERIC_STEP__ );
 
-                  if ( scenarioData.containsKey( stepName ) )
+                  if ( stepData != null )
                   {
-                     HashMap<String, ArrayList<Serializable>> stepData = scenarioData.get( stepName );
-
                      for ( String dataKey : stepData.keySet() )
                      {
                         ArrayList<Serializable> possibleValues = stepData.get( dataKey );
+
                         if ( ( possibleValues != null ) && !possibleValues.isEmpty() )
                         {
+                           long iterationIndex = testExecutionContext.getIterationIndex();
+                           if ( iterationIndex <= 0 )
+                           {
+                              iterationIndex = 0;
+                           }
+
                            int valueIndex = (int) ( iterationIndex % possibleValues.size() );
                            testData.put( dataKey, possibleValues.get( valueIndex ) );
                         }

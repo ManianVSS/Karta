@@ -10,10 +10,14 @@ import org.mvss.karta.framework.utils.SSLProperties;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
+@Getter
+@Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -44,7 +48,8 @@ public class KartaConfiguration implements Serializable
 
    private SSLProperties                       sslProperties;
 
-   private String                              nodeName;
+   @Builder.Default
+   private KartaMinionConfiguration            localNode                    = new KartaMinionConfiguration();
 
    @Builder.Default
    private ArrayList<KartaMinionConfiguration> nodes                        = new ArrayList<KartaMinionConfiguration>();
@@ -67,8 +72,7 @@ public class KartaConfiguration implements Serializable
       PropertyUtils.expandEnvVars( enabledPlugins );
       PropertyUtils.expandEnvVars( propertyFiles );
       PropertyUtils.expandEnvVars( testCatalogFragmentFiles );
-      sslProperties.expandSystemAndEnvProperties();
-      nodeName = PropertyUtils.expandEnvVars( nodeName );
+      sslProperties.expandSystemAndEnvProperties();;
       PropertyUtils.expandEnvVars( configurationScanPackages );
    }
 }

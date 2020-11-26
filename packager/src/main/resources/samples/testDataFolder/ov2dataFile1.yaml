@@ -1,95 +1,17 @@
-CalculatorTest:
-      __feature_setup__:
-            the calculator is powered on:
-                  data3:
-                        - 2value1
-                        - 2value2
-                        - 2value3
-                  data2:
-                        - mapval1:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-                        - mapval2:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-                        - mapval3:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-      Scenario1:
-            the button "" is pressed:
-                  data3:
-                        - 2value1
-                        - 2value2
-                        - 2value3
-                  data2:
-                        - mapval1:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-                        - mapval2:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-                        - mapval3:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-            the calculator should display "":
-                  data3:
-                        - 2value1
-                        - 2value2
-                        - 2value3
-                  data2:
-                        - mapval1:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-                        - mapval2:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-                        - mapval3:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-      Scenario2:
-            a binary operation is perfomed on the calculator:
-                  data3:
-                        - 2value1
-                        - 2value2
-                        - 2value3
-                  data2:
-                        - mapval1:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-                        - mapval2:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-                        - mapval3:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-            the calculator should display "":
-                  data3:
-                        - 2value1
-                        - 2value2
-                        - 2value3
-                  data2:
-                        - mapval1:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-                        - mapval2:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-                        - mapval3:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-      __feature_teardown__:
-            the calculator is powered off:
-                  data3:
-                        - 2value1
-                        - 2value2
-                        - 2value3
-                  data2:
-                        - mapval1:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-                        - mapval2:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
-                        - mapval3:
-                                2mapvalkey1: 2mapvalkey1value
-                                2mapvalkey2: 2mapvalkey2value
+__generic_feature__:
+        __generic_scenario__:
+                __generic_step__:
+                        data3:
+                                - cvalue1
+                                - cvalue2
+                                - cvalue3
+                        data2:
+                                - mapval1:
+                                          cmapvalkey1: cmapvalkey1value
+                                          cmapvalkey2: cmapvalkey2value
+                                - mapval2:
+                                          cmapvalkey1: cmapvalkey1value
+                                          cmapvalkey2: cmapvalkey2value
+                                - mapval3:
+                                          cmapvalkey1: cmapvalkey1value
+                                          cmapvalkey2: cmapvalkey2value

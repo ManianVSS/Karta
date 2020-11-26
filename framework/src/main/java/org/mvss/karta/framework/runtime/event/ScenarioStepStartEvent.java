@@ -1,6 +1,6 @@
 package org.mvss.karta.framework.runtime.event;
 
-import org.mvss.karta.framework.core.TestStep;
+import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.runtime.Constants;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -22,15 +22,15 @@ public class ScenarioStepStartEvent extends ScenarioEvent
     */
    private static final long serialVersionUID = 1L;
 
-   public ScenarioStepStartEvent( String runName, String featureName, long iterationNumber, String scenarioName, TestStep step )
+   public ScenarioStepStartEvent( String runName, String featureName, long iterationNumber, String scenarioName, PreparedStep step )
    {
       super( StandardEventsTypes.SCENARIO_STEP_START_EVENT, runName, featureName, iterationNumber, scenarioName );
       this.parameters.put( Constants.STEP, step );
    }
 
    @JsonIgnore
-   public TestStep getStep()
+   public PreparedStep getStep()
    {
-      return (TestStep) parameters.get( Constants.STEP );
+      return (PreparedStep) parameters.get( Constants.STEP );
    }
 }

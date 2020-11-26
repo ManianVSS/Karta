@@ -2,12 +2,12 @@ package org.mvss.karta.server.api;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
-import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.PreparedChaosAction;
+import org.mvss.karta.framework.core.PreparedScenario;
+import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StandardFeatureResults;
 import org.mvss.karta.framework.core.StandardScenarioResults;
@@ -15,11 +15,9 @@ import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestJob;
-import org.mvss.karta.framework.core.TestScenario;
-import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
-import org.mvss.karta.framework.runtime.TestExecutionContext;
+import org.mvss.karta.framework.runtime.RunInfo;
 import org.mvss.karta.framework.runtime.TestFailureException;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
@@ -32,24 +30,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 public class MinionController
 {
-   private static TypeReference<ArrayList<TestStep>> stepListTypeRef        = new TypeReference<ArrayList<TestStep>>()
-                                                                            {
-                                                                            };
-
-   private static TypeReference<HashSet<String>>     hashSetOfStringTypeRef = new TypeReference<HashSet<String>>()
-                                                                            {
-                                                                            };
-
    @Autowired
-   private KartaRuntime                              kartaRuntime;
+   private KartaRuntime kartaRuntime;
 
-   private ObjectMapper                              objectMapper           = ParserUtils.getObjectMapper();
+   private ObjectMapper objectMapper = ParserUtils.getObjectMapper();
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.GET, value = Constants.PATH_HEALTH )
@@ -69,16 +58,15 @@ public class MinionController
             return StandardStepResults.error( "Missing parameters in body" );
          }
 
-         String stepRunnerPlugin = parameters.containsKey( Constants.STEP_RUNNER_PLUGIN ) ? (String) parameters.get( Constants.STEP_RUNNER_PLUGIN ) : kartaRuntime.getKartaConfiguration().getDefaultStepRunnerPlugin();
-         TestStep testStep = objectMapper.convertValue( parameters.get( Constants.TEST_STEP ), TestStep.class );
-         TestExecutionContext testExecutionContext = parameters.containsKey( Constants.TEST_EXECUTION_CONTEXT ) ? objectMapper.convertValue( parameters.get( Constants.TEST_EXECUTION_CONTEXT ), TestExecutionContext.class ) : new TestExecutionContext();
+         RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ? objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) : kartaRuntime.getDefaultRunInfo();
+         PreparedStep testStep = objectMapper.convertValue( parameters.get( Constants.TEST_STEP ), PreparedStep.class );
 
          if ( testStep == null )
          {
             return StandardStepResults.error( "Step to run missing in parameters" );
          }
 
-         return kartaRuntime.runStep( stepRunnerPlugin, testStep, testExecutionContext );
+         return kartaRuntime.runStep( runInfo, testStep );
       }
       catch ( TestFailureException e )
       {
@@ -101,16 +89,15 @@ public class MinionController
             return StandardStepResults.error( "Missing parameters in body" );
          }
 
-         String stepRunnerPlugin = parameters.containsKey( Constants.STEP_RUNNER_PLUGIN ) ? (String) parameters.get( Constants.STEP_RUNNER_PLUGIN ) : kartaRuntime.getKartaConfiguration().getDefaultStepRunnerPlugin();
-         ChaosAction chaosAction = objectMapper.convertValue( parameters.get( Constants.CHAOS_ACTION ), ChaosAction.class );
-         TestExecutionContext testExecutionContext = parameters.containsKey( Constants.TEST_EXECUTION_CONTEXT ) ? objectMapper.convertValue( parameters.get( Constants.TEST_EXECUTION_CONTEXT ), TestExecutionContext.class ) : new TestExecutionContext();
+         RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ? objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) : kartaRuntime.getDefaultRunInfo();
+         PreparedChaosAction chaosAction = objectMapper.convertValue( parameters.get( Constants.CHAOS_ACTION ), PreparedChaosAction.class );
 
          if ( chaosAction == null )
          {
             return StandardStepResults.error( "Chaos action to run missing in parameters" );
          }
 
-         return kartaRuntime.runChaosAction( stepRunnerPlugin, chaosAction, testExecutionContext );
+         return kartaRuntime.runChaosAction( runInfo, chaosAction );
       }
       catch ( TestFailureException e )
       {
@@ -133,15 +120,10 @@ public class MinionController
             return StandardScenarioResults.error( "Missing parameters in body" );
          }
 
-         String stepRunnerPlugin = parameters.containsKey( Constants.STEP_RUNNER_PLUGIN ) ? (String) parameters.get( Constants.STEP_RUNNER_PLUGIN ) : kartaRuntime.getKartaConfiguration().getDefaultStepRunnerPlugin();
-         HashSet<String> testDataSourcePlugins = parameters.containsKey( Constants.TEST_DATA_SOURCE_PLUGINS ) ? objectMapper.convertValue( parameters.get( Constants.TEST_DATA_SOURCE_PLUGINS ), hashSetOfStringTypeRef )
-                  : kartaRuntime.getKartaConfiguration().getDefaultTestDataSourcePlugins();
-         String runName = (String) parameters.get( Constants.RUN_NAME );
+         RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ? objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) : kartaRuntime.getDefaultRunInfo();
          String featureName = (String) parameters.get( Constants.FEATURE_NAME );
          long iterationIndex = DataUtils.serializableToLong( parameters.get( Constants.ITERATION_INDEX ), -1 );
-         ArrayList<TestStep> scenarioSetupSteps = parameters.containsKey( Constants.SCENARIO_SETUP_STEPS ) ? objectMapper.convertValue( parameters.get( Constants.SCENARIO_SETUP_STEPS ), stepListTypeRef ) : new ArrayList<TestStep>();
-         TestScenario testScenario = objectMapper.convertValue( parameters.get( Constants.TEST_SCENARIO ), TestScenario.class );
-         ArrayList<TestStep> scenarioTearDownSteps = parameters.containsKey( Constants.SCENARIO_TEAR_DOWN_STEPS ) ? objectMapper.convertValue( parameters.get( Constants.SCENARIO_TEAR_DOWN_STEPS ), stepListTypeRef ) : new ArrayList<TestStep>();
+         PreparedScenario testScenario = objectMapper.convertValue( parameters.get( Constants.TEST_SCENARIO ), PreparedScenario.class );
          long scenarioIterationNumber = DataUtils.serializableToLong( parameters.get( Constants.SCENARIO_ITERATION_NUMBER ), -1 );
 
          if ( testScenario == null )
@@ -149,7 +131,7 @@ public class MinionController
             return StandardScenarioResults.error( "Scenario to run missing in parameters" );
          }
 
-         return kartaRuntime.runTestScenario( stepRunnerPlugin, testDataSourcePlugins, runName, featureName, iterationIndex, scenarioSetupSteps, testScenario, scenarioTearDownSteps, scenarioIterationNumber );
+         return kartaRuntime.runTestScenario( runInfo, featureName, iterationIndex, testScenario, scenarioIterationNumber );
       }
       catch ( Throwable t )
       {
@@ -166,10 +148,7 @@ public class MinionController
          throw new Exception( "Missing parameters in body" );
       }
 
-      String stepRunnerPlugin = parameters.containsKey( Constants.STEP_RUNNER_PLUGIN ) ? (String) parameters.get( Constants.STEP_RUNNER_PLUGIN ) : kartaRuntime.getKartaConfiguration().getDefaultStepRunnerPlugin();
-      HashSet<String> testDataSourcePlugins = parameters.containsKey( Constants.TEST_DATA_SOURCE_PLUGINS ) ? objectMapper.convertValue( parameters.get( Constants.TEST_DATA_SOURCE_PLUGINS ), hashSetOfStringTypeRef )
-               : kartaRuntime.getKartaConfiguration().getDefaultTestDataSourcePlugins();
-      String runName = (String) parameters.get( Constants.RUN_NAME );
+      RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ? objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) : kartaRuntime.getDefaultRunInfo();
       String featureName = (String) parameters.get( Constants.FEATURE_NAME );
       TestJob job = objectMapper.convertValue( parameters.get( Constants.JOB ), TestJob.class );
 
@@ -178,7 +157,7 @@ public class MinionController
          throw new Exception( "Missing job to run in parameters" );
       }
 
-      return kartaRuntime.scheduleJob( stepRunnerPlugin, testDataSourcePlugins, runName, featureName, job );
+      return kartaRuntime.scheduleJob( runInfo, featureName, job );
    }
 
    @ResponseStatus( HttpStatus.OK )
@@ -199,23 +178,14 @@ public class MinionController
             return StandardFeatureResults.error( "Missing parameters in body" );
          }
 
-         String stepRunnerPlugin = parameters.containsKey( Constants.STEP_RUNNER_PLUGIN ) ? (String) parameters.get( Constants.STEP_RUNNER_PLUGIN ) : kartaRuntime.getKartaConfiguration().getDefaultStepRunnerPlugin();
-         HashSet<String> testDataSourcePlugins = parameters.containsKey( Constants.TEST_DATA_SOURCE_PLUGINS ) ? objectMapper.convertValue( parameters.get( Constants.TEST_DATA_SOURCE_PLUGINS ), hashSetOfStringTypeRef )
-                  : kartaRuntime.getKartaConfiguration().getDefaultTestDataSourcePlugins();
-         String runName = (String) parameters.get( Constants.RUN_NAME );
+         RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ? objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) : kartaRuntime.getDefaultRunInfo();
          TestFeature feature = objectMapper.convertValue( parameters.get( Constants.FEATURE ), TestFeature.class );
 
          if ( feature == null )
          {
             return StandardFeatureResults.error( "Feature to run missing in parameters" );
          }
-
-         boolean chanceBasedScenarioExecution = parameters.containsKey( Constants.CHANCE_BASED_SCENARIO_EXECUTION ) ? (boolean) parameters.get( Constants.CHANCE_BASED_SCENARIO_EXECUTION ) : false;
-         boolean exclusiveScenarioPerIteration = parameters.containsKey( Constants.EXCLUSIVE_SCENARIO_PER_ITERATION ) ? (boolean) parameters.get( Constants.EXCLUSIVE_SCENARIO_PER_ITERATION ) : false;
-         long numberOfIterations = DataUtils.serializableToLong( parameters.get( Constants.NUMBER_OF_ITERATIONS ), 1 );
-         int numberOfIterationsInParallel = parameters.containsKey( Constants.NUMBER_OF_ITERATIONS_IN_PARALLEL ) ? (int) parameters.get( Constants.NUMBER_OF_ITERATIONS_IN_PARALLEL ) : 1;
-
-         return kartaRuntime.runFeature( stepRunnerPlugin, testDataSourcePlugins, runName, feature, chanceBasedScenarioExecution, exclusiveScenarioPerIteration, numberOfIterations, numberOfIterationsInParallel );
+         return kartaRuntime.runFeature( runInfo, feature );
       }
       catch ( Throwable t )
       {
