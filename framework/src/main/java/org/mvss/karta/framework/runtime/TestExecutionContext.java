@@ -6,6 +6,8 @@ import java.util.HashMap;
 
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,6 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+//TODO: Thread and context specific bean registry to share control objects for a thread/runtime level
 @Getter
 @Setter
 @ToString
@@ -40,6 +43,21 @@ public class TestExecutionContext implements Serializable
 
    @Builder.Default
    private HashMap<String, Serializable> variables        = new HashMap<String, Serializable>();
+
+   @JsonIgnore
+   private transient BeanRegistry        contextBeanRegistry;
+
+   public TestExecutionContext( String runName, String featureName, long iterationIndex, String scenarioName, String stepIdentifier, HashMap<String, Serializable> data, HashMap<String, Serializable> variables )
+   {
+      super();
+      this.runName = runName;
+      this.featureName = featureName;
+      this.iterationIndex = iterationIndex;
+      this.scenarioName = scenarioName;
+      this.stepIdentifier = stepIdentifier;
+      this.data = data;
+      this.variables = variables;
+   }
 
    public void mergeTestData( HashMap<String, Serializable> stepTestData, HashMap<String, ArrayList<Serializable>> testDataSet, ArrayList<TestDataSource> testDataSources ) throws Throwable
    {
@@ -74,5 +92,4 @@ public class TestExecutionContext implements Serializable
          stepTestData.forEach( ( key, value ) -> data.put( key, value ) );
       }
    }
-
 }

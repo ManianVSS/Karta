@@ -522,13 +522,16 @@ public class KartaRuntime implements AutoCloseable
       {
          String runName = runInfo.getRunName();
 
+         HashSet<String> individualTestTags = new HashSet<String>();
+         individualTestTags.add( Constants.__ALL__ );
+
          if ( StringUtils.isNotBlank( runTarget.getFeatureFile() ) )
          {
-            eventProcessor.runStart( runName );
+            eventProcessor.runStart( runName, individualTestTags );
             eventProcessor.raiseEvent( new RunStartEvent( runName ) );
             FeatureResult result = runFeatureFile( runInfo, runTarget.getFeatureFile() );
             eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
-            eventProcessor.runStop( runName );
+            eventProcessor.runStop( runName, individualTestTags );
             return result.isPassed();
          }
          else if ( StringUtils.isNotBlank( runTarget.getJavaTest() ) )
@@ -540,11 +543,11 @@ public class KartaRuntime implements AutoCloseable
             }
 
             JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).runInfo( runInfo ).javaTest( runTarget.getJavaTest() ).javaTestJarFile( runTarget.getJavaTestJarFile() ).build();
-            eventProcessor.runStart( runName );
+            eventProcessor.runStart( runName, individualTestTags );
             eventProcessor.raiseEvent( new RunStartEvent( runName ) );
             FeatureResult result = testRunner.call();
             eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
-            eventProcessor.runStop( runName );
+            eventProcessor.runStop( runName, individualTestTags );
             return result.isPassed();
          }
          else if ( ( runTarget.getRunTags() != null && !runTarget.getRunTags().isEmpty() ) )
@@ -566,13 +569,13 @@ public class KartaRuntime implements AutoCloseable
    public boolean runTestsWithTags( RunInfo runInfo, HashSet<String> tags ) throws Throwable
    {
       String runName = runInfo.getRunName();
-      eventProcessor.runStart( runName );
+      eventProcessor.runStart( runName, tags );
       eventProcessor.raiseEvent( new RunStartEvent( runName ) );
       ArrayList<Test> tests = testCatalogManager.filterTestsByTag( tags );
       Collections.sort( tests );
       boolean result = runTest( runInfo, tests );
       eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
-      eventProcessor.runStop( runName );
+      eventProcessor.runStop( runName, tags );
       return result;
    }
 

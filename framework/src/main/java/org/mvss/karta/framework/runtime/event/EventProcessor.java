@@ -5,9 +5,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
-import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.runtime.TestFailureException;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
@@ -128,9 +128,9 @@ public class EventProcessor implements AutoCloseable
       }
    }
 
-   public void runStart( String runName )
+   public void runStart( String runName, HashSet<String> tags )
    {
-      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.runStart( runName ) );
+      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.runStart( runName, tags ) );
    }
 
    public void featureStart( String runName, TestFeature feature, HashSet<String> tags )
@@ -141,7 +141,7 @@ public class EventProcessor implements AutoCloseable
       }
    }
 
-   public void scenarioStart( String runName, String featureName, TestScenario scenario, HashSet<String> tags )
+   public void scenarioStart( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
    {
       if ( tags != null )
       {
@@ -149,7 +149,7 @@ public class EventProcessor implements AutoCloseable
       }
    }
 
-   public void scenarioStop( String runName, String featureName, TestScenario scenario, HashSet<String> tags )
+   public void scenarioStop( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
    {
       if ( tags != null )
       {
@@ -165,8 +165,8 @@ public class EventProcessor implements AutoCloseable
       }
    }
 
-   public void runStop( String runName )
+   public void runStop( String runName, HashSet<String> tags )
    {
-      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.runStop( runName ) );
+      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.runStop( runName, tags ) );
    }
 }

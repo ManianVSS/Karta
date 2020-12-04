@@ -110,6 +110,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          TreeMap<Integer, ArrayList<Method>> scenarioTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
          TreeMap<Integer, ArrayList<Method>> featureTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
 
+         beanRegistry.loadStaticBeans( testCaseClass );
          Object testCaseObject = testCaseClass.newInstance();
          beanRegistry.loadBeans( testCaseObject );
 

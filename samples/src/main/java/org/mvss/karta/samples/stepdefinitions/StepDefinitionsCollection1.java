@@ -21,8 +21,8 @@ public class StepDefinitionsCollection1
    @PropertyMapping( group = "groupName", value = "variable2" )
    private SamplePropertyType variable2;
 
-   @KartaAutoWired( "AutomationDriverObject" )
-   private AutomationDriver   driver;
+   @KartaAutoWired( "Employee" )
+   private Employee           employee;
 
    @StepDefinition( value = "the calculator is powered on", parameterMapping = ParameterMapping.NAMED )
    public void the_calculator_is_powered_on( TestExecutionContext context, @NamedParameter( "employee" ) Employee employee ) throws Throwable
@@ -56,13 +56,20 @@ public class StepDefinitionsCollection1
    public void the_button_is_pressed( TestExecutionContext context, String button ) throws Throwable
    {
       log.info( "the button \"" + button + "\" is pressed with testData" + context.getData() );
+   }
+
+   @StepDefinition( "the UI button \"\" is pressed" )
+   public void the_UI_button_is_pressed( TestExecutionContext context, String button ) throws Throwable
+   {
+      log.info( "the UI button \"" + button + "\" is pressed with testData" + context.getData() );
+      AutomationDriver driver = (AutomationDriver) context.getContextBeanRegistry().get( "AutomationDriverObject" );
       driver.click( button );
    }
 
    @StepDefinition( "dummy teardown step" )
    public void dummy_teardown_step( TestExecutionContext context ) throws Throwable
    {
-      log.info( "dummy teardown step " + variable2 );
+      log.info( "dummy teardown step " + variable2 + " bean employee= " + employee );
    }
 
    @StepDefinition( "the calculator is powered off" )

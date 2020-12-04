@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.runtime;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -60,6 +61,15 @@ public class ScenarioRunner implements Callable<ScenarioResult>
       result.setIterationIndex( iterationIndex );
 
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
+
+      // This should run at scenario runner since this need to run on the node where scenario is to be run
+      testScenario.propogateContextBeanRegistry();
+
+      HashSet<String> tags = runInfo.getTags();
+      if ( tags != null )
+      {
+         eventProcessor.scenarioStart( runName, featureName, testScenario, tags );
+      }
 
       log.debug( "Running Scenario: " + testScenario );
 
@@ -149,6 +159,11 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                {
                   result.setSuccessful( false );
                }
+            }
+
+            if ( tags != null )
+            {
+               eventProcessor.scenarioStop( runName, featureName, testScenario, tags );
             }
          }
          catch ( Throwable t )

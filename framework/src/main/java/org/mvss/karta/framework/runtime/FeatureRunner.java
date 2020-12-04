@@ -121,12 +121,12 @@ public class FeatureRunner implements Callable<FeatureResult>
 
          boolean useMinions = kartaRuntime.getKartaConfiguration().isMinionsEnabled() && !nodeRegistry.getMinions().isEmpty();
 
+         eventProcessor.raiseEvent( new FeatureStartEvent( runName, testFeature ) );
+
          if ( tags != null )
          {
             eventProcessor.featureStart( runName, testFeature, tags );
          }
-
-         eventProcessor.raiseEvent( new FeatureStartEvent( runName, testFeature ) );
 
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
@@ -340,11 +340,12 @@ public class FeatureRunner implements Callable<FeatureResult>
             result.setSuccessful( false );
          }
 
-         eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature, result ) );
          if ( tags != null )
          {
             eventProcessor.featureStop( runName, testFeature, tags );
          }
+
+         eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature, result ) );
       }
       catch ( Throwable t )
       {

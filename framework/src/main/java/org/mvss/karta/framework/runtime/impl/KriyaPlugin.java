@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,20 +19,22 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.text.StringEscapeUtils;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.AfterFeature;
+import org.mvss.karta.framework.core.AfterRun;
 import org.mvss.karta.framework.core.AfterScenario;
 import org.mvss.karta.framework.core.BeforeFeature;
+import org.mvss.karta.framework.core.BeforeRun;
 import org.mvss.karta.framework.core.BeforeScenario;
 import org.mvss.karta.framework.core.ChaosActionDefinition;
 import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.core.NamedParameter;
 import org.mvss.karta.framework.core.ParameterMapping;
 import org.mvss.karta.framework.core.PreparedChaosAction;
+import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.runtime.BeanRegistry;
 import org.mvss.karta.framework.runtime.Configurator;
@@ -52,46 +55,49 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCycleHook
 {
-   public static final String                           PLUGIN_NAME                            = "Kriya";
+   public static final String                                       PLUGIN_NAME                            = "Kriya";
 
-   public static final String                           INLINE_STEP_DEF_PARAM_INDICATOR_STRING = "\"\"";
-   public static final String                           WORD_FETCH_REGEX                       = "\\W+";
+   public static final String                                       INLINE_STEP_DEF_PARAM_INDICATOR_STRING = "\"\"";
+   public static final String                                       WORD_FETCH_REGEX                       = "\\W+";
 
-   public static final String                           INLINE_TEST_DATA_PATTERN               = "\"(?:[^\\\\\"]+|\\\\.|\\\\\\\\)*\"";
+   public static final String                                       INLINE_TEST_DATA_PATTERN               = "\"(?:[^\\\\\"]+|\\\\.|\\\\\\\\)*\"";
 
-   private HashMap<String, MutablePair<Object, Method>> taggedFeatureStartHooks                = new HashMap<String, MutablePair<Object, Method>>();
-   private HashMap<String, MutablePair<Object, Method>> taggedFeatureStopHooks                 = new HashMap<String, MutablePair<Object, Method>>();
-   private HashMap<String, MutablePair<Object, Method>> taggedScenarioStartHooks               = new HashMap<String, MutablePair<Object, Method>>();
-   private HashMap<String, MutablePair<Object, Method>> taggedScenarioStopHooks                = new HashMap<String, MutablePair<Object, Method>>();
+   private HashMap<String, Pattern>                                 tagPatternMap                          = new HashMap<String, Pattern>();
+   private HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedRunStartHooks                    = new HashMap<Pattern, ArrayList<MutablePair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedRunStopHooks                     = new HashMap<Pattern, ArrayList<MutablePair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedFeatureStartHooks                = new HashMap<Pattern, ArrayList<MutablePair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedFeatureStopHooks                 = new HashMap<Pattern, ArrayList<MutablePair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedScenarioStartHooks               = new HashMap<Pattern, ArrayList<MutablePair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedScenarioStopHooks                = new HashMap<Pattern, ArrayList<MutablePair<Object, Method>>>();
 
-   private HashMap<String, MutablePair<Object, Method>> stepHandlerMap                         = new HashMap<String, MutablePair<Object, Method>>();
-   private HashMap<String, MutablePair<Object, Method>> chaosActionHandlerMap                  = new HashMap<String, MutablePair<Object, Method>>();
+   private HashMap<String, MutablePair<Object, Method>>             stepHandlerMap                         = new HashMap<String, MutablePair<Object, Method>>();
+   private HashMap<String, MutablePair<Object, Method>>             chaosActionHandlerMap                  = new HashMap<String, MutablePair<Object, Method>>();
 
-   private static Pattern                               testDataPattern                        = Pattern.compile( INLINE_TEST_DATA_PATTERN );
+   private static Pattern                                           testDataPattern                        = Pattern.compile( INLINE_TEST_DATA_PATTERN );
 
-   public static final List<String>                     conjunctions                           = Arrays.asList( "Given", "When", "Then", "And", "But" );
+   public static final List<String>                                 conjunctions                           = Arrays.asList( "Given", "When", "Then", "And", "But" );
 
-   private static ObjectMapper                          objectMapper                           = ParserUtils.getObjectMapper();
+   private static ObjectMapper                                      objectMapper                           = ParserUtils.getObjectMapper();
 
-   private boolean                                      initialized                            = false;
+   private boolean                                                  initialized                            = false;
 
    @PropertyMapping( group = PLUGIN_NAME, value = "stepDefinitionPackageNames" )
-   private ArrayList<String>                            stepDefinitionPackageNames             = new ArrayList<String>();
+   private ArrayList<String>                                        stepDefinitionPackageNames             = new ArrayList<String>();
 
    @PropertyMapping( group = PLUGIN_NAME, value = "chaosActionDefinitionPackageNames" )
-   private ArrayList<String>                            chaosActionDefinitionPackageNames      = new ArrayList<String>();
+   private ArrayList<String>                                        chaosActionDefinitionPackageNames      = new ArrayList<String>();
 
    @KartaAutoWired
-   private BeanRegistry                                 beanRegistry;
+   private BeanRegistry                                             beanRegistry;
 
    @KartaAutoWired
-   private Configurator                                 configurator;
+   private Configurator                                             configurator;
 
    @KartaAutoWired
-   private EventProcessor                               eventProcessor;
+   private EventProcessor                                           eventProcessor;
 
    @KartaAutoWired
-   private KartaMinionRegistry                          minionRegistry;
+   private KartaMinionRegistry                                      minionRegistry;
 
    @Override
    public String getPluginName()
@@ -132,6 +138,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                      Class<?> stepDefinitionClass = candidateStepDefinitionMethod.getDeclaringClass();
                                                                      if ( !beanRegistry.containsKey( stepDefinitionClass.getName() ) )
                                                                      {
+                                                                        beanRegistry.loadStaticBeans( stepDefinitionClass );
                                                                         Object stepDefClassObj = stepDefinitionClass.newInstance();
                                                                         configurator.loadProperties( stepDefClassObj );
                                                                         beanRegistry.loadBeans( stepDefClassObj );
@@ -173,6 +180,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                      Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
                                                                      if ( !beanRegistry.containsKey( chaosActionDefinitionClass.getName() ) )
                                                                      {
+                                                                        beanRegistry.loadStaticBeans( chaosActionDefinitionClass );
                                                                         Object chaosActionDefClassObj = chaosActionDefinitionClass.newInstance();
                                                                         configurator.loadProperties( chaosActionDefClassObj );
                                                                         beanRegistry.loadBeans( chaosActionDefClassObj );
@@ -189,7 +197,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
                                                          };
 
-   private void processTaggedHook( HashMap<String, MutablePair<Object, Method>> taggedHooks, String[] tags, Method hookMethod, Class<?>... parameters ) throws InstantiationException, IllegalAccessException
+   private void processTaggedHook( HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedHooks, String[] tags, Method hookMethod, Class<?>... parameters ) throws InstantiationException, IllegalAccessException
    {
       String methodDescription = hookMethod.toString();
       Class<?>[] params = hookMethod.getParameterTypes();
@@ -218,6 +226,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       Class<?> hookClass = hookMethod.getDeclaringClass();
       if ( !beanRegistry.containsKey( hookClass.getName() ) )
       {
+         beanRegistry.loadStaticBeans( hookClass );
          Object hookObj = hookClass.newInstance();
          configurator.loadProperties( hookObj );
          beanRegistry.loadBeans( hookObj );
@@ -226,10 +235,66 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
       for ( String tag : tags )
       {
-         taggedHooks.put( tag, new MutablePair<Object, Method>( beanRegistry.get( hookClass.getName() ), hookMethod ) );
+         if ( !tagPatternMap.containsKey( tag ) )
+         {
+            tagPatternMap.put( tag, Pattern.compile( tag ) );
+         }
+
+         Pattern tagPattern = tagPatternMap.get( tag );
+
+         if ( !taggedHooks.containsKey( tagPattern ) )
+         {
+            taggedHooks.put( tagPattern, new ArrayList<MutablePair<Object, Method>>() );
+         }
+
+         ArrayList<MutablePair<Object, Method>> hooksDef = taggedHooks.get( tagPattern );
+
+         MutablePair<Object, Method> hookdef = new MutablePair<Object, Method>( beanRegistry.get( hookClass.getName() ), hookMethod );
+
+         hooksDef.add( hookdef );
       }
 
    }
+
+   private final Consumer<Method> processTaggedRunStartHook      = new Consumer<Method>()
+                                                                 {
+                                                                    @Override
+                                                                    public void accept( Method runStartHookMethod )
+                                                                    {
+                                                                       try
+                                                                       {
+                                                                          for ( BeforeRun beforeRun : runStartHookMethod.getAnnotationsByType( BeforeRun.class ) )
+                                                                          {
+                                                                             String[] tags = beforeRun.value();
+                                                                             processTaggedHook( taggedRunStartHooks, tags, runStartHookMethod, String.class );
+                                                                          }
+                                                                       }
+                                                                       catch ( Throwable t )
+                                                                       {
+                                                                          log.error( "Exception while parsing run start hook from method  " + runStartHookMethod.getName(), t );
+                                                                       }
+                                                                    }
+                                                                 };
+
+   private final Consumer<Method> processTaggedRunStopHook       = new Consumer<Method>()
+                                                                 {
+                                                                    @Override
+                                                                    public void accept( Method runStopHookMethod )
+                                                                    {
+                                                                       try
+                                                                       {
+                                                                          for ( AfterRun afterRun : runStopHookMethod.getAnnotationsByType( AfterRun.class ) )
+                                                                          {
+                                                                             String[] tags = afterRun.value();
+                                                                             processTaggedHook( taggedRunStopHooks, tags, runStopHookMethod, String.class );
+                                                                          }
+                                                                       }
+                                                                       catch ( Throwable t )
+                                                                       {
+                                                                          log.error( "Exception while parsing run stop hook from method  " + runStopHookMethod.getName(), t );
+                                                                       }
+                                                                    }
+                                                                 };
 
    private final Consumer<Method> processTaggedFeatureStartHook  = new Consumer<Method>()
                                                                  {
@@ -249,8 +314,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                           log.error( "Exception while parsing feature start hook from method  " + featureStartHookMethod.getName(), t );
                                                                        }
                                                                     }
-
                                                                  };
+
    private final Consumer<Method> processTaggedFeatureStopHook   = new Consumer<Method>()
                                                                  {
                                                                     @Override
@@ -269,8 +334,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                           log.error( "Exception while parsing feature stop hook from method  " + featureStopHookMethod.getName(), t );
                                                                        }
                                                                     }
-
                                                                  };
+
    private final Consumer<Method> processTaggedScenarioStartHook = new Consumer<Method>()
                                                                  {
                                                                     @Override
@@ -281,7 +346,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                           for ( BeforeScenario beforeScenario : scenarioStartHookMethod.getAnnotationsByType( BeforeScenario.class ) )
                                                                           {
                                                                              String[] tags = beforeScenario.value();
-                                                                             processTaggedHook( taggedScenarioStartHooks, tags, scenarioStartHookMethod, String.class, String.class, TestScenario.class );
+                                                                             processTaggedHook( taggedScenarioStartHooks, tags, scenarioStartHookMethod, String.class, String.class, PreparedScenario.class );
                                                                           }
                                                                        }
                                                                        catch ( Throwable t )
@@ -289,8 +354,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                           log.error( "Exception while parsing scenario start hook from method  " + scenarioStartHookMethod.getName(), t );
                                                                        }
                                                                     }
-
                                                                  };
+
    private final Consumer<Method> processTaggedScenarioStopHook  = new Consumer<Method>()
                                                                  {
                                                                     @Override
@@ -301,7 +366,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                           for ( AfterScenario afterScenario : scenarioStopHookMethod.getAnnotationsByType( AfterScenario.class ) )
                                                                           {
                                                                              String[] tags = afterScenario.value();
-                                                                             processTaggedHook( taggedScenarioStopHooks, tags, scenarioStopHookMethod, String.class, String.class, TestScenario.class );
+                                                                             processTaggedHook( taggedScenarioStopHooks, tags, scenarioStopHookMethod, String.class, String.class, PreparedScenario.class );
                                                                           }
                                                                        }
                                                                        catch ( Throwable t )
@@ -309,7 +374,6 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                           log.error( "Exception while parsing scenario stop hook from method  " + scenarioStopHookMethod.getName(), t );
                                                                        }
                                                                     }
-
                                                                  };
 
    @Override
@@ -324,6 +388,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       AnnotationScanner.forEachMethod( stepDefinitionPackageNames, StepDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processStepDefinition );
       AnnotationScanner.forEachMethod( chaosActionDefinitionPackageNames, ChaosActionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processChaosDefinition );
 
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeRun.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedRunStartHook );
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterRun.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedRunStopHook );
       AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeFeature.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedFeatureStartHook );
       AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterFeature.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedFeatureStopHook );
       AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeScenario.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedScenarioStartHook );
@@ -513,48 +579,61 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       return result;
    }
 
-   @Override
-   public void runStart( String runName )
-   {
-      // TODO Add run Start hook
-   }
-
-   @Override
-   public void runStop( String runName )
-   {
-      // TODO Add run Stop hook
-   }
-
-   public void invokeTaggedMethods( HashMap<String, MutablePair<Object, Method>> taggedHooks, HashSet<String> tags, Object... parameters )
+   public void invokeTaggedMethods( HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedHooksList, HashSet<String> tags, Object... parameters )
    {
       HashSet<Method> alreadyInvokedMethods = new HashSet<Method>();
 
       for ( String tag : tags )
       {
-         MutablePair<Object, Method> objectMethodPair = taggedHooks.get( tag );
-
-         if ( objectMethodPair != null )
+         for ( Entry<Pattern, ArrayList<MutablePair<Object, Method>>> patternHooksEntrySet : taggedHooksList.entrySet() )
          {
-            Object hookObject = objectMethodPair.getLeft();
-            Method hookMethodToInvoke = objectMethodPair.getRight();
+            Pattern tagPattern = patternHooksEntrySet.getKey();
 
-            if ( alreadyInvokedMethods.contains( hookMethodToInvoke ) )
+            if ( tagPattern.matcher( tag ).matches() )
             {
-               // Already called feature start method for another tag
-               continue;
-            }
+               for ( MutablePair<Object, Method> objectMethodPair : patternHooksEntrySet.getValue() )
+               {
+                  Object hookObject = objectMethodPair.getLeft();
+                  Method hookMethodToInvoke = objectMethodPair.getRight();
 
-            alreadyInvokedMethods.add( hookMethodToInvoke );
+                  if ( alreadyInvokedMethods.contains( hookMethodToInvoke ) )
+                  {
+                     // Already called feature start method for another tag
+                     continue;
+                  }
 
-            try
-            {
-               hookMethodToInvoke.invoke( hookObject, parameters );
-            }
-            catch ( Throwable e )
-            {
-               log.error( "", e );
+                  alreadyInvokedMethods.add( hookMethodToInvoke );
+
+                  try
+                  {
+                     hookMethodToInvoke.invoke( hookObject, parameters );
+                  }
+                  catch ( Throwable e )
+                  {
+                     log.error( "", e );
+                  }
+               }
             }
          }
+
+      }
+   }
+
+   @Override
+   public void runStart( String runName, HashSet<String> tags )
+   {
+      if ( tags != null )
+      {
+         invokeTaggedMethods( taggedRunStartHooks, tags, runName );
+      }
+   }
+
+   @Override
+   public void runStop( String runName, HashSet<String> tags )
+   {
+      if ( tags != null )
+      {
+         invokeTaggedMethods( taggedRunStopHooks, tags, runName );
       }
    }
 
@@ -568,7 +647,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    }
 
    @Override
-   public void scenarioStart( String runName, String featureName, TestScenario scenario, HashSet<String> tags )
+   public void scenarioStart( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
    {
       if ( tags != null )
       {
@@ -577,7 +656,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    }
 
    @Override
-   public void scenarioStop( String runName, String featureName, TestScenario scenario, HashSet<String> tags )
+   public void scenarioStop( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
    {
       if ( tags != null )
       {

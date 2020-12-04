@@ -97,4 +97,5 @@ public class Constants
    public static final String   NUMBER_OF_ITERATIONS             = "numberOfIterations";
    public static final String   NUMBER_OF_ITERATIONS_IN_PARALLEL = "numberOfIterationsInParallel";
 
+   public static final String   __ALL__                          = "__All__";
 }

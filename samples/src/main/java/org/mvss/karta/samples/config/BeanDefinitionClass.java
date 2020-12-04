@@ -1,18 +1,17 @@
 package org.mvss.karta.samples.config;
 
 import org.mvss.karta.framework.core.KartaBean;
-import org.mvss.karta.samples.resources.AutomationDriver;
-import org.mvss.karta.samples.resources.AutomationDriverImpl;
+import org.mvss.karta.samples.stepdefinitions.Employee;
 
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class BeanDefinitionClass
 {
-   @KartaBean( "AutomationDriverObject" )
-   public static AutomationDriver getAutomtionDriver()
+   @KartaBean( "EmployeeBean" )
+   public static Employee getEmployee()
    {
-      log.info( "Creating new Automation Driver" );
-      return AutomationDriverImpl.builder().url( "url" ).username( "user" ).password( "pass" ).build();
+      log.info( "Creating new bean" );
+      return new Employee( "AdminBeanEmployee", "admin", "NA", false, "admin", 0, "NA" );
    }
 }

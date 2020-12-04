@@ -48,7 +48,6 @@ tests:
     tags:
       - remote
       - chaos
-      - UI
     featureFileName: SampleFeatureFile4.yaml
     numberOfIterations: 1
     threadGroup: calcChaos
@@ -58,8 +57,7 @@ tests:
     description: sample Gherkin feature file4
     featureSourceParserPlugin: Gherkin
     tags:
-      - Gherkin
-      - UI
+      - Gherkin    
     featureFileName: SampleFeatureFile5.feature
     numberOfIterations: 4
 
@@ -74,5 +72,13 @@ tests:
     exclusiveScenarioPerIteration: true
     numberOfIterations: 10
     numberOfThreads: 5
+
+  - name: UIAutomation
+    priority: 1
+    description: UI Automation test
+    tags:      
+      - UI
+    featureFileName: UIAutomation.yaml
+    numberOfIterations: 1
 
 subCategories: []
