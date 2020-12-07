@@ -77,7 +77,8 @@ public class Configurator
 
    public static void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object ) throws IllegalArgumentException, IllegalAccessException
    {
-      AnnotationScanner.forEachField( object.getClass(), PropertyMapping.class, AnnotationScanner.IS_NON_STATIC, null, ( type, field, annotation ) -> PropertyUtils.setFieldValue( propertiesStore, object, field, (PropertyMapping) annotation ) );
+      AnnotationScanner.forEachField( object.getClass(), PropertyMapping.class, AnnotationScanner.IS_NON_STATIC
+               .and( AnnotationScanner.IS_NON_FINAL ), null, ( type, field, annotation ) -> PropertyUtils.setFieldValue( propertiesStore, object, field, (PropertyMapping) annotation ) );
    }
 
    public void loadProperties( Object... objects ) throws IllegalArgumentException, IllegalAccessException
@@ -90,7 +91,8 @@ public class Configurator
 
    public void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Class<?> classToLoadPropertiesWith ) throws IllegalArgumentException, IllegalAccessException
    {
-      AnnotationScanner.forEachField( classToLoadPropertiesWith, PropertyMapping.class, AnnotationScanner.IS_STATIC, null, ( type, field, annotation ) -> PropertyUtils.setFieldValue( propertiesStore, null, field, (PropertyMapping) annotation ) );
+      AnnotationScanner.forEachField( classToLoadPropertiesWith, PropertyMapping.class, AnnotationScanner.IS_STATIC
+               .and( AnnotationScanner.IS_NON_FINAL ), null, ( type, field, annotation ) -> PropertyUtils.setFieldValue( propertiesStore, null, field, (PropertyMapping) annotation ) );
    }
 
    public void loadProperties( Class<?>... classesToLoadPropertiesWith ) throws IllegalArgumentException, IllegalAccessException

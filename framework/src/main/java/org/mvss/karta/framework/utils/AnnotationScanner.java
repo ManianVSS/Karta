@@ -22,6 +22,18 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class AnnotationScanner
 {
+   public static final Predicate<Integer>     IS_FINAL                 = new Predicate<Integer>()
+                                                                       {
+
+                                                                          @Override
+                                                                          public boolean test( Integer modifiers )
+                                                                          {
+                                                                             return Modifier.isFinal( modifiers );
+                                                                          }
+                                                                       };
+
+   public static final Predicate<Integer>     IS_NON_FINAL             = IS_FINAL.negate();
+
    public static final Predicate<Integer>     IS_STATIC                = new Predicate<Integer>()
                                                                        {
 
@@ -71,7 +83,6 @@ public class AnnotationScanner
                                                                           @Override
                                                                           public boolean test( Class<?> returnType )
                                                                           {
-                                                                             // TODO Auto-generated method stub
                                                                              return ( returnType == Void.class );
                                                                           }
                                                                        };

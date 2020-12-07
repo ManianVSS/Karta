@@ -3,6 +3,9 @@ package org.mvss.karta.framework.runtime.testcatalog;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -59,31 +62,51 @@ public class TestCategory implements Serializable
       return null;
    }
 
-   public void filterTestsByTag( ArrayList<Test> outputFilteredTests, HashSet<String> tags )
-   {
-      for ( String tag : tags )
-      {
-         if ( this.tags.contains( tag ) )
-         {
-            addAllTestsToList( outputFilteredTests );
-            return;
-         }
-      }
+   private static ConcurrentHashMap<Pattern, ConcurrentHashMap<String, Matcher>> patternMatcherMap = new ConcurrentHashMap<Pattern, ConcurrentHashMap<String, Matcher>>();
 
-      for ( Test test : tests )
+   public synchronized void filterTestsByTag( ArrayList<Test> outputFilteredTests, HashSet<Pattern> tagPatterns )
+   {
+      for ( Pattern tagPattern : tagPatterns )
       {
-         for ( String tag : tags )
+         if ( !patternMatcherMap.containsKey( tagPattern ) )
          {
-            if ( test.getTags().contains( tag ) )
+            patternMatcherMap.put( tagPattern, new ConcurrentHashMap<String, Matcher>() );
+         }
+         ConcurrentHashMap<String, Matcher> matcherMap = patternMatcherMap.get( tagPattern );
+         for ( String tag : this.tags )
+         {
+            Matcher matcher = matcherMap.get( tag );
+            if ( matcher == null )
             {
-               outputFilteredTests.add( test );
+               matcherMap.put( tag, matcher = tagPattern.matcher( tag ) );
+            }
+            if ( matcher.matches() )
+            {
+               addAllTestsToList( outputFilteredTests );
+               return;
+            }
+         }
+
+         for ( Test test : tests )
+         {
+            for ( String tag : test.getTags() )
+            {
+               Matcher matcher = matcherMap.get( tag );
+               if ( matcher == null )
+               {
+                  matcherMap.put( tag, matcher = tagPattern.matcher( tag ) );
+               }
+               if ( matcher.matches() )
+               {
+                  outputFilteredTests.add( test );
+               }
             }
          }
       }
 
       for ( TestCategory subCategory : subCategories )
       {
-         subCategory.filterTestsByTag( outputFilteredTests, tags );
+         subCategory.filterTestsByTag( outputFilteredTests, tagPatterns );
       }
 
    }

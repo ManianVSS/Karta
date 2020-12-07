@@ -11,6 +11,7 @@ import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestJob;
+import org.mvss.karta.framework.core.TestJobResult;
 import org.mvss.karta.framework.runtime.RunInfo;
 
 public interface KartaMinion extends Remote
@@ -19,9 +20,7 @@ public interface KartaMinion extends Remote
    // TODO: Events and incidents should be passed back to caller rather than being raised locally
    FeatureResult runFeature( RunInfo runInfo, TestFeature feature ) throws RemoteException;
 
-   long scheduleJob( RunInfo runInfo, String featureName, TestJob job ) throws RemoteException;
-
-   boolean deleteJob( Long jobId ) throws RemoteException;
+   TestJobResult runJobIteration( RunInfo runInfo, String featureName, TestJob job, long iterationIndex ) throws RemoteException;
 
    ScenarioResult runTestScenario( RunInfo runInfo, String featureName, long iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber ) throws RemoteException;
 

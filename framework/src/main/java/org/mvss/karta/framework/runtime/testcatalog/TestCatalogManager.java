@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -86,10 +88,23 @@ public class TestCatalogManager
       testCatalog.mergeTest( testToMerge );
    }
 
-   public ArrayList<Test> filterTestsByTag( HashSet<String> tags )
+   private static ConcurrentHashMap<String, Pattern> patternsMap = new ConcurrentHashMap<String, Pattern>();
+
+   public synchronized ArrayList<Test> filterTestsByTag( HashSet<String> tags )
    {
       ArrayList<Test> outputFilteredTests = new ArrayList<Test>();
-      testCatalog.filterTestsByTag( outputFilteredTests, tags );
+      HashSet<Pattern> tagPatterns = new HashSet<Pattern>();
+
+      for ( String tag : tags )
+      {
+         if ( !patternsMap.contains( tag ) )
+         {
+            patternsMap.put( tag, Pattern.compile( tag ) );
+         }
+         Pattern tagPattern = patternsMap.get( tag );
+         tagPatterns.add( tagPattern );
+      }
+      testCatalog.filterTestsByTag( outputFilteredTests, tagPatterns );
       return outputFilteredTests;
    }
 }

@@ -2,6 +2,7 @@ package org.mvss.karta.framework.runtime;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Consumer;
@@ -13,6 +14,8 @@ import org.mvss.karta.framework.utils.AnnotationScanner;
 
 import lombok.extern.log4j.Log4j2;
 
+//TODO: Bean and property injection into bean with dependency tree 
+//TODO: Reload bean definitions if changed in annotated locations
 @Log4j2
 public class BeanRegistry
 {
@@ -21,6 +24,16 @@ public class BeanRegistry
    public BeanRegistry()
    {
       beans.put( BeanRegistry.class.getName(), this );
+   }
+
+   public Object put( Object bean )
+   {
+      return put( bean.getClass().getName(), bean );
+   }
+
+   public Object put( String beanName, Object bean )
+   {
+      return beans.put( beanName, bean );
    }
 
    public boolean add( Object bean )
@@ -61,25 +74,29 @@ public class BeanRegistry
       }
       for ( Field field : theClassOfObject.getDeclaredFields() )
       {
-         field.setAccessible( true );
-
-         KartaAutoWired propertyMapping = field.getDeclaredAnnotation( KartaAutoWired.class );
-
-         if ( propertyMapping != null )
+         int modifiers = field.getModifiers();
+         if ( !Modifier.isStatic( modifiers ) && !Modifier.isFinal( modifiers ) )
          {
-            Class<?> fieldClass = field.getType();
-            String beanName = propertyMapping.value();
+            field.setAccessible( true );
 
-            if ( StringUtils.isEmpty( beanName ) )
+            KartaAutoWired propertyMapping = field.getDeclaredAnnotation( KartaAutoWired.class );
+
+            if ( propertyMapping != null )
             {
-               beanName = fieldClass.getName();
-            }
+               Class<?> fieldClass = field.getType();
+               String beanName = propertyMapping.value();
 
-            Object valueToSet = beans.get( beanName );
+               if ( StringUtils.isEmpty( beanName ) )
+               {
+                  beanName = fieldClass.getName();
+               }
 
-            if ( valueToSet != null )
-            {
-               field.set( object, valueToSet );
+               Object valueToSet = beans.get( beanName );
+
+               if ( valueToSet != null )
+               {
+                  field.set( object, valueToSet );
+               }
             }
          }
       }
@@ -92,6 +109,57 @@ public class BeanRegistry
       else
       {
          loadBeans( object, superClass, beans );
+      }
+   }
+
+   public void loadStaticBeans( Class<?> theClassOfObject ) throws IllegalArgumentException, IllegalAccessException
+   {
+      loadStaticBeans( theClassOfObject, beans );
+   }
+
+   public static void loadStaticBeans( Class<?> theClassOfObject, HashMap<String, Object> beans ) throws IllegalArgumentException, IllegalAccessException
+   {
+      if ( ( theClassOfObject == null ) || theClassOfObject.getName().equals( Object.class.getName() ) )
+      {
+         return;
+      }
+      for ( Field field : theClassOfObject.getDeclaredFields() )
+      {
+         int modifiers = field.getModifiers();
+         if ( Modifier.isStatic( modifiers ) && !Modifier.isFinal( modifiers ) )
+         {
+            field.setAccessible( true );
+
+            KartaAutoWired propertyMapping = field.getDeclaredAnnotation( KartaAutoWired.class );
+
+            if ( propertyMapping != null )
+            {
+               Class<?> fieldClass = field.getType();
+               String beanName = propertyMapping.value();
+
+               if ( StringUtils.isEmpty( beanName ) )
+               {
+                  beanName = fieldClass.getName();
+               }
+
+               Object valueToSet = beans.get( beanName );
+
+               if ( valueToSet != null )
+               {
+                  field.set( null, valueToSet );
+               }
+            }
+         }
+      }
+
+      Class<?> superClass = theClassOfObject.getSuperclass();
+      if ( superClass.getName().equals( Object.class.getName() ) )
+      {
+         return;
+      }
+      else
+      {
+         loadStaticBeans( superClass, beans );
       }
    }
 

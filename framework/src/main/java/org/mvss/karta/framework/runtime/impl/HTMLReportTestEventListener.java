@@ -19,6 +19,7 @@ import org.mvss.karta.framework.runtime.event.JavaFeatureCompleteEvent;
 import org.mvss.karta.framework.runtime.event.StandardEventsTypes;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
+import org.mvss.karta.framework.utils.ParserUtils;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -169,7 +170,11 @@ public class HTMLReportTestEventListener implements TestEventListener
                break;
             }
             path = Paths.get( runReportsBaseFolder.getPath(), runName, featureName + ".html" );
+            Path jsonPath = Paths.get( runReportsBaseFolder.getPath(), runName, featureName + ".json" );
+
             File featureReportFile = path.toFile();
+            File featureJSONDumpFile = jsonPath.toFile();
+
             // featureDirectory.mkdirs();
             HashMap<String, Boolean> featureMap = getOrCreateFeatureMap( runName );
             featureMap.put( featureName, featureResult.isPassed() );
@@ -203,6 +208,7 @@ public class HTMLReportTestEventListener implements TestEventListener
 
                featureReportBuilder.append( "</body>\r\n" + "</html>" );
                FileUtils.write( featureReportFile, featureReportBuilder.toString(), Charset.defaultCharset() );
+               FileUtils.write( featureJSONDumpFile, ParserUtils.getObjectMapper().writeValueAsString( featureResult ), Charset.defaultCharset() );
             }
             catch ( Throwable e )
             {

@@ -18,7 +18,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-@Builder
+@Builder( toBuilder = true )
 @AllArgsConstructor
 @NoArgsConstructor
 public class TestJob implements Serializable

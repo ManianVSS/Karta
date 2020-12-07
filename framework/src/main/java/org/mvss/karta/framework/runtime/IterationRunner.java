@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -65,7 +64,6 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
    public HashMap<String, ScenarioResult> call()
    {
       String runName = runInfo.getRunName();
-      HashSet<String> tags = runInfo.getTags();
 
       result = new HashMap<String, ScenarioResult>();
 
@@ -89,10 +87,6 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
             continue;
          }
 
-         if ( tags != null )
-         {
-            eventProcessor.scenarioStart( runName, featureName, testScenario, tags );
-         }
          eventProcessor.raiseEvent( new ScenarioStartEvent( runName, featureName, iterationIndex, testScenario ) );
 
          ScenarioResult scenarioResult = null;
@@ -121,11 +115,6 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
          }
 
          eventProcessor.raiseEvent( new ScenarioCompleteEvent( runName, featureName, iterationIndex, testScenario, scenarioResult ) );
-
-         if ( tags != null )
-         {
-            eventProcessor.scenarioStop( runName, featureName, testScenario, tags );
-         }
       }
 
       if ( resultConsumer != null )

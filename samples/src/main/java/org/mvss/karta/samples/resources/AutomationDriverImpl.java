@@ -26,4 +26,10 @@ public class AutomationDriverImpl implements AutomationDriver
    {
       log.info( "Clicking on element with locator " + locator + " using driver " + this );
    }
+
+   @Override
+   public void close() throws Exception
+   {
+      log.info( "Closing driver " + this );
+   }
 }

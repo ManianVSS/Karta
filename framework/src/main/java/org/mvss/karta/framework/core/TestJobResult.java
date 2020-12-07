@@ -1,8 +1,8 @@
 package org.mvss.karta.framework.core;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,28 +22,28 @@ public class TestJobResult implements Serializable, Comparable<TestJobResult>
    /**
     * 
     */
-   private static final long          serialVersionUID = 1L;
+   private static final long                           serialVersionUID = 1L;
 
    @Builder.Default
-   private int                        iterationIndex   = 0;
+   private long                                        iterationIndex   = 0;
 
    @Builder.Default
-   private Date                       startTime        = new Date();
+   private Date                                        startTime        = new Date();
 
-   private Date                       endTime;
-
-   @Builder.Default
-   private boolean                    successsful      = true;
+   private Date                                        endTime;
 
    @Builder.Default
-   private boolean                    error            = false;
+   private boolean                                     successsful      = true;
 
    @Builder.Default
-   private HashMap<TestStep, Boolean> stepResults      = new HashMap<TestStep, Boolean>();
+   private boolean                                     error            = false;
+
+   @Builder.Default
+   private ArrayList<SerializableKVP<String, Boolean>> stepResults      = new ArrayList<SerializableKVP<String, Boolean>>();
 
    @Override
    public int compareTo( TestJobResult other )
    {
-      return iterationIndex - other.iterationIndex;
+      return ( iterationIndex < other.iterationIndex ) ? -1 : ( ( iterationIndex == other.iterationIndex ) ? 0 : 1 );
    }
 }

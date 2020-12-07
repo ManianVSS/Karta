@@ -3,7 +3,6 @@ package org.mvss.karta.framework.core;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 
 import org.mvss.karta.framework.runtime.event.Event;
 
@@ -27,39 +26,39 @@ public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
    /**
     * 
     */
-   private static final long        serialVersionUID   = 1L;
+   private static final long                           serialVersionUID   = 1L;
 
    @Builder.Default
-   private long                     iterationIndex     = 0;
+   private long                                        iterationIndex     = 0;
 
    @Builder.Default
-   private Date                     startTime          = new Date();
+   private Date                                        startTime          = new Date();
 
-   private Date                     endTime;
-
-   @Builder.Default
-   private boolean                  successful         = true;
+   private Date                                        endTime;
 
    @Builder.Default
-   private boolean                  error              = false;
+   private boolean                                     successful         = true;
 
    @Builder.Default
-   private ArrayList<TestIncident>  incidents          = new ArrayList<TestIncident>();
+   private boolean                                     error              = false;
 
    @Builder.Default
-   private HashMap<String, Boolean> setupResults       = new HashMap<String, Boolean>();
+   private ArrayList<TestIncident>                     incidents          = new ArrayList<TestIncident>();
 
    @Builder.Default
-   private HashMap<String, Boolean> chaosActionResults = new HashMap<String, Boolean>();
+   private ArrayList<SerializableKVP<String, Boolean>> setupResults       = new ArrayList<SerializableKVP<String, Boolean>>();
 
    @Builder.Default
-   private HashMap<String, Boolean> runResults         = new HashMap<String, Boolean>();
+   private ArrayList<SerializableKVP<String, Boolean>> chaosActionResults = new ArrayList<SerializableKVP<String, Boolean>>();
 
    @Builder.Default
-   private HashMap<String, Boolean> tearDownResults    = new HashMap<String, Boolean>();
+   private ArrayList<SerializableKVP<String, Boolean>> runResults         = new ArrayList<SerializableKVP<String, Boolean>>();
 
    @Builder.Default
-   private ArrayList<Event>         events             = new ArrayList<Event>();
+   private ArrayList<SerializableKVP<String, Boolean>> tearDownResults    = new ArrayList<SerializableKVP<String, Boolean>>();
+
+   @Builder.Default
+   private ArrayList<Event>                            events             = new ArrayList<Event>();
 
    @JsonIgnore
    public boolean isPassed()

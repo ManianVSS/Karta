@@ -19,7 +19,7 @@ import lombok.ToString;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@Builder( toBuilder = true )
 public class ChaosAction implements Serializable, ObjectWithChance
 {
 

@@ -2,12 +2,15 @@ package org.mvss.karta.framework.runtime;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
+import org.mvss.karta.framework.core.SerializableKVP;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestJob;
+import org.mvss.karta.framework.core.TestJobResult;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.runtime.event.ChaosActionJobCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ChaosActionJobStartEvent;
@@ -20,11 +23,14 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class TestJobRunner
 {
-   public static boolean run( KartaRuntime kartaRuntime, RunInfo runInfo, String featureName, TestJob job, long iterationIndex ) throws Throwable
+   public static TestJobResult run( KartaRuntime kartaRuntime, RunInfo runInfo, String featureName, TestJob job, long iterationIndex ) throws Throwable
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
       String runName = runInfo.getRunName();
       log.debug( "Running job: " + job );
+      TestJobResult testJobResult = new TestJobResult();
+
+      testJobResult.setIterationIndex( iterationIndex );
 
       HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
@@ -32,7 +38,11 @@ public class TestJobRunner
       {
          case CHAOS:
             ChaosActionTreeNode chaosConfiguration = job.getChaosConfiguration();
-            if ( chaosConfiguration != null )
+            if ( chaosConfiguration == null )
+            {
+               testJobResult.setError( true );
+            }
+            else
             {
                if ( !chaosConfiguration.checkForValidity() )
                {
@@ -41,17 +51,12 @@ public class TestJobRunner
 
                ArrayList<ChaosAction> chaosActionsToPerform = chaosConfiguration.nextChaosActions( kartaRuntime.getRandom() );
                // TODO: Handle chaos action being empty
-
                for ( ChaosAction chaosAction : chaosActionsToPerform )
                {
                   eventProcessor.raiseEvent( new ChaosActionJobStartEvent( runName, featureName, job, iterationIndex, chaosAction ) );
                   StepResult result = kartaRuntime.runChaosAction( runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), chaosAction );
                   eventProcessor.raiseEvent( new ChaosActionJobCompleteEvent( runName, featureName, job, iterationIndex, chaosAction, result ) );
                }
-            }
-            else
-            {
-               return false;
             }
             break;
 
@@ -60,26 +65,33 @@ public class TestJobRunner
 
             if ( steps == null )
             {
-               return false;
+               testJobResult.setError( true );
             }
-
-            for ( TestStep step : steps )
+            else
             {
-               eventProcessor.raiseEvent( new JobStepStartEvent( runName, featureName, job, iterationIndex, step ) );
-               StepResult result = kartaRuntime.runStep( runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), step );
-               eventProcessor.raiseEvent( new JobStepCompleteEvent( runName, featureName, job, iterationIndex, step, result ) );
-
-               if ( !result.isPassed() )
+               for ( TestStep step : steps )
                {
-                  return false;
+                  eventProcessor.raiseEvent( new JobStepStartEvent( runName, featureName, job, iterationIndex, step ) );
+                  StepResult result = kartaRuntime.runStep( runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), step );
+                  eventProcessor.raiseEvent( new JobStepCompleteEvent( runName, featureName, job, iterationIndex, step, result ) );
+
+                  testJobResult.getStepResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), result.isPassed() ) );
+                  if ( !result.isPassed() )
+                  {
+                     testJobResult.setSuccesssful( true );
+                     testJobResult.setEndTime( new Date() );
+                     break;
+                  }
                }
             }
             break;
 
          default:
-            return false;
+            testJobResult.setError( true );
+            break;
       }
 
-      return true;
+      testJobResult.setEndTime( new Date() );
+      return testJobResult;
    }
 }

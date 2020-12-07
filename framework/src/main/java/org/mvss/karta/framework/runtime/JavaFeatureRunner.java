@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.ScenarioResult;
+import org.mvss.karta.framework.core.SerializableKVP;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.javatest.Feature;
 import org.mvss.karta.framework.core.javatest.FeatureSetup;
@@ -110,6 +111,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          TreeMap<Integer, ArrayList<Method>> scenarioTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
          TreeMap<Integer, ArrayList<Method>> featureTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
 
+         beanRegistry.loadStaticBeans( testCaseClass );
          Object testCaseObject = testCaseClass.newInstance();
          beanRegistry.loadBeans( testCaseObject );
 
@@ -180,7 +182,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
             StepResult stepResult = runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
 
             eventProcessor.raiseEvent( new JavaFeatureSetupCompleteEvent( runName, featureName, stepName, stepResult ) );
-            result.getSetupResultMap().put( stepName, stepResult.isPassed() );
+            result.getSetupResults().add( new SerializableKVP<String, Boolean>( stepName, stepResult.isPassed() ) );
             result.getIncidents().addAll( stepResult.getIncidents() );
 
             if ( !stepResult.isPassed() )
@@ -274,7 +276,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
             StepResult stepResult = runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
 
             eventProcessor.raiseEvent( new JavaFeatureTearDownCompleteEvent( runName, featureName, stepName, stepResult ) );
-            result.getTearDownResultMap().put( stepName, stepResult.isPassed() );
+            result.getTearDownResults().add( new SerializableKVP<String, Boolean>( stepName, stepResult.isPassed() ) );
             result.getIncidents().addAll( stepResult.getIncidents() );
 
             if ( !stepResult.isPassed() )
