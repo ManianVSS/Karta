@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-//TODO: Thread and context specific bean registry to share control objects for a thread/runtime level
+//TODO: Thread specific bean registry to share control objects for a thread/runtime level
 @Getter
 @Setter
 @ToString

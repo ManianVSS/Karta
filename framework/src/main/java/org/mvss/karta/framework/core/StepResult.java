@@ -21,7 +21,7 @@ import lombok.ToString;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@Builder( toBuilder = true )
 public class StepResult implements Serializable
 {
    /**
@@ -114,5 +114,10 @@ public class StepResult implements Serializable
          events.addAll( stepResult.events );
       }
 
+   }
+
+   public StepResult trimmedVersion()
+   {
+      return this.toBuilder().results( null ).events( null ).build();
    }
 }

@@ -12,6 +12,7 @@ import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestJob;
+import org.mvss.karta.framework.core.TestJobResult;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.RunInfo;
 
@@ -62,34 +63,21 @@ public class KartaRestMinion implements KartaMinion
    }
 
    @Override
-   public long scheduleJob( RunInfo runInfo, String featureName, TestJob job ) throws RemoteException
+   public TestJobResult runJobIteration( RunInfo runInfo, String featureName, TestJob job, long iterationIndex ) throws RemoteException
    {
       HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
       parameters.put( Constants.RUN_INFO, runInfo );
       parameters.put( Constants.FEATURE_NAME, featureName );
       parameters.put( Constants.JOB, job );
+      parameters.put( Constants.ITERATION_INDEX, iterationIndex );
 
-      Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_JOB );
+      Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_JOB_ITERATION );
 
-      long result = -1;
+      TestJobResult result = null;
       int statusCode = response.getStatusCode();
       if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
       {
-         result = response.getBody().as( Long.class );
-      }
-      return result;
-   }
-
-   @Override
-   public boolean deleteJob( Long jobId ) throws RemoteException
-   {
-      Response response = RestAssured.given( requestSpecBuilder.build() ).delete( Constants.PATH_RUN_JOB + Constants.SLASH + jobId );
-
-      boolean result = false;
-      int statusCode = response.getStatusCode();
-      if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
-      {
-         result = response.getBody().as( Boolean.class );
+         result = response.getBody().as( TestJobResult.class );
       }
       return result;
    }

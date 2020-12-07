@@ -13,9 +13,11 @@ import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestJob;
+import org.mvss.karta.framework.core.TestJobResult;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunInfo;
 import org.mvss.karta.framework.runtime.TestFailureException;
+import org.mvss.karta.framework.runtime.TestJobRunner;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -25,9 +27,9 @@ public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion,
    /**
     * 
     */
-   private static final long serialVersionUID = 1L;
+   private static final long      serialVersionUID = 1L;
 
-   private KartaRuntime      kartaRuntime;
+   private transient KartaRuntime kartaRuntime;
 
    public KartaMinionImpl( KartaRuntime kartaRuntime ) throws RemoteException
    {
@@ -41,28 +43,15 @@ public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion,
    }
 
    @Override
-   public long scheduleJob( RunInfo runInfo, String featureName, TestJob job ) throws RemoteException
+   public TestJobResult runJobIteration( RunInfo runInfo, String featureName, TestJob job, long iterationIndex ) throws RemoteException
    {
       try
       {
-         return kartaRuntime.scheduleJob( runInfo, featureName, job );
+         return TestJobRunner.run( kartaRuntime, runInfo, featureName, job, iterationIndex );
       }
       catch ( Throwable e )
       {
-         throw new RemoteException( "Exception while scheduling job", e );
-      }
-   }
-
-   @Override
-   public boolean deleteJob( Long jobId ) throws RemoteException
-   {
-      try
-      {
-         return kartaRuntime.deleteJob( jobId );
-      }
-      catch ( Throwable e )
-      {
-         throw new RemoteException( "Exception while deleting job", e );
+         throw new RemoteException( "Exception while running job iteration", e );
       }
    }
 

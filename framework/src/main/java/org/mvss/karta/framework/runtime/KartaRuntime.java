@@ -16,7 +16,6 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -31,11 +30,11 @@ import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StandardFeatureResults;
-import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.TestJob;
+import org.mvss.karta.framework.core.TestJobResult;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinionConfiguration;
@@ -101,11 +100,68 @@ public class KartaRuntime implements AutoCloseable
    @Getter
    private ExecutorServiceManager executorServiceManager;
 
+   /**
+    * This flag is used to run a custom Karta Minion server by disabling node initializing first and call addNodes later
+    */
    public static boolean          initializeNodes  = true;
 
    @Getter
    private RunInfo                defaultRunInfo   = null;
 
+   /**
+    * Default constructor is reserved for default runtime instance. Use getInstance.
+    * 
+    * @throws JsonMappingException
+    * @throws JsonProcessingException
+    * @throws IOException
+    * @throws URISyntaxException
+    */
+   private KartaRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException
+   {
+
+   }
+
+   private static KartaRuntime instance        = null;
+
+   private static Object       _syncLockObject = new Object();
+
+   /**
+    * Gets the default KartaRuntime singleton instance.
+    * 
+    * @return KartaRuntime
+    * @throws Throwable
+    */
+   public static KartaRuntime getInstance() throws Throwable
+   {
+      if ( instance == null )
+      {
+         synchronized ( _syncLockObject )
+         {
+            instance = new KartaRuntime();
+
+            if ( !instance.initializeRuntime() )
+            {
+               instance = null;
+            }
+         }
+      }
+
+      return instance;
+   }
+
+   /**
+    * Initializes the runtime with the default settings
+    * 
+    * @return boolean
+    * @throws JsonMappingException
+    * @throws JsonProcessingException
+    * @throws IOException
+    * @throws URISyntaxException
+    * @throws IllegalArgumentException
+    * @throws IllegalAccessException
+    * @throws NotBoundException
+    * @throws ClassNotFoundException
+    */
    public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException, ClassNotFoundException
    {
       /*---------------------------------------------------------------------------------------------------------------------*/
@@ -237,6 +293,11 @@ public class KartaRuntime implements AutoCloseable
       return true;
    }
 
+   /**
+    * <b> This is typically required only when creating a customized KartaMinionServer</b>. </br>
+    * Adds the nodes based on the configuration. </br>
+    * This needs to be called after initializing the runtime. </br>
+    */
    public void addNodes()
    {
       ArrayList<KartaMinionConfiguration> nodes = kartaConfiguration.getNodes();
@@ -247,6 +308,9 @@ public class KartaRuntime implements AutoCloseable
       }
    }
 
+   /**
+    * Auto-closable method for the runtime. Stops all tests and Karta components.
+    */
    @Override
    public void close()
    {
@@ -275,83 +339,6 @@ public class KartaRuntime implements AutoCloseable
       }
    }
 
-   // Default constructor is reserved for default runtime instance use getDefaultInstance
-   private KartaRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException
-   {
-
-   }
-
-   private static KartaRuntime instance        = null;
-
-   private static Object       _syncLockObject = new Object();
-
-   public static KartaRuntime getInstance() throws Throwable
-   {
-      if ( instance == null )
-      {
-         synchronized ( _syncLockObject )
-         {
-            instance = new KartaRuntime();
-
-            if ( !instance.initializeRuntime() )
-            {
-               instance = null;
-            }
-         }
-      }
-
-      return instance;
-   }
-
-   public void loadRuntimeObjects( Object object ) throws IllegalArgumentException, IllegalAccessException
-   {
-      beanRegistry.loadBeans( object );
-   }
-
-   public FeatureResult runFeatureFile( RunInfo runInfo, String featureFileName )
-   {
-      try
-      {
-         String featureSource = ClassPathLoaderUtils.readAllText( featureFileName );
-
-         if ( StringUtils.isEmpty( featureSource ) )
-         {
-            String errorMsg = "Feature file invalid: " + featureFileName;
-            log.error( errorMsg );
-            return StandardFeatureResults.error( errorMsg );
-         }
-         return runFeatureSource( runInfo, featureSource );
-      }
-      catch ( Throwable t )
-      {
-         log.error( Constants.EMPTY_STRING, t );
-         return StandardFeatureResults.error( t );
-      }
-   }
-
-   public FeatureResult runFeatureSource( RunInfo runInfo, String featureFileSourceString )
-   {
-      try
-      {
-         FeatureSourceParser featureParser = getFeatureSourceParser( runInfo );
-
-         if ( featureParser == null )
-         {
-            String errorMsg = "Failed to get a feature source parser of type: " + runInfo.getFeatureSourceParserPlugin();
-            log.error( errorMsg );
-            return StandardFeatureResults.error( errorMsg );
-         }
-         TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
-
-         return runFeature( runInfo, testFeature );
-      }
-      catch ( Throwable t )
-      {
-         log.error( Constants.EMPTY_STRING, t );
-         return StandardFeatureResults.error( t );
-      }
-   }
-
    private static HashMap<String, FeatureSourceParser>                featureSourceParserMap = new HashMap<String, FeatureSourceParser>();
    private static HashMap<String, StepRunner>                         stepRunnerMap          = new HashMap<String, StepRunner>();
    private static HashMap<HashSet<String>, ArrayList<TestDataSource>> testDataSourcesMap     = new HashMap<HashSet<String>, ArrayList<TestDataSource>>();
@@ -360,7 +347,13 @@ public class KartaRuntime implements AutoCloseable
    private Object                                                     srMapLock              = new Object();
    private Object                                                     tdsMapLock             = new Object();
 
-   public synchronized FeatureSourceParser getFeatureSourceParser( String featureSourceParserName )
+   /**
+    * Returns the FeatureSourceParser based on the feature source parser plugin name provided.
+    * 
+    * @param featureSourceParserName
+    * @return FeatureSourceParser
+    */
+   public FeatureSourceParser getFeatureSourceParser( String featureSourceParserName )
    {
       synchronized ( fspMapLock )
       {
@@ -393,12 +386,24 @@ public class KartaRuntime implements AutoCloseable
       }
    }
 
+   /**
+    * Returns the FeatureSourceParser based on the RunInfo
+    * 
+    * @param runInfo
+    * @return FeatureSourceParser
+    */
    public FeatureSourceParser getFeatureSourceParser( RunInfo runInfo )
    {
       String featureSourceParserName = runInfo.getFeatureSourceParserPlugin();
       return getFeatureSourceParser( featureSourceParserName );
    }
 
+   /**
+    * Returns the StepRunner based on the step runner plugin name provided.
+    * 
+    * @param stepRunnerPluginName
+    * @return StepRunner
+    */
    public StepRunner getStepRunner( String stepRunnerPluginName )
    {
       synchronized ( srMapLock )
@@ -431,12 +436,24 @@ public class KartaRuntime implements AutoCloseable
       }
    }
 
+   /**
+    * Returns the StepRunner based on the RunInfo
+    * 
+    * @param runInfo
+    * @return StepRunner
+    */
    public StepRunner getStepRunner( RunInfo runInfo )
    {
       String stepRunnerPluginName = runInfo.getStepRunnerPluginName();
       return getStepRunner( stepRunnerPluginName );
    }
 
+   /**
+    * Returns a list of TestDataSources based on the set of test data source plugin names provided
+    * 
+    * @param testDataSourcesPluginNames
+    * @return ArrayList&lt;TestDataSource&gt;
+    */
    public ArrayList<TestDataSource> getTestDataSources( HashSet<String> testDataSourcesPluginNames )
    {
       synchronized ( tdsMapLock )
@@ -476,44 +493,25 @@ public class KartaRuntime implements AutoCloseable
       }
    }
 
+   /**
+    * Returns a list of TestDataSources based on the RunInfo
+    * 
+    * @param runInfo
+    * @return ArrayList&lt;TestDataSource&gt;
+    */
    public ArrayList<TestDataSource> getTestDataSources( RunInfo runInfo )
    {
       HashSet<String> testDataSourcesPluginNames = runInfo.getTestDataSourcePlugins();
       return getTestDataSources( testDataSourcesPluginNames );
    }
 
-   public FeatureResult runFeature( RunInfo runInfo, TestFeature feature )
-   {
-      StepRunner stepRunner = getStepRunner( runInfo );
-
-      if ( stepRunner == null )
-      {
-         String errorMsg = "Failed to get a step runner for run: " + runInfo;
-         log.error( errorMsg );
-         return StandardFeatureResults.error( errorMsg );
-      }
-
-      ArrayList<TestDataSource> testDataSources = getTestDataSources( runInfo );
-
-      if ( testDataSources == null )
-      {
-         String errorMsg = "Failed to get test data sources for run: " + runInfo;
-         log.error( errorMsg );
-         return StandardFeatureResults.error( errorMsg );
-      }
-      try
-      {
-         FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).runInfo( runInfo ).testFeature( feature ).build();
-         FeatureResult featureResult = featureRunner.call();
-         return featureResult;
-      }
-      catch ( Throwable t )
-      {
-         log.error( Constants.EMPTY_STRING, t );
-         return StandardFeatureResults.error( t );
-      }
-   }
-
+   /**
+    * Runs a RunTarget and returns if the feature/JavaTestCase or Tags passed
+    * 
+    * @param runInfo
+    * @param runTarget
+    * @return boolean
+    */
    public boolean runTestTarget( RunInfo runInfo, RunTarget runTarget )
    {
       runInfo.setDefaultPlugins( kartaConfiguration.getDefaultFeatureSourceParserPlugin(), kartaConfiguration.getDefaultStepRunnerPlugin(), kartaConfiguration.getDefaultTestDataSourcePlugins() );
@@ -566,6 +564,14 @@ public class KartaRuntime implements AutoCloseable
       }
    }
 
+   /**
+    * Runs tests filtered from the TestCatalog using the set of tags provided, uses minions if configured and returns if all the tests passed.
+    * 
+    * @param runInfo
+    * @param tags
+    * @return boolean
+    * @throws Throwable
+    */
    public boolean runTestsWithTags( RunInfo runInfo, HashSet<String> tags ) throws Throwable
    {
       String runName = runInfo.getRunName();
@@ -579,6 +585,14 @@ public class KartaRuntime implements AutoCloseable
       return result;
    }
 
+   /**
+    * Runs a collection of Tests, uses minions if configured and returns if all the tests passed.
+    * 
+    * @param runInfo
+    * @param tests
+    * @return boolean
+    * @throws Throwable
+    */
    public boolean runTest( RunInfo runInfo, Collection<Test> tests ) throws Throwable
    {
       ArrayList<Future<FeatureResult>> futures = new ArrayList<Future<FeatureResult>>();
@@ -640,64 +654,156 @@ public class KartaRuntime implements AutoCloseable
       return successful.get();
    }
 
-   public StepResult runStep( String stepRunnerPlugin, PreparedStep step ) throws TestFailureException
+   /**
+    * Runs a feature file using the RunInfo provided and returns the FeatureResult
+    * 
+    * @param runInfo
+    * @param featureFileName
+    * @return FeatureResult
+    */
+   public FeatureResult runFeatureFile( RunInfo runInfo, String featureFileName )
    {
-      StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin );
-      if ( stepRunner == null )
+      try
       {
-         return StandardStepResults.error( TestIncident.builder().message( "Step runner plugin not found: " + stepRunnerPlugin ).build() );
+         String featureSource = ClassPathLoaderUtils.readAllText( featureFileName );
+
+         if ( StringUtils.isEmpty( featureSource ) )
+         {
+            String errorMsg = "Feature file invalid: " + featureFileName;
+            log.error( errorMsg );
+            return StandardFeatureResults.error( errorMsg );
+         }
+         return runFeatureSource( runInfo, featureSource );
       }
-      return stepRunner.runStep( step );
+      catch ( Throwable t )
+      {
+         log.error( Constants.EMPTY_STRING, t );
+         return StandardFeatureResults.error( t );
+      }
    }
 
+   /**
+    * Runs the feature source string using the RunInfo provided and returns the FeatureResult
+    * 
+    * @param runInfo
+    * @param featureFileSourceString
+    * @return FeatureResult
+    */
+   public FeatureResult runFeatureSource( RunInfo runInfo, String featureFileSourceString )
+   {
+      try
+      {
+         FeatureSourceParser featureParser = getFeatureSourceParser( runInfo );
+
+         if ( featureParser == null )
+         {
+            String errorMsg = "Failed to get a feature source parser of type: " + runInfo.getFeatureSourceParserPlugin();
+            log.error( errorMsg );
+            return StandardFeatureResults.error( errorMsg );
+         }
+         TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
+
+         return runFeature( runInfo, testFeature );
+      }
+      catch ( Throwable t )
+      {
+         log.error( Constants.EMPTY_STRING, t );
+         return StandardFeatureResults.error( t );
+      }
+   }
+
+   /**
+    * Runs a TestFeature locally (or remotely invoked) using the RunInfo provided and returns the FeatureResult
+    * 
+    * @param runInfo
+    * @param feature
+    * @return FeatureResult
+    */
+   public FeatureResult runFeature( RunInfo runInfo, TestFeature feature )
+   {
+      StepRunner stepRunner = getStepRunner( runInfo );
+
+      if ( stepRunner == null )
+      {
+         String errorMsg = "Failed to get a step runner for run: " + runInfo;
+         log.error( errorMsg );
+         return StandardFeatureResults.error( errorMsg );
+      }
+
+      ArrayList<TestDataSource> testDataSources = getTestDataSources( runInfo );
+
+      if ( testDataSources == null )
+      {
+         String errorMsg = "Failed to get test data sources for run: " + runInfo;
+         log.error( errorMsg );
+         return StandardFeatureResults.error( errorMsg );
+      }
+      try
+      {
+         FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).runInfo( runInfo ).testFeature( feature ).build();
+         FeatureResult featureResult = featureRunner.call();
+         return featureResult;
+      }
+      catch ( Throwable t )
+      {
+         log.error( Constants.EMPTY_STRING, t );
+         return StandardFeatureResults.error( t );
+      }
+   }
+
+   /**
+    * Runs a TestJob iteration on remote node or locally
+    * 
+    * @param runInfo
+    * @param featureName
+    * @param job
+    * @param iterationIndex
+    * @return TestJobResult
+    * @throws Throwable
+    */
+   public TestJobResult runJobIteration( RunInfo runInfo, String featureName, TestJob job, long iterationIndex ) throws Throwable
+   {
+      TestJobResult jobResult = null;
+      String node = job.getNode();
+      if ( StringUtils.isNotEmpty( node ) )
+      {
+         // TODO: Handle local node
+         // TODO: Handle null node error
+         jobResult = nodeRegistry.getNode( node ).runJobIteration( runInfo, featureName, job.toBuilder().node( null ).build(), iterationIndex );
+      }
+      else
+      {
+         jobResult = TestJobRunner.run( this, runInfo, featureName, job, iterationIndex );
+      }
+
+      return jobResult;
+   }
+
+   /**
+    * Runs a PreparedScenario locally (or remotely invoked) using the RunInfo provided and returns the ScenarioResult
+    * 
+    * @param runInfo
+    * @param featureName
+    * @param iterationIndex
+    * @param testScenario
+    * @param scenarioIterationNumber
+    * @return ScenarioResult
+    */
    public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, long iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber )
    {
       ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( this ).runInfo( runInfo ).featureName( featureName ).iterationIndex( iterationIndex ).testScenario( testScenario ).scenarioIterationNumber( scenarioIterationNumber ).build();
       return scenarioRunner.call();
    }
 
-   public StepResult runChaosAction( String stepRunnerPlugin, PreparedChaosAction chaosAction ) throws TestFailureException
-   {
-      StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPlugin );
-      if ( stepRunner == null )
-      {
-         return StandardStepResults.error( TestIncident.builder().message( "Step runner plugin not found: " + stepRunnerPlugin ).build() );
-      }
-      return stepRunner.performChaosAction( chaosAction );
-   }
-
-   public long scheduleJob( RunInfo runInfo, String featureName, TestJob job ) throws Throwable
-   {
-      long jobInterval = job.getInterval();
-      int repeatCount = job.getIterationCount();
-
-      if ( jobInterval > 0 )
-      {
-         HashMap<String, Object> jobData = new HashMap<String, Object>();
-         jobData.put( Constants.KARTA_RUNTIME, this );
-         jobData.put( Constants.RUN_INFO, runInfo );
-         jobData.put( Constants.FEATURE_NAME, featureName );
-         jobData.put( Constants.TEST_JOB, job );
-         jobData.put( Constants.ITERATION_COUNTER, new AtomicLong() );
-         return QuartzJobScheduler.scheduleJob( QuartzTestJob.class, jobInterval, repeatCount, jobData );
-      }
-      else
-      {
-         TestJobRunner.run( this, runInfo, featureName, job, 0 );
-         return -1;
-      }
-   }
-
-   public boolean deleteJob( Long jobId )
-   {
-      return QuartzJobScheduler.deleteJob( jobId );
-   }
-
-   public boolean deleteJobs( ArrayList<Long> jobIds )
-   {
-      return QuartzJobScheduler.deleteJobs( jobIds );
-   }
-
+   /**
+    * Takes care of post execution of a test step </br>
+    * - raises incidents returned in the StepResult </br>
+    * - raises other events returned in the StepResult </br>
+    * - merges the result map into the variables of the TestExecutionContext </br>
+    * 
+    * @param stepResult
+    * @param testExecutionContext
+    */
    public void processStepResult( StepResult stepResult, TestExecutionContext testExecutionContext )
    {
       for ( TestIncident incident : stepResult.getIncidents() )
@@ -713,16 +819,43 @@ public class KartaRuntime implements AutoCloseable
       DataUtils.mergeMapInto( stepResult.getResults(), testExecutionContext.getVariables() );
    }
 
+   /**
+    * Converts a TestStep into PreparedStep which is ready for execution with execution context and test data merged
+    * 
+    * @param runInfo
+    * @param featureName
+    * @param iterationIndex
+    * @param scenarioName
+    * @param variables
+    * @param commonTestDataSet
+    * @param step
+    * @return PreparedStep
+    * @throws Throwable
+    */
    public PreparedStep getPreparedStep( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestStep step ) throws Throwable
    {
       StepRunner stepRunner = getStepRunner( runInfo );
-      String stepIdentifier = stepRunner.sanitizeStepIdentifier( step.getIdentifier() );
-      TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, stepIdentifier, null, variables );
+      String stepIdentifier = step.getIdentifier();
+      String sanitizedStepIdentifer = stepRunner.sanitizeStepIdentifier( stepIdentifier );
+      TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, sanitizedStepIdentifer, null, variables );
       testExecutionContext.mergeTestData( step.getTestData(), DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
 
       return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).build();
    }
 
+   /**
+    * Converts a ChaosAction into PreparedChaosAction which is ready for execution with execution context and test data merged
+    * 
+    * @param runInfo
+    * @param featureName
+    * @param iterationIndex
+    * @param scenarioName
+    * @param variables
+    * @param commonTestDataSet
+    * @param chaosAction
+    * @return PreparedChaosAction
+    * @throws Throwable
+    */
    public PreparedChaosAction getPreparedChaosAction( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet,
                                                       ChaosAction chaosAction )
             throws Throwable
@@ -732,6 +865,20 @@ public class KartaRuntime implements AutoCloseable
       return PreparedChaosAction.builder().chaosAction( chaosAction ).testExecutionContext( testExecutionContext ).build();
    }
 
+   /**
+    * Converts a TestScenario into PreparedScenario which is ready for execution with execution context and test data merged
+    * 
+    * @param runInfo
+    * @param featureName
+    * @param iterationIndex
+    * @param variables
+    * @param commonTestDataSet
+    * @param scenarioSetupSteps
+    * @param testScenario
+    * @param scenarioTearDownSteps
+    * @return PreparedScenario
+    * @throws Throwable
+    */
    public PreparedScenario getPreparedScenario( RunInfo runInfo, String featureName, long iterationIndex, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, ArrayList<TestStep> scenarioSetupSteps,
                                                 TestScenario testScenario, ArrayList<TestStep> scenarioTearDownSteps )
             throws Throwable
@@ -781,6 +928,15 @@ public class KartaRuntime implements AutoCloseable
       return preparedScenario;
    }
 
+   /**
+    * Runs a PreparedStep based on the RunInfo locally or on a remote node and returns the StepResult
+    * 
+    * @param runInfo
+    * @param step
+    * @return StepResult
+    * @throws TestFailureException
+    * @throws RemoteException
+    */
    public StepResult runStep( RunInfo runInfo, PreparedStep step ) throws TestFailureException, RemoteException
    {
       StepResult stepResult;
@@ -790,8 +946,7 @@ public class KartaRuntime implements AutoCloseable
       {
          // TODO: Handle local node
          // TODO: Handle null node error
-         step.setNode( null );
-         stepResult = nodeRegistry.getNode( node ).runStep( runInfo, step );
+         stepResult = nodeRegistry.getNode( node ).runStep( runInfo, step.toBuilder().node( null ).build() );
       }
       else
       {
@@ -804,11 +959,33 @@ public class KartaRuntime implements AutoCloseable
       return stepResult;
    }
 
+   /**
+    * Runs a TestStep based on the RunInfo locally or on a remote node and returns the StepResult
+    * 
+    * @param runInfo
+    * @param featureName
+    * @param iterationIndex
+    * @param scenarioName
+    * @param variables
+    * @param commonTestDataSet
+    * @param step
+    * @return StepResult
+    * @throws Throwable
+    */
    public StepResult runStep( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestStep step ) throws Throwable
    {
       return runStep( runInfo, getPreparedStep( runInfo, featureName, iterationIndex, scenarioName, variables, commonTestDataSet, step ) );
    }
 
+   /**
+    * Runs a PreparedChaosAction based on the RunInfo locally or on a remote node and returns the StepResult
+    * 
+    * @param runInfo
+    * @param preparedChaosAction
+    * @return StepResult
+    * @throws TestFailureException
+    * @throws RemoteException
+    */
    public StepResult runChaosAction( RunInfo runInfo, PreparedChaosAction preparedChaosAction ) throws TestFailureException, RemoteException
    {
       StepResult stepResult;
@@ -816,8 +993,7 @@ public class KartaRuntime implements AutoCloseable
       String nodeName = preparedChaosAction.getChaosAction().getNode();
       if ( StringUtils.isNotEmpty( nodeName ) )
       {
-         preparedChaosAction.getChaosAction().setNode( null );
-         stepResult = nodeRegistry.getNode( nodeName ).performChaosAction( runInfo, preparedChaosAction );
+         stepResult = nodeRegistry.getNode( nodeName ).performChaosAction( runInfo, preparedChaosAction.toBuilder().chaosAction( preparedChaosAction.getChaosAction().toBuilder().node( null ).build() ).build() );
       }
       else
       {
@@ -830,6 +1006,19 @@ public class KartaRuntime implements AutoCloseable
       return stepResult;
    }
 
+   /**
+    * Runs a ChaosAction based on the RunInfo locally or on a remote node and returns the StepResult
+    * 
+    * @param runInfo
+    * @param featureName
+    * @param iterationIndex
+    * @param scenarioName
+    * @param variables
+    * @param commonTestDataSet
+    * @param chaosAction
+    * @return StepResult
+    * @throws Throwable
+    */
    public StepResult runChaosAction( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, ChaosAction chaosAction )
             throws Throwable
    {

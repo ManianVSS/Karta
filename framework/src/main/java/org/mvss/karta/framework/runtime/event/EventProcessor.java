@@ -64,7 +64,7 @@ public class EventProcessor implements AutoCloseable
 
    public void start()
    {
-      // TODO: Change to thread factory to be able to manage events.
+      // TODO: Change to thread factory to be able to manage threads.
       eventProcessingQueue = new BlockingRunnableQueue( maxEventQueueSize );
       eventListenerExecutorService = new ThreadPoolExecutor( numberOfThread, numberOfThread, 0L, TimeUnit.MILLISECONDS, eventProcessingQueue );
    }
@@ -105,9 +105,6 @@ public class EventProcessor implements AutoCloseable
 
    public void raiseEvent( Event event )
    {
-      // TODO: Track the thread to do graceful exit
-      // TODO: Asynchronous event sender to do events as soon as possible;
-      // new Thread( () -> sendEventsToListeners( event ) ).run();
       sendEventsToListeners( event );
    }
 

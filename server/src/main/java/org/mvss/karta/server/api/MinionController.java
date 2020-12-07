@@ -15,15 +15,16 @@ import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestJob;
+import org.mvss.karta.framework.core.TestJobResult;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunInfo;
 import org.mvss.karta.framework.runtime.TestFailureException;
+import org.mvss.karta.framework.runtime.TestJobRunner;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -140,8 +141,8 @@ public class MinionController
    }
 
    @ResponseStatus( HttpStatus.OK )
-   @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_JOB )
-   public long runJob( @RequestBody HashMap<String, Serializable> parameters ) throws Throwable
+   @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_JOB_ITERATION )
+   public TestJobResult runJobIteration( @RequestBody HashMap<String, Serializable> parameters ) throws Throwable
    {
       if ( parameters == null )
       {
@@ -151,20 +152,14 @@ public class MinionController
       RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ? objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) : kartaRuntime.getDefaultRunInfo();
       String featureName = (String) parameters.get( Constants.FEATURE_NAME );
       TestJob job = objectMapper.convertValue( parameters.get( Constants.JOB ), TestJob.class );
+      long iterationIndex = DataUtils.serializableToLong( parameters.get( Constants.ITERATION_INDEX ), -1 );
 
       if ( job == null )
       {
          throw new Exception( "Missing job to run in parameters" );
       }
 
-      return kartaRuntime.scheduleJob( runInfo, featureName, job );
-   }
-
-   @ResponseStatus( HttpStatus.OK )
-   @RequestMapping( method = RequestMethod.DELETE, value = Constants.PATH_RUN_JOB_ID )
-   public boolean deleteJob( @PathVariable long id )
-   {
-      return kartaRuntime.deleteJob( id );
+      return TestJobRunner.run( kartaRuntime, runInfo, featureName, job, iterationIndex );
    }
 
    @ResponseStatus( HttpStatus.OK )

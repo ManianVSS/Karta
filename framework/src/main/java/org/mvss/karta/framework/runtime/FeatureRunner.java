@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -13,14 +12,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.ScenarioResult;
+import org.mvss.karta.framework.core.SerializableKVP;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.TestJob;
+import org.mvss.karta.framework.core.TestJobIterationResultProcessor;
+import org.mvss.karta.framework.core.TestJobResult;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.minions.KartaMinion;
@@ -65,35 +66,22 @@ public class FeatureRunner implements Callable<FeatureResult>
 
    private FeatureResult           result;
 
+   private synchronized void accumulateJobIterationResult( String testJob, TestJobResult testJobResult )
+   {
+      result.addTestJobResult( testJob, testJobResult );
+   }
+
    private synchronized void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
    {
       result.addIterationResult( iterationResult );
    }
 
    @Builder.Default
-   private ArrayList<Long>            runningJobs   = new ArrayList<Long>();
-
-   @Builder.Default
-   private HashMap<Long, KartaMinion> remoteJobsMap = new HashMap<Long, KartaMinion>();
+   private ArrayList<Long> runningJobs = new ArrayList<Long>();
 
    private boolean deleteJobs()
    {
       boolean deleteJobResults = QuartzJobScheduler.deleteJobs( runningJobs );
-
-      if ( !remoteJobsMap.isEmpty() )
-      {
-         for ( Entry<Long, KartaMinion> entry : remoteJobsMap.entrySet() )
-         {
-            try
-            {
-               deleteJobResults = deleteJobResults && entry.getValue().deleteJob( entry.getKey() );
-            }
-            catch ( Throwable t )
-            {
-               deleteJobResults = false;
-            }
-         }
-      }
 
       if ( !deleteJobResults )
       {
@@ -134,24 +122,25 @@ public class FeatureRunner implements Callable<FeatureResult>
          {
             try
             {
-               if ( StringUtils.isNotEmpty( job.getNode() ) )
-               {
-                  KartaMinion node = nodeRegistry.getNode( job.getNode() );
-                  long jobId = node.scheduleJob( runInfo, testFeature.getName(), job );
+               long jobInterval = job.getInterval();
+               int repeatCount = job.getIterationCount();
 
-                  if ( jobId != -1 )
-                  {
-                     remoteJobsMap.put( jobId, node );
-                  }
+               if ( jobInterval > 0 )
+               {
+                  HashMap<String, Object> jobData = new HashMap<String, Object>();
+                  jobData.put( Constants.KARTA_RUNTIME, kartaRuntime );
+                  jobData.put( Constants.RUN_INFO, runInfo );
+                  jobData.put( Constants.FEATURE_NAME, testFeature.getName() );
+                  jobData.put( Constants.TEST_JOB, job );
+                  jobData.put( Constants.ITERATION_COUNTER, new AtomicLong() );
+                  TestJobIterationResultProcessor testJobIterationResultProcessor = ( jobName, testJobResult ) -> accumulateJobIterationResult( jobName, testJobResult );
+                  jobData.put( Constants.TEST_JOB_ITERATION_RESULT_PROCESSOR, testJobIterationResultProcessor );
+                  long jobId = QuartzJobScheduler.scheduleJob( QuartzTestJob.class, jobInterval, repeatCount, jobData );
+                  runningJobs.add( jobId );
                }
                else
                {
-                  long jobId = kartaRuntime.scheduleJob( runInfo, testFeature.getName(), job );// ( stepRunner, testDataSources, runName, testFeature.getName(), job );
-
-                  if ( jobId != -1 )
-                  {
-                     runningJobs.add( jobId );
-                  }
+                  TestJobRunner.run( kartaRuntime, runInfo, testFeature.getName(), job, 0 );
                }
             }
             catch ( Throwable t )
@@ -192,7 +181,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             {
                eventProcessor.raiseEvent( new FeatureSetupStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-               result.getSetupResultMap().put( step.getIdentifier(), stepResult.isPassed() );
+               result.getSetupResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), stepResult.isPassed() ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )
@@ -294,12 +283,6 @@ public class FeatureRunner implements Callable<FeatureResult>
          iterationExecutionService.shutdown();
          iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
 
-         // TODO: Check and remove this reset if not needed
-         // for ( TestScenario scenario : testFeature.getTestScenarios() )
-         // {
-         // AtomicLong counter = scenarioIterationIndexMap.get( scenario );
-         // counter.set( 0 );
-         // }
          testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario ).set( 0 ) );
 
          iterationIndex = -1;
@@ -323,7 +306,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             {
                eventProcessor.raiseEvent( new FeatureTearDownStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-               result.getTearDownResultMap().put( step.getIdentifier(), stepResult.isPassed() );
+               result.getTearDownResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), stepResult.isPassed() ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )

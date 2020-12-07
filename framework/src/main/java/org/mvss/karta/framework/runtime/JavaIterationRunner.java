@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.ScenarioResult;
+import org.mvss.karta.framework.core.SerializableKVP;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.javatest.Scenario;
 import org.mvss.karta.framework.core.javatest.ScenarioSetup;
@@ -113,7 +114,7 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
                   eventProcessor.raiseEvent( new JavaScenarioSetupStartEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName ) );
                   StepResult stepResult = JavaFeatureRunner.runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
                   eventProcessor.raiseEvent( new JavaScenarioSetupCompleteEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName, stepResult ) );
-                  scenarioResult.getSetupResults().put( stepName, stepResult.isPassed() );
+                  scenarioResult.getSetupResults().add( new SerializableKVP<String, Boolean>( stepName, stepResult.isPassed() ) );
                   scenarioResult.getIncidents().addAll( stepResult.getIncidents() );
 
                   if ( !stepResult.isPassed() )
@@ -128,7 +129,7 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
             String stepName = scenarioName;
             TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, stepName, null, variables );
             StepResult stepResult = JavaFeatureRunner.runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, scenarioMethod );
-            scenarioResult.getRunResults().put( stepName, stepResult.isPassed() );
+            scenarioResult.getRunResults().add( new SerializableKVP<String, Boolean>( stepName, stepResult.isPassed() ) );
             scenarioResult.getIncidents().addAll( stepResult.getIncidents() );
 
             if ( !stepResult.isPassed() )
@@ -154,7 +155,7 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
                   eventProcessor.raiseEvent( new JavaScenarioTearDownStartEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName ) );
                   stepResult = JavaFeatureRunner.runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
                   eventProcessor.raiseEvent( new JavaScenarioTearDownCompleteEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName, stepResult ) );
-                  scenarioResult.getTearDownResults().put( stepName, stepResult.isPassed() );
+                  scenarioResult.getTearDownResults().add( new SerializableKVP<String, Boolean>( stepName, stepResult.isPassed() ) );
                   scenarioResult.getIncidents().addAll( stepResult.getIncidents() );
 
                   if ( !stepResult.isPassed() )

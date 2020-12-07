@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.AllArgsConstructor;
@@ -28,44 +30,43 @@ public class FeatureResult implements Serializable
    /**
     * 
     */
-   private static final long                          serialVersionUID   = 1L;
+   private static final long                           serialVersionUID   = 1L;
 
    @Builder.Default
-   private Date                                       startTime          = new Date();
+   private Date                                        startTime          = new Date();
 
-   private Date                                       endTime;
-
-   @Builder.Default
-   private boolean                                    successful         = true;
+   private Date                                        endTime;
 
    @Builder.Default
-   private boolean                                    error              = false;
+   private boolean                                     successful         = true;
 
    @Builder.Default
-   private CopyOnWriteArrayList<TestIncident>         incidents          = new CopyOnWriteArrayList<TestIncident>();
+   private boolean                                     error              = false;
 
    @Builder.Default
-   private HashMap<String, Boolean>                   setupResultMap     = new HashMap<String, Boolean>();
+   private CopyOnWriteArrayList<TestIncident>          incidents          = new CopyOnWriteArrayList<TestIncident>();
 
    @Builder.Default
-   private HashMap<String, ArrayList<TestJobResult>>  jobsResultsMap     = new HashMap<String, ArrayList<TestJobResult>>();
+   private ArrayList<SerializableKVP<String, Boolean>> setupResults       = new ArrayList<SerializableKVP<String, Boolean>>();
 
    @Builder.Default
-   private HashMap<String, ArrayList<ScenarioResult>> scenarioResultsMap = new HashMap<String, ArrayList<ScenarioResult>>();
+   private HashMap<String, ArrayList<TestJobResult>>   jobsResultsMap     = new HashMap<String, ArrayList<TestJobResult>>();
 
    @Builder.Default
-   private HashMap<String, Boolean>                   tearDownResultMap  = new HashMap<String, Boolean>();
+   private HashMap<String, ArrayList<ScenarioResult>>  scenarioResultsMap = new HashMap<String, ArrayList<ScenarioResult>>();
 
-   public HashMap<String, ArrayList<TestJobResult>> addTestJobResult( TestJob testJob, TestJobResult testJobResult )
+   @Builder.Default
+   private ArrayList<SerializableKVP<String, Boolean>> tearDownResults    = new ArrayList<SerializableKVP<String, Boolean>>();
+
+   public HashMap<String, ArrayList<TestJobResult>> addTestJobResult( String jobName, TestJobResult testJobResult )
    {
       if ( jobsResultsMap == null )
       {
          jobsResultsMap = new HashMap<String, ArrayList<TestJobResult>>();
       }
 
-      if ( ( testJobResult == null ) && ( testJob != null ) )
+      if ( ( testJobResult != null ) && StringUtils.isNotBlank( jobName ) )
       {
-         String jobName = testJob.getName();
          ArrayList<TestJobResult> jobResults = jobsResultsMap.get( jobName );
 
          if ( jobResults == null )

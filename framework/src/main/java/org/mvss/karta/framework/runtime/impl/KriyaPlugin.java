@@ -15,7 +15,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.text.StringEscapeUtils;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.AfterFeature;
@@ -27,6 +26,7 @@ import org.mvss.karta.framework.core.BeforeScenario;
 import org.mvss.karta.framework.core.ChaosActionDefinition;
 import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.core.NamedParameter;
+import org.mvss.karta.framework.core.Pair;
 import org.mvss.karta.framework.core.ParameterMapping;
 import org.mvss.karta.framework.core.PreparedChaosAction;
 import org.mvss.karta.framework.core.PreparedScenario;
@@ -55,49 +55,49 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCycleHook
 {
-   public static final String                                       PLUGIN_NAME                            = "Kriya";
+   public static final String                                PLUGIN_NAME                            = "Kriya";
 
-   public static final String                                       INLINE_STEP_DEF_PARAM_INDICATOR_STRING = "\"\"";
-   public static final String                                       WORD_FETCH_REGEX                       = "\\W+";
+   public static final String                                INLINE_STEP_DEF_PARAM_INDICATOR_STRING = "\"\"";
+   public static final String                                WORD_FETCH_REGEX                       = "\\W+";
 
-   public static final String                                       INLINE_TEST_DATA_PATTERN               = "\"(?:[^\\\\\"]+|\\\\.|\\\\\\\\)*\"";
+   public static final String                                INLINE_TEST_DATA_PATTERN               = "\"(?:[^\\\\\"]+|\\\\.|\\\\\\\\)*\"";
 
-   private HashMap<String, Pattern>                                 tagPatternMap                          = new HashMap<String, Pattern>();
-   private HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedRunStartHooks                    = new HashMap<Pattern, ArrayList<MutablePair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedRunStopHooks                     = new HashMap<Pattern, ArrayList<MutablePair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedFeatureStartHooks                = new HashMap<Pattern, ArrayList<MutablePair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedFeatureStopHooks                 = new HashMap<Pattern, ArrayList<MutablePair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedScenarioStartHooks               = new HashMap<Pattern, ArrayList<MutablePair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedScenarioStopHooks                = new HashMap<Pattern, ArrayList<MutablePair<Object, Method>>>();
+   private HashMap<String, Pattern>                          tagPatternMap                          = new HashMap<String, Pattern>();
+   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedRunStartHooks                    = new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedRunStopHooks                     = new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedFeatureStartHooks                = new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedFeatureStopHooks                 = new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStartHooks               = new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStopHooks                = new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
 
-   private HashMap<String, MutablePair<Object, Method>>             stepHandlerMap                         = new HashMap<String, MutablePair<Object, Method>>();
-   private HashMap<String, MutablePair<Object, Method>>             chaosActionHandlerMap                  = new HashMap<String, MutablePair<Object, Method>>();
+   private HashMap<String, Pair<Object, Method>>             stepHandlerMap                         = new HashMap<String, Pair<Object, Method>>();
+   private HashMap<String, Pair<Object, Method>>             chaosActionHandlerMap                  = new HashMap<String, Pair<Object, Method>>();
 
-   private static Pattern                                           testDataPattern                        = Pattern.compile( INLINE_TEST_DATA_PATTERN );
+   private static Pattern                                    testDataPattern                        = Pattern.compile( INLINE_TEST_DATA_PATTERN );
 
-   public static final List<String>                                 conjunctions                           = Arrays.asList( "Given", "When", "Then", "And", "But" );
+   public static final List<String>                          conjunctions                           = Arrays.asList( "Given", "When", "Then", "And", "But" );
 
-   private static ObjectMapper                                      objectMapper                           = ParserUtils.getObjectMapper();
+   private static ObjectMapper                               objectMapper                           = ParserUtils.getObjectMapper();
 
-   private boolean                                                  initialized                            = false;
+   private boolean                                           initialized                            = false;
 
    @PropertyMapping( group = PLUGIN_NAME, value = "stepDefinitionPackageNames" )
-   private ArrayList<String>                                        stepDefinitionPackageNames             = new ArrayList<String>();
+   private ArrayList<String>                                 stepDefinitionPackageNames             = new ArrayList<String>();
 
    @PropertyMapping( group = PLUGIN_NAME, value = "chaosActionDefinitionPackageNames" )
-   private ArrayList<String>                                        chaosActionDefinitionPackageNames      = new ArrayList<String>();
+   private ArrayList<String>                                 chaosActionDefinitionPackageNames      = new ArrayList<String>();
 
    @KartaAutoWired
-   private BeanRegistry                                             beanRegistry;
+   private BeanRegistry                                      beanRegistry;
 
    @KartaAutoWired
-   private Configurator                                             configurator;
+   private Configurator                                      configurator;
 
    @KartaAutoWired
-   private EventProcessor                                           eventProcessor;
+   private EventProcessor                                    eventProcessor;
 
    @KartaAutoWired
-   private KartaMinionRegistry                                      minionRegistry;
+   private KartaMinionRegistry                               minionRegistry;
 
    @Override
    public String getPluginName()
@@ -144,7 +144,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                         beanRegistry.loadBeans( stepDefClassObj );
                                                                         beanRegistry.add( stepDefClassObj );
                                                                      }
-                                                                     stepHandlerMap.put( stepDefString, new MutablePair<Object, Method>( beanRegistry.get( stepDefinitionClass.getName() ), candidateStepDefinitionMethod ) );
+                                                                     stepHandlerMap.put( stepDefString, new Pair<Object, Method>( beanRegistry.get( stepDefinitionClass.getName() ), candidateStepDefinitionMethod ) );
                                                                   }
                                                                }
                                                                catch ( Throwable t )
@@ -186,7 +186,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                         beanRegistry.loadBeans( chaosActionDefClassObj );
                                                                         beanRegistry.add( chaosActionDefClassObj );
                                                                      }
-                                                                     chaosActionHandlerMap.put( chaosActionName, new MutablePair<Object, Method>( beanRegistry.get( chaosActionDefinitionClass.getName() ), candidateChaosActionMethod ) );
+                                                                     chaosActionHandlerMap.put( chaosActionName, new Pair<Object, Method>( beanRegistry.get( chaosActionDefinitionClass.getName() ), candidateChaosActionMethod ) );
                                                                   }
                                                                }
                                                                catch ( Throwable t )
@@ -197,7 +197,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
                                                          };
 
-   private void processTaggedHook( HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedHooks, String[] tags, Method hookMethod, Class<?>... parameters ) throws InstantiationException, IllegalAccessException
+   private void processTaggedHook( HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooks, String[] tags, Method hookMethod, Class<?>... parameters ) throws InstantiationException, IllegalAccessException
    {
       String methodDescription = hookMethod.toString();
       Class<?>[] params = hookMethod.getParameterTypes();
@@ -244,12 +244,12 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
          if ( !taggedHooks.containsKey( tagPattern ) )
          {
-            taggedHooks.put( tagPattern, new ArrayList<MutablePair<Object, Method>>() );
+            taggedHooks.put( tagPattern, new ArrayList<Pair<Object, Method>>() );
          }
 
-         ArrayList<MutablePair<Object, Method>> hooksDef = taggedHooks.get( tagPattern );
+         ArrayList<Pair<Object, Method>> hooksDef = taggedHooks.get( tagPattern );
 
-         MutablePair<Object, Method> hookdef = new MutablePair<Object, Method>( beanRegistry.get( hookClass.getName() ), hookMethod );
+         Pair<Object, Method> hookdef = new Pair<Object, Method>( beanRegistry.get( hookClass.getName() ), hookMethod );
 
          hooksDef.add( hookdef );
       }
@@ -435,7 +435,6 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          return result;
       }
 
-      // Prepared step should already be sanitized // sanitizeStepIdentifier( testStep.getIdentifier() );
       String stepIdentifier = testStep.getIdentifier();
 
       // Fetch the positional argument names
@@ -446,6 +445,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          inlineStepDefinitionParameterNames.add( matcher.group() );
       }
 
+      stepIdentifier = sanitizeStepIdentifier( stepIdentifier );
       if ( !stepHandlerMap.containsKey( stepIdentifier ) )
       {
          // TODO: Handling undefined step to ask manual action(other configured handlers) if possible
@@ -466,10 +466,11 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       try
       {
          HashMap<String, Serializable> testData = testExecutionContext.getData();
+         HashMap<String, Serializable> variables = testExecutionContext.getVariables();
 
          ArrayList<Object> values = new ArrayList<Object>();
 
-         MutablePair<Object, Method> stepDefHandlerObjectMethodPair = stepHandlerMap.get( stepIdentifier );
+         Pair<Object, Method> stepDefHandlerObjectMethodPair = stepHandlerMap.get( stepIdentifier );
 
          Object stepDefObject = stepDefHandlerObjectMethodPair.getLeft();
          Method stepDefMethodToInvoke = stepDefHandlerObjectMethodPair.getRight();
@@ -492,7 +493,14 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                   {
                      name = paramaterNameInfo.value();
                   }
-                  Serializable parameterValue = testData.get( name );
+
+                  Serializable parameterValue = variables.get( name );
+
+                  if ( parameterValue == null )
+                  {
+                     parameterValue = testData.get( name );
+                  }
+
                   values.add( ( parameterValue == null ) ? null : objectMapper.convertValue( parameterValue, parametersObj[i].getType() ) );
 
                }
@@ -508,16 +516,21 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
          }
 
-         if ( stepDefMethodToInvoke.getReturnType().equals( StepResult.class ) )
+         Class<?> returnType = stepDefMethodToInvoke.getReturnType();
+         Object returnValue = stepDefMethodToInvoke.invoke( stepDefObject, values.toArray() );
+
+         if ( returnType.equals( StepResult.class ) )
          {
-            result = (StepResult) stepDefMethodToInvoke.invoke( stepDefObject, values.toArray() );
+            result = (StepResult) returnValue;
+         }
+         else if ( boolean.class.isAssignableFrom( returnType ) )
+         {
+            result = StepResult.builder().successful( (boolean) returnValue ).build();
          }
          else
          {
-            stepDefMethodToInvoke.invoke( stepDefObject, values.toArray() );
             result.setSuccessful( true );
          }
-
       }
       catch ( Throwable t )
       {
@@ -552,7 +565,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       {
          if ( chaosActionHandlerMap.containsKey( choasActionName ) )
          {
-            MutablePair<Object, Method> chaosActionHandlerObjectMethodPair = chaosActionHandlerMap.get( choasActionName );
+            Pair<Object, Method> chaosActionHandlerObjectMethodPair = chaosActionHandlerMap.get( choasActionName );
 
             Object chaosActionHandlerObject = chaosActionHandlerObjectMethodPair.getLeft();
             Method choasActionHandlerMethodToInvoke = chaosActionHandlerObjectMethodPair.getRight();
@@ -579,19 +592,19 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       return result;
    }
 
-   public void invokeTaggedMethods( HashMap<Pattern, ArrayList<MutablePair<Object, Method>>> taggedHooksList, HashSet<String> tags, Object... parameters )
+   public void invokeTaggedMethods( HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooksList, HashSet<String> tags, Object... parameters )
    {
       HashSet<Method> alreadyInvokedMethods = new HashSet<Method>();
 
       for ( String tag : tags )
       {
-         for ( Entry<Pattern, ArrayList<MutablePair<Object, Method>>> patternHooksEntrySet : taggedHooksList.entrySet() )
+         for ( Entry<Pattern, ArrayList<Pair<Object, Method>>> patternHooksEntrySet : taggedHooksList.entrySet() )
          {
             Pattern tagPattern = patternHooksEntrySet.getKey();
 
             if ( tagPattern.matcher( tag ).matches() )
             {
-               for ( MutablePair<Object, Method> objectMethodPair : patternHooksEntrySet.getValue() )
+               for ( Pair<Object, Method> objectMethodPair : patternHooksEntrySet.getValue() )
                {
                   Object hookObject = objectMethodPair.getLeft();
                   Method hookMethodToInvoke = objectMethodPair.getRight();

@@ -9,6 +9,7 @@ import org.mvss.karta.framework.core.PreparedChaosAction;
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.ScenarioResult;
+import org.mvss.karta.framework.core.SerializableKVP;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
@@ -73,7 +74,6 @@ public class ScenarioRunner implements Callable<ScenarioResult>
 
       log.debug( "Running Scenario: " + testScenario );
 
-      // TODO: Handle null steps for steps
       try
       {
          for ( PreparedStep step : testScenario.getSetupSteps() )
@@ -83,7 +83,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
             StepResult stepResult = kartaRuntime.runStep( runInfo, step );
 
             eventProcessor.raiseEvent( new ScenarioSetupStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
-            result.getSetupResults().put( step.getIdentifier(), stepResult.isPassed() );
+            result.getSetupResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), stepResult.isPassed() ) );
             result.getIncidents().addAll( stepResult.getIncidents() );
 
             if ( !stepResult.isPassed() )
@@ -103,7 +103,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                StepResult stepResult = kartaRuntime.runChaosAction( runInfo, preparedChaosAction );
 
                eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), preparedChaosAction, stepResult ) );
-               result.getChaosActionResults().put( preparedChaosAction.getChaosAction().getName(), stepResult.isPassed() );
+               result.getChaosActionResults().add( new SerializableKVP<String, Boolean>( preparedChaosAction.getChaosAction().getName(), stepResult.isPassed() ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )
@@ -122,7 +122,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                   StepResult stepResult = kartaRuntime.runStep( runInfo, step );
 
                   eventProcessor.raiseEvent( new ScenarioStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
-                  result.getRunResults().put( step.getIdentifier(), stepResult.isPassed() );
+                  result.getRunResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), stepResult.isPassed() ) );
                   result.getIncidents().addAll( stepResult.getIncidents() );
 
                   if ( !stepResult.isPassed() )
@@ -152,7 +152,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                StepResult stepResult = kartaRuntime.runStep( runInfo, step );
 
                eventProcessor.raiseEvent( new ScenarioTearDownStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
-               result.getTearDownResults().put( step.getIdentifier(), stepResult.isPassed() );
+               result.getTearDownResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), stepResult.isPassed() ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )

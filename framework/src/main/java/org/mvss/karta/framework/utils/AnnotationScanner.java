@@ -83,7 +83,6 @@ public class AnnotationScanner
                                                                           @Override
                                                                           public boolean test( Class<?> returnType )
                                                                           {
-                                                                             // TODO Auto-generated method stub
                                                                              return ( returnType == Void.class );
                                                                           }
                                                                        };

@@ -3,6 +3,8 @@ package org.mvss.karta.framework.runtime;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.mvss.karta.framework.core.TestJob;
+import org.mvss.karta.framework.core.TestJobIterationResultProcessor;
+import org.mvss.karta.framework.core.TestJobResult;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -29,8 +31,11 @@ public class QuartzTestJob implements Job
          String featureName = (String) jobData.get( Constants.FEATURE_NAME );
          TestJob testJob = (TestJob) jobData.get( Constants.TEST_JOB );
          AtomicLong iterationCounter = (AtomicLong) jobData.get( Constants.ITERATION_COUNTER );
+         TestJobIterationResultProcessor testJobIterationResultProcessor = (TestJobIterationResultProcessor) jobData.get( Constants.TEST_JOB_ITERATION_RESULT_PROCESSOR );
 
-         TestJobRunner.run( kartaRuntime, runInfo, featureName, testJob, iterationCounter.getAndIncrement() );
+         // Run the job iteration on a remote node or local node using utility method
+         TestJobResult testJobResult = kartaRuntime.runJobIteration( runInfo, featureName, testJob, iterationCounter.getAndIncrement() );
+         testJobIterationResultProcessor.consume( testJob.getName(), testJobResult );
       }
       catch ( Throwable e )
       {
