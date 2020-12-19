@@ -4,7 +4,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
@@ -19,11 +21,21 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class BeanRegistry
 {
-   private HashMap<String, Object> beans = new HashMap<String, Object>();
+   private HashMap<String, Object> beans                 = new HashMap<String, Object>();
+
+   private Configurator            configurator;
+
+   private static List<Class<?>>   configuredBeanClasses = Collections.synchronizedList( new ArrayList<Class<?>>() );
 
    public BeanRegistry()
    {
       beans.put( BeanRegistry.class.getName(), this );
+   }
+
+   public BeanRegistry( Configurator configurator )
+   {
+      this();
+      this.configurator = configurator;
    }
 
    public Object put( Object bean )
@@ -172,8 +184,49 @@ public class BeanRegistry
          {
             for ( KartaBean kartaBean : candidateBeanDefinitionMethod.getAnnotationsByType( KartaBean.class ) )
             {
+
+               Class<?> beanDeclaringClass = candidateBeanDefinitionMethod.getDeclaringClass();
+
+               if ( !configuredBeanClasses.contains( beanDeclaringClass ) )
+               {
+                  try
+                  {
+                     if ( configurator != null )
+                     {
+                        configurator.loadProperties( beanDeclaringClass );
+                     }
+                     loadStaticBeans( beanDeclaringClass );
+                  }
+                  catch ( IllegalArgumentException | IllegalAccessException e )
+                  {
+                     log.error( "", e );
+                  }
+                  configuredBeanClasses.add( beanDeclaringClass );
+               }
+
                String beanName = kartaBean.value();
-               Object beanObj = candidateBeanDefinitionMethod.invoke( null );
+
+               Class<?>[] paramTypes = candidateBeanDefinitionMethod.getParameterTypes();
+
+               Object beanObj = null;
+
+               if ( paramTypes.length == 0 )
+               {
+                  beanObj = candidateBeanDefinitionMethod.invoke( null );
+               }
+               else if ( ( paramTypes.length == 1 ) && ( paramTypes[0] == BeanRegistry.class ) )
+               {
+                  beanObj = candidateBeanDefinitionMethod.invoke( this );
+               }
+               else
+               {
+                  continue;
+               }
+
+               if ( StringUtils.isAllBlank( beanName ) )
+               {
+                  beanName = beanObj.getClass().getName();
+               }
 
                if ( !add( beanName, beanObj ) )
                {

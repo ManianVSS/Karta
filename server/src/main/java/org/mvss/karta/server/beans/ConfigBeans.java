@@ -16,7 +16,15 @@ public class ConfigBeans
       try
       {
          KartaRuntime.initializeNodes = false;
-         return KartaRuntime.getInstance();
+         KartaRuntime kartaRuntime = KartaRuntime.getInstance();
+
+         if ( kartaRuntime == null )
+         {
+            log.error( "Karta runtime could not be initialized. Please check the directory and config files" );
+            System.exit( -1 );
+         }
+
+         return kartaRuntime;
       }
       catch ( Throwable e )
       {

@@ -47,7 +47,7 @@ public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion,
    {
       try
       {
-         return TestJobRunner.run( kartaRuntime, runInfo, featureName, job, iterationIndex );
+         return TestJobRunner.run( kartaRuntime, runInfo, featureName, job, iterationIndex, null );
       }
       catch ( Throwable e )
       {

@@ -23,7 +23,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class TestJobRunner
 {
-   public static TestJobResult run( KartaRuntime kartaRuntime, RunInfo runInfo, String featureName, TestJob job, long iterationIndex ) throws Throwable
+   public static TestJobResult run( KartaRuntime kartaRuntime, RunInfo runInfo, String featureName, TestJob job, long iterationIndex, BeanRegistry contextBeanRegistry ) throws Throwable
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
       String runName = runInfo.getRunName();
@@ -54,7 +54,7 @@ public class TestJobRunner
                for ( ChaosAction chaosAction : chaosActionsToPerform )
                {
                   eventProcessor.raiseEvent( new ChaosActionJobStartEvent( runName, featureName, job, iterationIndex, chaosAction ) );
-                  StepResult result = kartaRuntime.runChaosAction( runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), chaosAction );
+                  StepResult result = kartaRuntime.runChaosAction( runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), chaosAction, contextBeanRegistry );
                   eventProcessor.raiseEvent( new ChaosActionJobCompleteEvent( runName, featureName, job, iterationIndex, chaosAction, result ) );
                }
             }
@@ -72,7 +72,7 @@ public class TestJobRunner
                for ( TestStep step : steps )
                {
                   eventProcessor.raiseEvent( new JobStepStartEvent( runName, featureName, job, iterationIndex, step ) );
-                  StepResult result = kartaRuntime.runStep( runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), step );
+                  StepResult result = kartaRuntime.runStep( runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), step, contextBeanRegistry );
                   eventProcessor.raiseEvent( new JobStepCompleteEvent( runName, featureName, job, iterationIndex, step, result ) );
 
                   testJobResult.getStepResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), result.isPassed() ) );

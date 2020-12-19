@@ -159,7 +159,7 @@ public class MinionController
          throw new Exception( "Missing job to run in parameters" );
       }
 
-      return TestJobRunner.run( kartaRuntime, runInfo, featureName, job, iterationIndex );
+      return TestJobRunner.run( kartaRuntime, runInfo, featureName, job, iterationIndex, null );
    }
 
    @ResponseStatus( HttpStatus.OK )

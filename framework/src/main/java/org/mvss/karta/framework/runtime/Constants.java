@@ -19,6 +19,7 @@ public class Constants
    public static final String   TEST_JOB                            = "testJob";
    public static final String   ITERATION_COUNTER                   = "iterationCounter";
    public static final String   TEST_JOB_ITERATION_RESULT_PROCESSOR = "testJobIterationResultProcessor";
+   public static final String   BEAN_REGISTRY                       = "BeanRegistry";
 
    public static final String   RUN_INFO                            = "runInfo";
    public static final String   STEP_RUNNER_PLUGIN                  = "stepRunnerPlugin";

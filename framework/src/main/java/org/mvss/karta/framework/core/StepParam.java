@@ -7,7 +7,9 @@ import java.lang.annotation.Target;
 
 @Target( ElementType.PARAMETER )
 @Retention( RetentionPolicy.RUNTIME )
-public @interface NamedParameter
+public @interface StepParam
 {
    public String value();
+
+   public ParameterMapping mapto() default ParameterMapping.TESTDATA;
 }

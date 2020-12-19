@@ -53,6 +53,35 @@ public class ScenarioRunner implements Callable<ScenarioResult>
 
    private ScenarioResult   result;
 
+   // private Consumer<Class<?>> initializeConfigClasses = new Consumer<Class<?>>()
+   // {
+   //
+   // @Override
+   // public void accept( Class<?> t )
+   // {
+   // try
+   // {
+   // if ( kartaRuntime != null )
+   // {
+   // Configurator configurator = kartaRuntime.getConfigurator();
+   // BeanRegistry beanRegistry = kartaRuntime.getBeanRegistry();
+   // if ( configurator != null )
+   // {
+   // configurator.loadProperties( t );
+   // }
+   // if ( beanRegistry != null )
+   // {
+   // beanRegistry.loadStaticBeans( t );
+   // }
+   // }
+   // }
+   // catch ( IllegalArgumentException | IllegalAccessException e )
+   // {
+   // log.error( "", e );
+   // }
+   // }
+   // };
+
    @Override
    public ScenarioResult call()
    {
@@ -64,7 +93,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
 
       // This should run at scenario runner since this need to run on the node where scenario is to be run
-      testScenario.propogateContextBeanRegistry();
+      testScenario.propogateContextBeanRegistry( kartaRuntime.getConfigurator() );
 
       HashSet<String> tags = runInfo.getTags();
       if ( tags != null )

@@ -10,6 +10,4 @@ import java.lang.annotation.Target;
 public @interface StepDefinition
 {
    public String value();
-
-   public ParameterMapping parameterMapping() default ParameterMapping.POSITIONAL;
 }

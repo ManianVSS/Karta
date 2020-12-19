@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 import org.mvss.karta.framework.runtime.BeanRegistry;
+import org.mvss.karta.framework.runtime.Configurator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -25,33 +26,32 @@ public class PreparedScenario implements Serializable
    /**
     * 
     */
-   private static final long              serialVersionUID    = 1L;
+   private static final long              serialVersionUID = 1L;
 
    private String                         name;
 
    private String                         description;
 
    @Builder.Default
-   private ArrayList<PreparedStep>        setupSteps          = new ArrayList<PreparedStep>();
+   private ArrayList<PreparedStep>        setupSteps       = new ArrayList<PreparedStep>();
 
    @Builder.Default
-   private ArrayList<PreparedChaosAction> chaosActions        = new ArrayList<PreparedChaosAction>();
+   private ArrayList<PreparedChaosAction> chaosActions     = new ArrayList<PreparedChaosAction>();
 
    @Builder.Default
-   private ArrayList<PreparedStep>        executionSteps      = new ArrayList<PreparedStep>();
+   private ArrayList<PreparedStep>        executionSteps   = new ArrayList<PreparedStep>();
 
    @Builder.Default
-   private ArrayList<PreparedStep>        tearDownSteps       = new ArrayList<PreparedStep>();
+   private ArrayList<PreparedStep>        tearDownSteps    = new ArrayList<PreparedStep>();
 
    @JsonIgnore
-   @Builder.Default
-   private transient BeanRegistry         contextBeanRegistry = new BeanRegistry();
+   private transient BeanRegistry         contextBeanRegistry;
 
-   public void propogateContextBeanRegistry()
+   public void propogateContextBeanRegistry( Configurator configurator )
    {
       if ( contextBeanRegistry == null )
       {
-         contextBeanRegistry = new BeanRegistry();
+         contextBeanRegistry = new BeanRegistry( configurator );
       }
 
       for ( PreparedStep step : setupSteps )

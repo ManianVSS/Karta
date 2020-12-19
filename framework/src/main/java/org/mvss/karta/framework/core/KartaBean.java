@@ -6,9 +6,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import org.mvss.karta.framework.runtime.Constants;
+
 @Retention( RUNTIME )
 @Target( METHOD )
 public @interface KartaBean
 {
-   public String value();
+   public String value() default Constants.EMPTY_STRING;
 }
