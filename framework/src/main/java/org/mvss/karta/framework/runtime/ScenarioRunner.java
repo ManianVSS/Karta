@@ -103,7 +103,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                StepResult stepResult = kartaRuntime.runChaosAction( runInfo, preparedChaosAction );
 
                eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), preparedChaosAction, stepResult ) );
-               result.getChaosActionResults().add( new SerializableKVP<String, Boolean>( preparedChaosAction.getChaosAction().getName(), stepResult.isPassed() ) );
+               result.getChaosActionResults().add( new SerializableKVP<String, Boolean>( preparedChaosAction.getName(), stepResult.isPassed() ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )

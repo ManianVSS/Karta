@@ -63,7 +63,7 @@ public class Constants
 
    public static final String   PATH_HEALTH                         = "/health";
    public static final String   PATH_RUN_STEP                       = "/run/step";
-   public static final String   PATH_RUN_CHAOS_ACTION               = "/run/choasAction";
+   public static final String   PATH_RUN_CHAOS_ACTION               = "/run/chaosAction";
    public static final String   PATH_RUN_SCENARIO                   = "/run/scenario";
    public static final String   PATH_RUN_JOB_ITERATION              = "/run/jobIteration";
    public static final String   PATH_RUN_FEATURE                    = "/run/feature";

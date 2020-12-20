@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.AfterFeature;
 import org.mvss.karta.framework.core.AfterRun;
 import org.mvss.karta.framework.core.AfterScenario;
@@ -173,14 +172,14 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                      String chaosActionName = chaosActionDefinition.value();
                                                                      Class<?>[] params = candidateChaosActionMethod.getParameterTypes();
 
-                                                                     if ( !( ( params.length == 2 ) && ( TestExecutionContext.class == params[0] ) && ( ChaosAction.class == params[1] ) ) )
+                                                                     if ( !( ( params.length >= 2 ) && ( TestExecutionContext.class == params[0] ) && ( PreparedChaosAction.class == params[1] ) ) )
                                                                      {
-                                                                        log.error( "Chaos action definition method " + methodDescription + " should have two parameters of types(" + TestExecutionContext.class.getName() + ", " + ChaosAction.class.getName()
-                                                                                   + ")" );
+                                                                        log.error( "Chaos action definition method " + methodDescription + " should have first two parameters of types(" + TestExecutionContext.class.getName() + ", "
+                                                                                   + PreparedChaosAction.class.getName() + ")" );
                                                                         continue;
                                                                      }
 
-                                                                     log.debug( "Mapping choas action definition " + chaosActionName + " to " + methodDescription );
+                                                                     log.debug( "Mapping chaos action definition " + chaosActionName + " to " + methodDescription );
 
                                                                      Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
                                                                      if ( !beanRegistry.containsKey( chaosActionDefinitionClass.getName() ) )
@@ -455,8 +454,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       if ( !stepHandlerMap.containsKey( stepIdentifier ) )
       {
          // TODO: Handling undefined step to ask manual action(other configured handlers) if possible
-         log.error( "Missing step definition: " + stepIdentifier );
-         log.error( "Suggestion:" );
+         String errorMessage = "Missing step definition: " + stepIdentifier;
+         log.error( errorMessage );
          String positionalParameters = "";
 
          int i = 0;
@@ -464,9 +463,9 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          {
             positionalParameters = positionalParameters + ", Serializable posArg" + ( i++ ) + " /*= " + inlineStepDefinitionParameterName + "*/";
          }
-         log.error( "\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava( stepIdentifier ) + "\" )\r\n" + "   public StepResult " + stepIdentifier.replaceAll( "\\s", "_" ) + "( TestExecutionContext context " + positionalParameters
+         log.error( "Suggestion:\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava( stepIdentifier ) + "\" )\r\n" + "   public StepResult " + stepIdentifier.replaceAll( "\\s", "_" ) + "( TestExecutionContext context " + positionalParameters
                     + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
-         return StandardStepResults.error( "Missing step definition " + stepIdentifier );
+         return StandardStepResults.error( errorMessage );
       }
 
       try
@@ -559,34 +558,43 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    {
       StepResult result = new StepResult();
 
-      ChaosAction chaosAction = preparedChaosAction.getChaosAction();
       TestExecutionContext testExecutionContext = preparedChaosAction.getTestExecutionContext();
       HashMap<String, Serializable> testData = testExecutionContext.getData();
       HashMap<String, Serializable> variables = testExecutionContext.getVariables();
 
-      log.debug( "Chaos actions run" + chaosAction );
+      log.debug( "Chaos actions run" + preparedChaosAction );
 
-      if ( StringUtils.isBlank( chaosAction.getName() ) )
+      if ( StringUtils.isBlank( preparedChaosAction.getName() ) )
       {
-         log.error( "Empty chaos action name " + chaosAction );
+         log.error( "Empty chaos action name " + preparedChaosAction );
          return result;
       }
 
-      String choasActionName = chaosAction.getName();
+      String chaosActionName = preparedChaosAction.getName();
 
       try
       {
-         if ( chaosActionHandlerMap.containsKey( choasActionName ) )
+         if ( !chaosActionHandlerMap.containsKey( chaosActionName ) )
          {
-            Pair<Object, Method> chaosActionHandlerObjectMethodPair = chaosActionHandlerMap.get( choasActionName );
+            // TODO: Handling undefined chaos action to ask manual action(other configured handlers) if possible
+            String errorMessage = "Missing chaos action handler definition: " + chaosActionName;
+            log.error( errorMessage );
+            log.error( "Suggestion:\r\n   @ChaosActionDefinition( \"" + StringEscapeUtils.escapeJava( chaosActionName ) + "\" )\r\n" + "   public StepResult " + chaosActionName.replaceAll( "\\s", "_" )
+                       + "( TestExecutionContext context, PreparedChaosAction actionToPerform) throws Throwable\r\n" + "   {\r\n...\r\n   }" );
+            return StandardStepResults.error( errorMessage );
+         }
+
+         if ( chaosActionHandlerMap.containsKey( chaosActionName ) )
+         {
+            Pair<Object, Method> chaosActionHandlerObjectMethodPair = chaosActionHandlerMap.get( chaosActionName );
 
             Object chaosActionHandlerObject = chaosActionHandlerObjectMethodPair.getLeft();
-            Method choasActionHandlerMethodToInvoke = chaosActionHandlerObjectMethodPair.getRight();
+            Method chaosActionHandlerMethodToInvoke = chaosActionHandlerObjectMethodPair.getRight();
 
-            Parameter[] parametersObj = choasActionHandlerMethodToInvoke.getParameters();
+            Parameter[] parametersObj = chaosActionHandlerMethodToInvoke.getParameters();
             ArrayList<Object> values = new ArrayList<Object>();
             values.add( testExecutionContext );
-            values.add( chaosAction );
+            values.add( preparedChaosAction );
 
             if ( parametersObj.length > 2 )
             {
@@ -626,8 +634,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                }
             }
 
-            Class<?> returnType = choasActionHandlerMethodToInvoke.getReturnType();
-            Object returnValue = choasActionHandlerMethodToInvoke.invoke( chaosActionHandlerObject, values.toArray() );
+            Class<?> returnType = chaosActionHandlerMethodToInvoke.getReturnType();
+            Object returnValue = chaosActionHandlerMethodToInvoke.invoke( chaosActionHandlerObject, values.toArray() );
 
             if ( returnType.equals( StepResult.class ) )
             {
@@ -645,7 +653,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       }
       catch ( Throwable t )
       {
-         String errorMessage = "Exception occured while running chaos action " + chaosAction;
+         String errorMessage = "Exception occured while running chaos action " + preparedChaosAction;
          log.error( errorMessage, t );
          result = StandardStepResults.error( errorMessage, t );
       }

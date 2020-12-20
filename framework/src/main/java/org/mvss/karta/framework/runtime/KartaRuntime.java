@@ -873,7 +873,7 @@ public class KartaRuntime implements AutoCloseable
       TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, chaosAction.getName(), null, variables );
       testExecutionContext.setContextBeanRegistry( contextBeanRegistry );
       testExecutionContext.mergeTestData( null, commonTestDataSet, getTestDataSources( runInfo ) );
-      return PreparedChaosAction.builder().chaosAction( chaosAction ).testExecutionContext( testExecutionContext ).build();
+      return PreparedChaosAction.builder().name( chaosAction.getName() ).node( chaosAction.getNode() ).subjects( chaosAction.getSubjects() ).chaos( chaosAction.getChaos() ).testExecutionContext( testExecutionContext ).build();
    }
 
    /**
@@ -1006,10 +1006,10 @@ public class KartaRuntime implements AutoCloseable
    {
       StepResult stepResult;
 
-      String nodeName = preparedChaosAction.getChaosAction().getNode();
+      String nodeName = preparedChaosAction.getNode();
       if ( StringUtils.isNotEmpty( nodeName ) )
       {
-         stepResult = nodeRegistry.getNode( nodeName ).performChaosAction( runInfo, preparedChaosAction.toBuilder().chaosAction( preparedChaosAction.getChaosAction().toBuilder().node( null ).build() ).build() );
+         stepResult = nodeRegistry.getNode( nodeName ).performChaosAction( runInfo, preparedChaosAction.toBuilder().node( null ).build() );
       }
       else
       {

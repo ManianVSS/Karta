@@ -3,8 +3,8 @@ package org.mvss.karta.samples.chaosdefinitions;
 import java.util.List;
 import java.util.Random;
 
-import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.ChaosActionDefinition;
+import org.mvss.karta.framework.core.PreparedChaosAction;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 
@@ -18,9 +18,9 @@ public class ChaosActionDefinitionCollection
    private Random random = new Random();
 
    @ChaosActionDefinition( "the calculator is powered off" )
-   public void the_calculator_is_powered_on( TestExecutionContext context, ChaosAction actionToPerform ) throws Throwable
+   public void the_calculator_is_powered_on( TestExecutionContext context, PreparedChaosAction actionToPerform ) throws Throwable
    {
-      List<String> subjects = RandomizationUtils.selectByChaos( random, actionToPerform.getSubjects(), actionToPerform.getChaosLevel(), actionToPerform.getChaosUnit() );
+      List<String> subjects = RandomizationUtils.selectByChaos( random, actionToPerform.getSubjects(), actionToPerform.getChaos() );
       log.info( "Chaos action called " + actionToPerform + " actions to be peformed on " + subjects );
    }
 }

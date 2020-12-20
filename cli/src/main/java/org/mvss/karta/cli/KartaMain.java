@@ -20,6 +20,11 @@ import org.mvss.karta.framework.runtime.RunTarget;
 
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * The entry point for Karta command line interface.</br>
+ * 
+ * @author Manian
+ */
 @Log4j2
 public class KartaMain
 {
