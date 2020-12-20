@@ -147,12 +147,12 @@ public class LoggingTestEventListener implements TestEventListener
          case StandardEventsTypes.SCENARIO_CHAOS_ACTION_START_EVENT:
             ScenarioChaosActionStartEvent scenarioChaosActionStartEvent = (ScenarioChaosActionStartEvent) event;
             log.info( "{" + scenarioChaosActionStartEvent.getRunName() + "}{" + scenarioChaosActionStartEvent.getFeatureName() + "}{" + scenarioChaosActionStartEvent.getScenarioName() + "}{" + scenarioChaosActionStartEvent.getIterationNumber()
-                      + "}{chaosAction(" + scenarioChaosActionStartEvent.getPreparedChaosAction().getChaosAction().getName() + ")}" + SPACE + STARTED );
+                      + "}{chaosAction(" + scenarioChaosActionStartEvent.getPreparedChaosAction().getName() + ")}" + SPACE + STARTED );
             break;
          case StandardEventsTypes.SCENARIO_CHAOS_ACTION_COMPLETE_EVENT:
             ScenarioChaosActionCompleteEvent scenarioChaosActionCompleteEvent = (ScenarioChaosActionCompleteEvent) event;
             log.info( "{" + scenarioChaosActionCompleteEvent.getRunName() + "}{" + scenarioChaosActionCompleteEvent.getFeatureName() + "}{" + scenarioChaosActionCompleteEvent.getScenarioName() + "}{" + scenarioChaosActionCompleteEvent.getIterationNumber()
-                      + "}{chaosAction(" + scenarioChaosActionCompleteEvent.getPreparedChaosAction().getChaosAction().getName() + ")}" + SPACE + getStepResultLog( scenarioChaosActionCompleteEvent.getResult() ) );
+                      + "}{chaosAction(" + scenarioChaosActionCompleteEvent.getPreparedChaosAction().getName() + ")}" + SPACE + getStepResultLog( scenarioChaosActionCompleteEvent.getResult() ) );
             break;
 
          case StandardEventsTypes.SCENARIO_STEP_START_EVENT:

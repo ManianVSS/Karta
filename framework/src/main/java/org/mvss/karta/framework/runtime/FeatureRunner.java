@@ -104,6 +104,7 @@ public class FeatureRunner implements Callable<FeatureResult>
 
          EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
          KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
+         BeanRegistry contextBeanRegistry = new BeanRegistry( kartaRuntime.getConfigurator() );
 
          Random random = kartaRuntime.getRandom();
 
@@ -135,12 +136,13 @@ public class FeatureRunner implements Callable<FeatureResult>
                   jobData.put( Constants.ITERATION_COUNTER, new AtomicLong() );
                   TestJobIterationResultProcessor testJobIterationResultProcessor = ( jobName, testJobResult ) -> accumulateJobIterationResult( jobName, testJobResult );
                   jobData.put( Constants.TEST_JOB_ITERATION_RESULT_PROCESSOR, testJobIterationResultProcessor );
+                  jobData.put( Constants.BEAN_REGISTRY, contextBeanRegistry );
                   long jobId = QuartzJobScheduler.scheduleJob( QuartzTestJob.class, jobInterval, repeatCount, jobData );
                   runningJobs.add( jobId );
                }
                else
                {
-                  TestJobRunner.run( kartaRuntime, runInfo, testFeature.getName(), job, 0 );
+                  TestJobRunner.run( kartaRuntime, runInfo, testFeature.getName(), job, 0, contextBeanRegistry );
                }
             }
             catch ( Throwable t )
@@ -168,7 +170,7 @@ public class FeatureRunner implements Callable<FeatureResult>
 
             try
             {
-               stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, testFeature.getTestDataSet(), step );
+               stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
             }
             catch ( TestFailureException tfe )
             {
@@ -293,7 +295,7 @@ public class FeatureRunner implements Callable<FeatureResult>
 
             try
             {
-               stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, testFeature.getTestDataSet(), step );
+               stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
             }
             catch ( TestFailureException tfe )
             {

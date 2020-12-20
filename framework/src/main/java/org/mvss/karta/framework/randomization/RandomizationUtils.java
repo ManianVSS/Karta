@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.mvss.karta.framework.chaos.ChaosUnit;
+import org.mvss.karta.framework.chaos.Chaos;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.DataUtils;
 
@@ -122,7 +122,7 @@ public class RandomizationUtils
       return returnValue;
    }
 
-   public static <T> List<T> discardListItems( Random random, List<T> items, int count )
+   public static <T> ArrayList<T> discardListItems( Random random, List<T> items, int count )
    {
       ArrayList<T> returnList = null;
 
@@ -148,7 +148,7 @@ public class RandomizationUtils
       return returnList;
    }
 
-   public static <T> List<T> selectListItems( Random random, List<T> items, int count )
+   public static <T> ArrayList<T> selectListItems( Random random, List<T> items, int count )
    {
       ArrayList<T> returnList = null;
 
@@ -177,7 +177,7 @@ public class RandomizationUtils
       return returnList;
    }
 
-   public static <T> List<T> selectByPercentage( Random random, List<T> items, float percentage )
+   public static <T> ArrayList<T> selectByPercentage( Random random, List<T> items, float percentage )
    {
       if ( items == null )
       {
@@ -188,7 +188,7 @@ public class RandomizationUtils
       return selectListItems( random, items, selectCount );
    }
 
-   public static <T> List<T> selectByMaxPercentage( Random random, List<T> items, float maxPercentage )
+   public static <T> ArrayList<T> selectByMaxPercentage( Random random, List<T> items, float maxPercentage )
    {
       if ( items == null )
       {
@@ -201,23 +201,23 @@ public class RandomizationUtils
       return selectListItems( random, items, selectCount );
    }
 
-   public static <T> List<T> selectByChaos( Random random, List<T> items, float chaosLevel, ChaosUnit chaosUnit )
+   public static <T> ArrayList<T> selectByChaos( Random random, ArrayList<T> items, Chaos chaos )
    {
       if ( ( items == null ) || items.isEmpty() )
       {
          return items;
       }
 
-      switch ( chaosUnit )
+      switch ( chaos.getChaosUnit() )
       {
          case CONSTANT:
-            return selectListItems( random, items, (int) Math.ceil( chaosLevel ) );
+            return selectListItems( random, items, (int) Math.ceil( chaos.getChaosLevel() ) );
          case ALL_BUT_ONE:
             return discardListItems( random, items, 1 );
          case MAX_PERCENTAGE:
-            return selectByMaxPercentage( random, items, chaosLevel );
+            return selectByMaxPercentage( random, items, chaos.getChaosLevel() );
          case PERCENTAGE:
-            return selectByPercentage( random, items, chaosLevel );
+            return selectByPercentage( random, items, chaos.getChaosLevel() );
          default:
             return items;
       }

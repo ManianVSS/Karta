@@ -13,6 +13,11 @@ import org.mvss.karta.samples.resources.AutomationDriverImpl;
 
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * This class defines the life cycle hooks for Karta using Kriya plug-in. </br>
+ * 
+ * @author Manian
+ */
 @Log4j2
 public class Hooks
 {

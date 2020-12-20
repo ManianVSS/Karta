@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.AfterFeature;
 import org.mvss.karta.framework.core.AfterRun;
 import org.mvss.karta.framework.core.AfterScenario;
@@ -25,14 +24,13 @@ import org.mvss.karta.framework.core.BeforeRun;
 import org.mvss.karta.framework.core.BeforeScenario;
 import org.mvss.karta.framework.core.ChaosActionDefinition;
 import org.mvss.karta.framework.core.KartaAutoWired;
-import org.mvss.karta.framework.core.NamedParameter;
 import org.mvss.karta.framework.core.Pair;
-import org.mvss.karta.framework.core.ParameterMapping;
 import org.mvss.karta.framework.core.PreparedChaosAction;
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepDefinition;
+import org.mvss.karta.framework.core.StepParam;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
@@ -116,21 +114,27 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                   {
                                                                      String methodDescription = candidateStepDefinitionMethod.toString();
                                                                      String stepDefString = stepDefinition.value();
-                                                                     Class<?>[] params = candidateStepDefinitionMethod.getParameterTypes();
+                                                                     Parameter[] params = candidateStepDefinitionMethod.getParameters();
 
-                                                                     if ( !( ( params.length > 0 ) && ( TestExecutionContext.class == params[0] ) ) )
+                                                                     if ( !( ( params.length > 0 ) && ( TestExecutionContext.class == params[0].getType() ) ) )
                                                                      {
                                                                         log.error( "Step definition method " + methodDescription + " should have the first parameter type as TestExecutionContext" );
                                                                         continue;
                                                                      }
 
-                                                                     if ( stepDefinition.parameterMapping() == ParameterMapping.POSITIONAL )
+                                                                     int positionalArgumentsCount = 0;
+                                                                     for ( int i = 1; i < params.length; i++ )
                                                                      {
-                                                                        if ( params.length != ( StringUtils.countMatches( stepDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) + 1 ) )
+                                                                        if ( params[i].getAnnotation( StepParam.class ) == null )
                                                                         {
-                                                                           log.error( "Step definition method " + methodDescription + " does not match the argument count as per the identifier" );
-                                                                           continue;
+                                                                           positionalArgumentsCount++;
                                                                         }
+                                                                     }
+
+                                                                     if ( positionalArgumentsCount != StringUtils.countMatches( stepDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) )
+                                                                     {
+                                                                        log.error( "Step definition method " + methodDescription + " does not match the argument count as per the identifier" );
+                                                                        continue;
                                                                      }
 
                                                                      log.debug( "Mapping stepdef " + stepDefString + " to " + methodDescription );
@@ -168,14 +172,14 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                      String chaosActionName = chaosActionDefinition.value();
                                                                      Class<?>[] params = candidateChaosActionMethod.getParameterTypes();
 
-                                                                     if ( !( ( params.length == 2 ) && ( TestExecutionContext.class == params[0] ) && ( ChaosAction.class == params[1] ) ) )
+                                                                     if ( !( ( params.length >= 2 ) && ( TestExecutionContext.class == params[0] ) && ( PreparedChaosAction.class == params[1] ) ) )
                                                                      {
-                                                                        log.error( "Chaos action definition method " + methodDescription + " should have two parameters of types(" + TestExecutionContext.class.getName() + ", " + ChaosAction.class.getName()
-                                                                                   + ")" );
+                                                                        log.error( "Chaos action definition method " + methodDescription + " should have first two parameters of types(" + TestExecutionContext.class.getName() + ", "
+                                                                                   + PreparedChaosAction.class.getName() + ")" );
                                                                         continue;
                                                                      }
 
-                                                                     log.debug( "Mapping choas action definition " + chaosActionName + " to " + methodDescription );
+                                                                     log.debug( "Mapping chaos action definition " + chaosActionName + " to " + methodDescription );
 
                                                                      Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
                                                                      if ( !beanRegistry.containsKey( chaosActionDefinitionClass.getName() ) )
@@ -226,6 +230,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       Class<?> hookClass = hookMethod.getDeclaringClass();
       if ( !beanRegistry.containsKey( hookClass.getName() ) )
       {
+         configurator.loadProperties( hookClass );
          beanRegistry.loadStaticBeans( hookClass );
          Object hookObj = hookClass.newInstance();
          configurator.loadProperties( hookObj );
@@ -449,8 +454,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       if ( !stepHandlerMap.containsKey( stepIdentifier ) )
       {
          // TODO: Handling undefined step to ask manual action(other configured handlers) if possible
-         log.error( "Missing step definition: " + stepIdentifier );
-         log.error( "Suggestion:" );
+         String errorMessage = "Missing step definition: " + stepIdentifier;
+         log.error( errorMessage );
          String positionalParameters = "";
 
          int i = 0;
@@ -458,9 +463,9 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          {
             positionalParameters = positionalParameters + ", Serializable posArg" + ( i++ ) + " /*= " + inlineStepDefinitionParameterName + "*/";
          }
-         log.error( "\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava( stepIdentifier ) + "\" )\r\n" + "   public StepResult " + stepIdentifier.replaceAll( "\\s", "_" ) + "( TestExecutionContext context " + positionalParameters
+         log.error( "Suggestion:\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava( stepIdentifier ) + "\" )\r\n" + "   public StepResult " + stepIdentifier.replaceAll( "\\s", "_" ) + "( TestExecutionContext context " + positionalParameters
                     + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
-         return StandardStepResults.error( "Missing step definition " + stepIdentifier );
+         return StandardStepResults.error( errorMessage );
       }
 
       try
@@ -481,39 +486,44 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
          if ( parametersObj.length > 1 )
          {
-            StepDefinition definition = stepDefMethodToInvoke.getAnnotation( StepDefinition.class );
-
-            if ( definition.parameterMapping() == ParameterMapping.NAMED )
+            for ( int i = 1, positionalArg = 0; i < parametersObj.length; i++ )
             {
-               for ( int i = 1; i < parametersObj.length; i++ )
+               String name = parametersObj[i].getName();
+               StepParam paramaterNameInfo = parametersObj[i].getAnnotation( StepParam.class );
+
+               if ( paramaterNameInfo == null )
                {
-                  String name = parametersObj[i].getName();
-                  NamedParameter paramaterNameInfo = parametersObj[i].getAnnotation( NamedParameter.class );
-                  if ( paramaterNameInfo != null )
+                  values.add( ParserUtils.getObjectMapper().readValue( inlineStepDefinitionParameterNames.get( positionalArg++ ), parametersObj[i++].getType() ) );
+               }
+               else
+               {
+                  name = paramaterNameInfo.value();
+
+                  switch ( paramaterNameInfo.mapto() )
                   {
-                     name = paramaterNameInfo.value();
+                     case CONTEXT_BEAN:
+                        BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
+                        if ( beanRegistry != null )
+                        {
+                           values.add( beanRegistry.get( name ) );
+                        }
+                        else
+                        {
+                           values.add( null );
+                        }
+                        break;
+
+                     case TESTDATA:
+                        values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
+                        break;
+
+                     case VARIABLE:
+                        values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
+                        break;
+
                   }
-
-                  Serializable parameterValue = variables.get( name );
-
-                  if ( parameterValue == null )
-                  {
-                     parameterValue = testData.get( name );
-                  }
-
-                  values.add( ( parameterValue == null ) ? null : objectMapper.convertValue( parameterValue, parametersObj[i].getType() ) );
-
                }
             }
-            else // ( definition.parameterMapping() == ParameterMapping.POSITIONAL )
-            {
-               int i = 1;
-               for ( String positionalParam : inlineStepDefinitionParameterNames )
-               {
-                  values.add( ParserUtils.getObjectMapper().readValue( positionalParam, parametersObj[i++].getType() ) );
-               }
-            }
-
          }
 
          Class<?> returnType = stepDefMethodToInvoke.getReturnType();
@@ -548,42 +558,102 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    {
       StepResult result = new StepResult();
 
-      ChaosAction chaosAction = preparedChaosAction.getChaosAction();
       TestExecutionContext testExecutionContext = preparedChaosAction.getTestExecutionContext();
+      HashMap<String, Serializable> testData = testExecutionContext.getData();
+      HashMap<String, Serializable> variables = testExecutionContext.getVariables();
 
-      log.debug( "Chaos actions run" + chaosAction );
+      log.debug( "Chaos actions run" + preparedChaosAction );
 
-      if ( StringUtils.isBlank( chaosAction.getName() ) )
+      if ( StringUtils.isBlank( preparedChaosAction.getName() ) )
       {
-         log.error( "Empty chaos action name " + chaosAction );
+         log.error( "Empty chaos action name " + preparedChaosAction );
          return result;
       }
 
-      String choasActionName = chaosAction.getName();
+      String chaosActionName = preparedChaosAction.getName();
 
       try
       {
-         if ( chaosActionHandlerMap.containsKey( choasActionName ) )
+         if ( !chaosActionHandlerMap.containsKey( chaosActionName ) )
          {
-            Pair<Object, Method> chaosActionHandlerObjectMethodPair = chaosActionHandlerMap.get( choasActionName );
+            // TODO: Handling undefined chaos action to ask manual action(other configured handlers) if possible
+            String errorMessage = "Missing chaos action handler definition: " + chaosActionName;
+            log.error( errorMessage );
+            log.error( "Suggestion:\r\n   @ChaosActionDefinition( \"" + StringEscapeUtils.escapeJava( chaosActionName ) + "\" )\r\n" + "   public StepResult " + chaosActionName.replaceAll( "\\s", "_" )
+                       + "( TestExecutionContext context, PreparedChaosAction actionToPerform) throws Throwable\r\n" + "   {\r\n...\r\n   }" );
+            return StandardStepResults.error( errorMessage );
+         }
+
+         if ( chaosActionHandlerMap.containsKey( chaosActionName ) )
+         {
+            Pair<Object, Method> chaosActionHandlerObjectMethodPair = chaosActionHandlerMap.get( chaosActionName );
 
             Object chaosActionHandlerObject = chaosActionHandlerObjectMethodPair.getLeft();
-            Method choasActionHandlerMethodToInvoke = chaosActionHandlerObjectMethodPair.getRight();
+            Method chaosActionHandlerMethodToInvoke = chaosActionHandlerObjectMethodPair.getRight();
 
-            if ( choasActionHandlerMethodToInvoke.getReturnType().equals( StepResult.class ) )
+            Parameter[] parametersObj = chaosActionHandlerMethodToInvoke.getParameters();
+            ArrayList<Object> values = new ArrayList<Object>();
+            values.add( testExecutionContext );
+            values.add( preparedChaosAction );
+
+            if ( parametersObj.length > 2 )
             {
-               result = (StepResult) choasActionHandlerMethodToInvoke.invoke( chaosActionHandlerObject, testExecutionContext, chaosAction );
+               for ( int i = 2; i < parametersObj.length; i++ )
+               {
+                  String name = parametersObj[i].getName();
+                  StepParam paramaterNameInfo = parametersObj[i].getAnnotation( StepParam.class );
+
+                  if ( paramaterNameInfo != null )
+                  {
+                     name = paramaterNameInfo.value();
+
+                     switch ( paramaterNameInfo.mapto() )
+                     {
+                        case CONTEXT_BEAN:
+                           BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
+                           if ( beanRegistry != null )
+                           {
+                              values.add( beanRegistry.get( name ) );
+                           }
+                           else
+                           {
+                              values.add( null );
+                           }
+                           break;
+
+                        case TESTDATA:
+                           values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
+                           break;
+
+                        case VARIABLE:
+                           values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
+                           break;
+
+                     }
+                  }
+               }
+            }
+
+            Class<?> returnType = chaosActionHandlerMethodToInvoke.getReturnType();
+            Object returnValue = chaosActionHandlerMethodToInvoke.invoke( chaosActionHandlerObject, values.toArray() );
+
+            if ( returnType.equals( StepResult.class ) )
+            {
+               result = (StepResult) returnValue;
+            }
+            else if ( boolean.class.isAssignableFrom( returnType ) )
+            {
+               result = StepResult.builder().successful( (boolean) returnValue ).build();
             }
             else
             {
-               choasActionHandlerMethodToInvoke.invoke( chaosActionHandlerObject, testExecutionContext, chaosAction );
                result.setSuccessful( true );
             }
          }
       }
       catch ( Throwable t )
       {
-         String errorMessage = "Exception occured while running chaos action " + chaosAction;
+         String errorMessage = "Exception occured while running chaos action " + preparedChaosAction;
          log.error( errorMessage, t );
          result = StandardStepResults.error( errorMessage, t );
       }

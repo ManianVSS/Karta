@@ -19,8 +19,9 @@ testScenarios:
           subjects:
             - calculator1
             - calculator2
-          chaosLevel: 50
-          chaosUnit: PERCENTAGE
+          chaos:
+            chaosLevel: 50
+            chaosUnit: PERCENTAGE
 
     executionSteps:
       - identifier: When the all clear button is pressed

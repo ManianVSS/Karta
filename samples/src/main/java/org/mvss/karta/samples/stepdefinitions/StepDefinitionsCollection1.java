@@ -1,9 +1,9 @@
 package org.mvss.karta.samples.stepdefinitions;
 
 import org.mvss.karta.framework.core.KartaAutoWired;
-import org.mvss.karta.framework.core.NamedParameter;
 import org.mvss.karta.framework.core.ParameterMapping;
 import org.mvss.karta.framework.core.StepDefinition;
+import org.mvss.karta.framework.core.StepParam;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.event.GenericTestEvent;
@@ -21,18 +21,18 @@ public class StepDefinitionsCollection1
    @PropertyMapping( group = "groupName", value = "variable2" )
    private SamplePropertyType variable2;
 
-   @KartaAutoWired( "Employee" )
+   @KartaAutoWired( "EmployeeBean" )
    private Employee           employee;
 
-   @StepDefinition( value = "the calculator is powered on", parameterMapping = ParameterMapping.NAMED )
-   public void the_calculator_is_powered_on( TestExecutionContext context, @NamedParameter( "employee" ) Employee employee ) throws Throwable
+   @StepDefinition( value = "the calculator is powered on" )
+   public void the_calculator_is_powered_on( TestExecutionContext context, @StepParam( "employee" ) Employee employee ) throws Throwable
    {
       context.getVariables().put( "CalculatorState", "On" );
       log.info( "the calculator is powered on by " + username + " employee:" + employee + " and testdata=" + context.getData() );
    }
 
-   @StepDefinition( value = "the all clear button is pressed", parameterMapping = ParameterMapping.NAMED )
-   public StepResult the_all_clear_button_is_cleared( TestExecutionContext context, @NamedParameter( "csvEmployee" ) Employee csvEmployee ) throws Throwable
+   @StepDefinition( value = "the all clear button is pressed" )
+   public StepResult the_all_clear_button_is_cleared( TestExecutionContext context, @StepParam( "csvEmployee" ) Employee csvEmployee ) throws Throwable
    {
       log.info( "the all clear button is pressed. Employee from CSV: " + csvEmployee );
 
@@ -59,10 +59,9 @@ public class StepDefinitionsCollection1
    }
 
    @StepDefinition( "the UI button \"\" is pressed" )
-   public void the_UI_button_is_pressed( TestExecutionContext context, String button ) throws Throwable
+   public void the_UI_button_is_pressed( TestExecutionContext context, @StepParam( value = "AutomationDriverObject", mapto = ParameterMapping.CONTEXT_BEAN ) AutomationDriver driver, String button ) throws Throwable
    {
       log.info( "the UI button \"" + button + "\" is pressed with testData" + context.getData() );
-      AutomationDriver driver = (AutomationDriver) context.getContextBeanRegistry().get( "AutomationDriverObject" );
       driver.click( button );
    }
 

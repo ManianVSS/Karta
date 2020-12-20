@@ -15,6 +15,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Configuration for Karta.</br>
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @ToString
@@ -23,46 +28,101 @@ import lombok.ToString;
 @Builder
 public class KartaConfiguration implements Serializable
 {
+   private static final long                   serialVersionUID                 = 1L;
+
    /**
-    * 
+    * The directories where plug-in jars are to be loaded from.
     */
-   private static final long                   serialVersionUID             = 1L;
-
    @Builder.Default
-   private ArrayList<String>                   pluginsDirectories           = new ArrayList<String>();
+   private ArrayList<String>                   pluginsDirectories               = new ArrayList<String>();
 
-   private String                              defaultFeatureSourceParserPlugin;
-
-   private String                              defaultStepRunnerPlugin;
-
+   /**
+    * The default feature source parser plug-in
+    */
    @Builder.Default
-   private HashSet<String>                     defaultTestDataSourcePlugins = new HashSet<String>();
+   private String                              defaultFeatureSourceParserPlugin = null;
 
-   private HashSet<String>                     enabledPlugins;
-
+   /**
+    * The default step runner plug-in
+    */
    @Builder.Default
-   private ArrayList<String>                   propertyFiles                = new ArrayList<String>();
+   private String                              defaultStepRunnerPlugin          = null;
 
+   /**
+    * The default set of test data source plug-ins
+    */
    @Builder.Default
-   private ArrayList<String>                   testCatalogFragmentFiles     = new ArrayList<String>();
+   private HashSet<String>                     defaultTestDataSourcePlugins     = new HashSet<String>();
 
-   private SSLProperties                       sslProperties;
-
+   /**
+    * The set of plug-in which are enabled that are to be initialized and closed with Karta Runtime
+    */
    @Builder.Default
-   private KartaMinionConfiguration            localNode                    = new KartaMinionConfiguration();
+   private HashSet<String>                     enabledPlugins                   = null;
 
+   /**
+    * The list of property files to be merged into the Configurator.</br>
+    * The latter ones in sequence override duplicate properties during merge </br>
+    */
    @Builder.Default
-   private ArrayList<KartaMinionConfiguration> nodes                        = new ArrayList<KartaMinionConfiguration>();
+   private ArrayList<String>                   propertyFiles                    = new ArrayList<String>();
 
+   /**
+    * The list of test catalog fragment files to merge into the TestCatalog.</br>
+    * For schema of files refer to {@link org.mvss.karta.framework.runtime.testcatalog.TestCategory}
+    */
    @Builder.Default
-   private int                                 testThreadCount              = 1;
+   private ArrayList<String>                   testCatalogFragmentFiles         = new ArrayList<String>();
 
+   /**
+    * The SSL configuration (Java trust store and keystore) for Karta. </br>
+    * 
+    * @see org.mvss.karta.framework.utils.SSLProperties
+    */
    @Builder.Default
-   private boolean                             minionsEnabled               = true;
+   private SSLProperties                       sslProperties                    = null;
 
+   /**
+    * The current node configuration.</br>
+    * This is mandatory if running a minion server or node.
+    * 
+    * @see org.mvss.karta.framework.minions.KartaMinionConfiguration
+    */
    @Builder.Default
-   private ArrayList<String>                   configurationScanPackages    = new ArrayList<String>();
+   private KartaMinionConfiguration            localNode                        = new KartaMinionConfiguration();
 
+   /**
+    * The list of available nodes available or minions to use. </br>
+    * 
+    * @see org.mvss.karta.framework.minions.KartaMinionConfiguration
+    */
+   @Builder.Default
+   private ArrayList<KartaMinionConfiguration> nodes                            = new ArrayList<KartaMinionConfiguration>();
+
+   /**
+    * Indicates if minions are enabled to run scenario iterations for load sharing.
+    */
+   @Builder.Default
+   private boolean                             minionsEnabled                   = true;
+
+   /**
+    * The thread count for running multiple tests in parallel.</br>
+    * An exclusive test thread group always runs in one thread.</br>
+    * Refer {@link org.mvss.karta.framework.runtime.testcatalog.Test#threadGroup}
+    */
+   @Builder.Default
+   private int                                 testThreadCount                  = 1;
+
+   /**
+    * The list of Java package names to scan for {@link org.mvss.karta.framework.core.KartaBean} annotations on public and static methods. </br>
+    */
+   @Builder.Default
+   private ArrayList<String>                   configurationScanPackages        = new ArrayList<String>();
+
+   /**
+    * Expands system and environmental variables into keys configuration value. </br>
+    * Refer {@link org.mvss.karta.framework.utils.PropertyUtils#propertyPattern}.
+    */
    public synchronized void expandSystemAndEnvProperties()
    {
       PropertyUtils.expandEnvVars( pluginsDirectories );

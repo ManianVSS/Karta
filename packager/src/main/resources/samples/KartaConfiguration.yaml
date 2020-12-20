@@ -55,3 +55,6 @@ testThreadCount: 10
 
 configurationScanPackages:
   - org.mvss.karta.samples.config
+
+testCatalogFragmentFiles:
+  - SampleTestCatalogFragment.yaml

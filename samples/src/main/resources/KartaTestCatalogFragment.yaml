@@ -52,33 +52,4 @@ tests:
     numberOfIterations: 1
     threadGroup: calcChaos
 
-  - name: SampleGherkinFile5
-    priority: 2
-    description: sample Gherkin feature file4
-    featureSourceParserPlugin: Gherkin
-    tags:
-      - Gherkin    
-    featureFileName: SampleFeatureFile5.feature
-    numberOfIterations: 4
-
-  - testType: JAVA_TEST
-    priority: 1
-    name: SampleJavaTest
-    description: sample java test
-    tags:
-      - javaTests
-    javaTestClass: org.mvss.karta.samples.tests.Test1
-    chanceBasedScenarioExecution: true
-    exclusiveScenarioPerIteration: true
-    numberOfIterations: 10
-    numberOfThreads: 5
-
-  - name: UIAutomation
-    priority: 1
-    description: UI Automation test
-    tags:      
-      - UI
-    featureFileName: UIAutomation.yaml
-    numberOfIterations: 1
-
 subCategories: []

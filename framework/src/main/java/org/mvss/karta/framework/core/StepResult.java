@@ -16,6 +16,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * The execution results for a step.
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @ToString
@@ -24,40 +29,73 @@ import lombok.ToString;
 @Builder( toBuilder = true )
 public class StepResult implements Serializable
 {
-   /**
-    * 
-    */
    private static final long             serialVersionUID = 1L;
 
+   /**
+    * Start time of step execution.
+    */
    @Builder.Default
    private Date                          startTime        = new Date();
 
-   private Date                          endTime;
+   /**
+    * End time of step execution.
+    */
+   @Builder.Default
+   private Date                          endTime          = null;
 
+   /**
+    * Indicates whether the step was successful
+    */
    @Builder.Default
    private boolean                       successful       = true;
 
+   /**
+    * Indicates whether the step has an unexpected error/exception indicate test script failure
+    */
    @Builder.Default
    private boolean                       error            = false;
 
+   /**
+    * List of the test incidents observed during the step execution.
+    * This can be used to associate additional failures for step execution which don't necessarily fail the step's.
+    */
    @Builder.Default
    private ArrayList<TestIncident>       incidents        = new ArrayList<TestIncident>();
 
+   /**
+    * Mapping of return result variable names to serializable values of the step
+    */
    @Builder.Default
    private HashMap<String, Serializable> results          = new HashMap<String, Serializable>();
 
+   /**
+    * List of events to be raised after step execution. Used for raising custom events from steps.
+    */
    @Builder.Default
    private ArrayList<Event>              events           = new ArrayList<Event>();
 
+   /**
+    * Map of attachment names to attachment data. Can be used store data like screenshots.
+    */
    @Builder.Default
    private HashMap<String, Serializable> attachments      = new HashMap<String, Serializable>();
 
+   /**
+    * Indicates if the test passed
+    * 
+    * @return boolean
+    */
    @JsonIgnore
    public boolean isPassed()
    {
       return successful && !error && incidents.isEmpty();
    }
 
+   /**
+    * Add a test incident to the step result
+    * 
+    * @param testIncident
+    */
    public void addIncident( TestIncident testIncident )
    {
       if ( incidents == null )
@@ -67,6 +105,11 @@ public class StepResult implements Serializable
       incidents.add( testIncident );
    }
 
+   /**
+    * Merge the step result into current result.
+    * 
+    * @param stepResult
+    */
    public void merge( StepResult stepResult )
    {
       if ( stepResult == null )
@@ -116,6 +159,11 @@ public class StepResult implements Serializable
 
    }
 
+   /**
+    * Get a trimmed version which don't contain return result variables or events
+    * 
+    * @return
+    */
    public StepResult trimmedVersion()
    {
       return this.toBuilder().results( null ).events( null ).build();

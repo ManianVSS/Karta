@@ -11,6 +11,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * The test feature object. Kriya directly deserializes this object from Yaml files.
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @ToString
@@ -19,9 +24,6 @@ import lombok.ToString;
 @AllArgsConstructor
 public class TestFeature implements Serializable
 {
-   /**
-    * 
-    */
    private static final long                        serialVersionUID      = 1L;
 
    private String                                   name;

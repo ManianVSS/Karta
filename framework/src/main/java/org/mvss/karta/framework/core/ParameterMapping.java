@@ -1,6 +1,11 @@
 package org.mvss.karta.framework.core;
 
+/**
+ * Step definition method parameter mapping type
+ * 
+ * @author Manian
+ */
 public enum ParameterMapping
 {
-   POSITIONAL, NAMED
+   TESTDATA, VARIABLE, CONTEXT_BEAN
 }

@@ -32,9 +32,10 @@ public class QuartzTestJob implements Job
          TestJob testJob = (TestJob) jobData.get( Constants.TEST_JOB );
          AtomicLong iterationCounter = (AtomicLong) jobData.get( Constants.ITERATION_COUNTER );
          TestJobIterationResultProcessor testJobIterationResultProcessor = (TestJobIterationResultProcessor) jobData.get( Constants.TEST_JOB_ITERATION_RESULT_PROCESSOR );
+         BeanRegistry contextBeanRegistry = (BeanRegistry) jobData.get( Constants.BEAN_REGISTRY );
 
          // Run the job iteration on a remote node or local node using utility method
-         TestJobResult testJobResult = kartaRuntime.runJobIteration( runInfo, featureName, testJob, iterationCounter.getAndIncrement() );
+         TestJobResult testJobResult = kartaRuntime.runJobIteration( runInfo, featureName, testJob, iterationCounter.getAndIncrement(), contextBeanRegistry );
          testJobIterationResultProcessor.consume( testJob.getName(), testJobResult );
       }
       catch ( Throwable e )

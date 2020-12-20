@@ -19,6 +19,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Stores results of a TestFeature execution.
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @ToString
@@ -27,9 +32,6 @@ import lombok.ToString;
 @AllArgsConstructor
 public class FeatureResult implements Serializable
 {
-   /**
-    * 
-    */
    private static final long                           serialVersionUID   = 1L;
 
    @Builder.Default

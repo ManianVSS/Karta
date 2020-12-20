@@ -20,6 +20,11 @@ import org.mvss.karta.framework.runtime.RunTarget;
 
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * The entry point for Karta command line interface.</br>
+ * 
+ * @author Manian
+ */
 @Log4j2
 public class KartaMain
 {
@@ -82,6 +87,11 @@ public class KartaMain
             KartaRuntime.initializeNodes = false;
             try (KartaRuntime kartaRuntime = KartaRuntime.getInstance())
             {
+               if ( kartaRuntime == null )
+               {
+                  log.error( "Karta runtime could not be initialized. Please check the directory and config files" );
+                  System.exit( -1 );
+               }
                KartaMinionServer kartaRMIServer = new KartaMinionServer( kartaRuntime );
                kartaRuntime.addNodes();
                log.info( "Karta minion started " + kartaRMIServer.getMinionConfig() );
@@ -146,6 +156,11 @@ public class KartaMain
 
                try (KartaRuntime kartaRuntime = KartaRuntime.getInstance())
                {
+                  if ( kartaRuntime == null )
+                  {
+                     log.error( "Karta runtime could not be initialized. Please check the directory and config files" );
+                     System.exit( -1 );
+                  }
                   if ( !kartaRuntime.runTestTarget( runInfo, runTarget ) )
                   {
                      System.exit( 1 );
