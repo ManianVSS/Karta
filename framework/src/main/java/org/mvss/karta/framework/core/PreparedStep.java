@@ -11,6 +11,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Prepared step for execution
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @ToString
@@ -19,9 +24,6 @@ import lombok.ToString;
 @AllArgsConstructor
 public class PreparedStep implements Serializable
 {
-   /**
-    * 
-    */
    private static final long    serialVersionUID = 1L;
 
    private String               identifier;

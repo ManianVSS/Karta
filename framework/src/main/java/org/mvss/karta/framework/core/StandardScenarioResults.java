@@ -2,6 +2,11 @@ package org.mvss.karta.framework.core;
 
 import java.util.Date;
 
+/**
+ * Utility class for scenario results
+ * 
+ * @author Manian
+ */
 public class StandardScenarioResults
 {
    public final static ScenarioResult passed = ScenarioResult.builder().successful( true ).build();

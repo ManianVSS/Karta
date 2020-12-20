@@ -15,6 +15,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * This class captures the execution results of a prepared scenario
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @ToString
@@ -23,9 +28,6 @@ import lombok.ToString;
 @AllArgsConstructor
 public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
 {
-   /**
-    * 
-    */
    private static final long                           serialVersionUID   = 1L;
 
    @Builder.Default

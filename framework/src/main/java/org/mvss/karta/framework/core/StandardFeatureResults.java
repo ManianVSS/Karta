@@ -2,6 +2,11 @@ package org.mvss.karta.framework.core;
 
 import java.util.Date;
 
+/**
+ * Utility class for feature results
+ * 
+ * @author Manian
+ */
 public class StandardFeatureResults
 {
    public final static FeatureResult passed = FeatureResult.builder().successful( true ).build();

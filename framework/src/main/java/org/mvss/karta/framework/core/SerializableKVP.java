@@ -9,6 +9,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Serializable key value pair
+ * 
+ * @author Manian
+ * @param <K>
+ * @param <V>
+ */
 @Getter
 @Setter
 @ToString
@@ -17,9 +24,6 @@ import lombok.ToString;
 @AllArgsConstructor
 public class SerializableKVP<K extends Serializable, V extends Serializable> implements Serializable
 {
-   /**
-    * 
-    */
    private static final long serialVersionUID = 1L;
 
    private K                 key;

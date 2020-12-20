@@ -7,6 +7,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * A generic pair of objects
+ * 
+ * @author Manian
+ * @param <K>
+ * @param <V>
+ */
 @Getter
 @Setter
 @ToString
@@ -15,7 +22,6 @@ import lombok.ToString;
 @AllArgsConstructor
 public class Pair<K, V>
 {
-
    private K left;
    private V right;
 }
