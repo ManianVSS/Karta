@@ -2,6 +2,7 @@ package org.mvss.karta.framework.runtime;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -632,8 +633,38 @@ public class KartaRuntime implements AutoCloseable
                   return false;
                }
 
-               // TODO: Handle io errors
-               TestFeature testFeature = featureParser.parseFeatureSource( IOUtils.toString( DynamicClassLoader.getClassPathResourceInJarAsStream( test.getSourceArchive(), test.getFeatureFileName() ), Charset.defaultCharset() ) );
+               String sourceArchive = test.getSourceArchive();
+               String featureFileName = test.getFeatureFileName();
+
+               if ( featureFileName == null )
+               {
+                  log.error( "Feature file missing for test: " + test );
+                  continue;
+               }
+
+               String featureSourceCode = null;
+
+               if ( sourceArchive == null )
+               {
+                  featureSourceCode = ClassPathLoaderUtils.readAllText( featureFileName );
+               }
+               else
+               {
+                  InputStream jarFileStream = DynamicClassLoader.getClassPathResourceInJarAsStream( sourceArchive, featureFileName );
+
+                  if ( jarFileStream != null )
+                  {
+                     featureSourceCode = IOUtils.toString( jarFileStream, Charset.defaultCharset() );
+                  }
+               }
+
+               if ( featureSourceCode == null )
+               {
+                  log.error( "Could not load feature file for test " + test );
+                  continue;
+               }
+
+               TestFeature testFeature = featureParser.parseFeatureSource( featureSourceCode );
 
                ExecutorService testExecutorService = executorServiceManager.getExecutorServiceForGroup( test.getThreadGroup() );
 

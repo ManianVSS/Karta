@@ -1,5 +1,7 @@
 package org.mvss.karta.samples.stepdefinitions;
 
+import java.util.ArrayList;
+
 import org.mvss.karta.framework.core.AfterFeature;
 import org.mvss.karta.framework.core.AfterRun;
 import org.mvss.karta.framework.core.AfterScenario;
@@ -8,6 +10,7 @@ import org.mvss.karta.framework.core.BeforeRun;
 import org.mvss.karta.framework.core.BeforeScenario;
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.TestFeature;
+import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.samples.resources.AutomationDriver;
 import org.mvss.karta.samples.resources.AutomationDriverImpl;
 
@@ -21,6 +24,9 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class Hooks
 {
+   @PropertyMapping( group = "Kriya", value = "stepDefinitionPackageNames" )
+   private ArrayList<String> stepDefinitionPackageNames = null;
+
    @BeforeRun( ".*" )
    public void beforeRun( String runName )
    {
@@ -36,6 +42,7 @@ public class Hooks
    @BeforeScenario( "UI" )
    public void beforeUIScenarios( String runName, String featureName, PreparedScenario scenario )
    {
+      log.info( "Test hooks property mapping step definition package names: " + stepDefinitionPackageNames );
       log.info( "@BeforeScenario Kriya tag check " + runName + " " + featureName + " " + scenario.getName() );
       AutomationDriver automationDriver = new AutomationDriverImpl( runName, featureName, scenario.getName() );
       scenario.getContextBeanRegistry().add( "AutomationDriverObject", automationDriver );
