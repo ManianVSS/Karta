@@ -47,7 +47,7 @@ public class StepDefinitionsCollection1
    }
 
    @StepDefinition( "the calculator should display \"\"" )
-   public void the_calculator_should_display( TestExecutionContext context, double displayNumber ) throws Throwable
+   public void the_calculator_should_display( double displayNumber, TestExecutionContext context ) throws Throwable
    {
       log.info( "the calculator should display \"" + displayNumber + "\" with testdata " + context.getData() );
    }
@@ -66,7 +66,7 @@ public class StepDefinitionsCollection1
    }
 
    @StepDefinition( "dummy teardown step" )
-   public void dummy_teardown_step( TestExecutionContext context ) throws Throwable
+   public void dummy_teardown_step() throws Throwable
    {
       log.info( "dummy teardown step " + variable2 + " bean employee= " + employee );
    }
