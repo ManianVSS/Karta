@@ -3,6 +3,8 @@ package org.mvss.karta.framework.runtime;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
@@ -92,7 +94,10 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
          BeanRegistry beanRegistry = kartaRuntime.getBeanRegistry();
          Random random = kartaRuntime.getRandom();
-         Class<?> testCaseClass = StringUtils.isNotBlank( javaTestJarFile ) ? (Class<?>) DynamicClassLoader.loadClass( javaTestJarFile, javaTest ) : (Class<?>) Class.forName( javaTest );
+
+         boolean loadClassFromJar = StringUtils.isNotBlank( javaTestJarFile ) && Files.exists( Paths.get( javaTestJarFile ) );
+
+         Class<?> testCaseClass = loadClassFromJar ? (Class<?>) DynamicClassLoader.loadClass( javaTestJarFile, javaTest ) : (Class<?>) Class.forName( javaTest );
 
          Feature featureAnnotation = testCaseClass.getAnnotation( Feature.class );
 

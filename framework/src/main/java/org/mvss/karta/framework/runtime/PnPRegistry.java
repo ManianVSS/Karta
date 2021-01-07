@@ -122,12 +122,7 @@ public class PnPRegistry implements AutoCloseable
 
    public void loadPluginJar( Configurator configurator, File jarFile ) throws MalformedURLException, IOException, URISyntaxException
    {
-      if ( jarFile == null )
-      {
-         return;
-      }
-
-      InputStream jarFileInputStream = DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_PLUGINS_CONFIG_YAML );
+      InputStream jarFileInputStream = ( jarFile == null ) ? ClassPathLoaderUtils.getFileStream( Constants.KARTA_PLUGINS_CONFIG_YAML ) : DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_PLUGINS_CONFIG_YAML );
 
       if ( jarFileInputStream == null )
       {
@@ -140,7 +135,8 @@ public class PnPRegistry implements AutoCloseable
 
       if ( configurator != null )
       {
-         InputStream runtimePropertiesInputStream = DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_RUNTIME_PROPERTIES_YAML );
+         InputStream runtimePropertiesInputStream = ( jarFile == null ) ? ClassPathLoaderUtils.getFileStream( Constants.KARTA_RUNTIME_PROPERTIES_YAML )
+                  : DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_RUNTIME_PROPERTIES_YAML );
 
          if ( runtimePropertiesInputStream != null )
          {

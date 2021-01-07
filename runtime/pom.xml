@@ -4,8 +4,8 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.mvss.karta</groupId>
-	<artifactId>packager</artifactId>
-	<description>Karta packager</description>
+	<artifactId>runtime</artifactId>
+	<description>Karta runtime</description>
 	<packaging>pom</packaging>
 
 	<properties>
@@ -16,37 +16,31 @@
 	<parent>
 		<groupId>org.mvss</groupId>
 		<artifactId>karta</artifactId>
-		<version>0.0.8</version>
+		<version>0.0.9</version>
 	</parent>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.mvss.karta</groupId>
 			<artifactId>framework</artifactId>
-			<version>0.0.8</version>
-			<scope>runtime</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.mvss.karta</groupId>
-			<artifactId>cli</artifactId>
-			<version>0.0.8</version>
-			<scope>runtime</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.mvss.karta</groupId>
-			<artifactId>samples</artifactId>
-			<version>0.0.8</version>
+			<version>0.0.9</version>
 			<scope>runtime</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.mvss.karta</groupId>
 			<artifactId>server</artifactId>
-			<version>0.0.8</version>
+			<version>0.0.9</version>
 			<scope>runtime</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.mvss.karta</groupId>
+			<artifactId>samples</artifactId>
+			<version>0.0.9</version>
+			<scope>runtime</scope>
+		</dependency>
+		
 	</dependencies>
 
 

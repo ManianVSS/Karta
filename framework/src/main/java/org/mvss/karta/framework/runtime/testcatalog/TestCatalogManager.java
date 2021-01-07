@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
@@ -38,14 +39,20 @@ public class TestCatalogManager
 
    public void mergeWithCatalog( String sourceArchive ) throws Throwable
    {
-      ClassLoader loader = DynamicClassLoader.getClassLoaderForJar( sourceArchive );
+      InputStream fileStream = null;
+      ClassLoader loader = TestCatalogManager.class.getClassLoader();
 
-      if ( loader == null )
+      if ( StringUtils.isNotBlank( sourceArchive ) )
       {
-         return;
+         loader = DynamicClassLoader.getClassLoaderForJar( sourceArchive );
+
+         if ( loader == null )
+         {
+            return;
+         }
       }
 
-      InputStream fileStream = loader.getResourceAsStream( Constants.TEST_CATALOG_FRAGMENT_FILE_NAME );
+      fileStream = loader.getResourceAsStream( Constants.TEST_CATALOG_FRAGMENT_FILE_NAME );
 
       if ( fileStream == null )
       {
@@ -60,6 +67,16 @@ public class TestCatalogManager
 
    public void mergeRepositoryDirectoryIntoCatalog( File repositoryDirectory )
    {
+
+      try
+      {
+         mergeWithCatalog( (String) null );
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Failed to load test catalog from classpath", t );
+      }
+
       for ( File jarFile : FileUtils.listFiles( repositoryDirectory, Constants.jarExtention, true ) )
       {
          try

@@ -59,9 +59,9 @@ public class StepDefinitionsCollection1
    }
 
    @StepDefinition( "the UI button \"\" is pressed" )
-   public void the_UI_button_is_pressed( TestExecutionContext context, @StepParam( value = "AutomationDriverObject", mapto = ParameterMapping.CONTEXT_BEAN ) AutomationDriver driver, String button ) throws Throwable
+   public void the_UI_button_is_pressed( @StepParam( value = "AutomationDriverObject", mapto = ParameterMapping.CONTEXT_BEAN ) AutomationDriver driver, String button ) throws Throwable
    {
-      log.info( "the UI button \"" + button + "\" is pressed with testData" + context.getData() );
+      log.info( "the UI button \"" + button + "\" is pressed" );
       driver.click( button );
    }
 

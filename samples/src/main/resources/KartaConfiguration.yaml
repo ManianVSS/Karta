@@ -1,0 +1,57 @@
+pluginsDirectories: []
+enabledPlugins:
+  - Kriya
+  - DataFilesTestDataSource
+  - ObjectGenTestDataSource
+  - RandomTestDataSource
+  - LoggingTestEventListener
+  - DumpToFileTestEventListener
+  #- RabbitMQTestEventListener
+  - GherkinPlugin
+  - CSVTestDataSourcePlugin
+  - HTMLReportTestEventListener
+
+defaultFeatureSourceParserPlugin: Kriya
+defaultStepRunnerPlugin: Kriya
+defaultTestDataSourcePlugins:
+  - DataFilesTestDataSource
+  - RandomTestDataSource
+
+propertyFiles:
+  - KartaRuntimeProperties.yaml
+  - SampleRunProperties.yaml
+  - SampleRunProperties2.yaml
+
+sslProperties:
+  trustStoreType: jks
+  trustStore: "${KARTA_HOME}/bin/trustStore.jks"
+  trustStorePassword: changeit
+  keyStoreType: pkcs12
+  keyStore: "${KARTA_HOME}/bin/keyStore.p12"
+  keyStorePassword: changeit
+
+nodeName: local
+
+nodes:
+  - name: Node1
+    host: localhost
+    port: 17171
+    enableSSL: true
+    nodeType: RMI
+    minion: true
+
+  - name: Node2
+    host: localhost
+    port: 17171
+    enableSSL: true
+    nodeType: RMI
+    minion: true
+
+minionsEnabled: true
+
+testThreadCount: 1
+
+configurationScanPackages:
+  - org.mvss.karta.samples.config
+
+testCatalogFragmentFiles: []

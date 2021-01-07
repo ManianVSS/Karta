@@ -1,0 +1,95 @@
+CalculatorTest:
+      __feature_setup__:
+            the calculator is powered on:
+                  data4:
+                        - 3value1
+                        - 3value2
+                        - 3value3
+                  data2:
+                        - mapval1:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+                        - mapval2:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+                        - mapval3:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+      Scenario1:
+            the button "" is pressed:
+                  data4:
+                        - 3value1
+                        - 3value2
+                        - 3value3
+                  data2:
+                        - mapval1:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+                        - mapval2:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+                        - mapval3:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+            the calculator should display "":
+                  data4:
+                        - 3value1
+                        - 3value2
+                        - 3value3
+                  data2:
+                        - mapval1:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+                        - mapval2:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+                        - mapval3:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+      Scenario2:
+            a binary operation is perfomed on the calculator:
+                  data4:
+                        - 3value1
+                        - 3value2
+                        - 3value3
+                  data2:
+                        - mapval1:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+                        - mapval2:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+                        - mapval3:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+            the calculator should display "":
+                  data4:
+                        - 3value1
+                        - 3value2
+                        - 3value3
+                  data2:
+                        - mapval1:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+                        - mapval2:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+                        - mapval3:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+      __feature_teardown__:
+            the calculator is powered off:
+                  data4:
+                        - 3value1
+                        - 3value2
+                        - 3value3
+                  data2:
+                        - mapval1:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+                        - mapval2:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value
+                        - mapval3:
+                                3mapvalkey1: 3mapvalkey1value
+                                3mapvalkey2: 3mapvalkey2value

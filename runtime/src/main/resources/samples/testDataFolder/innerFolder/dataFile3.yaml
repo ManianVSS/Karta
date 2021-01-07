@@ -1,0 +1,25 @@
+CalculatorTest2:
+      __feature_setup__:
+            __generic_step__:
+                  data1:
+                        - ct2value1
+                  data2:
+                        - mapval1:
+                                mapvalkey1: ct2mapvalkey1value
+                        - mapval2:
+                                mapvalkey1: ct2mapvalkey1value
+                        - mapval3:
+                                mapvalkey1: ct2mapvalkey1value
+      __feature_teardown__:
+            __generic_step__:
+                  data1:
+                        - ct2value1
+                        - ct2value2
+                        - ct2value3
+                  data2:
+                        - mapval1:
+                                mapvalkey1: ct2mapvalkey1value
+                        - mapval2:
+                                mapvalkey1: ct2mapvalkey1value
+                        - mapval3:
+                                mapvalkey1: ct2mapvalkey1value
