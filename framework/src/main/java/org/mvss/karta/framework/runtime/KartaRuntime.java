@@ -2,9 +2,12 @@ package org.mvss.karta.framework.runtime;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -201,12 +204,19 @@ public class KartaRuntime implements AutoCloseable
       // Load and enable plug-ins
       /*---------------------------------------------------------------------------------------------------------------------*/
       pnpRegistry = new PnPRegistry();
-      // kartaBaseConfiguration = yamlObjectMapper.readValue( ClassPathLoaderUtils.readAllText( Constants.KARTA_BASE_CONFIG_YAML ), KartaBaseConfiguration.class );
       ArrayList<PluginConfig> basePluginConfigs = PnPRegistry.readPluginsConfig( Constants.KARTA_BASE_PLUGIN_CONFIG_YAML );
-      pnpRegistry.addPluginConfiguration( basePluginConfigs );// kartaBaseConfiguration.getPluginConfigs() );
+      pnpRegistry.addPluginConfiguration( basePluginConfigs );
 
       ArrayList<String> pluginDirectories = kartaConfiguration.getPluginsDirectories();
-      if ( pluginDirectories != null )
+      if ( ( pluginDirectories == null ) || ( pluginDirectories.isEmpty() ) )
+      {
+         ArrayList<PluginConfig> additionalPluginConfig = PnPRegistry.readPluginsConfig( Constants.KARTA_PLUGINS_CONFIG_YAML );
+         if ( additionalPluginConfig != null )
+         {
+            pnpRegistry.addPluginConfiguration( additionalPluginConfig );
+         }
+      }
+      else
       {
          for ( String pluginsDirectory : pluginDirectories )
          {
@@ -632,8 +642,44 @@ public class KartaRuntime implements AutoCloseable
                   return false;
                }
 
-               // TODO: Handle io errors
-               TestFeature testFeature = featureParser.parseFeatureSource( IOUtils.toString( DynamicClassLoader.getClassPathResourceInJarAsStream( test.getSourceArchive(), test.getFeatureFileName() ), Charset.defaultCharset() ) );
+               String sourceArchive = test.getSourceArchive();
+               String featureFileName = test.getFeatureFileName();
+
+               if ( featureFileName == null )
+               {
+                  log.error( "Feature file missing for test: " + test );
+                  continue;
+               }
+
+               String featureSourceCode = null;
+
+               if ( ( sourceArchive == null ) || !Files.exists( Paths.get( sourceArchive ) ) )
+               {
+                  featureSourceCode = ClassPathLoaderUtils.readAllText( featureFileName );
+
+                  if ( featureSourceCode == null )
+                  {
+                     log.error( "Could not load feature source file " + featureFileName + " from classpath or source archive " + sourceArchive );
+                     continue;
+                  }
+               }
+               else
+               {
+                  InputStream jarFileStream = DynamicClassLoader.getClassPathResourceInJarAsStream( sourceArchive, featureFileName );
+
+                  if ( jarFileStream != null )
+                  {
+                     featureSourceCode = IOUtils.toString( jarFileStream, Charset.defaultCharset() );
+                  }
+               }
+
+               if ( featureSourceCode == null )
+               {
+                  log.error( "Could not load feature file for test " + test );
+                  continue;
+               }
+
+               TestFeature testFeature = featureParser.parseFeatureSource( featureSourceCode );
 
                ExecutorService testExecutorService = executorServiceManager.getExecutorServiceForGroup( test.getThreadGroup() );
 

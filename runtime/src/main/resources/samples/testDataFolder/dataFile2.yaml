@@ -1,0 +1,33 @@
+CalculatorTest2:
+      __generic_scenario__:
+            __generic_step__:
+                  data1:
+                        - value1
+                        - value2
+                        - value3
+                  data2:
+                        - mapval1:
+                                mapvalkey1: mapvalkey1value
+                                mapvalkey2: mapvalkey2value
+                        - mapval2:
+                                mapvalkey1: mapvalkey1value
+                                mapvalkey2: mapvalkey2value
+                        - mapval3:
+                                mapvalkey1: mapvalkey1value
+                                mapvalkey2: mapvalkey2value
+      Scenario2:
+            __generic_step__:
+                  data1:
+                        - ct2s2value1
+                        - ct2s2value2
+                        - ct2s2value3
+                  data2:
+                        - ct2s2mapval1:
+                                mapvalkey1: ct2s2mapvalkey1value
+                                mapvalkey2: ct2s2mapvalkey2value
+                        - ct2s2mapval2:
+                                mapvalkey1: ct2s2mapvalkey1value
+                                mapvalkey2: ct2s2mapvalkey2value
+                        - ct2s2mapval3:
+                                mapvalkey1: ct2s2mapvalkey1value
+                                mapvalkey2: ct2s2mapvalkey2value

@@ -214,10 +214,6 @@ public class BeanRegistry
                {
                   beanObj = candidateBeanDefinitionMethod.invoke( null );
                }
-               else if ( ( paramTypes.length == 1 ) && ( paramTypes[0] == BeanRegistry.class ) )
-               {
-                  beanObj = candidateBeanDefinitionMethod.invoke( this );
-               }
                else
                {
                   continue;

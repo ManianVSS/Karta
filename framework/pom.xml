@@ -17,7 +17,7 @@
 	<parent>
 		<groupId>org.mvss</groupId>
 		<artifactId>karta</artifactId>
-		<version>0.0.8</version>
+		<version>0.0.9</version>
 	</parent>
 
 	<dependencies>
@@ -78,7 +78,7 @@
 		<dependency>
 			<groupId>org.reflections</groupId>
 			<artifactId>reflections</artifactId>
-			<version>0.9.11</version>
+			<version>0.9.10</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/com.rabbitmq/amqp-client -->

@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.mvss</groupId>
 	<artifactId>karta</artifactId>
-	<version>0.0.8</version>
+	<version>0.0.9</version>
 	<name>Karta</name>
 	<description>Karta Test Automation Framework</description>
 	<packaging>pom</packaging>
@@ -19,11 +19,10 @@
 	</properties>
 
 	<modules>
-		<module>framework</module>
-		<module>cli</module>
-		<module>samples</module>
+		<module>framework</module>		
 		<module>server</module>
-		<module>packager</module>
+		<module>samples</module>
+		<module>runtime</module>
 	</modules>
 
 	<dependencyManagement>

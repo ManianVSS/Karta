@@ -116,16 +116,10 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                      String stepDefString = stepDefinition.value();
                                                                      Parameter[] params = candidateStepDefinitionMethod.getParameters();
 
-                                                                     if ( !( ( params.length > 0 ) && ( TestExecutionContext.class == params[0].getType() ) ) )
-                                                                     {
-                                                                        log.error( "Step definition method " + methodDescription + " should have the first parameter type as TestExecutionContext" );
-                                                                        continue;
-                                                                     }
-
                                                                      int positionalArgumentsCount = 0;
-                                                                     for ( int i = 1; i < params.length; i++ )
+                                                                     for ( int i = 0; i < params.length; i++ )
                                                                      {
-                                                                        if ( params[i].getAnnotation( StepParam.class ) == null )
+                                                                        if ( ( params[i].getType() != TestExecutionContext.class ) && ( params[i].getAnnotation( StepParam.class ) == null ) )
                                                                         {
                                                                            positionalArgumentsCount++;
                                                                         }
@@ -482,52 +476,55 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
          Parameter[] parametersObj = stepDefMethodToInvoke.getParameters();
 
-         values.add( testExecutionContext );
-
-         if ( parametersObj.length > 1 )
+         for ( int i = 0, positionalArg = 0; i < parametersObj.length; i++ )
          {
-            for ( int i = 1, positionalArg = 0; i < parametersObj.length; i++ )
+            String name = parametersObj[i].getName();
+
+            Class<?> paramType = parametersObj[i].getType();
+            if ( paramType == TestExecutionContext.class )
             {
-               String name = parametersObj[i].getName();
-               StepParam paramaterNameInfo = parametersObj[i].getAnnotation( StepParam.class );
+               values.add( testExecutionContext );
+               continue;
+            }
 
-               if ( paramaterNameInfo == null )
+            StepParam paramaterNameInfo = parametersObj[i].getAnnotation( StepParam.class );
+
+            if ( paramaterNameInfo == null )
+            {
+               values.add( ParserUtils.getObjectMapper().readValue( inlineStepDefinitionParameterNames.get( positionalArg++ ), paramType ) );
+            }
+            else
+            {
+               name = paramaterNameInfo.value();
+
+               switch ( paramaterNameInfo.mapto() )
                {
-                  values.add( ParserUtils.getObjectMapper().readValue( inlineStepDefinitionParameterNames.get( positionalArg++ ), parametersObj[i++].getType() ) );
-               }
-               else
-               {
-                  name = paramaterNameInfo.value();
+                  case CONTEXT_BEAN:
+                     BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
+                     if ( beanRegistry != null )
+                     {
+                        values.add( beanRegistry.get( name ) );
+                     }
+                     else
+                     {
+                        values.add( null );
+                     }
+                     break;
 
-                  switch ( paramaterNameInfo.mapto() )
-                  {
-                     case CONTEXT_BEAN:
-                        BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
-                        if ( beanRegistry != null )
-                        {
-                           values.add( beanRegistry.get( name ) );
-                        }
-                        else
-                        {
-                           values.add( null );
-                        }
-                        break;
+                  case TESTDATA:
+                     values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
+                     break;
 
-                     case TESTDATA:
-                        values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
-                        break;
+                  case VARIABLE:
+                     values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
+                     break;
 
-                     case VARIABLE:
-                        values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
-                        break;
-
-                  }
                }
             }
          }
 
          Class<?> returnType = stepDefMethodToInvoke.getReturnType();
-         Object returnValue = stepDefMethodToInvoke.invoke( stepDefObject, values.toArray() );
+         Object returnValue = values.isEmpty() ? stepDefMethodToInvoke.invoke( stepDefObject ) : stepDefMethodToInvoke.invoke( stepDefObject, values.toArray() );
 
          if ( returnType.equals( StepResult.class ) )
          {
@@ -544,7 +541,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       }
       catch ( Throwable t )
       {
-         String errorMessage = "Exception occured while running chaos action " + testStep;
+         String errorMessage = "Exception occured while running step definition " + testStep;
          log.error( errorMessage, t );
          result = StandardStepResults.error( errorMessage, t );
       }

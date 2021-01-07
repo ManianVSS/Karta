@@ -47,7 +47,7 @@ public class StepDefinitionsCollection1
    }
 
    @StepDefinition( "the calculator should display \"\"" )
-   public void the_calculator_should_display( TestExecutionContext context, double displayNumber ) throws Throwable
+   public void the_calculator_should_display( double displayNumber, TestExecutionContext context ) throws Throwable
    {
       log.info( "the calculator should display \"" + displayNumber + "\" with testdata " + context.getData() );
    }
@@ -59,14 +59,14 @@ public class StepDefinitionsCollection1
    }
 
    @StepDefinition( "the UI button \"\" is pressed" )
-   public void the_UI_button_is_pressed( TestExecutionContext context, @StepParam( value = "AutomationDriverObject", mapto = ParameterMapping.CONTEXT_BEAN ) AutomationDriver driver, String button ) throws Throwable
+   public void the_UI_button_is_pressed( @StepParam( value = "AutomationDriverObject", mapto = ParameterMapping.CONTEXT_BEAN ) AutomationDriver driver, String button ) throws Throwable
    {
-      log.info( "the UI button \"" + button + "\" is pressed with testData" + context.getData() );
+      log.info( "the UI button \"" + button + "\" is pressed" );
       driver.click( button );
    }
 
    @StepDefinition( "dummy teardown step" )
-   public void dummy_teardown_step( TestExecutionContext context ) throws Throwable
+   public void dummy_teardown_step() throws Throwable
    {
       log.info( "dummy teardown step " + variable2 + " bean employee= " + employee );
    }

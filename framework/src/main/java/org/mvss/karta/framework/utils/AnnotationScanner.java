@@ -180,7 +180,9 @@ public class AnnotationScanner
 
       for ( Field fieldOfClass : classToWorkWith.getDeclaredFields() )
       {
-         for ( Annotation annotationObject : fieldOfClass.getAnnotationsByType( annotation ) )
+         Annotation annotationObject = fieldOfClass.getAnnotation( annotation );
+
+         if ( ( annotationObject != null ) && ( ( modifierChecks == null ) || modifierChecks.test( fieldOfClass.getModifiers() ) ) )
          {
             action.accept( classToWorkWith, fieldOfClass, annotationObject );
          }

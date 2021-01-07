@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
 	<name>Karta</name>
-	<comment>Katra Test Automation Framework</comment>
+	<comment>Katra Test Automation Framework parent project</comment>
 	<projects>
 	</projects>
 	<buildSpec>	
