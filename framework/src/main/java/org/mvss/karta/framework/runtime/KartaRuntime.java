@@ -20,7 +20,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.configuration.KartaConfiguration;
@@ -208,7 +207,7 @@ public class KartaRuntime implements AutoCloseable
       pnpRegistry.addPluginConfiguration( basePluginConfigs );
 
       ArrayList<String> pluginDirectories = kartaConfiguration.getPluginsDirectories();
-      if ( ( pluginDirectories == null ) || ( pluginDirectories.isEmpty() ) )
+      if ( ( ( pluginDirectories == null ) || ( pluginDirectories.isEmpty() ) ) && Files.exists( Paths.get( Constants.KARTA_PLUGINS_CONFIG_YAML ) ) )
       {
          ArrayList<PluginConfig> additionalPluginConfig = PnPRegistry.readPluginsConfig( Constants.KARTA_PLUGINS_CONFIG_YAML );
          if ( additionalPluginConfig != null )
@@ -262,7 +261,7 @@ public class KartaRuntime implements AutoCloseable
       {
          for ( String testCatalogFragmentFile : kartaConfiguration.getTestCatalogFragmentFiles() )
          {
-            catalogFileText = FileUtils.readFileToString( new File( testCatalogFragmentFile ), Charset.defaultCharset() );
+            catalogFileText = ClassPathLoaderUtils.readAllText( testCatalogFragmentFile );
             testCategory = ( catalogFileText == null ) ? new TestCategory() : yamlObjectMapper.readValue( catalogFileText, TestCategory.class );
             testCatalogManager.mergeWithCatalog( testCategory );
          }

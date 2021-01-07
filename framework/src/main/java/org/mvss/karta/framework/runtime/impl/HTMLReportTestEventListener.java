@@ -95,6 +95,7 @@ public class HTMLReportTestEventListener implements TestEventListener
       return runFeatureMap;
    }
 
+   // TODO: Add more details to report like iteration details and links between test-> feature->scenario->iteration->step report
    @Override
    public synchronized void processEvent( Event event )
    {

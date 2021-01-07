@@ -28,7 +28,6 @@ public class RunController
    @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_TARGET )
    public boolean startFeatureFileRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestBody RunTarget runTarget ) throws IllegalAccessException, InvocationTargetException
    {
-      // @RequestParam( defaultValue = KriyaPlugin.PLUGIN_NAME ) String pluginName
       if ( runName.equals( Constants.UNNAMED ) )
       {
          runName = runName + Constants.HYPHEN + System.currentTimeMillis();
@@ -44,7 +43,6 @@ public class RunController
    @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_FEATURESOURCE )
    public FeatureResult startFeatureSourceRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestBody String featureSourceString ) throws IllegalAccessException, InvocationTargetException
    {
-      // @RequestParam( defaultValue = KriyaPlugin.PLUGIN_NAME ) String pluginName
       if ( runName.equals( Constants.UNNAMED ) )
       {
          runName = runName + Constants.HYPHEN + System.currentTimeMillis();

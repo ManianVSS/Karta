@@ -53,6 +53,7 @@ public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
    @Builder.Default
    private ArrayList<SerializableKVP<String, Boolean>> chaosActionResults = new ArrayList<SerializableKVP<String, Boolean>>();
 
+   // TODO: Add more details to step results: start time and end time
    @Builder.Default
    private ArrayList<SerializableKVP<String, Boolean>> runResults         = new ArrayList<SerializableKVP<String, Boolean>>();
 
