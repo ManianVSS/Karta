@@ -9,35 +9,32 @@ import java.util.Date;
  */
 public class StandardFeatureResults
 {
-   public final static FeatureResult passed = FeatureResult.builder().successful( true ).build();
-   public final static FeatureResult failed = FeatureResult.builder().successful( false ).build();
-
-   public static FeatureResult error( String message )
+   public static FeatureResult error( String featureName, String message )
    {
-      return error( TestIncident.builder().message( message ).build() );
+      return error( featureName, TestIncident.builder().message( message ).build() );
    }
 
-   public static FeatureResult error( Throwable t )
+   public static FeatureResult error( String featureName, Throwable t )
    {
-      return error( TestIncident.builder().message( t.getMessage() ).thrownCause( t ).build() );
+      return error( featureName, TestIncident.builder().message( t.getMessage() ).thrownCause( t ).build() );
    }
 
-   public static FeatureResult error( TestIncident incident )
+   public static FeatureResult error( String featureName, TestIncident incident )
    {
-      FeatureResult result = FeatureResult.builder().error( true ).build();
+      FeatureResult result = FeatureResult.builder().featureName( featureName ).error( true ).build();
       result.setEndTime( new Date() );
       result.getIncidents().add( incident );
       return result;
    }
 
-   public static FeatureResult failure( Throwable t )
+   public static FeatureResult failure( String featureName, Throwable t )
    {
-      return failure( TestIncident.builder().thrownCause( t ).build() );
+      return failure( featureName, TestIncident.builder().thrownCause( t ).build() );
    }
 
-   public static FeatureResult failure( TestIncident incident )
+   public static FeatureResult failure( String featureName, TestIncident incident )
    {
-      FeatureResult result = FeatureResult.builder().successful( false ).build();
+      FeatureResult result = FeatureResult.builder().featureName( featureName ).successful( false ).build();
       result.setEndTime( new Date() );
       result.getIncidents().add( incident );
       return result;

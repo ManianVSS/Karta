@@ -75,6 +75,7 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
 
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
 
+      long stepIndex = 0;
       nextScenarioMethod: for ( Method scenarioMethod : scenariosMethodsToRun )
       {
          long scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( scenarioMethod ) ) ) ? scenarioIterationIndexMap.get( scenarioMethod ).getAndIncrement() : 0;
@@ -98,6 +99,7 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
 
             if ( scenarioSetupMethods != null )
             {
+               long setupStepIndex = 0;
                for ( Method methodToInvoke : scenarioSetupMethods )
                {
                   String stepName = methodToInvoke.getName();
@@ -113,8 +115,9 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
                   TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, stepName, null, variables );
                   eventProcessor.raiseEvent( new JavaScenarioSetupStartEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName ) );
                   StepResult stepResult = JavaFeatureRunner.runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
+                  stepResult.setStepIndex( setupStepIndex++ );
                   eventProcessor.raiseEvent( new JavaScenarioSetupCompleteEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName, stepResult ) );
-                  scenarioResult.getSetupResults().add( new SerializableKVP<String, Boolean>( stepName, stepResult.isPassed() ) );
+                  scenarioResult.getSetupResults().add( new SerializableKVP<String, StepResult>( stepName, stepResult ) );
                   scenarioResult.getIncidents().addAll( stepResult.getIncidents() );
 
                   if ( !stepResult.isPassed() )
@@ -129,7 +132,8 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
             String stepName = scenarioName;
             TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, stepName, null, variables );
             StepResult stepResult = JavaFeatureRunner.runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, scenarioMethod );
-            scenarioResult.getRunResults().add( new SerializableKVP<String, Boolean>( stepName, stepResult.isPassed() ) );
+            stepResult.setStepIndex( stepIndex++ );
+            scenarioResult.getRunResults().add( new SerializableKVP<String, StepResult>( stepName, stepResult ) );
             scenarioResult.getIncidents().addAll( stepResult.getIncidents() );
 
             if ( !stepResult.isPassed() )
@@ -139,6 +143,7 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
 
             if ( scenarioTearDownMethods != null )
             {
+               long teardownStepIndex = 0;
                for ( Method methodToInvoke : scenarioTearDownMethods )
                {
                   ScenarioTearDown annotation = methodToInvoke.getAnnotation( ScenarioTearDown.class );
@@ -154,8 +159,9 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
                   testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, scenarioName, stepName, null, variables );
                   eventProcessor.raiseEvent( new JavaScenarioTearDownStartEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName ) );
                   stepResult = JavaFeatureRunner.runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
+                  stepResult.setStepIndex( teardownStepIndex++ );
                   eventProcessor.raiseEvent( new JavaScenarioTearDownCompleteEvent( runName, featureName, scenarioIterationNumber, scenarioName, stepName, stepResult ) );
-                  scenarioResult.getTearDownResults().add( new SerializableKVP<String, Boolean>( stepName, stepResult.isPassed() ) );
+                  scenarioResult.getTearDownResults().add( new SerializableKVP<String, StepResult>( stepName, stepResult ) );
                   scenarioResult.getIncidents().addAll( stepResult.getIncidents() );
 
                   if ( !stepResult.isPassed() )

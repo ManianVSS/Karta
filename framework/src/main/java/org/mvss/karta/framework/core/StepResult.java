@@ -81,6 +81,11 @@ public class StepResult implements Serializable
    private HashMap<String, Serializable> attachments      = new HashMap<String, Serializable>();
 
    /**
+    * The index of this step. Used to distinguish multiple use of same steps in scenario.
+    */
+   private long                          stepIndex;
+
+   /**
     * Indicates if the test passed
     * 
     * @return boolean
@@ -160,12 +165,12 @@ public class StepResult implements Serializable
    }
 
    /**
-    * Get a trimmed version which don't contain return result variables or events
+    * Get a trimmed version which don't contain return result variables or events or attachments
     * 
     * @return
     */
-   public StepResult trimmedVersion()
+   public StepResult trimForReport()
    {
-      return this.toBuilder().results( null ).events( null ).build();
+      return this.toBuilder().results( null ).events( null ).attachments( null ).build();
    }
 }

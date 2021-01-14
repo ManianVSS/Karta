@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 
 import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.RunResult;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunInfo;
@@ -26,7 +27,7 @@ public class RunController
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_TARGET )
-   public boolean startFeatureFileRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestBody RunTarget runTarget ) throws IllegalAccessException, InvocationTargetException
+   public RunResult startFeatureFileRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestBody RunTarget runTarget ) throws IllegalAccessException, InvocationTargetException
    {
       if ( runName.equals( Constants.UNNAMED ) )
       {

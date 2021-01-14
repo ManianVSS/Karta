@@ -12,11 +12,18 @@ public class StandardStepResults
    /**
     * StepResult constant for passed step
     */
-   public final static StepResult passed = StepResult.builder().successful( true ).build();
+   public static StepResult passed()
+   {
+      return StepResult.builder().successful( true ).build();
+   }
+
    /**
     * StepResult constant for failed step
     */
-   public final static StepResult failed = StepResult.builder().successful( false ).build();
+   public static StepResult failed()
+   {
+      return StepResult.builder().successful( false ).build();
+   }
 
    /**
     * Create a step result with error using error message

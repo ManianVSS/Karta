@@ -76,14 +76,14 @@ public class ScenarioRunner implements Callable<ScenarioResult>
 
       try
       {
+         long setupStepIndex = 0;
          for ( PreparedStep step : testScenario.getSetupSteps() )
          {
             eventProcessor.raiseEvent( new ScenarioSetupStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
-
             StepResult stepResult = kartaRuntime.runStep( runInfo, step );
-
+            stepResult.setStepIndex( setupStepIndex++ );
             eventProcessor.raiseEvent( new ScenarioSetupStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
-            result.getSetupResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), stepResult.isPassed() ) );
+            result.getSetupResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
             result.getIncidents().addAll( stepResult.getIncidents() );
 
             if ( !stepResult.isPassed() )
@@ -96,14 +96,14 @@ public class ScenarioRunner implements Callable<ScenarioResult>
 
          if ( result.isSuccessful() )
          {
+            long chaosStepIndex = 0;
             for ( PreparedChaosAction preparedChaosAction : testScenario.getChaosActions() )
             {
                eventProcessor.raiseEvent( new ScenarioChaosActionStartEvent( runName, featureName, iterationIndex, testScenario.getName(), preparedChaosAction ) );
-
                StepResult stepResult = kartaRuntime.runChaosAction( runInfo, preparedChaosAction );
-
+               stepResult.setStepIndex( chaosStepIndex++ );
                eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), preparedChaosAction, stepResult ) );
-               result.getChaosActionResults().add( new SerializableKVP<String, Boolean>( preparedChaosAction.getName(), stepResult.isPassed() ) );
+               result.getChaosActionResults().add( new SerializableKVP<String, StepResult>( preparedChaosAction.getName(), stepResult ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )
@@ -115,14 +115,14 @@ public class ScenarioRunner implements Callable<ScenarioResult>
 
             if ( result.isSuccessful() )
             {
+               long runStepIndex = 0;
                for ( PreparedStep step : testScenario.getExecutionSteps() )
                {
                   eventProcessor.raiseEvent( new ScenarioStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
-
                   StepResult stepResult = kartaRuntime.runStep( runInfo, step );
-
+                  stepResult.setStepIndex( runStepIndex++ );
                   eventProcessor.raiseEvent( new ScenarioStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
-                  result.getRunResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), stepResult.isPassed() ) );
+                  result.getRunResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
                   result.getIncidents().addAll( stepResult.getIncidents() );
 
                   if ( !stepResult.isPassed() )
@@ -145,14 +145,14 @@ public class ScenarioRunner implements Callable<ScenarioResult>
       {
          try
          {
+            long teardownStepIndex = 0;
             for ( PreparedStep step : testScenario.getTearDownSteps() )
             {
                eventProcessor.raiseEvent( new ScenarioTearDownStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
-
                StepResult stepResult = kartaRuntime.runStep( runInfo, step );
-
+               stepResult.setStepIndex( teardownStepIndex++ );
                eventProcessor.raiseEvent( new ScenarioTearDownStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
-               result.getTearDownResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), stepResult.isPassed() ) );
+               result.getTearDownResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )

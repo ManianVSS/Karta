@@ -36,6 +36,7 @@ import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.minions.KartaMinionRegistry;
 import org.mvss.karta.framework.runtime.BeanRegistry;
 import org.mvss.karta.framework.runtime.Configurator;
+import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.TestFailureException;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
@@ -457,8 +458,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          {
             positionalParameters = positionalParameters + ", Serializable posArg" + ( i++ ) + " /*= " + inlineStepDefinitionParameterName + "*/";
          }
-         log.error( "Suggestion:\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava( stepIdentifier ) + "\" )\r\n" + "   public StepResult " + stepIdentifier.replaceAll( "\\s", "_" ) + "( TestExecutionContext context " + positionalParameters
-                    + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
+         log.error( "Suggestion:\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava( stepIdentifier ) + "\" )\r\n" + "   public StepResult " + stepIdentifier.replaceAll( Constants.REGEX_WHITESPACE, Constants.UNDERSCORE )
+                    + "( TestExecutionContext context " + positionalParameters + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
          return StandardStepResults.error( errorMessage );
       }
 
@@ -576,7 +577,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             // TODO: Handling undefined chaos action to ask manual action(other configured handlers) if possible
             String errorMessage = "Missing chaos action handler definition: " + chaosActionName;
             log.error( errorMessage );
-            log.error( "Suggestion:\r\n   @ChaosActionDefinition( \"" + StringEscapeUtils.escapeJava( chaosActionName ) + "\" )\r\n" + "   public StepResult " + chaosActionName.replaceAll( "\\s", "_" )
+            log.error( "Suggestion:\r\n   @ChaosActionDefinition( \"" + StringEscapeUtils.escapeJava( chaosActionName ) + "\" )\r\n" + "   public StepResult " + chaosActionName.replaceAll( Constants.REGEX_NON_ALPHANUMERIC, Constants.UNDERSCORE )
                        + "( TestExecutionContext context, PreparedChaosAction actionToPerform) throws Throwable\r\n" + "   {\r\n...\r\n   }" );
             return StandardStepResults.error( errorMessage );
          }

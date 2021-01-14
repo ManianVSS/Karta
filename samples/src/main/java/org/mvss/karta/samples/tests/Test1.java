@@ -31,28 +31,28 @@ public class Test1
    public StepResult myFeatureSetup( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
-      return StandardStepResults.passed;
+      return StandardStepResults.passed();
    }
 
    @ScenarioSetup( "My scenario setup" )
    public StepResult myScenarioSetupMethod( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
-      return StandardStepResults.passed;
+      return StandardStepResults.passed();
    }
 
    @Scenario( value = "Scenario2", sequence = 2, probability = 0.33f )
    public StepResult myScenarioMethod2( TestExecutionContext testExecutionContext )
    {
       log.info( username + " " + variable2 );
-      return StandardStepResults.passed;
+      return StandardStepResults.passed();
    }
 
    @Scenario( value = "Scenario1", sequence = 1, probability = 0.33f )
    public StepResult myScenarioMethod( TestExecutionContext testExecutionContext )
    {
       log.info( username + " " + variable1 );
-      return StandardStepResults.passed;
+      return StandardStepResults.passed();
    }
 
    @Scenario( value = "Scenario3", probability = 0.34f )
@@ -67,20 +67,20 @@ public class Test1
       // StepResult result = new StepResult();
       // result.getIncidents().add( TestIncident.builder().message( "Sample test incident" ).tags( failureTags ).build() );
       // return result;
-      return StandardStepResults.passed;
+      return StandardStepResults.passed();
    }
 
    @ScenarioTearDown( "My scenario teardown" )
    public StepResult myScenarioTearDownMethod( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
-      return StandardStepResults.passed;
+      return StandardStepResults.passed();
    }
 
    @FeatureTearDown( "My feature teardown" )
    public StepResult myFeatureTearDownMethod( TestExecutionContext testExecutionContext )
    {
       log.info( "testData " + testExecutionContext.getData() );
-      return StandardStepResults.passed;
+      return StandardStepResults.passed();
    }
 }

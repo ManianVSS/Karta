@@ -29,9 +29,14 @@ public class Constants
    public static final String   EMPTY_STRING                        = "";
 
    public static final String   DOT                                 = ".";
+   public static final String   COMMA                               = ",";
    public static final String   SLASH                               = "/";
    public static final String   COLON                               = ":";
    public static final String   HYPHEN                              = "-";
+   public static final String   UNDERSCORE                          = "_";
+   public static final String   DOUBLE_QUOTES                       = "\"";
+   public static final String   OPEN_SQ_BRACKET                     = "[";
+   public static final String   CLOSE_SQ_BRACKET                    = "]";
 
    public static final String   JAR                                 = "jar";
 
@@ -99,4 +104,10 @@ public class Constants
    public static final String   NUMBER_OF_ITERATIONS_IN_PARALLEL    = "numberOfIterationsInParallel";
 
    public static final String   __ALL__                             = "__All__";
+
+   public static final String   REGEX_WHITESPACE                    = "\\s";
+   public static final String   REGEX_NON_ALPHANUMERIC              = "[^a-zA-Z0-9]+";
+
+   public static final String   FAIL                                = "FAIL";
+   public static final String   PASS                                = "PASS";
 }

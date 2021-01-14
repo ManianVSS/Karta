@@ -166,11 +166,12 @@ public class MinionController
    @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_FEATURE )
    public FeatureResult runFeature( @RequestBody HashMap<String, Serializable> parameters ) throws IllegalAccessException, InvocationTargetException
    {
+      String featureName = Constants.UNNAMED;
       try
       {
          if ( parameters == null )
          {
-            return StandardFeatureResults.error( "Missing parameters in body" );
+            return StandardFeatureResults.error( featureName, "Missing parameters in body" );
          }
 
          RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ? objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) : kartaRuntime.getDefaultRunInfo();
@@ -178,13 +179,15 @@ public class MinionController
 
          if ( feature == null )
          {
-            return StandardFeatureResults.error( "Feature to run missing in parameters" );
+            return StandardFeatureResults.error( featureName, "Feature to run missing in parameters" );
          }
+         featureName = feature.getName();
+
          return kartaRuntime.runFeature( runInfo, feature );
       }
       catch ( Throwable t )
       {
-         return StandardFeatureResults.error( t );
+         return StandardFeatureResults.error( featureName, t );
       }
    }
 }

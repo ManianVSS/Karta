@@ -101,7 +101,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
          {
             try
             {
-               scenarioResult = minionToUse.runTestScenario( runInfo, featureName, scenarioIterationNumber, preparedScenario, scenarioIterationNumber );
+               scenarioResult = minionToUse.runTestScenario( runInfo, featureName, iterationIndex, preparedScenario, scenarioIterationNumber );
             }
             catch ( RemoteException e )
             {
@@ -111,10 +111,11 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
 
          if ( scenarioResult != null )
          {
-            result.put( testScenario.getName(), scenarioResult );
+            result.put( testScenario.getName(), scenarioResult.trimForReport() );
          }
 
          eventProcessor.raiseEvent( new ScenarioCompleteEvent( runName, featureName, iterationIndex, testScenario, scenarioResult ) );
+
       }
 
       if ( resultConsumer != null )

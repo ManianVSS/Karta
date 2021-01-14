@@ -2,6 +2,7 @@ package org.mvss.karta.framework.runtime;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
@@ -101,7 +102,7 @@ public class FeatureRunner implements Callable<FeatureResult>
          HashSet<String> tags = runInfo.getTags();
 
          result = new FeatureResult();
-
+         result.setFeatureName( testFeature.getName() );
          EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
          KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
          BeanRegistry contextBeanRegistry = new BeanRegistry( kartaRuntime.getConfigurator() );
@@ -161,9 +162,12 @@ public class FeatureRunner implements Callable<FeatureResult>
          HashMap<TestScenario, AtomicLong> scenarioIterationIndexMap = new HashMap<TestScenario, AtomicLong>();
          testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario, new AtomicLong() ) );
 
+         long setupStepIndex = -1;
          for ( TestStep step : testFeature.getSetupSteps() )
          {
+            setupStepIndex++;
             StepResult stepResult = new StepResult();
+            stepResult.setStepIndex( setupStepIndex );
             stepResult.setSuccessful( true );
 
             eventProcessor.raiseEvent( new FeatureSetupStepStartEvent( runName, testFeature, step ) );
@@ -171,6 +175,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             try
             {
                stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
+               stepResult.setStepIndex( setupStepIndex );
             }
             catch ( TestFailureException tfe )
             {
@@ -183,7 +188,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             {
                eventProcessor.raiseEvent( new FeatureSetupStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-               result.getSetupResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), stepResult.isPassed() ) );
+               result.getSetupResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )
@@ -287,15 +292,19 @@ public class FeatureRunner implements Callable<FeatureResult>
 
          testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario ).set( 0 ) );
 
+         long teardownStepIndex = -1;
          iterationIndex = -1;
          for ( TestStep step : testFeature.getTearDownSteps() )
          {
+            teardownStepIndex++;
             StepResult stepResult = new StepResult();
+            stepResult.setStepIndex( teardownStepIndex );
             eventProcessor.raiseEvent( new FeatureTearDownStepStartEvent( runName, testFeature, step ) );
 
             try
             {
                stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
+               stepResult.setStepIndex( teardownStepIndex );
             }
             catch ( TestFailureException tfe )
             {
@@ -308,7 +317,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             {
                eventProcessor.raiseEvent( new FeatureTearDownStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-               result.getTearDownResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), stepResult.isPassed() ) );
+               result.getTearDownResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )
@@ -343,6 +352,7 @@ public class FeatureRunner implements Callable<FeatureResult>
       {
          resultConsumer.accept( result );
       }
+      result.setEndTime( new Date() );
       return result;
    }
 }

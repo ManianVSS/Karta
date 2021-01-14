@@ -13,12 +13,12 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +30,7 @@ import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.PreparedChaosAction;
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.PreparedStep;
+import org.mvss.karta.framework.core.RunResult;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StandardFeatureResults;
 import org.mvss.karta.framework.core.StepResult;
@@ -526,8 +527,10 @@ public class KartaRuntime implements AutoCloseable
     * @param runTarget
     * @return boolean
     */
-   public boolean runTestTarget( RunInfo runInfo, RunTarget runTarget )
+   public RunResult runTestTarget( RunInfo runInfo, RunTarget runTarget )
    {
+      RunResult runResult = new RunResult();
+
       runInfo.setDefaultPlugins( kartaConfiguration.getDefaultFeatureSourceParserPlugin(), kartaConfiguration.getDefaultStepRunnerPlugin(), kartaConfiguration.getDefaultTestDataSourcePlugins() );
 
       try
@@ -542,25 +545,31 @@ public class KartaRuntime implements AutoCloseable
             eventProcessor.runStart( runName, individualTestTags );
             eventProcessor.raiseEvent( new RunStartEvent( runName ) );
             FeatureResult result = runFeatureFile( runInfo, runTarget.getFeatureFile() );
-            eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
+            runResult.setEndTime( new Date() );
+            runResult.addTestResult( result );
+            eventProcessor.raiseEvent( new RunCompleteEvent( runName, runResult ) );
             eventProcessor.runStop( runName, individualTestTags );
-            return result.isPassed();
+            return runResult;
          }
          else if ( StringUtils.isNotBlank( runTarget.getJavaTest() ) )
          {
             ArrayList<TestDataSource> testDataSources = getTestDataSources( runInfo );
             if ( testDataSources == null )
             {
-               return false;
+               runResult.setEndTime( new Date() );
+               runResult.setSuccessful( false );
+               return runResult;
             }
 
             JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).runInfo( runInfo ).javaTest( runTarget.getJavaTest() ).javaTestJarFile( runTarget.getJavaTestJarFile() ).build();
             eventProcessor.runStart( runName, individualTestTags );
             eventProcessor.raiseEvent( new RunStartEvent( runName ) );
             FeatureResult result = testRunner.call();
-            eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
+            runResult.setEndTime( new Date() );
+            runResult.addTestResult( result );
+            eventProcessor.raiseEvent( new RunCompleteEvent( runName, runResult ) );
             eventProcessor.runStop( runName, individualTestTags );
-            return result.isPassed();
+            return runResult;
          }
          else if ( ( runTarget.getRunTags() != null && !runTarget.getRunTags().isEmpty() ) )
          {
@@ -568,13 +577,17 @@ public class KartaRuntime implements AutoCloseable
          }
          else
          {
-            return false;
+            runResult.setEndTime( new Date() );
+            runResult.setSuccessful( false );
+            return runResult;
          }
       }
       catch ( Throwable t )
       {
          log.error( Constants.EMPTY_STRING, t );
-         return false;
+         runResult.setEndTime( new Date() );
+         runResult.setSuccessful( false );
+         return runResult;
       }
    }
 
@@ -586,15 +599,15 @@ public class KartaRuntime implements AutoCloseable
     * @return boolean
     * @throws Throwable
     */
-   public boolean runTestsWithTags( RunInfo runInfo, HashSet<String> tags ) throws Throwable
+   public RunResult runTestsWithTags( RunInfo runInfo, HashSet<String> tags ) throws Throwable
    {
       String runName = runInfo.getRunName();
       eventProcessor.runStart( runName, tags );
       eventProcessor.raiseEvent( new RunStartEvent( runName ) );
       ArrayList<Test> tests = testCatalogManager.filterTestsByTag( tags );
       Collections.sort( tests );
-      boolean result = runTest( runInfo, tests );
-      eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
+      RunResult result = runTest( runInfo, tests );
+      eventProcessor.raiseEvent( new RunCompleteEvent( runName, result ) );
       eventProcessor.runStop( runName, tags );
       return result;
    }
@@ -607,11 +620,12 @@ public class KartaRuntime implements AutoCloseable
     * @return boolean
     * @throws Throwable
     */
-   public boolean runTest( RunInfo runInfo, Collection<Test> tests ) throws Throwable
+   public RunResult runTest( RunInfo runInfo, Collection<Test> tests ) throws Throwable
    {
+      RunResult result = new RunResult();
       ArrayList<Future<FeatureResult>> futures = new ArrayList<Future<FeatureResult>>();
 
-      AtomicBoolean successful = new AtomicBoolean( true );
+      // AtomicBoolean successful = new AtomicBoolean( true );
 
       for ( Test test : tests )
       {
@@ -624,21 +638,27 @@ public class KartaRuntime implements AutoCloseable
                if ( featureParser == null )
                {
                   log.error( "Failed to get a feature source parser of type: " + runInfoForTest.getFeatureSourceParserPlugin() );
-                  return false;
+                  result.setEndTime( new Date() );
+                  result.setSuccessful( false );
+                  return result;
                }
 
                StepRunner stepRunner = getStepRunner( runInfoForTest );
                if ( stepRunner == null )
                {
                   log.error( "Failed to get a step runner for run: " + runInfo );
-                  return false;
+                  result.setEndTime( new Date() );
+                  result.setSuccessful( false );
+                  return result;
                }
 
                ArrayList<TestDataSource> testDataSources = getTestDataSources( runInfo );
                if ( testDataSources == null )
                {
                   log.error( "Failed to get test data sources for run: " + runInfo );
-                  return false;
+                  result.setEndTime( new Date() );
+                  result.setSuccessful( false );
+                  return result;
                }
 
                String sourceArchive = test.getSourceArchive();
@@ -682,14 +702,14 @@ public class KartaRuntime implements AutoCloseable
 
                ExecutorService testExecutorService = executorServiceManager.getExecutorServiceForGroup( test.getThreadGroup() );
 
-               FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).runInfo( runInfoForTest ).testFeature( testFeature ).resultConsumer( ( result ) -> successful.set( result.isSuccessful() && successful.get() ) ).build();
+               FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).runInfo( runInfoForTest ).testFeature( testFeature ).resultConsumer( ( featureResult ) -> result.addTestResult( featureResult ) ).build();
 
                futures.add( testExecutorService.submit( featureRunner ) );
                break;
 
             case JAVA_TEST:
                JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).runInfo( runInfo ).javaTest( test.getJavaTestClass() ).javaTestJarFile( test.getSourceArchive() )
-                        .resultConsumer( ( result ) -> successful.set( result.isSuccessful() && successful.get() ) ).build();
+                        .resultConsumer( ( featureResult ) -> result.addTestResult( featureResult ) ).build();
                testExecutorService = executorServiceManager.getExecutorServiceForGroup( test.getThreadGroup() );
                futures.add( testExecutorService.submit( testRunner ) );
                break;
@@ -701,7 +721,8 @@ public class KartaRuntime implements AutoCloseable
          future.get();
       }
 
-      return successful.get();
+      result.setEndTime( new Date() );
+      return result;
    }
 
    /**
@@ -721,14 +742,14 @@ public class KartaRuntime implements AutoCloseable
          {
             String errorMsg = "Feature file invalid: " + featureFileName;
             log.error( errorMsg );
-            return StandardFeatureResults.error( errorMsg );
+            return StandardFeatureResults.error( featureFileName, errorMsg );
          }
          return runFeatureSource( runInfo, featureSource );
       }
       catch ( Throwable t )
       {
          log.error( Constants.EMPTY_STRING, t );
-         return StandardFeatureResults.error( t );
+         return StandardFeatureResults.error( featureFileName, t );
       }
    }
 
@@ -749,7 +770,7 @@ public class KartaRuntime implements AutoCloseable
          {
             String errorMsg = "Failed to get a feature source parser of type: " + runInfo.getFeatureSourceParserPlugin();
             log.error( errorMsg );
-            return StandardFeatureResults.error( errorMsg );
+            return StandardFeatureResults.error( Constants.UNNAMED, errorMsg );
          }
          TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
 
@@ -758,7 +779,7 @@ public class KartaRuntime implements AutoCloseable
       catch ( Throwable t )
       {
          log.error( Constants.EMPTY_STRING, t );
-         return StandardFeatureResults.error( t );
+         return StandardFeatureResults.error( Constants.UNNAMED, t );
       }
    }
 
@@ -777,7 +798,7 @@ public class KartaRuntime implements AutoCloseable
       {
          String errorMsg = "Failed to get a step runner for run: " + runInfo;
          log.error( errorMsg );
-         return StandardFeatureResults.error( errorMsg );
+         return StandardFeatureResults.error( feature.getName(), errorMsg );
       }
 
       ArrayList<TestDataSource> testDataSources = getTestDataSources( runInfo );
@@ -786,7 +807,7 @@ public class KartaRuntime implements AutoCloseable
       {
          String errorMsg = "Failed to get test data sources for run: " + runInfo;
          log.error( errorMsg );
-         return StandardFeatureResults.error( errorMsg );
+         return StandardFeatureResults.error( feature.getName(), errorMsg );
       }
       try
       {
@@ -797,7 +818,7 @@ public class KartaRuntime implements AutoCloseable
       catch ( Throwable t )
       {
          log.error( Constants.EMPTY_STRING, t );
-         return StandardFeatureResults.error( t );
+         return StandardFeatureResults.error( feature.getName(), t );
       }
    }
 
@@ -972,7 +993,7 @@ public class KartaRuntime implements AutoCloseable
       ArrayList<PreparedStep> preparedExecutionSteps = new ArrayList<PreparedStep>();
       for ( TestStep step : testScenario.getExecutionSteps() )
       {
-         preparedSetupSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, step, contextBeanRegistry ) );
+         preparedExecutionSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, step, contextBeanRegistry ) );
       }
       preparedScenario.setExecutionSteps( preparedExecutionSteps );
 

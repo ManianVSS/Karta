@@ -6,6 +6,7 @@ import java.lang.reflect.Parameter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.TreeMap;
@@ -108,6 +109,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
          String featureName = featureAnnotation.value();
          String featureDescription = featureAnnotation.description();
+         result.setFeatureName( featureName );
 
          Method[] classMethods = testCaseClass.getMethods();
          TreeMap<Integer, ArrayList<Method>> featureSetupMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
@@ -170,6 +172,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
          eventProcessor.raiseEvent( new JavaFeatureStartEvent( runName, featureName ) );
 
+         long stepIndex = 0;
          for ( Method methodToInvoke : featureSetupMethods )
          {
             FeatureSetup annotation = methodToInvoke.getAnnotation( FeatureSetup.class );
@@ -185,9 +188,9 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
             TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.__FEATURE_SETUP__, stepName, null, variables );
             StepResult stepResult = runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
-
+            stepResult.setStepIndex( stepIndex++ );
             eventProcessor.raiseEvent( new JavaFeatureSetupCompleteEvent( runName, featureName, stepName, stepResult ) );
-            result.getSetupResults().add( new SerializableKVP<String, Boolean>( stepName, stepResult.isPassed() ) );
+            result.getSetupResults().add( new SerializableKVP<String, StepResult>( stepName, stepResult ) );
             result.getIncidents().addAll( stepResult.getIncidents() );
 
             if ( !stepResult.isPassed() )
@@ -263,6 +266,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
          iterationIndex = -1;
 
+         stepIndex = 0;
          for ( Method methodToInvoke : featureTearDownMethods )
          {
             FeatureTearDown annotation = methodToInvoke.getAnnotation( FeatureTearDown.class );
@@ -279,9 +283,10 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
             TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.__FEATURE_TEARDOWN__, stepName, null, variables );
             StepResult stepResult = runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
+            stepResult.setStepIndex( stepIndex++ );
 
             eventProcessor.raiseEvent( new JavaFeatureTearDownCompleteEvent( runName, featureName, stepName, stepResult ) );
-            result.getTearDownResults().add( new SerializableKVP<String, Boolean>( stepName, stepResult.isPassed() ) );
+            result.getTearDownResults().add( new SerializableKVP<String, StepResult>( stepName, stepResult ) );
             result.getIncidents().addAll( stepResult.getIncidents() );
 
             if ( !stepResult.isPassed() )
@@ -329,6 +334,11 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
       else
       {
          stepResult = StepResult.builder().successful( ( returnType == boolean.class ) ? ( (boolean) resultReturned ) : true ).build();
+      }
+
+      if ( stepResult.getEndTime() == null )
+      {
+         stepResult.setEndTime( new Date() );
       }
 
       kartaRuntime.processStepResult( stepResult, testExecutionContext );

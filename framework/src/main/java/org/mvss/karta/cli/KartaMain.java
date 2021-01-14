@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -12,6 +14,8 @@ import org.apache.commons.cli.MissingArgumentException;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.RunResult;
 import org.mvss.karta.framework.minions.KartaMinionServer;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
@@ -28,7 +32,6 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class KartaMain
 {
-
    private static final String  HELP          = "help";
 
    private static final String  TAGS          = "tags";
@@ -129,7 +132,7 @@ public class KartaMain
             {
                optionMissing = false;
                HashSet<String> tags = new HashSet<String>();
-               for ( String tag : cmd.getOptionValue( TAGS ).split( "," ) )
+               for ( String tag : cmd.getOptionValue( TAGS ).split( Constants.COMMA ) )
                {
                   tags.add( tag );
                }
@@ -153,7 +156,6 @@ public class KartaMain
 
             if ( runTargetAvailable )
             {
-
                try (KartaRuntime kartaRuntime = KartaRuntime.getInstance())
                {
                   if ( kartaRuntime == null )
@@ -161,7 +163,15 @@ public class KartaMain
                      log.error( "Karta runtime could not be initialized. Please check the directory and config files" );
                      System.exit( -1 );
                   }
-                  if ( !kartaRuntime.runTestTarget( runInfo, runTarget ) )
+                  RunResult runResult = kartaRuntime.runTestTarget( runInfo, runTarget );
+                  System.out.println( "Run results are as follows: " );
+                  ConcurrentHashMap<String, FeatureResult> resultMap = runResult.getTestResultMap();
+                  for ( Entry<String, FeatureResult> entry : resultMap.entrySet() )
+                  {
+                     System.out.println( entry.getKey() + Constants.COLON + ( entry.getValue().isPassed() ? Constants.PASS : Constants.FAIL ) );
+                  }
+
+                  if ( !runResult.isSuccessful() )
                   {
                      System.exit( 1 );
                   }

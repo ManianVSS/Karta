@@ -69,16 +69,18 @@ public class TestJobRunner
             }
             else
             {
+               long stepIndex = 0;
                for ( TestStep step : steps )
                {
                   eventProcessor.raiseEvent( new JobStepStartEvent( runName, featureName, job, iterationIndex, step ) );
                   StepResult result = kartaRuntime.runStep( runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), step, contextBeanRegistry );
+                  result.setStepIndex( stepIndex++ );
                   eventProcessor.raiseEvent( new JobStepCompleteEvent( runName, featureName, job, iterationIndex, step, result ) );
 
-                  testJobResult.getStepResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), result.isPassed() ) );
+                  testJobResult.getStepResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), result ) );
                   if ( !result.isPassed() )
                   {
-                     testJobResult.setSuccesssful( true );
+                     testJobResult.setSuccessful( true );
                      testJobResult.setEndTime( new Date() );
                      break;
                   }
