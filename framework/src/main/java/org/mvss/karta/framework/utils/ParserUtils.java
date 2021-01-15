@@ -32,7 +32,7 @@ public class ParserUtils
    private static ObjectMapper                                      objectMapper             = new ObjectMapper();
 
    @Getter
-   private static ObjectMapper                                      yamlObjectMapper         = new ObjectMapper( new YAMLFactory() );;
+   private static ObjectMapper                                      yamlObjectMapper         = new ObjectMapper( new YAMLFactory() );
 
    @Getter
    private static XmlMapper                                         xmlMapper                = new XmlMapper();

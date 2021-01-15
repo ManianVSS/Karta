@@ -147,7 +147,6 @@ public class HTMLReportTestEventListener implements TestEventListener
    private String              runReportsBaseFolderName = "reports";
 
    private File                runReportsBaseFolder     = null;
-   // private HashMap<String, HashMap<String, Boolean>> featureResultMap = new HashMap<String, HashMap<String, Boolean>>();
 
    private boolean             initialized              = false;
 
@@ -185,18 +184,6 @@ public class HTMLReportTestEventListener implements TestEventListener
       initialized = true;
       return true;
    }
-
-   // private synchronized HashMap<String, Boolean> getOrCreateFeatureMap( String runName )
-   // {
-   // HashMap<String, Boolean> runFeatureMap = featureResultMap.get( runName );
-   //
-   // if ( runFeatureMap == null )
-   // {
-   // runFeatureMap = new HashMap<String, Boolean>();
-   // featureResultMap.put( runName, runFeatureMap );
-   // }
-   // return runFeatureMap;
-   // }
 
    // TODO: Add more details to report like iteration details and links between test-> feature->scenario->iteration->step report
    @Override
@@ -272,10 +259,6 @@ public class HTMLReportTestEventListener implements TestEventListener
 
                File featureReportFile = path.toFile();
                File featureJSONDumpFile = jsonPath.toFile();
-
-               // featureDirectory.mkdirs();
-               // HashMap<String, Boolean> featureMap = getOrCreateFeatureMap( runName );
-               // featureMap.put( featureName, featureResult.isPassed() );
 
                featureResult.sortResults();
                StringBuilder featureReportBuilder = new StringBuilder();
