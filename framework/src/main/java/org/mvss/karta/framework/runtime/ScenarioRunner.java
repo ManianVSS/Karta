@@ -64,7 +64,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
 
       // This should run at scenario runner since this need to run on the node where scenario is to be run
-      testScenario.propogateContextBeanRegistry( kartaRuntime.getConfigurator() );
+      testScenario.propogateContextBeanRegistry();
 
       HashSet<String> tags = runInfo.getTags();
       if ( tags != null )

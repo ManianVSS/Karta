@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -16,9 +17,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +30,7 @@ import org.mvss.karta.configuration.PluginConfig;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.KartaBean;
 import org.mvss.karta.framework.core.PreparedChaosAction;
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.PreparedStep;
@@ -40,8 +44,8 @@ import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.core.TestJobResult;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
-import org.mvss.karta.framework.minions.KartaMinionConfiguration;
-import org.mvss.karta.framework.minions.KartaMinionRegistry;
+import org.mvss.karta.framework.nodes.KartaNodeConfiguration;
+import org.mvss.karta.framework.nodes.KartaNodeRegistry;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.RunCompleteEvent;
@@ -55,6 +59,7 @@ import org.mvss.karta.framework.runtime.interfaces.TestLifeCycleHook;
 import org.mvss.karta.framework.runtime.testcatalog.Test;
 import org.mvss.karta.framework.runtime.testcatalog.TestCatalogManager;
 import org.mvss.karta.framework.runtime.testcatalog.TestCategory;
+import org.mvss.karta.framework.utils.AnnotationScanner;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
@@ -93,7 +98,7 @@ public class KartaRuntime implements AutoCloseable
    private EventProcessor         eventProcessor;
 
    @Getter
-   private KartaMinionRegistry    nodeRegistry;
+   private KartaNodeRegistry      nodeRegistry;
 
    private static ObjectMapper    yamlObjectMapper = ParserUtils.getYamlObjectMapper();
 
@@ -241,7 +246,7 @@ public class KartaRuntime implements AutoCloseable
       // Initialize node registry
       /*---------------------------------------------------------------------------------------------------------------------*/
       // TODO: Add task pulling worker minions to support minions as clients rather than open server sockets
-      nodeRegistry = new KartaMinionRegistry();
+      nodeRegistry = new KartaNodeRegistry();
 
       if ( initializeNodes )
       {
@@ -276,7 +281,7 @@ public class KartaRuntime implements AutoCloseable
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize bean registry
       /*---------------------------------------------------------------------------------------------------------------------*/
-      beanRegistry = new BeanRegistry( configurator );
+      beanRegistry = new BeanRegistry();
       beanRegistry.add( configurator );
       beanRegistry.add( testCatalogManager );
       beanRegistry.add( eventProcessor );
@@ -287,7 +292,7 @@ public class KartaRuntime implements AutoCloseable
       ArrayList<String> packagesToScanBeans = kartaConfiguration.getConfigurationScanPackages();
       if ( packagesToScanBeans != null )
       {
-         beanRegistry.addBeansFromPackages( packagesToScanBeans );
+         addBeansFromPackages( packagesToScanBeans );
       }
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize enabled plug-ins only after all other beans are initialized
@@ -308,6 +313,80 @@ public class KartaRuntime implements AutoCloseable
       return true;
    }
 
+   private static List<Class<?>>  configuredBeanClasses = Collections.synchronizedList( new ArrayList<Class<?>>() );
+
+   private final Consumer<Method> processBeanDefinition = new Consumer<Method>()
+                                                        {
+                                                           @Override
+                                                           public void accept( Method candidateBeanDefinitionMethod )
+                                                           {
+                                                              try
+                                                              {
+                                                                 for ( KartaBean kartaBean : candidateBeanDefinitionMethod.getAnnotationsByType( KartaBean.class ) )
+                                                                 {
+
+                                                                    Class<?> beanDeclaringClass = candidateBeanDefinitionMethod.getDeclaringClass();
+
+                                                                    if ( !configuredBeanClasses.contains( beanDeclaringClass ) )
+                                                                    {
+                                                                       try
+                                                                       {
+                                                                          if ( configurator != null )
+                                                                          {
+                                                                             configurator.loadProperties( beanDeclaringClass );
+                                                                          }
+                                                                          beanRegistry.loadStaticBeans( beanDeclaringClass );
+                                                                       }
+                                                                       catch ( IllegalArgumentException | IllegalAccessException e )
+                                                                       {
+                                                                          log.error( "", e );
+                                                                       }
+                                                                       configuredBeanClasses.add( beanDeclaringClass );
+                                                                    }
+
+                                                                    String beanName = kartaBean.value();
+
+                                                                    Class<?>[] paramTypes = candidateBeanDefinitionMethod.getParameterTypes();
+
+                                                                    Object beanObj = null;
+
+                                                                    if ( paramTypes.length == 0 )
+                                                                    {
+                                                                       beanObj = candidateBeanDefinitionMethod.invoke( null );
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                       continue;
+                                                                    }
+
+                                                                    if ( StringUtils.isAllBlank( beanName ) )
+                                                                    {
+                                                                       beanName = beanObj.getClass().getName();
+                                                                    }
+
+                                                                    if ( !beanRegistry.add( beanName, beanObj ) )
+                                                                    {
+                                                                       log.error( "Bean: " + beanName + " is already registered." );
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                       log.info( "Bean: " + beanName + " registered." );
+                                                                    }
+                                                                 }
+                                                              }
+                                                              catch ( Throwable t )
+                                                              {
+                                                                 log.error( "Exception while parsing bean definition from method  " + candidateBeanDefinitionMethod.getName(), t );
+                                                              }
+
+                                                           }
+                                                        };
+
+   public void addBeansFromPackages( ArrayList<String> configurationScanPackageNames )
+   {
+      AnnotationScanner.forEachMethod( configurationScanPackageNames, KartaBean.class, AnnotationScanner.IS_PUBLIC_AND_STATIC, AnnotationScanner.IS_NON_VOID_RETURN_TYPE, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, processBeanDefinition );
+   }
+
    /**
     * <b> This is typically required only when creating a customized KartaMinionServer</b>. </br>
     * Adds the nodes based on the configuration. </br>
@@ -315,9 +394,9 @@ public class KartaRuntime implements AutoCloseable
     */
    public void addNodes()
    {
-      ArrayList<KartaMinionConfiguration> nodes = kartaConfiguration.getNodes();
+      ArrayList<KartaNodeConfiguration> nodes = kartaConfiguration.getNodes();
 
-      for ( KartaMinionConfiguration node : nodes )
+      for ( KartaNodeConfiguration node : nodes )
       {
          nodeRegistry.addNode( node );
       }
@@ -960,7 +1039,7 @@ public class KartaRuntime implements AutoCloseable
                                                 TestScenario testScenario, ArrayList<TestStep> scenarioTearDownSteps )
             throws Throwable
    {
-      BeanRegistry contextBeanRegistry = new BeanRegistry( configurator );
+      BeanRegistry contextBeanRegistry = new BeanRegistry();
 
       PreparedScenario preparedScenario = PreparedScenario.builder().name( testScenario.getName() ).description( testScenario.getDescription() ).contextBeanRegistry( contextBeanRegistry ).build();
 

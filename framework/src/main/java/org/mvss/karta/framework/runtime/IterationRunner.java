@@ -12,7 +12,7 @@ import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
-import org.mvss.karta.framework.minions.KartaMinion;
+import org.mvss.karta.framework.nodes.KartaNode;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.ScenarioCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioStartEvent;
@@ -49,7 +49,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
    private ArrayList<TestStep>                       scenarioTearDownSteps;
 
    @Builder.Default
-   private KartaMinion                               minionToUse = null;
+   private KartaNode                                 minionToUse = null;
 
    private HashMap<TestScenario, AtomicLong>         scenarioIterationIndexMap;
 

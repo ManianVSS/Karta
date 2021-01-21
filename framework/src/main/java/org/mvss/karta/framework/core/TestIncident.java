@@ -11,6 +11,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * This class describes a test incident which might occur when running a test step.
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @ToString
@@ -19,10 +24,6 @@ import lombok.ToString;
 @Builder
 public class TestIncident implements Serializable
 {
-
-   /**
-    * 
-    */
    private static final long serialVersionUID = 1L;
 
    private HashSet<String>   tags;

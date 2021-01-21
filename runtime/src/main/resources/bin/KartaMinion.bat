@@ -8,5 +8,5 @@ if "%KARTA_HOME%"=="" (
 )
 
 echo Karta home directory is %KARTA_HOME%
-java -cp "*;%KARTA_HOME%/bin/*;%KARTA_HOME%/lib/*" org.mvss.karta.cli.KartaMain -startMinion
+java -cp "*;%KARTA_HOME%/bin/*;%KARTA_HOME%/lib/*" org.mvss.karta.cli.KartaMain -startNode
 exit /B %errorlevel%

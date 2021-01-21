@@ -1,4 +1,4 @@
-package org.mvss.karta.framework.minions;
+package org.mvss.karta.framework.nodes;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -21,17 +21,19 @@ import org.mvss.karta.framework.runtime.TestJobRunner;
 
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * The default RMI based Karta node implementation
+ * 
+ * @author Manian
+ */
 @Log4j2
-public class KartaMinionImpl extends UnicastRemoteObject implements KartaMinion, Serializable
+public class KartaNodeImpl extends UnicastRemoteObject implements KartaNode, Serializable
 {
-   /**
-    * 
-    */
    private static final long      serialVersionUID = 1L;
 
    private transient KartaRuntime kartaRuntime;
 
-   public KartaMinionImpl( KartaRuntime kartaRuntime ) throws RemoteException
+   public KartaNodeImpl( KartaRuntime kartaRuntime ) throws RemoteException
    {
       this.kartaRuntime = kartaRuntime;
    }

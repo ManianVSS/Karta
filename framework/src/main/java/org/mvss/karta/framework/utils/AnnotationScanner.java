@@ -19,6 +19,11 @@ import org.reflections.util.ConfigurationBuilder;
 
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Utility class based on reflection to search for annotated classes, field and method and perform actions.
+ * 
+ * @author Manian
+ */
 @Log4j2
 public class AnnotationScanner
 {
@@ -100,6 +105,16 @@ public class AnnotationScanner
 
    public static final Predicate<Parameter[]> DOES_NOT_HAVE_PARAMETERS = HAS_PARAMS.negate();
 
+   /**
+    * Scans every method in the packages with matching annotations, modifiers and return type and call the consumer action
+    * 
+    * @param annotationScanPackageNames
+    * @param annotation
+    * @param modifierChecks
+    * @param returnTypeCheck
+    * @param paramsChecks
+    * @param action
+    */
    public static void forEachMethod( ArrayList<String> annotationScanPackageNames, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks,
                                      Consumer<Method> action )
    {
@@ -125,6 +140,16 @@ public class AnnotationScanner
       }
    }
 
+   /**
+    * Scans every method in the class with matching annotations, modifiers and return type and call the consumer action
+    * 
+    * @param classToWorkWith
+    * @param annotation
+    * @param modifierChecks
+    * @param returnTypeCheck
+    * @param paramsChecks
+    * @param action
+    */
    public static void forEachMethod( Class<?> classToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks, Consumer<Method> action )
    {
       for ( Method candidateMethod : classToWorkWith.getMethods() )
@@ -147,6 +172,14 @@ public class AnnotationScanner
       }
    }
 
+   /**
+    * Scans every class in the packages with matching annotations and modifiers and call the consumer action
+    * 
+    * @param annotationScanPackageNames
+    * @param annotation
+    * @param modifierChecks
+    * @param action
+    */
    public static void forEachClass( ArrayList<String> annotationScanPackageNames, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Consumer<Class<?>> action )
    {
       for ( String annotationScanPackageName : annotationScanPackageNames )
@@ -171,6 +204,15 @@ public class AnnotationScanner
       }
    }
 
+   /**
+    * Scans every field in the class with matching annotations, modifiers and return type and call the consumer action
+    * 
+    * @param classToWorkWith
+    * @param annotation
+    * @param modifierChecks
+    * @param typeCheck
+    * @param action
+    */
    public static void forEachField( Class<?> classToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> typeCheck, AnnotatedFieldConsumer action )
    {
       if ( ( classToWorkWith == null ) || classToWorkWith.getName().equals( Object.class.getName() ) )

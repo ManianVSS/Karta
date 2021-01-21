@@ -7,8 +7,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Utility class to work with generic maps, lists and other vectors
+ * 
+ * @author Manian
+ */
 public class DataUtils
 {
+   /**
+    * Create a clone of a HashMap
+    * 
+    * @param <K>
+    * @param <V>
+    * @param source
+    * @return
+    */
    public static <K, V> HashMap<K, V> cloneMap( HashMap<K, V> source )
    {
       HashMap<K, V> clone = new HashMap<K, V>();
@@ -16,6 +29,14 @@ public class DataUtils
       return clone;
    }
 
+   /**
+    * Merge two lists into a new one
+    * 
+    * @param <K>
+    * @param list1
+    * @param list2
+    * @return
+    */
    public static <K> ArrayList<K> mergeLists( Collection<K> list1, Collection<K> list2 )
    {
       ArrayList<K> mergedList = new ArrayList<K>();
@@ -30,6 +51,15 @@ public class DataUtils
       return mergedList;
    }
 
+   /**
+    * Merges two Maps into a new HashMap
+    * 
+    * @param <K>
+    * @param <V>
+    * @param map1
+    * @param map2
+    * @return
+    */
    public static <K, V> HashMap<K, V> mergeMaps( Map<K, V> map1, Map<K, V> map2 )
    {
       HashMap<K, V> mergedMap = new HashMap<K, V>();
@@ -45,6 +75,14 @@ public class DataUtils
       return mergedMap;
    }
 
+   /**
+    * Merges entries from source map into destination map with override.
+    * 
+    * @param <K>
+    * @param <V>
+    * @param sourceVars
+    * @param destinationVars
+    */
    public static <K, V> void mergeMapInto( Map<K, V> sourceVars, Map<K, V> destinationVars )
    {
       if ( ( sourceVars != null ) && ( sourceVars != destinationVars ) )
@@ -56,9 +94,17 @@ public class DataUtils
       }
    }
 
-   public static <T> void addItemToTreeMapInSequence( T method, TreeMap<Integer, ArrayList<T>> map, Integer sequence )
+   /**
+    * Adds an item to a tree-map with in sequence with the Integer sequence action as the tree-map key and value being the list of items for the sequence
+    * 
+    * @param <T>
+    * @param item
+    * @param map
+    * @param sequence
+    */
+   public static <T> void addItemToTreeMapInSequence( T item, TreeMap<Integer, ArrayList<T>> map, Integer sequence )
    {
-      if ( ( map == null ) || ( method == null ) )
+      if ( ( map == null ) || ( item == null ) )
       {
          return;
       }
@@ -73,9 +119,16 @@ public class DataUtils
          map.put( sequence, new ArrayList<T>() );
       }
 
-      map.get( sequence ).add( method );
+      map.get( sequence ).add( item );
    }
 
+   /**
+    * Serialize a tree-map of sequence to list to a single list
+    * 
+    * @param <T>
+    * @param itemSequenceMap
+    * @return
+    */
    public static <T> ArrayList<T> generateSequencedList( TreeMap<Integer, ArrayList<T>> itemSequenceMap )
    {
       ArrayList<T> itemSequence = new ArrayList<T>();
@@ -93,56 +146,160 @@ public class DataUtils
       return itemSequence;
    }
 
+   /**
+    * Validates if a given value is in range of min to max.
+    * Inclusion of min and max values are configured by parameters.
+    * 
+    * @param value
+    * @param min
+    * @param max
+    * @param includeMin
+    * @param includeMax
+    * @return
+    */
    public static boolean inRange( byte value, byte min, byte max, boolean includeMin, boolean includeMax )
    {
       return ( includeMin ? ( value >= min ) : ( value > min ) ) && ( includeMax ? ( value <= max ) : ( value < max ) );
    }
 
+   /**
+    * Validates if a given value is in range of min to max.
+    * Inclusion of min and max values are configured by parameters.
+    * 
+    * @param value
+    * @param min
+    * @param max
+    * @param includeMin
+    * @param includeMax
+    * @return
+    */
    public static boolean inRange( int value, int min, int max, boolean includeMin, boolean includeMax )
    {
       return ( includeMin ? ( value >= min ) : ( value > min ) ) && ( includeMax ? ( value <= max ) : ( value < max ) );
    }
+
+   /**
+    * Validates if a given value is in range of min to max.
+    * Inclusion of min and max values are configured by parameters.
+    * 
+    * @param value
+    * @param min
+    * @param max
+    * @param includeMin
+    * @param includeMax
+    * @return
+    */
 
    public static boolean inRange( long value, long min, long max, boolean includeMin, boolean includeMax )
    {
       return ( includeMin ? ( value >= min ) : ( value > min ) ) && ( includeMax ? ( value <= max ) : ( value < max ) );
    }
 
+   /**
+    * Validates if a given value is in range of min to max.
+    * Inclusion of min and max values are configured by parameters.
+    * 
+    * @param value
+    * @param min
+    * @param max
+    * @param includeMin
+    * @param includeMax
+    * @return
+    */
    public static boolean inRange( float value, float min, float max, boolean includeMin, boolean includeMax )
    {
       return ( includeMin ? ( value >= min ) : ( value > min ) ) && ( includeMax ? ( value <= max ) : ( value < max ) );
    }
 
+   /**
+    * Validates if a given value is in range of min to max.
+    * Inclusion of min and max values are configured by parameters.
+    * 
+    * @param value
+    * @param min
+    * @param max
+    * @param includeMin
+    * @param includeMax
+    * @return
+    */
    public static boolean inRange( double value, double min, double max, boolean includeMin, boolean includeMax )
    {
       return ( includeMin ? ( value >= min ) : ( value > min ) ) && ( includeMax ? ( value <= max ) : ( value < max ) );
    }
 
+   /**
+    * Validates if a given value is in range of min to max both included.
+    * 
+    * @param value
+    * @param min
+    * @param max
+    * @return
+    */
    public static boolean inRange( byte value, byte min, byte max )
    {
       return inRange( value, min, max, true, true );
    }
 
+   /**
+    * Validates if a given value is in range of min to max both included.
+    * 
+    * @param value
+    * @param min
+    * @param max
+    * @return
+    */
    public static boolean inRange( int value, int min, int max )
    {
       return inRange( value, min, max, true, true );
    }
 
+   /**
+    * Validates if a given value is in range of min to max.
+    * Inclusion of min and max values are configured by parameters.
+    * 
+    * @param value
+    * @param min
+    * @param max
+    * @return
+    */
    public static boolean inRange( long value, long min, long max )
    {
       return inRange( value, min, max, true, true );
    }
 
+   /**
+    * Validates if a given value is in range of min to max both included.
+    * 
+    * @param value
+    * @param min
+    * @param max
+    * @return
+    */
    public static boolean inRange( float value, float min, float max )
    {
       return inRange( value, min, max, true, true );
    }
 
+   /**
+    * Validates if a given value is in range of min to max both included.
+    * 
+    * @param value
+    * @param min
+    * @param max
+    * @return
+    */
    public static boolean inRange( double value, double min, double max )
    {
       return inRange( value, min, max, true, true );
    }
 
+   /**
+    * Converts a Serializable object of types Long/Integer/String to long value
+    * 
+    * @param serializable
+    * @param defaultValue
+    * @return
+    */
    public static long serializableToLong( Serializable serializable, long defaultValue )
    {
       long returnValue = defaultValue;
@@ -175,6 +332,15 @@ public class DataUtils
       return returnValue;
    }
 
+   /**
+    * Returns an string incremented by one.
+    * Only alphanumeric digits are considered for incrementing and carry forward.
+    * Digits are assumed to have most significant digit from left to least significant digit to right (natural ordering).
+    * e.g. "aZ9_z$z" is incremented to "bA0_a$a"
+    * 
+    * @param currentString
+    * @return
+    */
    public static String incrementStringAlphaNumerically( String currentString )
    {
       char[] chararray = currentString.toCharArray();

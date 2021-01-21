@@ -153,6 +153,5 @@ public class Test implements Serializable, Comparable<Test>
       int lhs = ( priority == null ) ? 0 : priority;
       int rhs = ( other.priority == null ) ? 0 : other.priority;
       return lhs - rhs;
-      // return ( priorityComparision == 0 ) ? name.compareTo( other.name ) : priorityComparision;
    }
 }

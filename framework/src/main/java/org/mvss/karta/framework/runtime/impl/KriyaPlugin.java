@@ -33,7 +33,7 @@ import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.core.StepParam;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.minions.KartaMinionRegistry;
+import org.mvss.karta.framework.nodes.KartaNodeRegistry;
 import org.mvss.karta.framework.runtime.BeanRegistry;
 import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.Constants;
@@ -96,7 +96,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    private EventProcessor                                    eventProcessor;
 
    @KartaAutoWired
-   private KartaMinionRegistry                               minionRegistry;
+   private KartaNodeRegistry                               minionRegistry;
 
    @Override
    public String getPluginName()

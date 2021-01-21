@@ -17,11 +17,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Utility class to load bean properties from property files (YAML, JSON or XML)
+ * 
+ * @author Manian
+ */
 @Log4j2
 public class PropertyUtils
 {
+   /**
+    * The compiled regex patter for matching property references in format ${propertyName}
+    */
    public static Pattern                 propertyPattern   = Pattern.compile( "\\$\\{([_A-Za-z0-9]+)\\}" );
 
+   /**
+    * Cached environment and system properties with system properties having higher precedence
+    */
    public static HashMap<String, String> systemPropertyMap = new HashMap<String, String>();
 
    private static ObjectMapper           objectMapper      = ParserUtils.getObjectMapper();
@@ -33,6 +44,12 @@ public class PropertyUtils
       System.getProperties().forEach( ( key, value ) -> systemPropertyMap.put( key.toString(), value.toString() ) );
    }
 
+   /**
+    * Expands system properties in format ${propertyName} in keys of the map
+    * 
+    * @param <V>
+    * @param valueMap
+    */
    public static <V> void expandEnvVarsForMap( Map<String, V> valueMap )
    {
       HashMap<String, V> expandedValue = new HashMap<String, V>();
@@ -41,6 +58,11 @@ public class PropertyUtils
       valueMap.putAll( expandedValue );
    }
 
+   /**
+    * Expands system properties in format ${propertyName} in keys and values of the map
+    * 
+    * @param valueMap
+    */
    public static void expandEnvVars( Map<String, String> valueMap )
    {
       HashMap<String, String> expandedValue = new HashMap<String, String>();
@@ -49,6 +71,11 @@ public class PropertyUtils
       valueMap.putAll( expandedValue );
    }
 
+   /**
+    * Expands system properties in format ${propertyName} in the collection values
+    * 
+    * @param valueList
+    */
    public static void expandEnvVars( Collection<String> valueList )
    {
       ArrayList<String> expandedValue = new ArrayList<String>();
@@ -57,6 +84,12 @@ public class PropertyUtils
       valueList.addAll( expandedValue );
    }
 
+   /**
+    * Expands system properties in format ${propertyName} in the string text.
+    * 
+    * @param text
+    * @return
+    */
    public static String expandEnvVars( String text )
    {
       if ( text == null )
@@ -66,11 +99,23 @@ public class PropertyUtils
       return expandEnvVars( text, systemPropertyMap );
    }
 
+   /**
+    * Merge system properties into the property map
+    * 
+    * @param propertyMap
+    */
    public static void mergeEnvValuesIntoMap( HashMap<String, String> propertyMap )
    {
       propertyMap.putAll( systemPropertyMap );
    }
 
+   /**
+    * Expand system properties in a string with a given system properites map
+    * 
+    * @param text
+    * @param systemPropertyMap
+    * @return
+    */
    public static String expandEnvVars( String text, HashMap<String, String> systemPropertyMap )
    {
       if ( text == null )
@@ -110,17 +155,39 @@ public class PropertyUtils
       return text;
    }
 
+   /**
+    * Returns environmental variable returning default value for undefined keys
+    * 
+    * @param key
+    * @param defaultValue
+    * @return
+    */
    public static String getEnv( String key, String defaultValue )
    {
       String envValue = System.getenv( key );
       return ( envValue == null ) ? defaultValue : envValue;
    }
 
+   /**
+    * Returns system/env property returning default value for undefined keys
+    * 
+    * @param key
+    * @param defaultValue
+    * @return
+    */
    public static String getSystemOrEnvProperty( String key, String defaultValue )
    {
       return systemPropertyMap.containsKey( key ) ? systemPropertyMap.get( key ) : defaultValue;
    }
 
+   /**
+    * Sets the value of a object's field based on the field type converting from the serializable value (property matched)
+    * 
+    * @param object
+    * @param field
+    * @param propertyValue
+    * @param castAsType
+    */
    public static void setFieldValue( Object object, Field field, Serializable propertyValue, Class<?> castAsType )
    {
       try
@@ -150,6 +217,15 @@ public class PropertyUtils
       }
    }
 
+   /**
+    * Get property value from a property store giving precedence to system/environment property.
+    * Useful in Kubernetes/Docker environment with environment variable acting as container parameters.
+    * 
+    * @param propertiesStore
+    * @param group
+    * @param name
+    * @return
+    */
    public static Serializable getPropertyValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, String group, String name )
    {
       String keyForEnvOrSys = group + "." + name;
@@ -164,6 +240,15 @@ public class PropertyUtils
       return ( groupStore == null ) ? null : groupStore.get( name );
    }
 
+   /**
+    * Sets the value of an object's field by matching property from a property store based on PropertyMapping annotation
+    * Note: A property store is a HashMap of property group name to HashMap of property names and values for the group.
+    * 
+    * @param propertiesStore
+    * @param object
+    * @param field
+    * @param propertyMapping
+    */
    public static void setFieldValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object, Field field, PropertyMapping propertyMapping )
    {
       try

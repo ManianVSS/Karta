@@ -35,7 +35,7 @@ ObjectGenTestDataSource:
   objectRuleMap:
     employee:
       ruleType: OBJECT_RULE
-      objectRules:
+      fieldGenRules:
         - fieldName: employeeId
           ruleType: STRING_RANGE
           range:
@@ -48,7 +48,7 @@ ObjectGenTestDataSource:
             max: 12
         - fieldName: gender
           ruleType: MUTEX_OBJECT_RULE_VALUE
-          objectRules:
+          fieldGenRules:
             - ruleType: VALUES
               probability: 0.9
               values:
@@ -62,7 +62,7 @@ ObjectGenTestDataSource:
           ruleType: BOOLEAN
         - fieldName: role
           ruleType: MUTEX_OBJECT_RULE_VALUE
-          objectRules:
+          fieldGenRules:
             - ruleType: VALUES
               probability: 0.9
               values:

@@ -1,50 +1,62 @@
-package org.mvss.karta.framework.minions;
+package org.mvss.karta.framework.nodes;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.RMIUtils;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * This registry class can help register Karta nodes and minions and cycle between minions for load sharing.
+ * 
+ * @author Manian
+ */
 @Log4j2
-public class KartaMinionRegistry
+public class KartaNodeRegistry
 {
    @Getter
-   private ArrayList<KartaMinion>       minions            = new ArrayList<KartaMinion>();
+   private ArrayList<KartaNode>       minions            = new ArrayList<KartaNode>();
 
    @Getter
-   private HashMap<String, KartaMinion> nodes              = new HashMap<String, KartaMinion>();
+   private HashMap<String, KartaNode> nodes              = new HashMap<String, KartaNode>();
 
-   private volatile int                 lastMinonIndexUsed = -1;
+   private volatile int               lastMinonIndexUsed = -1;
 
-   private Object                       lock               = new Object();
+   private Object                     lock               = new Object();
 
-   public boolean addNode( KartaMinionConfiguration minionConfiguration )
+   /**
+    * Add a karta node/minion by configuration
+    * 
+    * @param nodeConfiguration
+    * @return
+    */
+   public boolean addNode( KartaNodeConfiguration nodeConfiguration )
    {
       try
       {
          synchronized ( lock )
          {
-            String name = minionConfiguration.getName();
+            String name = nodeConfiguration.getName();
             if ( !nodes.containsKey( name ) )
             {
-               KartaMinion kartaNode = null;
+               KartaNode kartaNode = null;
 
-               switch ( minionConfiguration.getNodeType() )
+               switch ( nodeConfiguration.getNodeType() )
                {
                   // TODO: Handle local node
                   case RMI:
-                     Registry nodeRegistry = RMIUtils.getRemoteRegistry( minionConfiguration.getHost(), minionConfiguration.getPort(), minionConfiguration.isEnableSSL() );
-                     kartaNode = (KartaMinion) nodeRegistry.lookup( KartaMinion.class.getName() );
+                     Registry nodeRegistry = RMIUtils.getRemoteRegistry( nodeConfiguration.getHost(), nodeConfiguration.getPort(), nodeConfiguration.isEnableSSL() );
+                     kartaNode = (KartaNode) nodeRegistry.lookup( KartaNode.class.getName() );
                      break;
 
                   case REST:
-                     String url = ( minionConfiguration.isEnableSSL() ? "https://" : "http//" ) + minionConfiguration.getHost() + ":" + minionConfiguration.getPort();
-                     kartaNode = new KartaRestMinion( url, true );
+                     String url = ( nodeConfiguration.isEnableSSL() ? Constants.HTTPS : Constants.HTTP ) + nodeConfiguration.getHost() + Constants.COLON + nodeConfiguration.getPort();
+                     kartaNode = new KartaRestNode( url, true );
                      break;
 
                   default:
@@ -61,36 +73,42 @@ public class KartaMinionRegistry
                   return false;
                }
 
-               if ( minionConfiguration.isMinion() )
+               if ( nodeConfiguration.isMinion() )
                {
                   minions.add( kartaNode );
                   log.info( "Added minion " + kartaNode );
                }
 
-               log.info( "Added node " + name + " with config " + minionConfiguration );
+               log.info( "Added node " + name + " with config " + nodeConfiguration );
                return true;
             }
          }
       }
       catch ( RemoteException ce )
       {
-         log.error( "Connection could not be estabished to node " + minionConfiguration );
+         log.error( "Connection could not be estabished to node " + nodeConfiguration );
       }
       catch ( Throwable t )
       {
-         log.error( "Exception occured when trying to connect to node " + minionConfiguration, t );
+         log.error( "Exception occured when trying to connect to node " + nodeConfiguration, t );
       }
 
       return false;
    }
 
+   /**
+    * Remove a karta name from registry by name.
+    * 
+    * @param name
+    * @return
+    */
    public boolean removeNode( String name )
    {
       boolean nodeRemoved = false;
 
       synchronized ( lock )
       {
-         KartaMinion node = nodes.remove( name );
+         KartaNode node = nodes.remove( name );
          nodeRemoved = ( node != null );
 
          if ( nodeRemoved )
@@ -102,7 +120,13 @@ public class KartaMinionRegistry
       return nodeRemoved;
    }
 
-   public KartaMinion getNode( String name )
+   /**
+    * Get a karta node in registry by name.
+    * 
+    * @param name
+    * @return
+    */
+   public KartaNode getNode( String name )
    {
       synchronized ( lock )
       {
@@ -110,7 +134,12 @@ public class KartaMinionRegistry
       }
    }
 
-   public KartaMinion getNextMinion()
+   /**
+    * Gets the next minion to use by cycling through the list of minions.
+    * 
+    * @return
+    */
+   public KartaNode getNextMinion()
    {
       synchronized ( lock )
       {

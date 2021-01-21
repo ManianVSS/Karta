@@ -25,8 +25,8 @@ import org.mvss.karta.framework.core.TestJobIterationResultProcessor;
 import org.mvss.karta.framework.core.TestJobResult;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
-import org.mvss.karta.framework.minions.KartaMinion;
-import org.mvss.karta.framework.minions.KartaMinionRegistry;
+import org.mvss.karta.framework.nodes.KartaNode;
+import org.mvss.karta.framework.nodes.KartaNodeRegistry;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.FeatureCompleteEvent;
@@ -104,8 +104,8 @@ public class FeatureRunner implements Callable<FeatureResult>
          result = new FeatureResult();
          result.setFeatureName( testFeature.getName() );
          EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-         KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
-         BeanRegistry contextBeanRegistry = new BeanRegistry( kartaRuntime.getConfigurator() );
+         KartaNodeRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
+         BeanRegistry contextBeanRegistry = new BeanRegistry();
 
          Random random = kartaRuntime.getRandom();
 
@@ -267,7 +267,7 @@ public class FeatureRunner implements Callable<FeatureResult>
 
             if ( useMinions )
             {
-               KartaMinion minion = nodeRegistry.getNextMinion();
+               KartaNode minion = nodeRegistry.getNextMinion();
 
                if ( minion != null )
                {

@@ -4,7 +4,7 @@ import java.util.concurrent.Callable;
 
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.minions.KartaMinion;
+import org.mvss.karta.framework.nodes.KartaNode;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -29,7 +29,7 @@ public class RemoteFeatureRunner implements Callable<FeatureResult>
    private TestFeature   testFeature;
 
    @Builder.Default
-   private KartaMinion   minionToUse = null;
+   private KartaNode     minionToUse = null;
 
    private FeatureResult result;
 

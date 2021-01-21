@@ -10,23 +10,39 @@ import java.util.HashMap;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import javax.rmi.ssl.SslRMIServerSocketFactory;
 
+/**
+ * Utility class to create a connect with RMI registry
+ * 
+ * @author Manian
+ */
 public class RMIUtils
 {
    public static final String JAVA_RMI_SERVER_HOSTNAME = "java.rmi.server.hostname";
 
+   /**
+    * Creates a new RMI registry
+    * 
+    * @param host
+    * @param port
+    * @param enableSSL
+    * @param csf
+    * @param ssf
+    * @return
+    * @throws RemoteException
+    */
    public static Registry createNewRegistry( String host, int port, boolean enableSSL, RMIClientSocketFactory csf, RMIServerSocketFactory ssf ) throws RemoteException
    {
-      Registry callBackRegistry;
+      Registry rmiRegistry;
 
       String prevRmiHost = System.setProperty( JAVA_RMI_SERVER_HOSTNAME, host );
 
       if ( enableSSL )
       {
-         callBackRegistry = LocateRegistry.createRegistry( port, csf, ssf );
+         rmiRegistry = LocateRegistry.createRegistry( port, csf, ssf );
       }
       else
       {
-         callBackRegistry = LocateRegistry.createRegistry( port );
+         rmiRegistry = LocateRegistry.createRegistry( port );
       }
 
       if ( prevRmiHost == null )
@@ -38,14 +54,31 @@ public class RMIUtils
          System.setProperty( JAVA_RMI_SERVER_HOSTNAME, prevRmiHost );
       }
 
-      return callBackRegistry;
+      return rmiRegistry;
    }
 
+   /**
+    * Creates a new RMI registry
+    * 
+    * @param host
+    * @param port
+    * @param enableSSL
+    * @return
+    * @throws RemoteException
+    */
    public static Registry createNewRegistry( String host, int port, boolean enableSSL ) throws RemoteException
    {
       return createNewRegistry( host, port, enableSSL, new SslRMIClientSocketFactory(), new SslRMIServerSocketFactory() );
    }
 
+   /**
+    * Creates a new RMI registry on any available port and returns port as well
+    * 
+    * @param host
+    * @param enableSSL
+    * @return
+    * @throws RemoteException
+    */
    public static HashMap<String, Object> createNewRegistryOnAnyAvailablePort( String host, boolean enableSSL ) throws RemoteException
    {
       HashMap<String, Object> returnMap = new HashMap<String, Object>();
@@ -81,6 +114,15 @@ public class RMIUtils
       return returnMap;
    }
 
+   /**
+    * Tries to connect to and return a remote RMI registry
+    * 
+    * @param host
+    * @param port
+    * @param enableSSL
+    * @return
+    * @throws RemoteException
+    */
    public static Registry getRemoteRegistry( String host, int port, boolean enableSSL ) throws RemoteException
    {
       Registry rmiServerRegistry = null;

@@ -16,7 +16,7 @@ import org.apache.commons.cli.UnrecognizedOptionException;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.RunResult;
-import org.mvss.karta.framework.minions.KartaMinionServer;
+import org.mvss.karta.framework.nodes.KartaNodeServer;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunInfo;
@@ -41,7 +41,7 @@ public class KartaMain
    private static final String  JAVA_TEST     = "javaTest";
    private static final String  JAVA_TEST_JAR = "javaTestJar";
 
-   private static final String  START_MINION  = "startMinion";
+   private static final String  START_NODE    = "startNode";
 
    public static List<Runnable> exitHooks     = Collections.synchronizedList( new ArrayList<Runnable>() );
 
@@ -72,7 +72,7 @@ public class KartaMain
 
       options.addOption( Constants.RUN_NAME, true, "the name of this test run" );
 
-      options.addOption( START_MINION, false, "starts Karta minion (rmi node)" );
+      options.addOption( START_NODE, false, "starts Karta RMI node server" );
 
       options.addOption( null, HELP, false, "prints this help message" );
 
@@ -85,7 +85,7 @@ public class KartaMain
             formatter.printHelp( Constants.KARTA, options );
             System.exit( 0 );
          }
-         else if ( cmd.hasOption( START_MINION ) )
+         else if ( cmd.hasOption( START_NODE ) )
          {
             KartaRuntime.initializeNodes = false;
             try (KartaRuntime kartaRuntime = KartaRuntime.getInstance())
@@ -95,9 +95,10 @@ public class KartaMain
                   log.error( "Karta runtime could not be initialized. Please check the directory and config files" );
                   System.exit( -1 );
                }
-               KartaMinionServer kartaRMIServer = new KartaMinionServer( kartaRuntime );
+               KartaNodeServer kartaRMIServer = new KartaNodeServer( kartaRuntime );
+               kartaRMIServer.startServer();
                kartaRuntime.addNodes();
-               log.info( "Karta minion started " + kartaRMIServer.getMinionConfig() );
+               log.info( "Karta node server started " + kartaRMIServer.getNodeConfig() );
                Thread.currentThread().join();
             }
          }

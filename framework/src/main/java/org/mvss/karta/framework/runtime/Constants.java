@@ -110,4 +110,7 @@ public class Constants
 
    public static final String   FAIL                                = "FAIL";
    public static final String   PASS                                = "PASS";
+
+   public static final String   HTTPS                               = "https://";
+   public static final String   HTTP                                = "http://";
 }

@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 import org.mvss.karta.framework.runtime.BeanRegistry;
-import org.mvss.karta.framework.runtime.Configurator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -90,11 +89,11 @@ public class PreparedScenario implements Serializable
     * 
     * @param configurator
     */
-   public void propogateContextBeanRegistry( Configurator configurator )
+   public void propogateContextBeanRegistry()
    {
       if ( contextBeanRegistry == null )
       {
-         contextBeanRegistry = new BeanRegistry( configurator );
+         contextBeanRegistry = new BeanRegistry();
       }
 
       for ( PreparedStep step : setupSteps )

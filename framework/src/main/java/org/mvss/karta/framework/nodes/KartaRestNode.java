@@ -1,4 +1,4 @@
-package org.mvss.karta.framework.minions;
+package org.mvss.karta.framework.nodes;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -21,12 +21,19 @@ import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.response.Response;
 import lombok.Getter;
 
+/**
+ * Default REST based Karta Node implementation.
+ * This class is only the REST Client
+ * The server side is implemented in Karta Server project using matching REST API
+ * 
+ * @author Manian
+ */
 @Getter
-public class KartaRestMinion implements KartaMinion
+public class KartaRestNode implements KartaNode
 {
    private RequestSpecBuilder requestSpecBuilder;
 
-   public KartaRestMinion( String url )
+   public KartaRestNode( String url )
    {
       requestSpecBuilder = new RequestSpecBuilder();
       requestSpecBuilder.setBaseUri( url );
@@ -35,7 +42,7 @@ public class KartaRestMinion implements KartaMinion
       requestSpecBuilder.addHeader( Constants.ACCEPT, Constants.APPLICATION_JSON );
    }
 
-   public KartaRestMinion( String url, boolean disableCertificateCheck )
+   public KartaRestNode( String url, boolean disableCertificateCheck )
    {
       this( url );
       if ( disableCertificateCheck )

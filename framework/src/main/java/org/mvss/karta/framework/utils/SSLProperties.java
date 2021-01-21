@@ -9,6 +9,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * This class groups all Java SSL properties
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @ToString

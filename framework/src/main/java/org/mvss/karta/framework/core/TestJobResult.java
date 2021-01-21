@@ -13,6 +13,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * The result of a test-job iteration
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @ToString
@@ -21,9 +26,6 @@ import lombok.ToString;
 @AllArgsConstructor
 public class TestJobResult implements Serializable, Comparable<TestJobResult>
 {
-   /**
-    * 
-    */
    private static final long                              serialVersionUID = 1L;
 
    @Builder.Default
