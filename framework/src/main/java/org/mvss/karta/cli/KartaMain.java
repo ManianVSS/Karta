@@ -169,7 +169,7 @@ public class KartaMain
                   ConcurrentHashMap<String, FeatureResult> resultMap = runResult.getTestResultMap();
                   for ( Entry<String, FeatureResult> entry : resultMap.entrySet() )
                   {
-                     System.out.println( entry.getKey() + Constants.COLON + ( entry.getValue().isPassed() ? Constants.PASS : Constants.FAIL ) );
+                     System.out.println( entry.getKey() + Constants.COLON + Constants.SPACE + ( entry.getValue().isPassed() ? Constants.PASS : Constants.FAIL ) );
                   }
 
                   if ( !runResult.isSuccessful() )

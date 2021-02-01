@@ -2,6 +2,7 @@ package org.mvss.karta.configuration;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import org.mvss.karta.framework.nodes.KartaNodeConfiguration;
@@ -106,12 +107,12 @@ public class KartaConfiguration implements Serializable
    private boolean                           minionsEnabled                   = true;
 
    /**
-    * The thread count for running multiple tests in parallel.</br>
-    * An exclusive test thread group always runs in one thread.</br>
+    * The map of thread group name and respective thread count.</br>
+    * An exclusive test thread group should always run in one thread.</br>
     * Refer {@link org.mvss.karta.framework.runtime.testcatalog.Test#threadGroup}
     */
    @Builder.Default
-   private int                               testThreadCount                  = 1;
+   private HashMap<String, Integer>          threadGroups                     = new HashMap<String, Integer>();
 
    /**
     * The list of Java package names to scan for {@link org.mvss.karta.framework.core.KartaBean} annotations on public and static methods. </br>

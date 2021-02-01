@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 import org.mvss.karta.framework.runtime.event.Event;
+import org.mvss.karta.framework.runtime.event.StandardEventsTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -172,5 +173,16 @@ public class StepResult implements Serializable
    public StepResult trimForReport()
    {
       return this.toBuilder().results( null ).events( null ).attachments( null ).build();
+   }
+
+   /**
+    * Convert events and other objects received from remote execution to appropriate sub class
+    */
+   public void processRemoteResults()
+   {
+      ArrayList<Event> newEvents = new ArrayList<Event>();
+      events.forEach( ( event ) -> newEvents.add( StandardEventsTypes.castToAppropriateEvent( event ) ) );
+      events.clear();
+      events = newEvents;
    }
 }

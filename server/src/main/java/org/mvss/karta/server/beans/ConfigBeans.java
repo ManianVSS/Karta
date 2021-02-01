@@ -33,34 +33,4 @@ public class ConfigBeans
       }
       return null;
    }
-
-   // @Bean
-   // public KartaConfiguration getKartaConfiguration()
-   // {
-   // try
-   // {
-   // return KartaRuntime.getInstance().getKartaConfiguration();
-   // }
-   // catch ( Throwable e )
-   // {
-   // log.error( e );
-   // System.exit( 1 );
-   // }
-   // return null;
-   // }
-   //
-   // @Bean
-   // public Configurator getConfigurator()
-   // {
-   // try
-   // {
-   // return KartaRuntime.getInstance().getConfigurator();
-   // }
-   // catch ( Throwable e )
-   // {
-   // log.error( e );
-   // System.exit( 1 );
-   // }
-   // return null;
-   // }
 }

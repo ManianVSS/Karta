@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import org.mvss.karta.framework.runtime.event.Event;
+import org.mvss.karta.framework.runtime.event.StandardEventsTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -97,5 +98,33 @@ public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
       }
 
       return trimmedResult;
+   }
+
+   /**
+    * Converts events and other objects received from remote execution to appropriate sub class
+    */
+   public void processRemoteResults()
+   {
+      ArrayList<Event> newEvents = new ArrayList<Event>();
+      events.forEach( ( event ) -> newEvents.add( StandardEventsTypes.castToAppropriateEvent( event ) ) );
+      events.clear();
+      events = newEvents;
+
+      for ( SerializableKVP<String, StepResult> setupResult : setupResults )
+      {
+         setupResult.getValue().processRemoteResults();
+      }
+      for ( SerializableKVP<String, StepResult> chaosActionResult : chaosActionResults )
+      {
+         chaosActionResult.getValue().processRemoteResults();
+      }
+      for ( SerializableKVP<String, StepResult> runResult : runResults )
+      {
+         runResult.getValue().processRemoteResults();
+      }
+      for ( SerializableKVP<String, StepResult> tearDownResult : tearDownResults )
+      {
+         tearDownResult.getValue().processRemoteResults();
+      }
    }
 }

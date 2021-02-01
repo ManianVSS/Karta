@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -13,6 +14,7 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
+@NoArgsConstructor
 public class GenericTestEvent extends Event
 {
 
@@ -20,6 +22,11 @@ public class GenericTestEvent extends Event
     * 
     */
    private static final long serialVersionUID = 1L;
+
+   public GenericTestEvent( Event event )
+   {
+      super( event );
+   }
 
    public GenericTestEvent( String runName, Serializable eventData )
    {

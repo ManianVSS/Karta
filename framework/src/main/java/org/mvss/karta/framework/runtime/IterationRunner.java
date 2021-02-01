@@ -102,6 +102,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
             try
             {
                scenarioResult = minionToUse.runTestScenario( runInfo, featureName, iterationIndex, preparedScenario, scenarioIterationNumber );
+               scenarioResult.processRemoteResults();
             }
             catch ( RemoteException e )
             {

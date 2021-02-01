@@ -39,6 +39,7 @@ public class RemoteFeatureRunner implements Callable<FeatureResult>
       try
       {
          result = minionToUse.runFeature( runInfo, testFeature );
+         result.processRemoteResults();
       }
       catch ( Throwable t )
       {

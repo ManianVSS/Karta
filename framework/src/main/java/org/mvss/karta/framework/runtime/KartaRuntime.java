@@ -276,7 +276,8 @@ public class KartaRuntime implements AutoCloseable
       testCatalogManager.mergeRepositoryDirectoryIntoCatalog( new File( Constants.DOT ) );
 
       executorServiceManager = new ExecutorServiceManager();
-      executorServiceManager.getOrAddExecutorServiceForGroup( Constants.__TESTS__, kartaConfiguration.getTestThreadCount() );
+      executorServiceManager.addExecutorServiceForGroups( kartaConfiguration.getThreadGroups() );
+      executorServiceManager.getOrAddExecutorServiceForGroup( Constants.__DEFAULT__, 1 );
 
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize bean registry
@@ -921,6 +922,7 @@ public class KartaRuntime implements AutoCloseable
          // TODO: Handle local node
          // TODO: Handle null node error
          jobResult = nodeRegistry.getNode( node ).runJobIteration( runInfo, featureName, job.toBuilder().node( null ).build(), iterationIndex );
+         jobResult.processRemoteResults();
       }
       else
       {
@@ -1105,6 +1107,7 @@ public class KartaRuntime implements AutoCloseable
          // TODO: Handle local node
          // TODO: Handle null node error
          stepResult = nodeRegistry.getNode( node ).runStep( runInfo, step.toBuilder().node( null ).build() );
+         stepResult.processRemoteResults();
       }
       else
       {
@@ -1155,6 +1158,7 @@ public class KartaRuntime implements AutoCloseable
       if ( StringUtils.isNotEmpty( nodeName ) )
       {
          stepResult = nodeRegistry.getNode( nodeName ).performChaosAction( runInfo, preparedChaosAction.toBuilder().node( null ).build() );
+         stepResult.processRemoteResults();
       }
       else
       {

@@ -37,21 +37,25 @@ nodeName: local
 nodes:
   - name: Node1
     host: localhost
-    port: 17171
+    port: 18080
     enableSSL: true
-    nodeType: RMI
+    nodeType: REST
     minion: true
 
   - name: Node2
     host: localhost
-    port: 17171
+    port: 18080
     enableSSL: true
-    nodeType: RMI
+    nodeType: REST
     minion: true
 
 minionsEnabled: true
 
-testThreadCount: 10
+threadGroups:
+  __default__: 1
+  calculator: 5
+  calcChaos: 1
+
 
 configurationScanPackages:
   - org.mvss.karta.samples.config

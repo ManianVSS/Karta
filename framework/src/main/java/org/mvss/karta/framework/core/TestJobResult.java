@@ -56,4 +56,15 @@ public class TestJobResult implements Serializable, Comparable<TestJobResult>
    {
       return successful && !error;
    }
+
+   /**
+    * Converts events and other objects received from remote execution to appropriate sub class
+    */
+   public void processRemoteResults()
+   {
+      for ( SerializableKVP<String, StepResult> setupResult : stepResults )
+      {
+         setupResult.getValue().processRemoteResults();
+      }
+   }
 }

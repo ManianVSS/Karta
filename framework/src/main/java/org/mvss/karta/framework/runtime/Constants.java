@@ -37,6 +37,7 @@ public class Constants
    public static final String   DOUBLE_QUOTES                       = "\"";
    public static final String   OPEN_SQ_BRACKET                     = "[";
    public static final String   CLOSE_SQ_BRACKET                    = "]";
+   public static final String   SPACE                               = " ";
 
    public static final String   JAR                                 = "jar";
 
@@ -61,6 +62,7 @@ public class Constants
    public static final String   _TEARDOWN_                          = ":TearDown:";
 
    public static final String   __TESTS__                           = "__tests__";
+   public static final String   __DEFAULT__                         = "__default__";
 
    public static final String   CONTENT_TYPE                        = "Content-Type";
    public static final String   APPLICATION_JSON                    = "application/json";
@@ -75,7 +77,10 @@ public class Constants
    public static final String   PATH_RUN_FEATURESOURCE              = "/run/featureSource";
    public static final String   PATH_RUN_TARGET                     = "/run/target";
 
-   public static final String   PATH_API_DEF                        = "/api";
+   public static final String   PATH_REPORT_HTML_EVENT              = "/report/html/event";
+
+   public static final String   PATH_API                            = "/api";
+   public static final String   PATH_API_RUNS                       = "/api/runs";
 
    public static final String   RUN_NAME                            = "runName";
    public static final String   FEATURE                             = "feature";
@@ -113,4 +118,7 @@ public class Constants
 
    public static final String   HTTPS                               = "https://";
    public static final String   HTTP                                = "http://";
+   public static final String   LOCALHOST                           = "localhost";
+
+   public static final int      MAX_BLOB_SIZE                       = 1048576;
 }

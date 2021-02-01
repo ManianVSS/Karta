@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class RunController
+public class ExecutionController
 {
    @Autowired
    private KartaRuntime kartaRuntime;

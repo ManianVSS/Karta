@@ -203,7 +203,6 @@ public class HTMLReportTestEventListener implements TestEventListener
                Path path = Paths.get( runReportsBaseFolder.getPath(), runName );
                File runDirectory = path.toFile();
                runDirectory.mkdirs();
-               // getOrCreateFeatureMap( runName );
                break;
 
             case StandardEventsTypes.RUN_COMPLETE_EVENT:

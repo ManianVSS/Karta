@@ -164,8 +164,14 @@ public class ParserUtils
     * @param toValueType
     * @return
     */
+   @SuppressWarnings( "unchecked" )
    public static <T> T convertValue( DataFormat format, Object fromValue, Class<T> toValueType )
    {
+      if ( fromValue.getClass() == toValueType )
+      {
+         return (T) fromValue;
+      }
+
       switch ( format )
       {
          case JSON:

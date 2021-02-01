@@ -228,8 +228,8 @@ public class PropertyUtils
     */
    public static Serializable getPropertyValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, String group, String name )
    {
-      String keyForEnvOrSys = group + "." + name;
-      String propertyFromEnvOrSys = systemPropertyMap.get( keyForEnvOrSys );
+      String keyForEnvOrSys = group + Constants.UNDERSCORE + name;
+      String propertyFromEnvOrSys = systemPropertyMap.get( keyForEnvOrSys.toUpperCase() );
 
       if ( propertyFromEnvOrSys != null )
       {

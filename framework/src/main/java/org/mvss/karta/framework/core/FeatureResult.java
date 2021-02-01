@@ -125,4 +125,34 @@ public class FeatureResult implements Serializable
       jobsResultsMap.values().forEach( ( results ) -> Collections.sort( results ) );
       scenarioResultsMap.values().forEach( ( results ) -> Collections.sort( results ) );
    }
+
+   /**
+    * Converts events and other objects received from remote execution to appropriate sub class
+    */
+   public void processRemoteResults()
+   {
+
+      for ( SerializableKVP<String, StepResult> setupResult : setupResults )
+      {
+         setupResult.getValue().processRemoteResults();
+      }
+      for ( Entry<String, ArrayList<TestJobResult>> chaosActionResult : jobsResultsMap.entrySet() )
+      {
+         for ( TestJobResult testJobResult : chaosActionResult.getValue() )
+         {
+            testJobResult.processRemoteResults();
+         }
+      }
+      for ( Entry<String, ArrayList<ScenarioResult>> runResult : scenarioResultsMap.entrySet() )
+      {
+         for ( ScenarioResult scenarioResult : runResult.getValue() )
+         {
+            scenarioResult.processRemoteResults();
+         }
+      }
+      for ( SerializableKVP<String, StepResult> tearDownResult : tearDownResults )
+      {
+         tearDownResult.getValue().processRemoteResults();
+      }
+   }
 }

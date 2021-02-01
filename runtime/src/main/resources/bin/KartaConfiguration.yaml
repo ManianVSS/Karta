@@ -56,8 +56,9 @@ nodes: []
 ### If minions are to be enabled
 minionsEnabled: true
 
-### Number of threads to use to run tests with
-testThreadCount: 1
+### Thread group name map to the number of threads to use to run tests with for the thread group. __default__ is the name of the default thread group
+threadGroups:
+  __default__: 1
 
 ### The packages to look for configuration objects like Beans
 configurationScanPackages: []

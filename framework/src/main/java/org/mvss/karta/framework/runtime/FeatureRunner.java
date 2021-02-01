@@ -48,6 +48,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Runner class to run TestFeatures for Karta
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -63,15 +68,29 @@ public class FeatureRunner implements Callable<FeatureResult>
 
    private TestFeature             testFeature;
 
+   /**
+    * The call back for updating execution result of the TestFeature after run completes.
+    */
    private Consumer<FeatureResult> resultConsumer;
 
    private FeatureResult           result;
 
+   /**
+    * The callback implementation for job iteration result updates for running Test Feature
+    * 
+    * @param testJob
+    * @param testJobResult
+    */
    private synchronized void accumulateJobIterationResult( String testJob, TestJobResult testJobResult )
    {
       result.addTestJobResult( testJob, testJobResult );
    }
 
+   /**
+    * The callback implementation for feature iteration result updates for running Test Feature
+    * 
+    * @param iterationResult
+    */
    private synchronized void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
    {
       result.addIterationResult( iterationResult );
@@ -93,6 +112,10 @@ public class FeatureRunner implements Callable<FeatureResult>
       return deleteJobResults;
    }
 
+   /**
+    * After initializing calling this method would run the feature.
+    * Call implementation for asynchronous calling.
+    */
    @Override
    public FeatureResult call()
    {
