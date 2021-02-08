@@ -1,6 +1,6 @@
 Karta:
   EventProcessor.numberOfThread: 10
-  EventProcessor.maxEventQueueSize: 100
+  EventProcessor.maxEventQueueSize: 10000
   node.config:
     host: localhost
     port: 17171

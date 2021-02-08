@@ -15,6 +15,12 @@ Kriya:
 DumpToFileTestEventListener:
   fileName: KartaEventsRawDump.bin
 
+RemoteHTMLTestEventListener:
+  url: https://localhost:18080/report/html/event
+
+KartaDashBoardTestEventListener:
+  url: https://localhost:18080
+
 RabbitMQTestEventListener:
   queueName: KartaEvents
   userName: guest

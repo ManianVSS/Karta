@@ -1,0 +1,45 @@
+package org.mvss.karta.framework.runtime.event.dto;
+
+import java.io.Serializable;
+
+import org.mvss.karta.framework.enums.TestStatus;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+@Builder
+public class ExecutionRecord implements Serializable
+{
+   private static final long serialVersionUID = 1L;
+
+   private Long              id;
+
+   private Long              version;
+
+   private String            name;
+
+   private String            description;
+
+   private String            testBed;
+
+   @Builder.Default
+   private TestStatus        status           = TestStatus.SCHEDULED;
+
+   @JsonIgnoreProperties( {"version", "description", "release", "build"} )
+   private Run               run;
+
+   private Long              incidentCount;
+
+   private Long              iterationCount;
+}

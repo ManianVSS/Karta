@@ -32,7 +32,7 @@ public class EventProcessor implements AutoCloseable
    @Getter
    @Setter
    @PropertyMapping( "EventProcessor.maxEventQueueSize" )
-   private int                        maxEventQueueSize                  = 100;
+   private int                        maxEventQueueSize                  = 10000;
 
    private ExecutorService            eventListenerExecutorService       = null;
 

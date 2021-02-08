@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -96,7 +97,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    private EventProcessor                                    eventProcessor;
 
    @KartaAutoWired
-   private KartaNodeRegistry                               minionRegistry;
+   private KartaNodeRegistry                                 minionRegistry;
 
    @Override
    public String getPluginName()
@@ -237,7 +238,14 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       {
          if ( !tagPatternMap.containsKey( tag ) )
          {
-            tagPatternMap.put( tag, Pattern.compile( tag ) );
+            try
+            {
+               tagPatternMap.put( tag, Pattern.compile( tag ) );
+            }
+            catch ( PatternSyntaxException pse )
+            {
+               log.error( "Hook tag pattern has invalid regex syntax", pse );
+            }
          }
 
          Pattern tagPattern = tagPatternMap.get( tag );

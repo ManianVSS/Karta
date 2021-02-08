@@ -18,3 +18,9 @@
 
 - pluginName: HTMLReportTestEventListener
   className: org.mvss.karta.framework.runtime.impl.HTMLReportTestEventListener
+
+- pluginName: RemoteHTMLTestEventListener
+  className: org.mvss.karta.framework.runtime.impl.RemoteHTMLTestEventListener
+
+- pluginName: KartaDashBoardTestEventListener
+  className: org.mvss.karta.framework.runtime.impl.KartaDashBoardTestEventListener

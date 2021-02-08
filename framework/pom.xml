@@ -52,6 +52,13 @@
 			<artifactId>commons-lang3</artifactId>
 		</dependency>
 
+		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-math3 -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-math3</artifactId>
+			<version>3.6.1</version>
+		</dependency>
+
 		<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -105,6 +112,22 @@
 			<groupId>io.rest-assured</groupId>
 			<artifactId>rest-assured</artifactId>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/io.kubernetes/client-java -->
+		<dependency>
+			<groupId>io.kubernetes</groupId>
+			<artifactId>client-java</artifactId>
+			<version>11.0.0</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/io.kubernetes/client-java-api -->
+		<dependency>
+			<groupId>io.kubernetes</groupId>
+			<artifactId>client-java-api</artifactId>
+			<version>11.0.0</version>
+		</dependency>
+
+
 	</dependencies>
 
 </project>
