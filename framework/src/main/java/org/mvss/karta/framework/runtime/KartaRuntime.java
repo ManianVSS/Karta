@@ -197,6 +197,7 @@ public class KartaRuntime implements AutoCloseable
       // Configurator should be setup before plug-in initialization
       /*---------------------------------------------------------------------------------------------------------------------*/
       configurator = new Configurator();
+      configurator.mergeProperties( kartaConfiguration.getProperties() );
       ArrayList<String> propertiesFileList = kartaConfiguration.getPropertyFiles();
       if ( ( propertiesFileList != null ) && !propertiesFileList.isEmpty() )
       {

@@ -34,7 +34,7 @@ public class Configurator
                                                                                                      {
                                                                                                      };
    /**
-    * Property Story is a mapping of group name to the map of property names to Serializable property values.
+    * Property store is a mapping of group name to the map of property names to Serializable property values.
     */
    @Getter
    private HashMap<String, HashMap<String, Serializable>>                            propertiesStore = new HashMap<String, HashMap<String, Serializable>>();
@@ -46,6 +46,11 @@ public class Configurator
     */
    public void mergeProperties( HashMap<String, HashMap<String, Serializable>> propertiesToMerge )
    {
+      if ( propertiesToMerge == null )
+      {
+         return;
+      }
+
       for ( String propertyGroupToMerge : propertiesToMerge.keySet() )
       {
          if ( !propertiesStore.containsKey( propertyGroupToMerge ) )
