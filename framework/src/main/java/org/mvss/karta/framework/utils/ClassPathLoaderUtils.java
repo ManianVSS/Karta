@@ -53,7 +53,7 @@ public class ClassPathLoaderUtils
    {
       File fileToLoad = new File( fileName );
 
-      if ( fileToLoad.exists() )
+      if ( fileToLoad.exists() && fileToLoad.isFile() )
       {
          return new FileInputStream( fileToLoad );
       }

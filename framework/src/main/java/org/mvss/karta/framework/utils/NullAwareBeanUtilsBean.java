@@ -19,4 +19,16 @@ public class NullAwareBeanUtilsBean extends BeanUtilsBean
          super.copyProperty( dest, name, value );
       }
    }
+
+   public static <T> T getOverridenValue( T originalValue, T overriddenValue )
+   {
+      if ( overriddenValue == null )
+      {
+         return originalValue;
+      }
+      else
+      {
+         return overriddenValue;
+      }
+   }
 }

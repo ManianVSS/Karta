@@ -1,37 +1,14 @@
-pluginsDirectories:
-  - "${KARTA_HOME}/plugins/"
-  - "."
 enabledPlugins:
-  - Kriya
-  - DataFilesTestDataSource
   - ObjectGenTestDataSource
   - RandomTestDataSource
-  - LoggingTestEventListener
   - DumpToFileTestEventListener
-  #- RabbitMQTestEventListener
-  - GherkinPlugin
+  - Gherkin
   - CSVTestDataSourcePlugin
-  - HTMLReportTestEventListener
-
-defaultFeatureSourceParserPlugin: Kriya
-defaultStepRunnerPlugin: Kriya
-defaultTestDataSourcePlugins:
-  - DataFilesTestDataSource
-  - RandomTestDataSource
 
 propertyFiles:
   - SampleRunProperties.yaml
   - SampleRunProperties2.yaml
-
-sslProperties:
-  trustStoreType: jks
-  trustStore: "${KARTA_HOME}/bin/trustStore.jks"
-  trustStorePassword: changeit
-  keyStoreType: pkcs12
-  keyStore: "${KARTA_HOME}/bin/keyStore.p12"
-  keyStorePassword: changeit
-
-nodeName: local
+  - SampleRunProperties3.properties
 
 nodes:
   - name: Node1
@@ -48,27 +25,19 @@ nodes:
     nodeType: REST
     minion: true
 
-minionsEnabled: true
-
+### Thread group name map to the number of threads to use to run tests with for the thread group. __default__ is the name of the default thread group
 threadGroups:
-  __default__: 1
   calculator: 5
   calcChaos: 1
 
 configurationScanPackages:
   - org.mvss.karta.samples.config
 
-testCatalogFragmentFiles:
-  - SampleTestCatalogFragment.yaml
+testCatalogFragmentFiles: []
 
 properties:
   Karta:
     EventProcessor.numberOfThread: 10
-    EventProcessor.maxEventQueueSize: 100
-    node.config:
-      host: localhost
-      port: 17171
-      enableSSL: true
 
   Kriya:
     stepDefinitionPackageNames:
@@ -76,16 +45,17 @@ properties:
     chaosActionDefinitionPackageNames:
       - org.mvss.karta.samples.chaosdefinitions
 
-  DumpToFileTestEventListener:
-    fileName: KartaEventsRawDump.bin
+  KriyaExt:
+    stepDefinitionPackageNames:
+      - org.mvss.karta.samples.stepdefinitions
+    actionGroupPackageNames:
+      - org.mvss.karta.samples.chaosdefinitions
 
-  RabbitMQTestEventListener:
-    queueName: KartaEvents
-    userName: guest
-    password: guest
-    virtualHost: "/"
-    hostName: localhost
-    portNumber: 5672
+  RandomTestDataSource:
+    seed: 1723
+
+  CSVTestDataSourcePlugin:
+    csvFileName: TestData.csv
 
   DataFilesTestDataSource:
     dataPath:

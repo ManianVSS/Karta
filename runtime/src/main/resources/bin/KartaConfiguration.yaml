@@ -22,7 +22,9 @@ defaultTestDataSourcePlugins:
 
 ### The list of property files to load properties from (YAML/JSON/XML based on file extention)
 propertyFiles:
-  - KartaRuntimeProperties.yaml
+  - KartaProperties.yaml
+  - KartaPluginProperties.yaml
+  - KartaTestProperties
 
 ### The SSL connection properties for Karta if enabling SSL for node communication
 sslProperties:

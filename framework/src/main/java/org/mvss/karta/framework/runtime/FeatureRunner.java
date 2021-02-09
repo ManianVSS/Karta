@@ -211,7 +211,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             {
                eventProcessor.raiseEvent( new FeatureSetupStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-               result.getSetupResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
+               result.getSetupResults().add( new SerializableKVP<String, StepResult>( step.getStep(), stepResult ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )
@@ -340,7 +340,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             {
                eventProcessor.raiseEvent( new FeatureTearDownStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-               result.getTearDownResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
+               result.getTearDownResults().add( new SerializableKVP<String, StepResult>( step.getStep(), stepResult ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )

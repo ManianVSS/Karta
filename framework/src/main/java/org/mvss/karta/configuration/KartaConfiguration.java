@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import org.mvss.karta.framework.nodes.KartaNodeConfiguration;
+import org.mvss.karta.framework.runtime.Configurator;
+import org.mvss.karta.framework.utils.DataUtils;
+import org.mvss.karta.framework.utils.NullAwareBeanUtilsBean;
 import org.mvss.karta.framework.utils.PropertyUtils;
 import org.mvss.karta.framework.utils.SSLProperties;
 
@@ -98,7 +101,7 @@ public class KartaConfiguration implements Serializable
     * @see org.mvss.karta.framework.nodes.KartaNodeConfiguration
     */
    @Builder.Default
-   private ArrayList<KartaNodeConfiguration>              nodes                            = new ArrayList<KartaNodeConfiguration>();
+   private HashSet<KartaNodeConfiguration>                nodes                            = new HashSet<KartaNodeConfiguration>();
 
    /**
     * Indicates if minions are enabled to run scenario iterations for load sharing.
@@ -132,6 +135,7 @@ public class KartaConfiguration implements Serializable
     */
    public synchronized void expandSystemAndEnvProperties()
    {
+      // TODO: Change to a generic utility for expanding env vars with annotations
       PropertyUtils.expandEnvVars( pluginsDirectories );
       defaultFeatureSourceParserPlugin = PropertyUtils.expandEnvVars( defaultFeatureSourceParserPlugin );
       defaultStepRunnerPlugin = PropertyUtils.expandEnvVars( defaultStepRunnerPlugin );
@@ -141,5 +145,24 @@ public class KartaConfiguration implements Serializable
       PropertyUtils.expandEnvVars( testCatalogFragmentFiles );
       sslProperties.expandSystemAndEnvProperties();;
       PropertyUtils.expandEnvVars( configurationScanPackages );
+   }
+
+   public synchronized void overrideConfiguration( KartaConfiguration override )
+   {
+      // TODO: Change to a generic utility to copy properties with an annotation for mapping
+      DataUtils.addMissing( pluginsDirectories, override.pluginsDirectories );
+      defaultFeatureSourceParserPlugin = NullAwareBeanUtilsBean.getOverridenValue( defaultFeatureSourceParserPlugin, override.defaultFeatureSourceParserPlugin );
+      defaultStepRunnerPlugin = NullAwareBeanUtilsBean.getOverridenValue( defaultStepRunnerPlugin, override.defaultStepRunnerPlugin );
+      DataUtils.addMissing( defaultTestDataSourcePlugins, override.defaultTestDataSourcePlugins );
+      DataUtils.addMissing( enabledPlugins, override.enabledPlugins );
+      DataUtils.addMissing( propertyFiles, override.propertyFiles );
+      DataUtils.addMissing( testCatalogFragmentFiles, override.testCatalogFragmentFiles );
+      sslProperties = NullAwareBeanUtilsBean.getOverridenValue( sslProperties, override.sslProperties );
+      localNode = NullAwareBeanUtilsBean.getOverridenValue( localNode, override.localNode );
+      DataUtils.addMissing( nodes, override.nodes );
+      minionsEnabled = override.minionsEnabled;
+      DataUtils.mergeMapInto( override.threadGroups, threadGroups );
+      DataUtils.addMissing( configurationScanPackages, override.configurationScanPackages );
+      Configurator.mergeProperties( properties, override.properties );
    }
 }

@@ -204,7 +204,7 @@ public class GherkinUtils
             if ( line.startsWith( conjuction ) )
             {
                stepFound = true;
-               currentStep = TestStep.builder().identifier( line.substring( conjuction.length() ).trim() ).build();
+               currentStep = TestStep.builder().step( line.substring( conjuction.length() ).trim() ).build();
                stepsContainer.add( currentStep );
                inStepScope = true;
                isScenarioOutline = false;

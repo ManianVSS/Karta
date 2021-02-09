@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -23,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.configuration.KartaConfiguration;
@@ -64,6 +66,7 @@ import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
+import org.mvss.karta.framework.utils.PropertyUtils;
 import org.mvss.karta.framework.utils.SSLUtils;
 import org.quartz.SchedulerException;
 
@@ -169,22 +172,50 @@ public class KartaRuntime implements AutoCloseable
     * @throws IllegalAccessException
     * @throws NotBoundException
     * @throws ClassNotFoundException
+    * @throws InvocationTargetException
     */
-   public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException, ClassNotFoundException
+   public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException, ClassNotFoundException, InvocationTargetException
    {
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize karta configuration
       /*---------------------------------------------------------------------------------------------------------------------*/
       String configString = ClassPathLoaderUtils.readAllText( Constants.KARTA_CONFIGURATION_YAML );
+
       if ( configString == null )
       {
-         return false;
+         if ( PropertyUtils.systemPropertyMap.containsKey( Constants.KARTA_HOME ) )
+         {
+            // TODO: Move all configuration file to user directory
+            File kartaHomeConfigFile = Paths.get( PropertyUtils.systemPropertyMap.get( Constants.KARTA_HOME ), Constants.BIN, Constants.KARTA_CONFIGURATION_YAML ).toFile();
+            if ( kartaHomeConfigFile.exists() )
+            {
+               configString = FileUtils.readFileToString( kartaHomeConfigFile, Charset.defaultCharset() );
+
+               if ( configString == null )
+               {
+                  return false;
+               }
+            }
+            else
+            {
+               return false;
+            }
+         }
       }
+
       kartaConfiguration = yamlObjectMapper.readValue( configString, KartaConfiguration.class );
+
+      configString = ClassPathLoaderUtils.readAllText( Constants.KARTA_CONFIGURATION_OVERRIDES_YAML );
+      if ( configString != null )
+      {
+         KartaConfiguration kartaOverrideConfiguration = yamlObjectMapper.readValue( configString, KartaConfiguration.class );
+         kartaConfiguration.overrideConfiguration( kartaOverrideConfiguration );
+      }
+
       kartaConfiguration.expandSystemAndEnvProperties();
 
       /*---------------------------------------------------------------------------------------------------------------------*/
-      // Intialize random
+      // Initialize random
       /*---------------------------------------------------------------------------------------------------------------------*/
       random = new Random();
 
@@ -199,12 +230,19 @@ public class KartaRuntime implements AutoCloseable
       configurator = new Configurator();
       configurator.mergeProperties( kartaConfiguration.getProperties() );
       ArrayList<String> propertiesFileList = kartaConfiguration.getPropertyFiles();
-      if ( ( propertiesFileList != null ) && !propertiesFileList.isEmpty() )
+      if ( propertiesFileList == null )
       {
-         String[] propertyFilesToLoad = new String[propertiesFileList.size()];
-         propertiesFileList.toArray( propertyFilesToLoad );
-         configurator.mergePropertiesFiles( propertyFilesToLoad );
+         propertiesFileList = new ArrayList<String>();
       }
+
+      if ( !propertiesFileList.isEmpty() )
+      {
+         propertiesFileList.add( Constants.KARTA_RUNTIME_PROPERTIES_YAML );
+      }
+
+      String[] propertyFilesToLoad = new String[propertiesFileList.size()];
+      propertiesFileList.toArray( propertyFilesToLoad );
+      configurator.mergePropertiesFiles( propertyFilesToLoad );
 
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Load and enable plug-ins
@@ -214,7 +252,7 @@ public class KartaRuntime implements AutoCloseable
       pnpRegistry.addPluginConfiguration( basePluginConfigs );
 
       ArrayList<String> pluginDirectories = kartaConfiguration.getPluginsDirectories();
-      if ( ( ( pluginDirectories == null ) || ( pluginDirectories.isEmpty() ) ) && Files.exists( Paths.get( Constants.KARTA_PLUGINS_CONFIG_YAML ) ) )
+      if ( Files.exists( Paths.get( Constants.KARTA_PLUGINS_CONFIG_YAML ) ) )
       {
          ArrayList<PluginConfig> additionalPluginConfig = PnPRegistry.readPluginsConfig( Constants.KARTA_PLUGINS_CONFIG_YAML );
          if ( additionalPluginConfig != null )
@@ -224,11 +262,14 @@ public class KartaRuntime implements AutoCloseable
       }
       else
       {
-         for ( String pluginsDirectory : pluginDirectories )
+         if ( pluginDirectories != null )
          {
-            if ( StringUtils.isNotEmpty( pluginsDirectory ) )
+            for ( String pluginsDirectory : pluginDirectories )
             {
-               pnpRegistry.loadPlugins( configurator, new File( pluginsDirectory ) );
+               if ( StringUtils.isNotEmpty( pluginsDirectory ) )
+               {
+                  pnpRegistry.loadPlugins( configurator, new File( pluginsDirectory ) );
+               }
             }
          }
       }
@@ -384,7 +425,7 @@ public class KartaRuntime implements AutoCloseable
                                                            }
                                                         };
 
-   public void addBeansFromPackages( ArrayList<String> configurationScanPackageNames )
+   public void addBeansFromPackages( Collection<String> configurationScanPackageNames )
    {
       AnnotationScanner.forEachMethod( configurationScanPackageNames, KartaBean.class, AnnotationScanner.IS_PUBLIC_AND_STATIC, AnnotationScanner.IS_NON_VOID_RETURN_TYPE, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, processBeanDefinition );
    }
@@ -396,9 +437,7 @@ public class KartaRuntime implements AutoCloseable
     */
    public void addNodes()
    {
-      ArrayList<KartaNodeConfiguration> nodes = kartaConfiguration.getNodes();
-
-      for ( KartaNodeConfiguration node : nodes )
+      for ( KartaNodeConfiguration node : kartaConfiguration.getNodes() )
       {
          nodeRegistry.addNode( node );
       }
@@ -463,7 +502,7 @@ public class KartaRuntime implements AutoCloseable
          {
             if ( !featureSourceParserMap.containsKey( featureSourceParserName ) )
             {
-               FeatureSourceParser featureSourceParser = (FeatureSourceParser) pnpRegistry.getPlugin( featureSourceParserName );
+               FeatureSourceParser featureSourceParser = (FeatureSourceParser) pnpRegistry.getEnabledPlugin( featureSourceParserName );
 
                if ( featureSourceParser == null )
                {
@@ -513,7 +552,7 @@ public class KartaRuntime implements AutoCloseable
          {
             if ( !stepRunnerMap.containsKey( stepRunnerPluginName ) )
             {
-               StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPluginName );
+               StepRunner stepRunner = (StepRunner) pnpRegistry.getEnabledPlugin( stepRunnerPluginName );
 
                if ( stepRunner == null )
                {
@@ -567,7 +606,7 @@ public class KartaRuntime implements AutoCloseable
 
                for ( String testDataSourcePlugin : testDataSourcesPluginNames )
                {
-                  TestDataSource testDataSource = (TestDataSource) pnpRegistry.getPlugin( testDataSourcePlugin );
+                  TestDataSource testDataSource = (TestDataSource) pnpRegistry.getEnabledPlugin( testDataSourcePlugin );
 
                   if ( testDataSource == null )
                   {
@@ -991,7 +1030,7 @@ public class KartaRuntime implements AutoCloseable
             throws Throwable
    {
       StepRunner stepRunner = getStepRunner( runInfo );
-      String stepIdentifier = step.getIdentifier();
+      String stepIdentifier = step.getStep();
       String sanitizedStepIdentifer = stepRunner.sanitizeStepIdentifier( stepIdentifier );
       TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, sanitizedStepIdentifer, null, variables );
       testExecutionContext.setContextBeanRegistry( contextBeanRegistry );

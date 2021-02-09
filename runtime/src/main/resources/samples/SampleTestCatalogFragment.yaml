@@ -20,7 +20,7 @@ tests:
     featureSourceParserPlugin: Gherkin
     tags:
       - Gherkin    
-    featureFileName: SampleFeatureFile5.feature
+    featureFileName: featureFiles/GherkinTestSet/SampleFeatureFile5.feature
     numberOfIterations: 4
     sourceArchive: samples.jar
 
@@ -42,7 +42,7 @@ tests:
     description: UI Automation test
     tags:      
       - UI
-    featureFileName: UIAutomation.yaml
+    featureFileName: featureFiles/UITests/UIAutomation.yaml
     numberOfIterations: 1
     sourceArchive: samples.jar
 

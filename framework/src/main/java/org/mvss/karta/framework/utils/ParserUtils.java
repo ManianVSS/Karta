@@ -1,8 +1,11 @@
 package org.mvss.karta.framework.utils;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Properties;
 
 import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.io.FilenameUtils;
@@ -87,10 +90,9 @@ public class ParserUtils
     * @param content
     * @param valueTypeRef
     * @return
-    * @throws JsonMappingException
-    * @throws JsonProcessingException
+    * @throws IOException
     */
-   public static <T> T readValue( DataFormat format, String content, TypeReference<T> valueTypeRef ) throws JsonMappingException, JsonProcessingException
+   public static <T> T readValue( DataFormat format, String content, TypeReference<T> valueTypeRef ) throws IOException
    {
       switch ( format )
       {
@@ -98,6 +100,14 @@ public class ParserUtils
             return objectMapper.readValue( content, valueTypeRef );
          case XML:
             return xmlMapper.readValue( content, valueTypeRef );
+
+         case PROPERTIES:
+            try (StringReader stringReader = new StringReader( content ))
+            {
+               Properties properties = new Properties();
+               properties.load( stringReader );
+               return objectMapper.readValue( objectMapper.writeValueAsString( properties ), valueTypeRef );
+            }
 
          default:
          case YAML:
@@ -113,10 +123,9 @@ public class ParserUtils
     * @param content
     * @param valueType
     * @return
-    * @throws JsonProcessingException
-    * @throws JsonMappingException
+    * @throws IOException
     */
-   public static <T> T readValue( DataFormat format, String content, Class<T> valueType ) throws JsonProcessingException, JsonMappingException
+   public static <T> T readValue( DataFormat format, String content, Class<T> valueType ) throws IOException
    {
       switch ( format )
       {
@@ -124,6 +133,14 @@ public class ParserUtils
             return objectMapper.readValue( content, valueType );
          case XML:
             return xmlMapper.readValue( content, valueType );
+
+         case PROPERTIES:
+            try (StringReader stringReader = new StringReader( content ))
+            {
+               Properties properties = new Properties();
+               properties.load( stringReader );
+               return objectMapper.readValue( objectMapper.writeValueAsString( properties ), valueType );
+            }
 
          default:
          case YAML:
@@ -202,9 +219,14 @@ public class ParserUtils
       {
          return DataFormat.XML;
       }
+      else if ( fileExtension.contentEquals( Constants.PROPERTIES ) )
+      {
+         return DataFormat.PROPERTIES;
+      }
       else// if ( fileExtension.equals( Constants.YAML ) || fileExtension.equals( Constants.YML ) )
       {
          return DataFormat.YAML;
       }
    }
+
 }

@@ -386,7 +386,7 @@ public class HTMLReportTestEventListener implements TestEventListener
                   FeatureSetupStepCompleteEvent featureSetupStepCompleteEvent = (FeatureSetupStepCompleteEvent) event;
                   featureName = featureSetupStepCompleteEvent.getFeatureName();
                   result = featureSetupStepCompleteEvent.getResult();
-                  stepId = featureSetupStepCompleteEvent.getStep().getIdentifier();
+                  stepId = featureSetupStepCompleteEvent.getStep().getStep();
                }
                else if ( event instanceof JavaFeatureSetupCompleteEvent )
                {
@@ -414,7 +414,7 @@ public class HTMLReportTestEventListener implements TestEventListener
                   FeatureTearDownStepCompleteEvent featureTearDownStepCompleteEvent = (FeatureTearDownStepCompleteEvent) event;
                   featureName = featureTearDownStepCompleteEvent.getFeatureName();
                   result = featureTearDownStepCompleteEvent.getResult();
-                  stepId = featureTearDownStepCompleteEvent.getStep().getIdentifier();
+                  stepId = featureTearDownStepCompleteEvent.getStep().getStep();
                }
                else if ( event instanceof JavaFeatureTearDownCompleteEvent )
                {

@@ -5,7 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -115,7 +115,7 @@ public class AnnotationScanner
     * @param paramsChecks
     * @param action
     */
-   public static void forEachMethod( ArrayList<String> annotationScanPackageNames, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks,
+   public static void forEachMethod( Collection<String> annotationScanPackageNames, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks,
                                      Consumer<Method> action )
    {
       for ( String annotationScanPackageName : annotationScanPackageNames )
@@ -180,7 +180,7 @@ public class AnnotationScanner
     * @param modifierChecks
     * @param action
     */
-   public static void forEachClass( ArrayList<String> annotationScanPackageNames, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Consumer<Class<?>> action )
+   public static void forEachClass( Collection<String> annotationScanPackageNames, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Consumer<Class<?>> action )
    {
       for ( String annotationScanPackageName : annotationScanPackageNames )
       {

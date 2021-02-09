@@ -1,22 +1,28 @@
 package org.mvss.karta.framework.runtime;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.utils.AnnotationScanner;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
+import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
 import org.mvss.karta.framework.utils.PropertyUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 import lombok.Getter;
 
@@ -46,6 +52,17 @@ public class Configurator
     */
    public void mergeProperties( HashMap<String, HashMap<String, Serializable>> propertiesToMerge )
    {
+      mergeProperties( propertiesStore, propertiesToMerge );
+   }
+
+   /**
+    * Merge a properties store into the destination
+    * 
+    * @param propertiesStore
+    * @param propertiesToMerge
+    */
+   public static void mergeProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, HashMap<String, HashMap<String, Serializable>> propertiesToMerge )
+   {
       if ( propertiesToMerge == null )
       {
          return;
@@ -69,16 +86,63 @@ public class Configurator
    }
 
    /**
+    * Merge a property to a property store based on group and key name
+    * 
+    * @param propertiesStore
+    * @param propertyGroupToMerge
+    * @param propertyToMerge
+    * @param propertyValue
+    */
+   public static void mergeProperty( HashMap<String, HashMap<String, Serializable>> propertiesStore, String propertyGroupToMerge, String propertyToMerge, String propertyValue )
+   {
+      if ( !propertiesStore.containsKey( propertyGroupToMerge ) )
+      {
+         propertiesStore.put( propertyGroupToMerge, new HashMap<String, Serializable>() );
+
+         HashMap<String, Serializable> propertiesStoreGroup = propertiesStore.get( propertyGroupToMerge );
+         propertiesStoreGroup.put( propertyToMerge, propertyValue );
+
+      }
+   }
+
+   /**
     * Read property store from String based on the data format
     * 
     * @param dataFormat
     * @param propertiesDataString
     * @return
-    * @throws JsonMappingException
-    * @throws JsonProcessingException
+    * @throws IOException
     */
-   public static HashMap<String, HashMap<String, Serializable>> readPropertiesFromString( DataFormat dataFormat, String propertiesDataString ) throws JsonMappingException, JsonProcessingException
+   public static HashMap<String, HashMap<String, Serializable>> readPropertiesFromString( DataFormat dataFormat, String propertiesDataString ) throws IOException
    {
+      if ( dataFormat == DataFormat.PROPERTIES )
+      {
+         try (StringReader stringReader = new StringReader( propertiesDataString ))
+         {
+            Properties properties = new Properties();
+            properties.load( stringReader );
+
+            HashMap<String, HashMap<String, Serializable>> propertiesStore = new HashMap<String, HashMap<String, Serializable>>();
+
+            for ( Object propertyKeyObj : properties.keySet() )
+            {
+               String propertyKey = (String) propertyKeyObj;
+               String propertyGroup = Constants.KARTA;
+               String propertyValue = properties.getProperty( propertyKey );
+
+               int pivotIndex = propertyKey.indexOf( Constants.DOT );
+               if ( DataUtils.inRange( pivotIndex, 0, propertyKey.length() - 2 ) )
+               {
+                  propertyGroup = propertyKey.substring( 0, pivotIndex );
+                  propertyKey = propertyKey.substring( pivotIndex + 1 );
+               }
+
+               mergeProperty( propertiesStore, propertyGroup, propertyKey, propertyValue );
+            }
+            return propertiesStore;
+         }
+      }
+
       return ParserUtils.readValue( dataFormat, propertiesDataString, propertiesType );
    }
 
@@ -107,7 +171,30 @@ public class Configurator
    {
       for ( String propertyFile : propertyFiles )
       {
-         mergePropertiesString( ParserUtils.getFileDataFormat( propertyFile ), ClassPathLoaderUtils.readAllText( propertyFile ) );
+         // TODO: Load from class-path folders and files for properties
+
+         Path propertyFilePath = Paths.get( propertyFile );
+
+         if ( Files.isDirectory( propertyFilePath ) )
+         {
+            for ( File propFileInDirectory : FileUtils.listFiles( propertyFilePath.toFile(), Constants.propertyFileExtentions, true ) )
+            {
+               String propertyFileContents = FileUtils.readFileToString( propFileInDirectory, Charset.defaultCharset() );
+
+               if ( propertyFileContents != null )
+               {
+                  mergePropertiesString( ParserUtils.getFileDataFormat( propFileInDirectory.getName() ), propertyFileContents );
+               }
+            }
+            continue;
+         }
+
+         String propertyFileContents = ClassPathLoaderUtils.readAllText( propertyFile );
+
+         if ( propertyFileContents != null )
+         {
+            mergePropertiesString( ParserUtils.getFileDataFormat( propertyFile ), propertyFileContents );
+         }
       }
    }
 

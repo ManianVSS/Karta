@@ -52,6 +52,30 @@ public class DataUtils
    }
 
    /**
+    * Adds items from source list to destination list if missing
+    * 
+    * @param <K>
+    * @param destination
+    * @param source
+    */
+   public static <K> void addMissing( Collection<K> destination, Collection<K> source )
+   {
+      if ( destination != null )
+      {
+         if ( source != null )
+         {
+            for ( K item : source )
+            {
+               if ( !destination.contains( item ) )
+               {
+                  destination.add( item );
+               }
+            }
+         }
+      }
+   }
+
+   /**
     * Merges two Maps into a new HashMap
     * 
     * @param <K>

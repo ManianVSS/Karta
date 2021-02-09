@@ -119,12 +119,12 @@ public class LoggingTestEventListener implements TestEventListener
 
          case StandardEventsTypes.FEATURE_SETUP_STEP_START_EVENT:
             FeatureSetupStepStartEvent featureSetupStepStartEvent = (FeatureSetupStepStartEvent) event;
-            log.info( "{" + featureSetupStepStartEvent.getRunName() + "}{" + featureSetupStepStartEvent.getFeature().getName() + "}{setup(" + featureSetupStepStartEvent.getStep().getIdentifier() + ")}" + SPACE + STARTED );
+            log.info( "{" + featureSetupStepStartEvent.getRunName() + "}{" + featureSetupStepStartEvent.getFeature().getName() + "}{setup(" + featureSetupStepStartEvent.getStep().getStep() + ")}" + SPACE + STARTED );
             break;
 
          case StandardEventsTypes.FEATURE_SETUP_STEP_COMPLETE_EVENT:
             FeatureSetupStepCompleteEvent featureSetupStepCompleteEvent = (FeatureSetupStepCompleteEvent) event;
-            log.info( "{" + featureSetupStepCompleteEvent.getRunName() + "}{" + featureSetupStepCompleteEvent.getFeature().getName() + "}{setup(" + featureSetupStepCompleteEvent.getStep().getIdentifier() + ")}" + SPACE
+            log.info( "{" + featureSetupStepCompleteEvent.getRunName() + "}{" + featureSetupStepCompleteEvent.getFeature().getName() + "}{setup(" + featureSetupStepCompleteEvent.getStep().getStep() + ")}" + SPACE
                       + getStepResultLog( featureSetupStepCompleteEvent.getResult() ) );
             break;
 
@@ -185,12 +185,12 @@ public class LoggingTestEventListener implements TestEventListener
             break;
          case StandardEventsTypes.FEATURE_TEARDOWN_STEP_START_EVENT:
             FeatureTearDownStepStartEvent featureTearDownStepStartEvent = (FeatureTearDownStepStartEvent) event;
-            log.info( "{" + featureTearDownStepStartEvent.getRunName() + "}{" + featureTearDownStepStartEvent.getFeature().getName() + "}{tearDown(" + featureTearDownStepStartEvent.getStep().getIdentifier() + ")}" + SPACE + STARTED );
+            log.info( "{" + featureTearDownStepStartEvent.getRunName() + "}{" + featureTearDownStepStartEvent.getFeature().getName() + "}{tearDown(" + featureTearDownStepStartEvent.getStep().getStep() + ")}" + SPACE + STARTED );
             break;
 
          case StandardEventsTypes.FEATURE_TEARDOWN_STEP_COMPLETE_EVENT:
             FeatureTearDownStepCompleteEvent featureTearDownStepCompleteEvent = (FeatureTearDownStepCompleteEvent) event;
-            log.info( "{" + featureTearDownStepCompleteEvent.getRunName() + "}{" + featureTearDownStepCompleteEvent.getFeature().getName() + "}{tearDown(" + featureTearDownStepCompleteEvent.getStep().getIdentifier() + ")}" + SPACE
+            log.info( "{" + featureTearDownStepCompleteEvent.getRunName() + "}{" + featureTearDownStepCompleteEvent.getFeature().getName() + "}{tearDown(" + featureTearDownStepCompleteEvent.getStep().getStep() + ")}" + SPACE
                       + getStepResultLog( featureTearDownStepCompleteEvent.getResult() ) );
             break;
 
@@ -281,14 +281,14 @@ public class LoggingTestEventListener implements TestEventListener
 
          case StandardEventsTypes.JOB_STEP_START_EVENT:
             JobStepStartEvent jobStepStartEvent = (JobStepStartEvent) event;
-            log.info( "{" + jobStepStartEvent.getRunName() + "}{" + jobStepStartEvent.getFeatureName() + "}{" + jobStepStartEvent.getJob().getName() + "}{" + jobStepStartEvent.getIterationNumber() + "}{step(" + jobStepStartEvent.getStep().getIdentifier()
-                      + ")}" + SPACE + STARTED );
+            log.info( "{" + jobStepStartEvent.getRunName() + "}{" + jobStepStartEvent.getFeatureName() + "}{" + jobStepStartEvent.getJob().getName() + "}{" + jobStepStartEvent.getIterationNumber() + "}{step(" + jobStepStartEvent.getStep().getStep() + ")}"
+                      + SPACE + STARTED );
             break;
 
          case StandardEventsTypes.JOB_STEP_COMPLETE_EVENT:
             JobStepCompleteEvent jobStepCompleteEvent = (JobStepCompleteEvent) event;
             log.info( "{" + jobStepCompleteEvent.getRunName() + "}{" + jobStepCompleteEvent.getFeatureName() + "}{" + jobStepCompleteEvent.getJob().getName() + "}{" + jobStepCompleteEvent.getIterationNumber() + "}{step("
-                      + jobStepCompleteEvent.getStep().getIdentifier() + ")}" + SPACE + getStepResultLog( jobStepCompleteEvent.getResult() ) );
+                      + jobStepCompleteEvent.getStep().getStep() + ")}" + SPACE + getStepResultLog( jobStepCompleteEvent.getResult() ) );
             break;
 
          case StandardEventsTypes.CHAOS_ACTION_JOB_COMPLETE_EVENT:

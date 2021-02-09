@@ -18,7 +18,7 @@ tests:
     description: sample feature file
     tags:
       - cycle
-    featureFileName: SampleFeatureFile.yaml
+    featureFileName: featureFiles/TestSet1/SampleFeatureFile.yaml
     numberOfIterations: 3
     threadGroup: calculator
 
@@ -26,7 +26,7 @@ tests:
     description: sample feature file2
     tags:
       - cycle
-    featureFileName: SampleFeatureFile2.yaml
+    featureFileName: featureFiles/TestSet1/SampleFeatureFile2.yaml
     chanceBasedScenarioExecution: true
     exclusiveScenarioPerIteration: true
     numberOfIterations: 10
@@ -38,7 +38,7 @@ tests:
     description: sample feature file3
     tags:
       - remote
-    featureFileName: SampleFeatureFile3.yaml
+    featureFileName: featureFiles/TestSet1/SampleFeatureFile3.yaml
     numberOfIterations: 1
     threadGroup: calculator
 
@@ -48,7 +48,7 @@ tests:
     tags:
       - remote
       - chaos
-    featureFileName: SampleFeatureFile4.yaml
+    featureFileName: featureFiles/TestSet1/SampleFeatureFile4.yaml
     numberOfIterations: 1
     threadGroup: calcChaos
 
@@ -58,7 +58,7 @@ tests:
     featureSourceParserPlugin: Gherkin
     tags:
       - Gherkin
-    featureFileName: SampleFeatureFile5.feature
+    featureFileName: featureFiles/GherkinTestSet/SampleFeatureFile5.feature
     numberOfIterations: 4
     sourceArchive: samples.jar
 
@@ -80,7 +80,7 @@ tests:
     description: UI Automation test
     tags:
       - UI
-    featureFileName: UIAutomation.yaml
+    featureFileName: featureFiles/UITests/UIAutomation.yaml
     numberOfIterations: 1
     sourceArchive: samples.jar
 

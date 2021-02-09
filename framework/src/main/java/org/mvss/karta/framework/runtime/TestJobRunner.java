@@ -77,7 +77,7 @@ public class TestJobRunner
                   result.setStepIndex( stepIndex++ );
                   eventProcessor.raiseEvent( new JobStepCompleteEvent( runName, featureName, job, iterationIndex, step, result ) );
 
-                  testJobResult.getStepResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), result ) );
+                  testJobResult.getStepResults().add( new SerializableKVP<String, StepResult>( step.getStep(), result ) );
                   if ( !result.isPassed() )
                   {
                      testJobResult.setSuccessful( true );

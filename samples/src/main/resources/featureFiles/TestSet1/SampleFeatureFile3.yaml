@@ -1,0 +1,69 @@
+---
+name: RemoteCalculatorTest
+description: This is a sample 2 YAML format feature file testing a calculator's function
+
+testJobs:
+  - name: job1
+    repeat: true
+    interval: 100
+    steps:
+      - step: authenticate to get new token
+        testData:
+          userName: "remoteadmin"
+          password: "password@123"
+
+      - step: reserve use of calculator for next "100" milliseconds
+
+      - step: logoff the old token
+    node: Node1
+
+  - name: job2
+    steps:
+      - step: the calculator is powered on
+      - step: the all clear button is pressed
+    node: Node2
+
+setupSteps:
+  - step: Given the calculator is powered on
+    node: Node1
+
+scenarioSetupSteps:
+  - step: When the all clear button is pressed
+    node: Node2
+  - step: Then the calculator should display "0"
+    node: Node1
+
+testScenarios:
+  - name: Scenario1
+    probability: 0.5
+    executionSteps:
+      - step: When the button "2" is pressed
+        node: Node2
+      - step: And the button "+" is pressed
+        node: Node1
+      - step: And the button "3" is pressed
+        node: Node2
+      - step: And the button "=" is pressed
+        node: Node1
+      - step: And the calculator should display "5"
+        node: Node2
+
+  - name: Scenario2
+    probability: 0.5
+    executionSteps:
+      - step: When a binary operation is perfomed on the calculator
+        testData:
+          operand1: 200
+          operation: "/"
+          operand2: 800
+        node: Node1
+      - step: And the calculator should display "0.25"
+        node: Node2
+
+scenarioTearDownSteps:
+  - step: Then dummy teardown step
+    node: Node1
+
+tearDownSteps:
+  - step: Then the calculator is powered off
+    node: Node2

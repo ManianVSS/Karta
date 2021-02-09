@@ -29,7 +29,7 @@ public class TestStep implements Serializable
    /**
     * The step identifier which is used to map the step in feature files to step definitions of step runner.
     */
-   private String                                   identifier;
+   private String                                   step;
 
    /**
     * The test data passed along with the step.

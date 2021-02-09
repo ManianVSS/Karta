@@ -5,10 +5,14 @@ public class Constants
    public static final String   KARTA                               = "Karta";
    public static final String   __KARTA__                           = "__Karta__";
 
+   public static final String   KARTA_HOME                          = "KARTA_HOME";
+   public static final String   BIN                                 = "bin";
    public static final String   KARTA_BASE_PLUGIN_CONFIG_YAML       = "KartaBasePluginsConfiguration.yaml";
    public static final String   KARTA_PLUGINS_CONFIG_YAML           = "KartaPluginsConfiguration.yaml";
    public static final String   KARTA_CONFIGURATION_YAML            = "KartaConfiguration.yaml";
+   public static final String   KARTA_CONFIGURATION_OVERRIDES_YAML  = "KartaConfigurationOverrides.yaml";
    public static final String   KARTA_RUNTIME_PROPERTIES_YAML       = "KartaRuntimeProperties.yaml";
+   public static final String   TEST_PROPERTIES_YAML                = "TestProperties.yaml";
 
    public static final String   TEST_CATALOG_FILE_NAME              = "KartaTestCatalog.yaml";
    public static final String   TEST_CATALOG_FRAGMENT_FILE_NAME     = "KartaTestCatalogFragment.yaml";
@@ -48,7 +52,8 @@ public class Constants
    public static final String   PROPERTIES                          = "properties";
 
    public static final String[] jarExtention                        = {JAR};
-   public static final String[] dataFileExtentions                  = {JSON, YAML, YML, XML};
+   public static final String[] dataFileExtentions                  = {JSON, YAML, YML, XML, PROPERTIES};
+   public static final String[] propertyFileExtentions              = {JSON, YAML, YML, XML, PROPERTIES};
 
    public static final String   UNNAMED                             = "Unnamed";
 
