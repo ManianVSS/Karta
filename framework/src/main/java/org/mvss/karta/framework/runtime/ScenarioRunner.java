@@ -1,8 +1,10 @@
 package org.mvss.karta.framework.runtime;
 
+import java.rmi.RemoteException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
+import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mvss.karta.framework.core.PreparedChaosAction;
@@ -12,6 +14,7 @@ import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.SerializableKVP;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestIncident;
+import org.mvss.karta.framework.nodes.KartaNode;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.ScenarioChaosActionCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioChaosActionStartEvent;
@@ -41,69 +44,58 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class ScenarioRunner implements Callable<ScenarioResult>
 {
-   private KartaRuntime     kartaRuntime;
-   private RunInfo          runInfo;
+   private KartaRuntime                                 kartaRuntime;
+   private RunInfo                                      runInfo;
 
-   private String           featureName;
-   private long             iterationIndex;
+   private String                                       featureName;
+   private long                                         iterationIndex;
 
-   private PreparedScenario testScenario;
+   private PreparedScenario                             testScenario;
 
-   private long             scenarioIterationNumber;
+   private long                                         scenarioIterationNumber;
 
-   private ScenarioResult   result;
+   private ScenarioResult                               result;
+
+   @Builder.Default
+   private KartaNode                                    minionToUse = null;
+
+   private BiConsumer<PreparedScenario, ScenarioResult> resultConsumer;
 
    @Override
    public ScenarioResult call()
    {
-      String runName = runInfo.getRunName();
+      // TODO: Check for nulls
 
-      result = new ScenarioResult();
-      result.setIterationIndex( iterationIndex );
-
-      EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-
-      // This should run at scenario runner since this need to run on the node where scenario is to be run
-      testScenario.propogateContextBeanRegistry();
-
-      HashSet<String> tags = runInfo.getTags();
-      if ( tags != null )
+      if ( minionToUse == null )
       {
-         eventProcessor.scenarioStart( runName, featureName, testScenario, tags );
-      }
+         String runName = runInfo.getRunName();
 
-      log.debug( "Running Scenario: " + testScenario );
+         result = new ScenarioResult();
+         result.setIterationIndex( iterationIndex );
 
-      try
-      {
-         long setupStepIndex = 0;
-         for ( PreparedStep step : testScenario.getSetupSteps() )
+         EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
+
+         // This should run at scenario runner since this need to run on the node where scenario is to be run
+         testScenario.propogateContextBeanRegistry();
+
+         HashSet<String> tags = runInfo.getTags();
+         if ( tags != null )
          {
-            eventProcessor.raiseEvent( new ScenarioSetupStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
-            StepResult stepResult = kartaRuntime.runStep( runInfo, step );
-            stepResult.setStepIndex( setupStepIndex++ );
-            eventProcessor.raiseEvent( new ScenarioSetupStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
-            result.getSetupResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
-            result.getIncidents().addAll( stepResult.getIncidents() );
-
-            if ( !stepResult.isPassed() )
-            {
-               result.setSuccessful( false );
-               break;
-            }
-
+            eventProcessor.scenarioStart( runName, featureName, testScenario, tags );
          }
 
-         if ( result.isSuccessful() )
+         log.debug( "Running Scenario: " + testScenario );
+
+         try
          {
-            long chaosStepIndex = 0;
-            for ( PreparedChaosAction preparedChaosAction : testScenario.getChaosActions() )
+            long setupStepIndex = 0;
+            for ( PreparedStep step : testScenario.getSetupSteps() )
             {
-               eventProcessor.raiseEvent( new ScenarioChaosActionStartEvent( runName, featureName, iterationIndex, testScenario.getName(), preparedChaosAction ) );
-               StepResult stepResult = kartaRuntime.runChaosAction( runInfo, preparedChaosAction );
-               stepResult.setStepIndex( chaosStepIndex++ );
-               eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), preparedChaosAction, stepResult ) );
-               result.getChaosActionResults().add( new SerializableKVP<String, StepResult>( preparedChaosAction.getName(), stepResult ) );
+               eventProcessor.raiseEvent( new ScenarioSetupStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
+               StepResult stepResult = kartaRuntime.runStep( runInfo, step );
+               stepResult.setStepIndex( setupStepIndex++ );
+               eventProcessor.raiseEvent( new ScenarioSetupStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
+               result.getSetupResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )
@@ -111,18 +103,19 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                   result.setSuccessful( false );
                   break;
                }
+
             }
 
             if ( result.isSuccessful() )
             {
-               long runStepIndex = 0;
-               for ( PreparedStep step : testScenario.getExecutionSteps() )
+               long chaosStepIndex = 0;
+               for ( PreparedChaosAction preparedChaosAction : testScenario.getChaosActions() )
                {
-                  eventProcessor.raiseEvent( new ScenarioStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
-                  StepResult stepResult = kartaRuntime.runStep( runInfo, step );
-                  stepResult.setStepIndex( runStepIndex++ );
-                  eventProcessor.raiseEvent( new ScenarioStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
-                  result.getRunResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
+                  eventProcessor.raiseEvent( new ScenarioChaosActionStartEvent( runName, featureName, iterationIndex, testScenario.getName(), preparedChaosAction ) );
+                  StepResult stepResult = kartaRuntime.runChaosAction( runInfo, preparedChaosAction );
+                  stepResult.setStepIndex( chaosStepIndex++ );
+                  eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), preparedChaosAction, stepResult ) );
+                  result.getChaosActionResults().add( new SerializableKVP<String, StepResult>( preparedChaosAction.getName(), stepResult ) );
                   result.getIncidents().addAll( stepResult.getIncidents() );
 
                   if ( !stepResult.isPassed() )
@@ -131,39 +124,26 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                      break;
                   }
                }
-            }
-         }
-      }
-      catch ( Throwable t )
-      {
-         log.error( "Exception occured during scenario run", t );
-         log.error( ExceptionUtils.getStackTrace( t ) );
-         result.setError( true );
-         result.getIncidents().add( TestIncident.builder().thrownCause( t ).build() );
-      }
-      finally
-      {
-         try
-         {
-            long teardownStepIndex = 0;
-            for ( PreparedStep step : testScenario.getTearDownSteps() )
-            {
-               eventProcessor.raiseEvent( new ScenarioTearDownStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
-               StepResult stepResult = kartaRuntime.runStep( runInfo, step );
-               stepResult.setStepIndex( teardownStepIndex++ );
-               eventProcessor.raiseEvent( new ScenarioTearDownStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
-               result.getTearDownResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
-               result.getIncidents().addAll( stepResult.getIncidents() );
 
-               if ( !stepResult.isPassed() )
+               if ( result.isSuccessful() )
                {
-                  result.setSuccessful( false );
-               }
-            }
+                  long runStepIndex = 0;
+                  for ( PreparedStep step : testScenario.getExecutionSteps() )
+                  {
+                     eventProcessor.raiseEvent( new ScenarioStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
+                     StepResult stepResult = kartaRuntime.runStep( runInfo, step );
+                     stepResult.setStepIndex( runStepIndex++ );
+                     eventProcessor.raiseEvent( new ScenarioStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
+                     result.getRunResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
+                     result.getIncidents().addAll( stepResult.getIncidents() );
 
-            if ( tags != null )
-            {
-               eventProcessor.scenarioStop( runName, featureName, testScenario, tags );
+                     if ( !stepResult.isPassed() )
+                     {
+                        result.setSuccessful( false );
+                        break;
+                     }
+                  }
+               }
             }
          }
          catch ( Throwable t )
@@ -175,8 +155,58 @@ public class ScenarioRunner implements Callable<ScenarioResult>
          }
          finally
          {
-            result.setEndTime( new Date() );
+            try
+            {
+               long teardownStepIndex = 0;
+               for ( PreparedStep step : testScenario.getTearDownSteps() )
+               {
+                  eventProcessor.raiseEvent( new ScenarioTearDownStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
+                  StepResult stepResult = kartaRuntime.runStep( runInfo, step );
+                  stepResult.setStepIndex( teardownStepIndex++ );
+                  eventProcessor.raiseEvent( new ScenarioTearDownStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
+                  result.getTearDownResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
+                  result.getIncidents().addAll( stepResult.getIncidents() );
+
+                  if ( !stepResult.isPassed() )
+                  {
+                     result.setSuccessful( false );
+                  }
+               }
+
+               if ( tags != null )
+               {
+                  eventProcessor.scenarioStop( runName, featureName, testScenario, tags );
+               }
+            }
+            catch ( Throwable t )
+            {
+               log.error( "Exception occured during scenario run", t );
+               log.error( ExceptionUtils.getStackTrace( t ) );
+               result.setError( true );
+               result.getIncidents().add( TestIncident.builder().thrownCause( t ).build() );
+            }
+            finally
+            {
+               result.setEndTime( new Date() );
+            }
          }
+      }
+      else
+      {
+         try
+         {
+            result = minionToUse.runTestScenario( runInfo, featureName, iterationIndex, testScenario, scenarioIterationNumber );
+            result.processRemoteResults();
+         }
+         catch ( RemoteException e )
+         {
+            log.error( "Exception occured when running scenario " + testScenario + " remotely on minion " + minionToUse, e );
+         }
+      }
+
+      if ( resultConsumer != null )
+      {
+         resultConsumer.accept( testScenario, result );
       }
       return result;
    }

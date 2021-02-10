@@ -28,6 +28,24 @@ testScenarios:
           operand2: 200
       - step: And the calculator should display "0.5"
 
+  - name: Scenario3
+    executionSteps:
+      - step: When the button "2" is pressed
+      - step: And the button "+" is pressed
+      - step: And the button "3" is pressed
+      - step: And the button "=" is pressed
+      - step: And the calculator should display "5"
+      # - step: Then the missing step definition "xyz" should display accept another parameter "abc"
+
+  - name: Scenario4
+    executionSteps:
+      - step: When a binary operation is perfomed on the calculator
+        testData:
+          operand1: 1000
+          operation: "/"
+          operand2: 200
+      - step: And the calculator should display "5"
+
 scenarioTearDownSteps:
   - step: Then dummy teardown step
 

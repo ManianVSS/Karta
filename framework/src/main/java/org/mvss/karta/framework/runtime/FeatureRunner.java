@@ -1,6 +1,8 @@
 package org.mvss.karta.framework.runtime;
 
 import java.io.Serializable;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -37,6 +39,7 @@ import org.mvss.karta.framework.runtime.event.FeatureTearDownStepCompleteEvent;
 import org.mvss.karta.framework.runtime.event.FeatureTearDownStepStartEvent;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
+import org.mvss.karta.framework.utils.WaitUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -240,11 +243,13 @@ public class FeatureRunner implements Callable<FeatureResult>
          int numberOfIterationsInParallel = runInfo.getNumberOfIterationsInParallel();
          boolean chanceBasedScenarioExecution = runInfo.isChanceBasedScenarioExecution();
          boolean exclusiveScenarioPerIteration = runInfo.isExclusiveScenarioPerIteration();
+         Duration targetRunDuration = runInfo.getRunDuration();
+         Duration coolDownBetweenDuration = runInfo.getCoolDownBetweenIterations();
 
-         if ( !DataUtils.inRange( numberOfIterations, 1, Integer.MAX_VALUE ) )
+         if ( !DataUtils.inRange( numberOfIterations, 0, Integer.MAX_VALUE ) )
          {
             log.error( "Configuration error: invalid number of iterations: " + numberOfIterations );
-            numberOfIterations = 1;
+            numberOfIterations = 0;
          }
 
          if ( !DataUtils.inRange( numberOfIterationsInParallel, 1, Integer.MAX_VALUE ) )
@@ -253,10 +258,26 @@ public class FeatureRunner implements Callable<FeatureResult>
             numberOfIterationsInParallel = 1;
          }
 
-         ExecutorService iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfIterationsInParallel ) );
+         ExecutorService iterationExecutionService = null;
+
+         if ( numberOfIterationsInParallel > 1 )
+         {
+            iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfIterationsInParallel ) );
+         }
+
+         Instant startTime = Instant.now();
 
          for ( iterationIndex = 0; ( numberOfIterations <= 0 ) || ( iterationIndex < numberOfIterations ); iterationIndex++ )
          {
+            // Break on target Run Duration
+            if ( targetRunDuration != null )
+            {
+               if ( targetRunDuration.compareTo( Duration.between( startTime, Instant.now() ) ) <= 0 )
+               {
+                  break;
+               }
+            }
+
             ArrayList<TestScenario> scenariosToRun = new ArrayList<TestScenario>();
 
             if ( chanceBasedScenarioExecution )
@@ -308,10 +329,21 @@ public class FeatureRunner implements Callable<FeatureResult>
                log.debug( "Iteration queued " + iterationIndex + " with scenarios " + scenariosToRun );
                iterationExecutionService.submit( iterationRunner );
             }
+
+            if ( coolDownBetweenDuration != null )
+            {
+               if ( iterationIndex % numberOfIterationsInParallel == 0 )
+               {
+                  WaitUtil.sleep( coolDownBetweenDuration.toMillis() );
+               }
+            }
          }
 
-         iterationExecutionService.shutdown();
-         iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
+         if ( numberOfIterationsInParallel > 1 )
+         {
+            iterationExecutionService.shutdown();
+            iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
+         }
 
          testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario ).set( 0 ) );
 

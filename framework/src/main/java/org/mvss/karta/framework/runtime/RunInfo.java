@@ -1,10 +1,14 @@
 package org.mvss.karta.framework.runtime;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.HashSet;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.runtime.testcatalog.Test;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat.Shape;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -41,6 +45,9 @@ public class RunInfo implements Serializable
    private HashSet<String>   testDataSourcePlugins;
 
    @Builder.Default
+   private boolean           runAllScenarioParallely       = false;
+
+   @Builder.Default
    private boolean           chanceBasedScenarioExecution  = false;
 
    @Builder.Default
@@ -48,6 +55,12 @@ public class RunInfo implements Serializable
 
    @Builder.Default
    private long              numberOfIterations            = 1;
+
+   @JsonFormat( shape = Shape.STRING )
+   private Duration          runDuration;
+
+   @JsonFormat( shape = Shape.STRING )
+   private Duration          coolDownBetweenIterations;
 
    @Builder.Default
    private int               numberOfIterationsInParallel  = 1;
@@ -96,8 +109,9 @@ public class RunInfo implements Serializable
 
    public RunInfo getRunInfoForTest( Test test )
    {
-      RunInfo runInfo = this.toBuilder().tags( test.getTags() ).chanceBasedScenarioExecution( test.getChanceBasedScenarioExecution() ).exclusiveScenarioPerIteration( test.getExclusiveScenarioPerIteration() )
-               .numberOfIterations( test.getNumberOfIterations() ).numberOfIterationsInParallel( test.getNumberOfThreads() ).build();
+      RunInfo runInfo = this.toBuilder().tags( test.getTags() ).runAllScenarioParallely( test.getRunAllScenarioParallely() ).chanceBasedScenarioExecution( test.getChanceBasedScenarioExecution() )
+               .exclusiveScenarioPerIteration( test.getExclusiveScenarioPerIteration() ).numberOfIterations( test.getNumberOfIterations() ).runDuration( test.getRunDuration() ).coolDownBetweenIterations( test.getCoolDownBetweenIterations() )
+               .numberOfIterationsInParallel( test.getNumberOfThreads() ).build();
 
       runInfo.setPlugins( test );
 

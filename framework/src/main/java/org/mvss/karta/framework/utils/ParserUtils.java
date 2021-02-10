@@ -52,8 +52,11 @@ public class ParserUtils
    static
    {
       objectMapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
+      objectMapper.findAndRegisterModules();
       yamlObjectMapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
+      yamlObjectMapper.findAndRegisterModules();
       xmlMapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
+      xmlMapper.findAndRegisterModules();
    }
 
    /**

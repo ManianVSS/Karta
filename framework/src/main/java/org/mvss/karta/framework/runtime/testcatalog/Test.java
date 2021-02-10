@@ -1,9 +1,13 @@
 package org.mvss.karta.framework.runtime.testcatalog;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.HashSet;
 
 import org.apache.commons.lang3.StringUtils;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat.Shape;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,10 +55,19 @@ public class Test implements Serializable, Comparable<Test>
    private String            javaTestClass;
 
    @Builder.Default
+   private Boolean           runAllScenarioParallely       = false;
+
+   @Builder.Default
    private Boolean           chanceBasedScenarioExecution  = false;
 
    @Builder.Default
    private Boolean           exclusiveScenarioPerIteration = false;
+
+   @JsonFormat( shape = Shape.STRING )
+   private Duration          runDuration;
+
+   @JsonFormat( shape = Shape.STRING )
+   private Duration          coolDownBetweenIterations;
 
    private String            threadGroup;
 

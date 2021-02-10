@@ -1,10 +1,12 @@
 package org.mvss.karta.framework.runtime;
 
 import java.io.Serializable;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -16,6 +18,7 @@ import org.mvss.karta.framework.nodes.KartaNode;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.ScenarioCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioStartEvent;
+import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -49,74 +52,96 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
    private ArrayList<TestStep>                       scenarioTearDownSteps;
 
    @Builder.Default
-   private KartaNode                                 minionToUse = null;
+   private KartaNode                                 minionToUse     = null;
 
    private HashMap<TestScenario, AtomicLong>         scenarioIterationIndexMap;
 
    @Builder.Default
-   private HashMap<String, Serializable>             variables   = new HashMap<String, Serializable>();;
+   private HashMap<String, Serializable>             variables       = new HashMap<String, Serializable>();;
 
    private HashMap<String, ScenarioResult>           result;
 
    private Consumer<HashMap<String, ScenarioResult>> resultConsumer;
 
+   @Builder.Default
+   private HashMap<PreparedScenario, TestScenario>   scenarioMapping = new HashMap<PreparedScenario, TestScenario>();
+
+   /**
+    * The callback implementation for scenario result updates for running test scenarios
+    * 
+    * @param scenario
+    * @param scenarioResult
+    */
+   private synchronized void accumulateScenarioResult( PreparedScenario scenario, ScenarioResult scenarioResult )
+   {
+      result.put( scenario.getName(), scenarioResult.trimForReport() );;
+      kartaRuntime.getEventProcessor().raiseEvent( new ScenarioCompleteEvent( runInfo.getRunName(), featureName, iterationIndex, scenarioMapping.get( scenario ), scenarioResult ) );
+   }
+
    @Override
    public HashMap<String, ScenarioResult> call()
    {
-      String runName = runInfo.getRunName();
-
       result = new HashMap<String, ScenarioResult>();
-
-      EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-      log.debug( "Iteration " + iterationIndex + " with scenarios " + scenariosToRun );
-
-      for ( TestScenario testScenario : scenariosToRun )
+      try
       {
-         long scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( testScenario ) ) ) ? scenarioIterationIndexMap.get( testScenario ).getAndIncrement() : 0;
-         log.debug( "Running Scenario: " + testScenario.getName() + "[" + scenarioIterationNumber + "]:" );
+         String runName = runInfo.getRunName();
 
-         PreparedScenario preparedScenario = null;
+         EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
+         log.debug( "Iteration " + iterationIndex + " with scenarios " + scenariosToRun );
 
-         try
+         ExecutorService scenarioExecutionService = null;
+         boolean runScenarioParallely = runInfo.isRunAllScenarioParallely();
+
+         if ( runScenarioParallely )
          {
-            preparedScenario = kartaRuntime.getPreparedScenario( runInfo, featureName, scenarioIterationNumber, DataUtils.cloneMap( variables ), commonTestDataSet, scenarioSetupSteps, testScenario, scenarioTearDownSteps );
+            int numberOfScenarios = scenariosToRun.size();
+            scenarioExecutionService = new ThreadPoolExecutor( numberOfScenarios, numberOfScenarios, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfScenarios ) );
          }
-         catch ( Throwable t )
-         {
-            log.error( "Exception occured when preparing scenario " + testScenario + " for running", t );
-            continue;
-         }
 
-         eventProcessor.raiseEvent( new ScenarioStartEvent( runName, featureName, iterationIndex, testScenario ) );
-
-         ScenarioResult scenarioResult = null;
-
-         if ( minionToUse == null )
+         for ( TestScenario testScenario : scenariosToRun )
          {
-            ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).featureName( featureName ).iterationIndex( iterationIndex ).testScenario( preparedScenario )
-                     .scenarioIterationNumber( scenarioIterationNumber ).build();
-            scenarioResult = scenarioRunner.call();
-         }
-         else
-         {
+            long scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( testScenario ) ) ) ? scenarioIterationIndexMap.get( testScenario ).getAndIncrement() : 0;
+            log.debug( "Running Scenario: " + testScenario.getName() + "[" + scenarioIterationNumber + "]:" );
+
+            PreparedScenario preparedScenario = null;
+
             try
             {
-               scenarioResult = minionToUse.runTestScenario( runInfo, featureName, iterationIndex, preparedScenario, scenarioIterationNumber );
-               scenarioResult.processRemoteResults();
+               preparedScenario = kartaRuntime.getPreparedScenario( runInfo, featureName, scenarioIterationNumber, DataUtils.cloneMap( variables ), commonTestDataSet, scenarioSetupSteps, testScenario, scenarioTearDownSteps );
+               scenarioMapping.put( preparedScenario, testScenario );
             }
-            catch ( RemoteException e )
+            catch ( Throwable t )
             {
-               log.error( "Exception occured when running scenario " + testScenario + " remotely on minion " + minionToUse, e );
+               log.error( "Exception occured when preparing scenario " + testScenario + " for running", t );
+               continue;
             }
+
+            eventProcessor.raiseEvent( new ScenarioStartEvent( runName, featureName, iterationIndex, testScenario ) );
+
+            ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).featureName( featureName ).iterationIndex( iterationIndex ).testScenario( preparedScenario )
+                     .scenarioIterationNumber( scenarioIterationNumber ).minionToUse( minionToUse ).resultConsumer( ( scenario, sresult ) -> accumulateScenarioResult( scenario, sresult ) ).build();
+
+            if ( runScenarioParallely )
+            {
+               scenarioExecutionService.submit( scenarioRunner );
+            }
+            else
+            {
+               scenarioRunner.call();
+            }
+
          }
 
-         if ( scenarioResult != null )
+         if ( runScenarioParallely )
          {
-            result.put( testScenario.getName(), scenarioResult.trimForReport() );
+            scenarioExecutionService.shutdown();
+            scenarioExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
          }
 
-         eventProcessor.raiseEvent( new ScenarioCompleteEvent( runName, featureName, iterationIndex, testScenario, scenarioResult ) );
-
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Error when running iteration: ", t );
       }
 
       if ( resultConsumer != null )

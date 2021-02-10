@@ -130,58 +130,59 @@ public class LoggingTestEventListener implements TestEventListener
 
          case StandardEventsTypes.SCENARIO_START_EVENT:
             ScenarioStartEvent scenarioStartEvent = (ScenarioStartEvent) event;
-            log.info( "{" + scenarioStartEvent.getRunName() + "}{" + scenarioStartEvent.getFeatureName() + "}{" + scenarioStartEvent.getIterationNumber() + "}{" + scenarioStartEvent.getScenario().getName() + "}" + SPACE + STARTED );
+            log.info( "{" + scenarioStartEvent.getRunName() + "}{" + scenarioStartEvent.getFeatureName() + "}{" + ( scenarioStartEvent.getIterationNumber() + 1 ) + "}{" + scenarioStartEvent.getScenario().getName() + "}" + SPACE + STARTED );
             break;
 
          case StandardEventsTypes.SCENARIO_SETUP_STEP_START_EVENT:
             ScenarioSetupStepStartEvent scenarioSetupStepStartEvent = (ScenarioSetupStepStartEvent) event;
-            log.info( "{" + scenarioSetupStepStartEvent.getRunName() + "}{" + scenarioSetupStepStartEvent.getFeatureName() + "}{" + scenarioSetupStepStartEvent.getScenarioName() + "}{" + scenarioSetupStepStartEvent.getIterationNumber() + "}{setup("
+            log.info( "{" + scenarioSetupStepStartEvent.getRunName() + "}{" + scenarioSetupStepStartEvent.getFeatureName() + "}{" + scenarioSetupStepStartEvent.getScenarioName() + "}{" + ( scenarioSetupStepStartEvent.getIterationNumber() + 1 ) + "}{setup("
                       + scenarioSetupStepStartEvent.getStep().getIdentifier() + ")}" + SPACE + STARTED );
             break;
          case StandardEventsTypes.SCENARIO_SETUP_STEP_COMPLETE_EVENT:
             ScenarioSetupStepCompleteEvent scenarioSetupStepCompleteEvent = (ScenarioSetupStepCompleteEvent) event;
-            log.info( "{" + scenarioSetupStepCompleteEvent.getRunName() + "}{" + scenarioSetupStepCompleteEvent.getFeatureName() + "}{" + scenarioSetupStepCompleteEvent.getScenarioName() + "}{" + scenarioSetupStepCompleteEvent.getIterationNumber()
+            log.info( "{" + scenarioSetupStepCompleteEvent.getRunName() + "}{" + scenarioSetupStepCompleteEvent.getFeatureName() + "}{" + scenarioSetupStepCompleteEvent.getScenarioName() + "}{" + ( scenarioSetupStepCompleteEvent.getIterationNumber() + 1 )
                       + "}{setup(" + scenarioSetupStepCompleteEvent.getStep().getIdentifier() + ")}" + SPACE + getStepResultLog( scenarioSetupStepCompleteEvent.getResult() ) );
             break;
 
          case StandardEventsTypes.SCENARIO_CHAOS_ACTION_START_EVENT:
             ScenarioChaosActionStartEvent scenarioChaosActionStartEvent = (ScenarioChaosActionStartEvent) event;
-            log.info( "{" + scenarioChaosActionStartEvent.getRunName() + "}{" + scenarioChaosActionStartEvent.getFeatureName() + "}{" + scenarioChaosActionStartEvent.getScenarioName() + "}{" + scenarioChaosActionStartEvent.getIterationNumber()
+            log.info( "{" + scenarioChaosActionStartEvent.getRunName() + "}{" + scenarioChaosActionStartEvent.getFeatureName() + "}{" + scenarioChaosActionStartEvent.getScenarioName() + "}{" + ( scenarioChaosActionStartEvent.getIterationNumber() + 1 )
                       + "}{chaosAction(" + scenarioChaosActionStartEvent.getPreparedChaosAction().getName() + ")}" + SPACE + STARTED );
             break;
          case StandardEventsTypes.SCENARIO_CHAOS_ACTION_COMPLETE_EVENT:
             ScenarioChaosActionCompleteEvent scenarioChaosActionCompleteEvent = (ScenarioChaosActionCompleteEvent) event;
-            log.info( "{" + scenarioChaosActionCompleteEvent.getRunName() + "}{" + scenarioChaosActionCompleteEvent.getFeatureName() + "}{" + scenarioChaosActionCompleteEvent.getScenarioName() + "}{" + scenarioChaosActionCompleteEvent.getIterationNumber()
-                      + "}{chaosAction(" + scenarioChaosActionCompleteEvent.getPreparedChaosAction().getName() + ")}" + SPACE + getStepResultLog( scenarioChaosActionCompleteEvent.getResult() ) );
+            log.info( "{" + scenarioChaosActionCompleteEvent.getRunName() + "}{" + scenarioChaosActionCompleteEvent.getFeatureName() + "}{" + scenarioChaosActionCompleteEvent.getScenarioName() + "}{"
+                      + ( scenarioChaosActionCompleteEvent.getIterationNumber() + 1 ) + "}{chaosAction(" + scenarioChaosActionCompleteEvent.getPreparedChaosAction().getName() + ")}" + SPACE
+                      + getStepResultLog( scenarioChaosActionCompleteEvent.getResult() ) );
             break;
 
          case StandardEventsTypes.SCENARIO_STEP_START_EVENT:
             ScenarioStepStartEvent scenarioStepStartEvent = (ScenarioStepStartEvent) event;
-            log.info( "{" + scenarioStepStartEvent.getRunName() + "}{" + scenarioStepStartEvent.getFeatureName() + "}{" + scenarioStepStartEvent.getScenarioName() + "}{" + scenarioStepStartEvent.getIterationNumber() + "}{step("
+            log.info( "{" + scenarioStepStartEvent.getRunName() + "}{" + scenarioStepStartEvent.getFeatureName() + "}{" + scenarioStepStartEvent.getScenarioName() + "}{" + ( scenarioStepStartEvent.getIterationNumber() + 1 ) + "}{step("
                       + scenarioStepStartEvent.getStep().getIdentifier() + ")}" + SPACE + STARTED );
             break;
 
          case StandardEventsTypes.SCENARIO_STEP_COMPLETE_EVENT:
             ScenarioStepCompleteEvent scenarioStepCompleteEvent = (ScenarioStepCompleteEvent) event;
-            log.info( "{" + scenarioStepCompleteEvent.getRunName() + "}{" + scenarioStepCompleteEvent.getFeatureName() + "}{" + scenarioStepCompleteEvent.getScenarioName() + "}{" + scenarioStepCompleteEvent.getIterationNumber() + "}{step("
+            log.info( "{" + scenarioStepCompleteEvent.getRunName() + "}{" + scenarioStepCompleteEvent.getFeatureName() + "}{" + scenarioStepCompleteEvent.getScenarioName() + "}{" + ( scenarioStepCompleteEvent.getIterationNumber() + 1 ) + "}{step("
                       + scenarioStepCompleteEvent.getStep().getIdentifier() + ")}" + SPACE + getStepResultLog( scenarioStepCompleteEvent.getResult() ) );
             break;
 
          case StandardEventsTypes.SCENARIO_TEARDOWN_STEP_START_EVENT:
             ScenarioTearDownStepStartEvent scenarioTearDownStepStartEvent = (ScenarioTearDownStepStartEvent) event;
-            log.info( "{" + scenarioTearDownStepStartEvent.getRunName() + "}{" + scenarioTearDownStepStartEvent.getFeatureName() + "}{" + scenarioTearDownStepStartEvent.getScenarioName() + "}{" + scenarioTearDownStepStartEvent.getIterationNumber()
+            log.info( "{" + scenarioTearDownStepStartEvent.getRunName() + "}{" + scenarioTearDownStepStartEvent.getFeatureName() + "}{" + scenarioTearDownStepStartEvent.getScenarioName() + "}{" + ( scenarioTearDownStepStartEvent.getIterationNumber() + 1 )
                       + "}{tearDown(" + scenarioTearDownStepStartEvent.getStep().getIdentifier() + ")}" + SPACE + STARTED );
             break;
 
          case StandardEventsTypes.SCENARIO_TEARDOWN_STEP_COMPLETE_EVENT:
             ScenarioTearDownStepCompleteEvent scenarioTearDownStepCompleteEvent = (ScenarioTearDownStepCompleteEvent) event;
             log.info( "{" + scenarioTearDownStepCompleteEvent.getRunName() + "}{" + scenarioTearDownStepCompleteEvent.getFeatureName() + "}{" + scenarioTearDownStepCompleteEvent.getScenarioName() + "}{"
-                      + scenarioTearDownStepCompleteEvent.getIterationNumber() + "}{tearDown(" + scenarioTearDownStepCompleteEvent.getStep().getIdentifier() + ")}" + SPACE + getStepResultLog( scenarioTearDownStepCompleteEvent.getResult() ) );
+                      + ( scenarioTearDownStepCompleteEvent.getIterationNumber() + 1 ) + "}{tearDown(" + scenarioTearDownStepCompleteEvent.getStep().getIdentifier() + ")}" + SPACE + getStepResultLog( scenarioTearDownStepCompleteEvent.getResult() ) );
             break;
 
          case StandardEventsTypes.SCENARIO_COMPLETE_EVENT:
             ScenarioCompleteEvent scenarioCompleteEvent = (ScenarioCompleteEvent) event;
-            log.info( "{" + scenarioCompleteEvent.getRunName() + "}{" + scenarioCompleteEvent.getFeatureName() + "}{" + scenarioCompleteEvent.getIterationNumber() + "}{" + scenarioCompleteEvent.getScenario().getName() + "}" + SPACE + COMPLETED );
+            log.info( "{" + scenarioCompleteEvent.getRunName() + "}{" + scenarioCompleteEvent.getFeatureName() + "}{" + ( scenarioCompleteEvent.getIterationNumber() + 1 ) + "}{" + scenarioCompleteEvent.getScenario().getName() + "}" + SPACE + COMPLETED );
             break;
          case StandardEventsTypes.FEATURE_TEARDOWN_STEP_START_EVENT:
             FeatureTearDownStepStartEvent featureTearDownStepStartEvent = (FeatureTearDownStepStartEvent) event;
@@ -217,49 +218,50 @@ public class LoggingTestEventListener implements TestEventListener
 
          case StandardEventsTypes.JAVA_SCENARIO_SETUP_START_EVENT:
             JavaScenarioSetupStartEvent javaScenarioSetupStartEvent = (JavaScenarioSetupStartEvent) event;
-            log.info( "{" + javaScenarioSetupStartEvent.getRunName() + "}{" + javaScenarioSetupStartEvent.getFeatureName() + "}{" + javaScenarioSetupStartEvent.getScenarioName() + "}{" + javaScenarioSetupStartEvent.getIterationNumber() + "}{setup("
+            log.info( "{" + javaScenarioSetupStartEvent.getRunName() + "}{" + javaScenarioSetupStartEvent.getFeatureName() + "}{" + javaScenarioSetupStartEvent.getScenarioName() + "}{" + ( javaScenarioSetupStartEvent.getIterationNumber() + 1 ) + "}{setup("
                       + javaScenarioSetupStartEvent.getStepIdentifier() + ")}" + SPACE + STARTED );
             break;
 
          case StandardEventsTypes.JAVA_SCENARIO_SETUP_COMPLETE_EVENT:
             JavaScenarioSetupCompleteEvent javaScenarioSetupCompleteEvent = (JavaScenarioSetupCompleteEvent) event;
-            log.info( "{" + javaScenarioSetupCompleteEvent.getRunName() + "}{" + javaScenarioSetupCompleteEvent.getFeatureName() + "}{" + javaScenarioSetupCompleteEvent.getScenarioName() + "}{" + javaScenarioSetupCompleteEvent.getIterationNumber()
+            log.info( "{" + javaScenarioSetupCompleteEvent.getRunName() + "}{" + javaScenarioSetupCompleteEvent.getFeatureName() + "}{" + javaScenarioSetupCompleteEvent.getScenarioName() + "}{" + ( javaScenarioSetupCompleteEvent.getIterationNumber() + 1 )
                       + "}{setup(" + javaScenarioSetupCompleteEvent.getStepIdentifier() + ")}" + SPACE + getStepResultLog( javaScenarioSetupCompleteEvent.getResult() ) );
             break;
 
          case StandardEventsTypes.JAVA_SCENARIO_CHAOS_ACTION_START_EVENT:
             JavaScenarioChaosActionStartEvent javaScenarioChaosActionStartEvent = (JavaScenarioChaosActionStartEvent) event;
             log.info( "{" + javaScenarioChaosActionStartEvent.getRunName() + "}{" + javaScenarioChaosActionStartEvent.getFeatureName() + "}{" + javaScenarioChaosActionStartEvent.getScenarioName() + "}{"
-                      + javaScenarioChaosActionStartEvent.getIterationNumber() + "}{chaosAction(" + javaScenarioChaosActionStartEvent.getChaosAction().getName() + ")}" + SPACE + STARTED );
+                      + ( javaScenarioChaosActionStartEvent.getIterationNumber() + 1 ) + "}{chaosAction(" + javaScenarioChaosActionStartEvent.getChaosAction().getName() + ")}" + SPACE + STARTED );
             break;
 
          case StandardEventsTypes.JAVA_SCENARIO_CHAOS_ACTION_COMPLETE_EVENT:
             JavaScenarioChaosActionCompleteEvent javaScenarioChaosActionCompleteEvent = (JavaScenarioChaosActionCompleteEvent) event;
             log.info( "{" + javaScenarioChaosActionCompleteEvent.getRunName() + "}{" + javaScenarioChaosActionCompleteEvent.getFeatureName() + "}{" + javaScenarioChaosActionCompleteEvent.getScenarioName() + "}{"
-                      + javaScenarioChaosActionCompleteEvent.getIterationNumber() + "}{chaosAction(" + javaScenarioChaosActionCompleteEvent.getChaosAction().getName() + ")}" + SPACE + getStepResultLog( javaScenarioChaosActionCompleteEvent.getResult() ) );
+                      + ( javaScenarioChaosActionCompleteEvent.getIterationNumber() + 1 ) + "}{chaosAction(" + javaScenarioChaosActionCompleteEvent.getChaosAction().getName() + ")}" + SPACE
+                      + getStepResultLog( javaScenarioChaosActionCompleteEvent.getResult() ) );
             break;
 
          case StandardEventsTypes.JAVA_SCENARIO_START_EVENT:
             JavaScenarioStartEvent javaScenarioStartEvent = (JavaScenarioStartEvent) event;
-            log.info( "{" + javaScenarioStartEvent.getRunName() + "}{" + javaScenarioStartEvent.getFeatureName() + "}{" + javaScenarioStartEvent.getScenarioName() + "}{" + javaScenarioStartEvent.getIterationNumber() + "}" + SPACE + STARTED );
+            log.info( "{" + javaScenarioStartEvent.getRunName() + "}{" + javaScenarioStartEvent.getFeatureName() + "}{" + javaScenarioStartEvent.getScenarioName() + "}{" + ( javaScenarioStartEvent.getIterationNumber() + 1 ) + "}" + SPACE + STARTED );
             break;
 
          case StandardEventsTypes.JAVA_SCENARIO_COMPLETE_EVENT:
             JavaScenarioCompleteEvent javaScenarioCompleteEvent = (JavaScenarioCompleteEvent) event;
-            log.info( "{" + javaScenarioCompleteEvent.getRunName() + "}{" + javaScenarioCompleteEvent.getFeatureName() + "}{" + javaScenarioCompleteEvent.getScenarioName() + "}{" + javaScenarioCompleteEvent.getIterationNumber() + "}" + SPACE
+            log.info( "{" + javaScenarioCompleteEvent.getRunName() + "}{" + javaScenarioCompleteEvent.getFeatureName() + "}{" + javaScenarioCompleteEvent.getScenarioName() + "}{" + ( javaScenarioCompleteEvent.getIterationNumber() + 1 ) + "}" + SPACE
                       + getScenarioResultLog( javaScenarioCompleteEvent.getResult() ) );
             break;
 
          case StandardEventsTypes.JAVA_SCENARIO_TEARDOWN_START_EVENT:
             JavaScenarioTearDownStartEvent javaScenarioTearDownStartEvent = (JavaScenarioTearDownStartEvent) event;
-            log.info( "{" + javaScenarioTearDownStartEvent.getRunName() + "}{" + javaScenarioTearDownStartEvent.getFeatureName() + "}{" + javaScenarioTearDownStartEvent.getScenarioName() + "}{" + javaScenarioTearDownStartEvent.getIterationNumber()
+            log.info( "{" + javaScenarioTearDownStartEvent.getRunName() + "}{" + javaScenarioTearDownStartEvent.getFeatureName() + "}{" + javaScenarioTearDownStartEvent.getScenarioName() + "}{" + ( javaScenarioTearDownStartEvent.getIterationNumber() + 1 )
                       + "}{tearDown(" + javaScenarioTearDownStartEvent.getStepIdentifier() + ")}" + SPACE + STARTED );
             break;
 
          case StandardEventsTypes.JAVA_SCENARIO_TEARDOWN_COMPLETE_EVENT:
             JavaScenarioTearDownCompleteEvent javaScenarioTearDownCompleteEvent = (JavaScenarioTearDownCompleteEvent) event;
             log.info( "{" + javaScenarioTearDownCompleteEvent.getRunName() + "}{" + javaScenarioTearDownCompleteEvent.getFeatureName() + "}{" + javaScenarioTearDownCompleteEvent.getScenarioName() + "}{"
-                      + javaScenarioTearDownCompleteEvent.getIterationNumber() + "}{tearDown(" + javaScenarioTearDownCompleteEvent.getStepIdentifier() + ")}" + SPACE + getStepResultLog( javaScenarioTearDownCompleteEvent.getResult() ) );
+                      + ( javaScenarioTearDownCompleteEvent.getIterationNumber() + 1 ) + "}{tearDown(" + javaScenarioTearDownCompleteEvent.getStepIdentifier() + ")}" + SPACE + getStepResultLog( javaScenarioTearDownCompleteEvent.getResult() ) );
             break;
 
          case StandardEventsTypes.JAVA_FEATURE_TEARDOWN_START_EVENT:
@@ -281,25 +283,25 @@ public class LoggingTestEventListener implements TestEventListener
 
          case StandardEventsTypes.JOB_STEP_START_EVENT:
             JobStepStartEvent jobStepStartEvent = (JobStepStartEvent) event;
-            log.info( "{" + jobStepStartEvent.getRunName() + "}{" + jobStepStartEvent.getFeatureName() + "}{" + jobStepStartEvent.getJob().getName() + "}{" + jobStepStartEvent.getIterationNumber() + "}{step(" + jobStepStartEvent.getStep().getStep() + ")}"
-                      + SPACE + STARTED );
+            log.info( "{" + jobStepStartEvent.getRunName() + "}{" + jobStepStartEvent.getFeatureName() + "}{" + jobStepStartEvent.getJob().getName() + "}{" + ( jobStepStartEvent.getIterationNumber() + 1 ) + "}{step(" + jobStepStartEvent.getStep().getStep()
+                      + ")}" + SPACE + STARTED );
             break;
 
          case StandardEventsTypes.JOB_STEP_COMPLETE_EVENT:
             JobStepCompleteEvent jobStepCompleteEvent = (JobStepCompleteEvent) event;
-            log.info( "{" + jobStepCompleteEvent.getRunName() + "}{" + jobStepCompleteEvent.getFeatureName() + "}{" + jobStepCompleteEvent.getJob().getName() + "}{" + jobStepCompleteEvent.getIterationNumber() + "}{step("
+            log.info( "{" + jobStepCompleteEvent.getRunName() + "}{" + jobStepCompleteEvent.getFeatureName() + "}{" + jobStepCompleteEvent.getJob().getName() + "}{" + ( jobStepCompleteEvent.getIterationNumber() + 1 ) + "}{step("
                       + jobStepCompleteEvent.getStep().getStep() + ")}" + SPACE + getStepResultLog( jobStepCompleteEvent.getResult() ) );
             break;
 
          case StandardEventsTypes.CHAOS_ACTION_JOB_COMPLETE_EVENT:
             ChaosActionJobCompleteEvent chaosActionJobCompleteEvent = (ChaosActionJobCompleteEvent) event;
-            log.info( "{" + chaosActionJobCompleteEvent.getRunName() + "}{" + chaosActionJobCompleteEvent.getFeatureName() + "}{" + chaosActionJobCompleteEvent.getJob().getName() + "}{" + chaosActionJobCompleteEvent.getIterationNumber() + "}{step("
+            log.info( "{" + chaosActionJobCompleteEvent.getRunName() + "}{" + chaosActionJobCompleteEvent.getFeatureName() + "}{" + chaosActionJobCompleteEvent.getJob().getName() + "}{" + ( chaosActionJobCompleteEvent.getIterationNumber() + 1 ) + "}{step("
                       + chaosActionJobCompleteEvent.getChaosAction().getName() + ")}" + SPACE + getStepResultLog( chaosActionJobCompleteEvent.getResult() ) );
             break;
 
          case StandardEventsTypes.CHAOS_ACTION_JOB_START_EVENT:
             ChaosActionJobStartEvent chaosActionJobStartEvent = (ChaosActionJobStartEvent) event;
-            log.info( "{" + chaosActionJobStartEvent.getRunName() + "}{" + chaosActionJobStartEvent.getFeatureName() + "}{" + chaosActionJobStartEvent.getJob().getName() + "}{" + chaosActionJobStartEvent.getIterationNumber() + "}{step("
+            log.info( "{" + chaosActionJobStartEvent.getRunName() + "}{" + chaosActionJobStartEvent.getFeatureName() + "}{" + chaosActionJobStartEvent.getJob().getName() + "}{" + ( chaosActionJobStartEvent.getIterationNumber() + 1 ) + "}{step("
                       + chaosActionJobStartEvent.getChaosAction().getName() + ")}" + SPACE + STARTED );
             break;
 
