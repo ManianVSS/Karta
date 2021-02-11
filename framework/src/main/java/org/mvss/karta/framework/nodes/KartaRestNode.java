@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.nodes;
 
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 
@@ -15,9 +16,15 @@ import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.core.TestJobResult;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.RunInfo;
+import org.mvss.karta.framework.utils.ParserUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.config.ObjectMapperConfig;
+import io.restassured.config.RestAssuredConfig;
+import io.restassured.mapper.factory.Jackson2ObjectMapperFactory;
 import io.restassured.response.Response;
 import lombok.Getter;
 
@@ -33,6 +40,18 @@ public class KartaRestNode implements KartaNode
 {
    private RequestSpecBuilder requestSpecBuilder;
 
+   static
+   {
+      RestAssured.config = RestAssuredConfig.config().objectMapperConfig( new ObjectMapperConfig().jackson2ObjectMapperFactory( new Jackson2ObjectMapperFactory()
+      {
+
+         @Override
+         public ObjectMapper create( Type arg0, String arg1 )
+         {
+            return ParserUtils.getObjectMapper();
+         }
+      } ) );
+   }
    public KartaRestNode( String url )
    {
       requestSpecBuilder = new RequestSpecBuilder();

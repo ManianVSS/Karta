@@ -23,6 +23,8 @@ import org.mvss.karta.framework.core.BeforeFeature;
 import org.mvss.karta.framework.core.BeforeRun;
 import org.mvss.karta.framework.core.BeforeScenario;
 import org.mvss.karta.framework.core.ChaosActionDefinition;
+import org.mvss.karta.framework.core.ContextBean;
+import org.mvss.karta.framework.core.ContextVariable;
 import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.core.Pair;
 import org.mvss.karta.framework.core.PreparedChaosAction;
@@ -30,8 +32,8 @@ import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepDefinition;
-import org.mvss.karta.framework.core.StepParam;
 import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.core.TestData;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.nodes.KartaNodeRegistry;
 import org.mvss.karta.framework.runtime.BeanRegistry;
@@ -96,7 +98,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    private EventProcessor                                    eventProcessor;
 
    @KartaAutoWired
-   private KartaNodeRegistry                               minionRegistry;
+   private KartaNodeRegistry                                 minionRegistry;
 
    @Override
    public String getPluginName()
@@ -115,12 +117,20 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                   {
                                                                      String methodDescription = candidateStepDefinitionMethod.toString();
                                                                      String stepDefString = stepDefinition.value();
+
+                                                                     if ( stepHandlerMap.containsKey( stepDefString ) )
+                                                                     {
+                                                                        log.error( "Step definition is duplicate " + methodDescription );
+                                                                        continue;
+                                                                     }
+
                                                                      Parameter[] params = candidateStepDefinitionMethod.getParameters();
 
                                                                      int positionalArgumentsCount = 0;
                                                                      for ( int i = 0; i < params.length; i++ )
                                                                      {
-                                                                        if ( ( params[i].getType() != TestExecutionContext.class ) && ( params[i].getAnnotation( StepParam.class ) == null ) )
+                                                                        if ( ( params[i].getType() != TestExecutionContext.class ) && ( params[i].getAnnotation( TestData.class ) == null ) && ( params[i].getAnnotation( ContextBean.class ) == null )
+                                                                             && ( params[i].getAnnotation( ContextVariable.class ) == null ) )
                                                                         {
                                                                            positionalArgumentsCount++;
                                                                         }
@@ -143,6 +153,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                         beanRegistry.loadBeans( stepDefClassObj );
                                                                         beanRegistry.add( stepDefClassObj );
                                                                      }
+
                                                                      stepHandlerMap.put( stepDefString, new Pair<Object, Method>( beanRegistry.get( stepDefinitionClass.getName() ), candidateStepDefinitionMethod ) );
                                                                   }
                                                                }
@@ -165,13 +176,35 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                   {
                                                                      String methodDescription = candidateChaosActionMethod.toString();
                                                                      String chaosActionName = chaosActionDefinition.value();
-                                                                     Class<?>[] params = candidateChaosActionMethod.getParameterTypes();
+                                                                     // Class<?>[] paramTypes = candidateChaosActionMethod.getParameterTypes();
 
-                                                                     if ( !( ( params.length >= 2 ) && ( TestExecutionContext.class == params[0] ) && ( PreparedChaosAction.class == params[1] ) ) )
+                                                                     if ( chaosActionHandlerMap.containsKey( chaosActionName ) )
+                                                                     {
+                                                                        log.error( "Chaos action definition is duplicate " + methodDescription );
+                                                                        continue;
+                                                                     }
+
+                                                                     Parameter[] params = candidateChaosActionMethod.getParameters();
+
+                                                                     if ( !( ( params.length >= 2 ) && ( TestExecutionContext.class == params[0].getType() ) && ( PreparedChaosAction.class == params[1].getType() ) ) )
                                                                      {
                                                                         log.error( "Chaos action definition method " + methodDescription + " should have first two parameters of types(" + TestExecutionContext.class.getName() + ", "
                                                                                    + PreparedChaosAction.class.getName() + ")" );
                                                                         continue;
+                                                                     }
+
+                                                                     for ( int paramNo = 2; paramNo < params.length; paramNo++ )
+                                                                     {
+                                                                        TestData testDataAnnotation = params[paramNo].getAnnotation( TestData.class );
+                                                                        ContextBean contextBeanAnnotation = params[paramNo].getAnnotation( ContextBean.class );
+                                                                        ContextVariable contextVariableAnnotation = params[paramNo].getAnnotation( ContextVariable.class );
+
+                                                                        if ( ( testDataAnnotation == null ) && ( contextBeanAnnotation == null ) && ( contextVariableAnnotation == null ) )
+                                                                        {
+                                                                           log.error( "Chaos action definition method " + methodDescription + "'s parameter is not mapped mapped with an appropriate annotation(" + TestData.class.getName() + ", "
+                                                                                      + ContextBean.class.getName() + ", " + ContextVariable.class.getName() + ")" );
+                                                                           continue;
+                                                                        }
                                                                      }
 
                                                                      log.debug( "Mapping chaos action definition " + chaosActionName + " to " + methodDescription );
@@ -488,39 +521,36 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                continue;
             }
 
-            StepParam paramaterNameInfo = parametersObj[i].getAnnotation( StepParam.class );
+            TestData testDataAnnotation = parametersObj[i].getAnnotation( TestData.class );
+            ContextBean contextBeanAnnotation = parametersObj[i].getAnnotation( ContextBean.class );
+            ContextVariable contextVariableAnnotation = parametersObj[i].getAnnotation( ContextVariable.class );
 
-            if ( paramaterNameInfo == null )
+            if ( testDataAnnotation != null )
             {
-               values.add( ParserUtils.getObjectMapper().readValue( inlineStepDefinitionParameterNames.get( positionalArg++ ), paramType ) );
+               name = testDataAnnotation.value();
+               values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
+            }
+            else if ( contextBeanAnnotation != null )
+            {
+               name = contextBeanAnnotation.value();
+               BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
+               if ( beanRegistry != null )
+               {
+                  values.add( beanRegistry.get( name ) );
+               }
+               else
+               {
+                  values.add( null );
+               }
+            }
+            else if ( contextVariableAnnotation != null )
+            {
+               name = contextVariableAnnotation.value();
+               values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
             }
             else
             {
-               name = paramaterNameInfo.value();
-
-               switch ( paramaterNameInfo.mapto() )
-               {
-                  case CONTEXT_BEAN:
-                     BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
-                     if ( beanRegistry != null )
-                     {
-                        values.add( beanRegistry.get( name ) );
-                     }
-                     else
-                     {
-                        values.add( null );
-                     }
-                     break;
-
-                  case TESTDATA:
-                     values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
-                     break;
-
-                  case VARIABLE:
-                     values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
-                     break;
-
-               }
+               values.add( ParserUtils.getObjectMapper().readValue( inlineStepDefinitionParameterNames.get( positionalArg++ ), paramType ) );
             }
          }
 
@@ -599,35 +629,34 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                for ( int i = 2; i < parametersObj.length; i++ )
                {
                   String name = parametersObj[i].getName();
-                  StepParam paramaterNameInfo = parametersObj[i].getAnnotation( StepParam.class );
+                  // TestData paramaterNameInfo = parametersObj[i].getAnnotation( TestData.class );
 
-                  if ( paramaterNameInfo != null )
+                  TestData testDataAnnotation = parametersObj[i].getAnnotation( TestData.class );
+                  ContextBean contextBeanAnnotation = parametersObj[i].getAnnotation( ContextBean.class );
+                  ContextVariable contextVariableAnnotation = parametersObj[i].getAnnotation( ContextVariable.class );
+
+                  if ( testDataAnnotation != null )
                   {
-                     name = paramaterNameInfo.value();
-
-                     switch ( paramaterNameInfo.mapto() )
+                     name = testDataAnnotation.value();
+                     values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
+                  }
+                  else if ( contextBeanAnnotation != null )
+                  {
+                     name = contextBeanAnnotation.value();
+                     BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
+                     if ( beanRegistry != null )
                      {
-                        case CONTEXT_BEAN:
-                           BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
-                           if ( beanRegistry != null )
-                           {
-                              values.add( beanRegistry.get( name ) );
-                           }
-                           else
-                           {
-                              values.add( null );
-                           }
-                           break;
-
-                        case TESTDATA:
-                           values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
-                           break;
-
-                        case VARIABLE:
-                           values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
-                           break;
-
+                        values.add( beanRegistry.get( name ) );
                      }
+                     else
+                     {
+                        values.add( null );
+                     }
+                  }
+                  else if ( contextVariableAnnotation != null )
+                  {
+                     name = contextVariableAnnotation.value();
+                     values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
                   }
                }
             }

@@ -117,6 +117,7 @@ public class Constants
 
    public static final String   REGEX_WHITESPACE                    = "\\s";
    public static final String   REGEX_NON_ALPHANUMERIC              = "[^a-zA-Z0-9]+";
+   public static final String   REGEX_ALL_STRING                    = ".*";
 
    public static final String   FAIL                                = "FAIL";
    public static final String   PASS                                = "PASS";
