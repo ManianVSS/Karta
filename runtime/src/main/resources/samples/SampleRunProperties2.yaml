@@ -1,3 +1,7 @@
 ---
 groupName:
   variable1: Overridden
+
+AutomationDriver:
+  browser: CHROME
+  url: https://github.com/ManianVSS/Karta

@@ -689,7 +689,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       return result;
    }
 
-   public void invokeTaggedMethods( HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooksList, HashSet<String> tags, Object... parameters )
+   public boolean invokeTaggedMethods( HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooksList, HashSet<String> tags, Object... parameters )
    {
       HashSet<Method> alreadyInvokedMethods = new HashSet<Method>();
 
@@ -721,66 +721,74 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                   catch ( Throwable e )
                   {
                      log.error( "", e );
+                     return false;
                   }
                }
             }
          }
-
       }
+
+      return true;
    }
 
    @Override
-   public void runStart( String runName, HashSet<String> tags )
+   public boolean runStart( String runName, HashSet<String> tags )
    {
       if ( tags != null )
       {
-         invokeTaggedMethods( taggedRunStartHooks, tags, runName );
+         return invokeTaggedMethods( taggedRunStartHooks, tags, runName );
       }
+      return true;
    }
 
    @Override
-   public void runStop( String runName, HashSet<String> tags )
+   public boolean runStop( String runName, HashSet<String> tags )
    {
       if ( tags != null )
       {
-         invokeTaggedMethods( taggedRunStopHooks, tags, runName );
+         return invokeTaggedMethods( taggedRunStopHooks, tags, runName );
       }
+      return true;
    }
 
    @Override
-   public void featureStart( String runName, TestFeature feature, HashSet<String> tags )
+   public boolean featureStart( String runName, TestFeature feature, HashSet<String> tags )
    {
       if ( tags != null )
       {
-         invokeTaggedMethods( taggedFeatureStartHooks, tags, runName, feature );
+         return invokeTaggedMethods( taggedFeatureStartHooks, tags, runName, feature );
       }
+      return true;
    }
 
    @Override
-   public void scenarioStart( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
+   public boolean scenarioStart( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
    {
       if ( tags != null )
       {
-         invokeTaggedMethods( taggedScenarioStartHooks, tags, runName, featureName, scenario );
+         return invokeTaggedMethods( taggedScenarioStartHooks, tags, runName, featureName, scenario );
       }
+      return true;
    }
 
    @Override
-   public void scenarioStop( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
+   public boolean scenarioStop( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
    {
       if ( tags != null )
       {
-         invokeTaggedMethods( taggedScenarioStopHooks, tags, runName, featureName, scenario );
+         return invokeTaggedMethods( taggedScenarioStopHooks, tags, runName, featureName, scenario );
       }
+      return true;
    }
 
    @Override
-   public void featureStop( String runName, TestFeature feature, HashSet<String> tags )
+   public boolean featureStop( String runName, TestFeature feature, HashSet<String> tags )
    {
       if ( tags != null )
       {
-         invokeTaggedMethods( taggedFeatureStopHooks, tags, runName, feature );
+         return invokeTaggedMethods( taggedFeatureStopHooks, tags, runName, feature );
       }
+      return true;
    }
 
 }

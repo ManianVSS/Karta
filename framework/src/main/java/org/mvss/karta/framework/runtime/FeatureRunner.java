@@ -102,7 +102,7 @@ public class FeatureRunner implements Callable<FeatureResult>
    @Builder.Default
    private ArrayList<Long> runningJobs = new ArrayList<Long>();
 
-   private boolean deleteJobs()
+   private void deleteJobs()
    {
       boolean deleteJobResults = QuartzJobScheduler.deleteJobs( runningJobs );
 
@@ -111,8 +111,15 @@ public class FeatureRunner implements Callable<FeatureResult>
          log.error( "Failed to delete test jobs" );
          result.setSuccessful( false );
       }
+   }
 
-      return deleteJobResults;
+   public void updateResultCallBack()
+   {
+      result.setEndTime( new Date() );
+      if ( resultConsumer != null )
+      {
+         resultConsumer.accept( result );
+      }
    }
 
    /**
@@ -141,7 +148,13 @@ public class FeatureRunner implements Callable<FeatureResult>
 
          if ( tags != null )
          {
-            eventProcessor.featureStart( runName, testFeature, tags );
+            if ( !eventProcessor.featureStart( runName, testFeature, tags ) )
+            {
+               eventProcessor.featureStop( runName, testFeature, tags );
+               result.setError( true );
+               updateResultCallBack();
+               return result;
+            }
          }
 
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
@@ -175,11 +188,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             catch ( Throwable t )
             {
                log.error( "Exception occured while scheduling jobs ", t );
-               if ( !deleteJobs() )
-               {
-                  log.error( "Failed to delete test jobs" );
-                  result.setSuccessful( false );
-               }
+               deleteJobs();
             }
          }
 
@@ -220,20 +229,19 @@ public class FeatureRunner implements Callable<FeatureResult>
                if ( !stepResult.isPassed() )
                {
                   result.setSuccessful( false );
-
-                  if ( !deleteJobs() )
-                  {
-                     log.error( "Failed to delete test jobs" );
-                     result.setSuccessful( false );
-                  }
+                  deleteJobs();
 
                   eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature, result ) );
 
                   if ( tags != null )
                   {
-                     eventProcessor.featureStop( runName, testFeature, tags );
+                     if ( !eventProcessor.featureStop( runName, testFeature, tags ) )
+                     {
+                        result.setError( true );
+                     }
                   }
 
+                  updateResultCallBack();
                   return result;
                }
             }
@@ -383,15 +391,14 @@ public class FeatureRunner implements Callable<FeatureResult>
             }
          }
 
-         if ( !deleteJobs() )
-         {
-            log.error( "Failed to delete test jobs" );
-            result.setSuccessful( false );
-         }
+         deleteJobs();
 
          if ( tags != null )
          {
-            eventProcessor.featureStop( runName, testFeature, tags );
+            if ( !eventProcessor.featureStop( runName, testFeature, tags ) )
+            {
+               result.setError( true );
+            }
          }
 
          eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature, result ) );
@@ -403,11 +410,7 @@ public class FeatureRunner implements Callable<FeatureResult>
          result.setError( true );
       }
 
-      if ( resultConsumer != null )
-      {
-         resultConsumer.accept( result );
-      }
-      result.setEndTime( new Date() );
+      updateResultCallBack();
       return result;
    }
 }

@@ -17,9 +17,8 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class AutomationDriverImpl implements AutomationDriver
 {
-   private String url;
-   private String username;
-   private String password;
+   private Browser browser;
+   private String  url;
 
    @Override
    public void click( String locator )

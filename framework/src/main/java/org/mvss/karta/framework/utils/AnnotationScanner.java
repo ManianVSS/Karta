@@ -13,6 +13,7 @@ import java.util.function.Predicate;
 import org.mvss.karta.framework.runtime.Constants;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
@@ -186,7 +187,7 @@ public class AnnotationScanner
       {
          try
          {
-            Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( annotationScanPackageName ) ).setScanners( new TypeAnnotationsScanner() ) );
+            Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( annotationScanPackageName ) ).setScanners( new TypeAnnotationsScanner(), new SubTypesScanner() ) );
             Set<Class<?>> candidateClasses = reflections.getTypesAnnotatedWith( annotation );
 
             for ( Class<?> candidateMethod : candidateClasses )
@@ -222,9 +223,14 @@ public class AnnotationScanner
 
       for ( Field fieldOfClass : classToWorkWith.getDeclaredFields() )
       {
-         Annotation annotationObject = fieldOfClass.getAnnotation( annotation );
+         Annotation annotationObject = null;
 
-         if ( ( annotationObject != null ) && ( ( modifierChecks == null ) || modifierChecks.test( fieldOfClass.getModifiers() ) ) )
+         if ( annotation != null )
+         {
+            annotationObject = fieldOfClass.getAnnotation( annotation );
+         }
+
+         if ( ( ( annotation == null ) || ( annotationObject != null ) ) && ( ( modifierChecks == null ) || modifierChecks.test( fieldOfClass.getModifiers() ) ) )
          {
             action.accept( classToWorkWith, fieldOfClass, annotationObject );
          }

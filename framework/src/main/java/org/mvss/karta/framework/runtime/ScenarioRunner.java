@@ -61,6 +61,14 @@ public class ScenarioRunner implements Callable<ScenarioResult>
 
    private BiConsumer<PreparedScenario, ScenarioResult> resultConsumer;
 
+   public void updateResultCallBack()
+   {
+      if ( resultConsumer != null )
+      {
+         resultConsumer.accept( testScenario, result );
+      }
+   }
+
    @Override
    public ScenarioResult call()
    {
@@ -81,7 +89,13 @@ public class ScenarioRunner implements Callable<ScenarioResult>
          HashSet<String> tags = runInfo.getTags();
          if ( tags != null )
          {
-            eventProcessor.scenarioStart( runName, featureName, testScenario, tags );
+            if ( !eventProcessor.scenarioStart( runName, featureName, testScenario, tags ) )
+            {
+               eventProcessor.scenarioStop( runName, featureName, testScenario, tags );
+               result.setError( true );
+               updateResultCallBack();
+               return result;
+            }
          }
 
          log.debug( "Running Scenario: " + testScenario );
@@ -175,7 +189,10 @@ public class ScenarioRunner implements Callable<ScenarioResult>
 
                if ( tags != null )
                {
-                  eventProcessor.scenarioStop( runName, featureName, testScenario, tags );
+                  if ( !eventProcessor.scenarioStop( runName, featureName, testScenario, tags ) )
+                  {
+                     result.setError( true );
+                  }
                }
             }
             catch ( Throwable t )
@@ -204,10 +221,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
          }
       }
 
-      if ( resultConsumer != null )
-      {
-         resultConsumer.accept( testScenario, result );
-      }
+      updateResultCallBack();
       return result;
    }
 }

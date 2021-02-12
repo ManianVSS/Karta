@@ -125,45 +125,87 @@ public class EventProcessor implements AutoCloseable
       }
    }
 
-   public void runStart( String runName, HashSet<String> tags )
+   public boolean runStart( String runName, HashSet<String> tags )
    {
-      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.runStart( runName, tags ) );
+      boolean success = true;
+
+      for ( TestLifeCycleHook lifeCycleHook : lifeCycleHooks )
+      {
+         success = success && lifeCycleHook.runStart( runName, tags );
+      }
+
+      return success;
    }
 
-   public void featureStart( String runName, TestFeature feature, HashSet<String> tags )
+   public boolean featureStart( String runName, TestFeature feature, HashSet<String> tags )
    {
+      boolean success = true;
+
       if ( tags != null )
       {
-         lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.featureStart( runName, feature, tags ) );
+         for ( TestLifeCycleHook lifeCycleHook : lifeCycleHooks )
+         {
+            success = success && lifeCycleHook.featureStart( runName, feature, tags );
+         }
       }
+
+      return success;
    }
 
-   public void scenarioStart( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
+   public boolean scenarioStart( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
    {
+      boolean success = true;
+
       if ( tags != null )
       {
-         lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.scenarioStart( runName, featureName, scenario, tags ) );
+         for ( TestLifeCycleHook lifeCycleHook : lifeCycleHooks )
+         {
+            success = success && lifeCycleHook.scenarioStart( runName, featureName, scenario, tags );
+         }
       }
+
+      return success;
    }
 
-   public void scenarioStop( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
+   public boolean scenarioStop( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
    {
+      boolean success = true;
+
       if ( tags != null )
       {
-         lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.scenarioStop( runName, featureName, scenario, tags ) );
+         for ( TestLifeCycleHook lifeCycleHook : lifeCycleHooks )
+         {
+            success = success && lifeCycleHook.scenarioStop( runName, featureName, scenario, tags );
+         }
       }
+
+      return success;
    }
 
-   public void featureStop( String runName, TestFeature feature, HashSet<String> tags )
+   public boolean featureStop( String runName, TestFeature feature, HashSet<String> tags )
    {
+      boolean success = true;
+
       if ( tags != null )
       {
-         lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.featureStop( runName, feature, tags ) );
+         for ( TestLifeCycleHook lifeCycleHook : lifeCycleHooks )
+         {
+            success = success && lifeCycleHook.featureStop( runName, feature, tags );
+         }
       }
+
+      return success;
    }
 
-   public void runStop( String runName, HashSet<String> tags )
+   public boolean runStop( String runName, HashSet<String> tags )
    {
-      lifeCycleHooks.forEach( ( lifeCycleHook ) -> lifeCycleHook.runStop( runName, tags ) );
+      boolean success = true;
+
+      for ( TestLifeCycleHook lifeCycleHook : lifeCycleHooks )
+      {
+         success = success && lifeCycleHook.runStop( runName, tags );
+      }
+
+      return success;
    }
 }

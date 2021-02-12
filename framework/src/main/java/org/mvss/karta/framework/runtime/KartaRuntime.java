@@ -33,6 +33,7 @@ import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.KartaBean;
+import org.mvss.karta.framework.core.LoadConfiguration;
 import org.mvss.karta.framework.core.PreparedChaosAction;
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.PreparedStep;
@@ -335,7 +336,7 @@ public class KartaRuntime implements AutoCloseable
       ArrayList<String> packagesToScanBeans = kartaConfiguration.getConfigurationScanPackages();
       if ( packagesToScanBeans != null )
       {
-         addBeansFromPackages( packagesToScanBeans );
+         processConfigBeans( packagesToScanBeans );
       }
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize enabled plug-ins only after all other beans are initialized
@@ -356,78 +357,111 @@ public class KartaRuntime implements AutoCloseable
       return true;
    }
 
-   private static List<Class<?>>  configuredBeanClasses = Collections.synchronizedList( new ArrayList<Class<?>>() );
+   private static List<Class<?>>    configuredBeanClasses           = Collections.synchronizedList( new ArrayList<Class<?>>() );
 
-   private final Consumer<Method> processBeanDefinition = new Consumer<Method>()
-                                                        {
-                                                           @Override
-                                                           public void accept( Method candidateBeanDefinitionMethod )
-                                                           {
-                                                              try
-                                                              {
-                                                                 for ( KartaBean kartaBean : candidateBeanDefinitionMethod.getAnnotationsByType( KartaBean.class ) )
-                                                                 {
-
-                                                                    Class<?> beanDeclaringClass = candidateBeanDefinitionMethod.getDeclaringClass();
-
-                                                                    if ( !configuredBeanClasses.contains( beanDeclaringClass ) )
+   private final Consumer<Method>   processBeanDefinition           = new Consumer<Method>()
                                                                     {
-                                                                       try
+                                                                       @Override
+                                                                       public void accept( Method beanDefinitionMethod )
                                                                        {
-                                                                          if ( configurator != null )
+                                                                          try
                                                                           {
-                                                                             configurator.loadProperties( beanDeclaringClass );
+                                                                             for ( KartaBean kartaBean : beanDefinitionMethod.getAnnotationsByType( KartaBean.class ) )
+                                                                             {
+
+                                                                                Class<?> beanDeclaringClass = beanDefinitionMethod.getDeclaringClass();
+
+                                                                                if ( !configuredBeanClasses.contains( beanDeclaringClass ) )
+                                                                                {
+                                                                                   try
+                                                                                   {
+                                                                                      if ( configurator != null )
+                                                                                      {
+                                                                                         configurator.loadProperties( beanDeclaringClass );
+                                                                                      }
+                                                                                      beanRegistry.loadStaticBeans( beanDeclaringClass );
+                                                                                   }
+                                                                                   catch ( IllegalArgumentException | IllegalAccessException e )
+                                                                                   {
+                                                                                      log.error( "", e );
+                                                                                   }
+                                                                                   configuredBeanClasses.add( beanDeclaringClass );
+                                                                                }
+
+                                                                                String beanName = kartaBean.value();
+
+                                                                                Class<?>[] paramTypes = beanDefinitionMethod.getParameterTypes();
+
+                                                                                Object beanObj = null;
+
+                                                                                if ( paramTypes.length == 0 )
+                                                                                {
+                                                                                   beanObj = beanDefinitionMethod.invoke( null );
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                   continue;
+                                                                                }
+
+                                                                                if ( StringUtils.isAllBlank( beanName ) )
+                                                                                {
+                                                                                   beanName = beanObj.getClass().getName();
+                                                                                }
+
+                                                                                if ( !beanRegistry.add( beanName, beanObj ) )
+                                                                                {
+                                                                                   log.error( "Bean: " + beanName + " is already registered." );
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                   log.info( "Bean: " + beanName + " registered." );
+                                                                                }
+                                                                             }
                                                                           }
-                                                                          beanRegistry.loadStaticBeans( beanDeclaringClass );
+                                                                          catch ( Throwable t )
+                                                                          {
+                                                                             log.error( "Exception while parsing bean definition from method  " + beanDefinitionMethod.getName(), t );
+                                                                          }
+
                                                                        }
-                                                                       catch ( IllegalArgumentException | IllegalAccessException e )
+                                                                    };
+
+   private final Consumer<Class<?>> processLoadPropertiesDefinition = new Consumer<Class<?>>()
+                                                                    {
+                                                                       @Override
+                                                                       public void accept( Class<?> classesToLoadPropertiesWith )
                                                                        {
-                                                                          log.error( "", e );
+                                                                          try
+                                                                          {
+                                                                             if ( !configuredBeanClasses.contains( classesToLoadPropertiesWith ) )
+                                                                             {
+                                                                                try
+                                                                                {
+                                                                                   if ( configurator != null )
+                                                                                   {
+                                                                                      configurator.loadProperties( classesToLoadPropertiesWith );
+                                                                                   }
+                                                                                   beanRegistry.loadStaticBeans( classesToLoadPropertiesWith );
+                                                                                }
+                                                                                catch ( IllegalArgumentException | IllegalAccessException e )
+                                                                                {
+                                                                                   log.error( "", e );
+                                                                                }
+                                                                                configuredBeanClasses.add( classesToLoadPropertiesWith );
+                                                                             }
+                                                                          }
+                                                                          catch ( Throwable t )
+                                                                          {
+                                                                             log.error( "Exception while loading static fileds from properties for class  " + classesToLoadPropertiesWith.getName(), t );
+                                                                          }
+
                                                                        }
-                                                                       configuredBeanClasses.add( beanDeclaringClass );
-                                                                    }
+                                                                    };
 
-                                                                    String beanName = kartaBean.value();
-
-                                                                    Class<?>[] paramTypes = candidateBeanDefinitionMethod.getParameterTypes();
-
-                                                                    Object beanObj = null;
-
-                                                                    if ( paramTypes.length == 0 )
-                                                                    {
-                                                                       beanObj = candidateBeanDefinitionMethod.invoke( null );
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                       continue;
-                                                                    }
-
-                                                                    if ( StringUtils.isAllBlank( beanName ) )
-                                                                    {
-                                                                       beanName = beanObj.getClass().getName();
-                                                                    }
-
-                                                                    if ( !beanRegistry.add( beanName, beanObj ) )
-                                                                    {
-                                                                       log.error( "Bean: " + beanName + " is already registered." );
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                       log.info( "Bean: " + beanName + " registered." );
-                                                                    }
-                                                                 }
-                                                              }
-                                                              catch ( Throwable t )
-                                                              {
-                                                                 log.error( "Exception while parsing bean definition from method  " + candidateBeanDefinitionMethod.getName(), t );
-                                                              }
-
-                                                           }
-                                                        };
-
-   public void addBeansFromPackages( Collection<String> configurationScanPackageNames )
+   public void processConfigBeans( Collection<String> configurationScanPackageNames )
    {
       AnnotationScanner.forEachMethod( configurationScanPackageNames, KartaBean.class, AnnotationScanner.IS_PUBLIC_AND_STATIC, AnnotationScanner.IS_NON_VOID_RETURN_TYPE, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, processBeanDefinition );
+      AnnotationScanner.forEachClass( configurationScanPackageNames, LoadConfiguration.class, AnnotationScanner.IS_PUBLIC, processLoadPropertiesDefinition );
    }
 
    /**
@@ -662,13 +696,25 @@ public class KartaRuntime implements AutoCloseable
 
          if ( StringUtils.isNotBlank( runTarget.getFeatureFile() ) )
          {
-            eventProcessor.runStart( runName, individualTestTags );
+            if ( !eventProcessor.runStart( runName, individualTestTags ) )
+            {
+               runResult.setError( true );
+               runResult.setEndTime( new Date() );
+               return runResult;
+            }
+
             eventProcessor.raiseEvent( new RunStartEvent( runName ) );
             FeatureResult result = runFeatureFile( runInfo, runTarget.getFeatureFile() );
             runResult.setEndTime( new Date() );
             runResult.addTestResult( result );
             eventProcessor.raiseEvent( new RunCompleteEvent( runName, runResult ) );
-            eventProcessor.runStop( runName, individualTestTags );
+
+            if ( !eventProcessor.runStop( runName, individualTestTags ) )
+            {
+               runResult.setError( true );
+               runResult.setEndTime( new Date() );
+               return runResult;
+            }
             return runResult;
          }
          else if ( StringUtils.isNotBlank( runTarget.getJavaTest() ) )
@@ -682,13 +728,23 @@ public class KartaRuntime implements AutoCloseable
             }
 
             JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).runInfo( runInfo ).javaTest( runTarget.getJavaTest() ).javaTestJarFile( runTarget.getJavaTestJarFile() ).build();
-            eventProcessor.runStart( runName, individualTestTags );
+            if ( !eventProcessor.runStart( runName, individualTestTags ) )
+            {
+               runResult.setError( true );
+               runResult.setEndTime( new Date() );
+               return runResult;
+            }
             eventProcessor.raiseEvent( new RunStartEvent( runName ) );
             FeatureResult result = testRunner.call();
             runResult.setEndTime( new Date() );
             runResult.addTestResult( result );
             eventProcessor.raiseEvent( new RunCompleteEvent( runName, runResult ) );
-            eventProcessor.runStop( runName, individualTestTags );
+            if ( !eventProcessor.runStop( runName, individualTestTags ) )
+            {
+               runResult.setError( true );
+               runResult.setEndTime( new Date() );
+               return runResult;
+            }
             return runResult;
          }
          else if ( ( runTarget.getRunTags() != null && !runTarget.getRunTags().isEmpty() ) )
@@ -721,15 +777,31 @@ public class KartaRuntime implements AutoCloseable
     */
    public RunResult runTestsWithTags( RunInfo runInfo, HashSet<String> tags ) throws Throwable
    {
+      RunResult runResult = new RunResult();
+
       String runName = runInfo.getRunName();
-      eventProcessor.runStart( runName, tags );
+
+      if ( !eventProcessor.runStart( runName, tags ) )
+      {
+         runResult.setError( true );
+         runResult.setEndTime( new Date() );
+         return runResult;
+      }
+
       eventProcessor.raiseEvent( new RunStartEvent( runName ) );
       ArrayList<Test> tests = testCatalogManager.filterTestsByTag( tags );
       Collections.sort( tests );
-      RunResult result = runTest( runInfo, tests );
-      eventProcessor.raiseEvent( new RunCompleteEvent( runName, result ) );
-      eventProcessor.runStop( runName, tags );
-      return result;
+      runResult = runTest( runInfo, tests );
+      eventProcessor.raiseEvent( new RunCompleteEvent( runName, runResult ) );
+
+      if ( !eventProcessor.runStop( runName, tags ) )
+      {
+         runResult.setError( true );
+         runResult.setEndTime( new Date() );
+         return runResult;
+      }
+
+      return runResult;
    }
 
    /**
