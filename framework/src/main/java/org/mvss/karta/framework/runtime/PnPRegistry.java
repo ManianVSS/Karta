@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
+@Getter
 @Log4j2
 public class PnPRegistry implements AutoCloseable
 {
@@ -181,32 +182,7 @@ public class PnPRegistry implements AutoCloseable
       }
    }
 
-   public boolean initializePlugins( BeanRegistry beanRegistry, Configurator configurator )
-   {
-      for ( Entry<String, Plugin> pluginEntry : enabledPlugins.entrySet() )
-      {
-         Plugin plugin = pluginEntry.getValue();
-         try
-         {
-            if ( beanRegistry != null )
-            {
-               beanRegistry.loadBeans( plugin );
-            }
-
-            if ( configurator != null )
-            {
-               configurator.loadProperties( plugin );
-            }
-            plugin.initialize();
-         }
-         catch ( Throwable t )
-         {
-            log.error( "Plugin failed to initialize: " + pluginEntry.getKey(), t );
-            return false;
-         }
-      }
-      return true;
-   }
+   // Initialize plugins moved to KartaRuntime using @Initializers
 
    @Override
    public void close()

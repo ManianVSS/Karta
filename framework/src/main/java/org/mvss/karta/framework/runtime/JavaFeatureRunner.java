@@ -92,8 +92,6 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          result = new FeatureResult();
 
          EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-         HashMap<String, HashMap<String, Serializable>> testProperties = kartaRuntime.getConfigurator().getPropertiesStore();
-         BeanRegistry beanRegistry = kartaRuntime.getBeanRegistry();
          Random random = kartaRuntime.getRandom();
 
          boolean loadClassFromJar = StringUtils.isNotBlank( javaTestJarFile ) && Files.exists( Paths.get( javaTestJarFile ) );
@@ -118,9 +116,8 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          TreeMap<Integer, ArrayList<Method>> scenarioTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
          TreeMap<Integer, ArrayList<Method>> featureTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
 
-         beanRegistry.loadStaticBeans( testCaseClass );
          Object testCaseObject = testCaseClass.newInstance();
-         beanRegistry.loadBeans( testCaseObject );
+         kartaRuntime.initializeObject( testCaseObject );
 
          for ( Method classMethod : classMethods )
          {
@@ -160,8 +157,6 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          ArrayList<GenericObjectWithChance<Method>> scenarioMethods = DataUtils.generateSequencedList( scenarioMethodsMap );
          ArrayList<Method> scenarioTearDownMethods = DataUtils.generateSequencedList( scenarioTearDownMethodsMap );
          ArrayList<Method> featureTearDownMethods = DataUtils.generateSequencedList( featureTearDownMethodsMap );
-
-         Configurator.loadProperties( testProperties, testCaseObject );
 
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 

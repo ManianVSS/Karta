@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import org.mvss.karta.framework.core.ClassMethodConsumer;
+import org.mvss.karta.framework.core.ObjectMethodConsumer;
 import org.mvss.karta.framework.runtime.Constants;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
@@ -142,7 +144,7 @@ public class AnnotationScanner
    }
 
    /**
-    * Scans every method in the class with matching annotations, modifiers and return type and call the consumer action
+    * Scans every method in the class with matching annotations, modifiers and return type and calls the consumer action
     * 
     * @param classToWorkWith
     * @param annotation
@@ -151,7 +153,7 @@ public class AnnotationScanner
     * @param paramsChecks
     * @param action
     */
-   public static void forEachMethod( Class<?> classToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks, Consumer<Method> action )
+   public static void forEachMethod( Class<?> classToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks, ClassMethodConsumer action )
    {
       for ( Method candidateMethod : classToWorkWith.getMethods() )
       {
@@ -162,7 +164,41 @@ public class AnnotationScanner
                if ( ( ( modifierChecks == null ) || modifierChecks.test( candidateMethod.getModifiers() ) ) && ( ( returnTypeCheck == null ) || returnTypeCheck.test( candidateMethod.getReturnType() ) )
                     && ( ( paramsChecks == null ) || paramsChecks.test( candidateMethod.getParameters() ) ) )
                {
-                  action.accept( candidateMethod );
+                  action.accept( classToWorkWith, candidateMethod );
+               }
+            }
+         }
+         catch ( Throwable t )
+         {
+            log.error( Constants.EMPTY_STRING, t );
+         }
+      }
+   }
+
+   /**
+    * Scans every method in the object's class with matching annotations, modifiers and return type and calls the ObjectMethodConsumer action
+    * 
+    * @param objectToWorkWith
+    * @param annotation
+    * @param modifierChecks
+    * @param returnTypeCheck
+    * @param paramsChecks
+    * @param action
+    */
+   public static void forEachMethod( Object objectToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks, ObjectMethodConsumer action )
+   {
+      Class<?> classToWorkWith = objectToWorkWith.getClass();
+
+      for ( Method candidateMethod : classToWorkWith.getMethods() )
+      {
+         try
+         {
+            if ( candidateMethod.isAnnotationPresent( annotation ) )
+            {
+               if ( ( ( modifierChecks == null ) || modifierChecks.test( candidateMethod.getModifiers() ) ) && ( ( returnTypeCheck == null ) || returnTypeCheck.test( candidateMethod.getReturnType() ) )
+                    && ( ( paramsChecks == null ) || paramsChecks.test( candidateMethod.getParameters() ) ) )
+               {
+                  action.accept( objectToWorkWith, candidateMethod );
                }
             }
          }

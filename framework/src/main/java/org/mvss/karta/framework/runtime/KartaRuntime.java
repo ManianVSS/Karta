@@ -31,9 +31,12 @@ import org.mvss.karta.configuration.KartaConfiguration;
 import org.mvss.karta.configuration.PluginConfig;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
+import org.mvss.karta.framework.core.ClassMethodConsumer;
 import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.core.KartaBean;
 import org.mvss.karta.framework.core.LoadConfiguration;
+import org.mvss.karta.framework.core.ObjectMethodConsumer;
 import org.mvss.karta.framework.core.PreparedChaosAction;
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.PreparedStep;
@@ -55,6 +58,7 @@ import org.mvss.karta.framework.runtime.event.RunCompleteEvent;
 import org.mvss.karta.framework.runtime.event.RunStartEvent;
 import org.mvss.karta.framework.runtime.event.TestIncidentOccurrenceEvent;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
+import org.mvss.karta.framework.runtime.interfaces.Plugin;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
@@ -326,6 +330,7 @@ public class KartaRuntime implements AutoCloseable
       // Initialize bean registry
       /*---------------------------------------------------------------------------------------------------------------------*/
       beanRegistry = new BeanRegistry();
+      beanRegistry.add( this );
       beanRegistry.add( configurator );
       beanRegistry.add( testCatalogManager );
       beanRegistry.add( eventProcessor );
@@ -341,11 +346,11 @@ public class KartaRuntime implements AutoCloseable
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize enabled plug-ins only after all other beans are initialized
       /*---------------------------------------------------------------------------------------------------------------------*/
-      if ( !pnpRegistry.initializePlugins( beanRegistry, configurator ) )
-      {
-         return false;
-      }
 
+      for ( Plugin pluginEntry : pnpRegistry.getEnabledPlugins().values() )
+      {
+         initializeObject( pluginEntry );
+      }
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Start event processor with event listener plug-ins*
       /*---------------------------------------------------------------------------------------------------------------------*/
@@ -371,22 +376,7 @@ public class KartaRuntime implements AutoCloseable
 
                                                                                 Class<?> beanDeclaringClass = beanDefinitionMethod.getDeclaringClass();
 
-                                                                                if ( !configuredBeanClasses.contains( beanDeclaringClass ) )
-                                                                                {
-                                                                                   try
-                                                                                   {
-                                                                                      if ( configurator != null )
-                                                                                      {
-                                                                                         configurator.loadProperties( beanDeclaringClass );
-                                                                                      }
-                                                                                      beanRegistry.loadStaticBeans( beanDeclaringClass );
-                                                                                   }
-                                                                                   catch ( IllegalArgumentException | IllegalAccessException e )
-                                                                                   {
-                                                                                      log.error( "", e );
-                                                                                   }
-                                                                                   configuredBeanClasses.add( beanDeclaringClass );
-                                                                                }
+                                                                                initializeClass( beanDeclaringClass );
 
                                                                                 String beanName = kartaBean.value();
 
@@ -433,22 +423,7 @@ public class KartaRuntime implements AutoCloseable
                                                                        {
                                                                           try
                                                                           {
-                                                                             if ( !configuredBeanClasses.contains( classesToLoadPropertiesWith ) )
-                                                                             {
-                                                                                try
-                                                                                {
-                                                                                   if ( configurator != null )
-                                                                                   {
-                                                                                      configurator.loadProperties( classesToLoadPropertiesWith );
-                                                                                   }
-                                                                                   beanRegistry.loadStaticBeans( classesToLoadPropertiesWith );
-                                                                                }
-                                                                                catch ( IllegalArgumentException | IllegalAccessException e )
-                                                                                {
-                                                                                   log.error( "", e );
-                                                                                }
-                                                                                configuredBeanClasses.add( classesToLoadPropertiesWith );
-                                                                             }
+                                                                             initializeClass( classesToLoadPropertiesWith );
                                                                           }
                                                                           catch ( Throwable t )
                                                                           {
@@ -462,6 +437,87 @@ public class KartaRuntime implements AutoCloseable
    {
       AnnotationScanner.forEachMethod( configurationScanPackageNames, KartaBean.class, AnnotationScanner.IS_PUBLIC_AND_STATIC, AnnotationScanner.IS_NON_VOID_RETURN_TYPE, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, processBeanDefinition );
       AnnotationScanner.forEachClass( configurationScanPackageNames, LoadConfiguration.class, AnnotationScanner.IS_PUBLIC, processLoadPropertiesDefinition );
+   }
+
+   private final ObjectMethodConsumer callObjectInitializer = new ObjectMethodConsumer()
+   {
+      @Override
+      public void accept( Object object, Method method )
+      {
+         try
+         {
+            method.invoke( object );
+         }
+         catch ( Throwable t )
+         {
+            log.error( "Exception while parsing bean definition from method  " + method.getName(), t );
+         }
+      }
+   };
+
+   /**
+    * Sets the properties and beans(static and non-static) for the object and calls any initializer methods
+    * 
+    * @see Initializer
+    * @param object
+    */
+   public void initializeObject( Object object )
+   {
+      try
+      {
+         Class<?> classOfObject = object.getClass();
+         initializeClass( classOfObject );
+         // Not checking one time initialization for object level here which can prevent garbage collection
+         configurator.loadProperties( object );
+         beanRegistry.loadBeans( object );
+         AnnotationScanner.forEachMethod( object, Initializer.class, AnnotationScanner.IS_NON_STATIC, null, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, callObjectInitializer );
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while initializing object", t );
+      }
+   }
+
+   private final ClassMethodConsumer callClassInitializer = new ClassMethodConsumer()
+   {
+      @Override
+      public void accept( Class<?> classToWorkWith, Method beanDefinitionMethod )
+      {
+         try
+         {
+            beanDefinitionMethod.invoke( null );
+         }
+         catch ( Throwable t )
+         {
+            log.error( "Exception while parsing bean definition from method  " + beanDefinitionMethod.getName(), t );
+         }
+
+      }
+   };
+
+   /**
+    * Sets the properties and beans (static) for the class of object and calls any initializer methods
+    * 
+    * @see Initializer
+    * @param theClassOfObject
+    */
+   public void initializeClass( Class<?> theClassOfObject )
+   {
+      try
+      {
+         if ( !configuredBeanClasses.contains( theClassOfObject ) )
+         {
+            configurator.loadProperties( theClassOfObject );
+            beanRegistry.loadStaticBeans( theClassOfObject );
+
+            AnnotationScanner.forEachMethod( theClassOfObject, Initializer.class, AnnotationScanner.IS_STATIC, null, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, callClassInitializer );
+            configuredBeanClasses.add( theClassOfObject );
+         }
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while initializing object", t );
+      }
    }
 
    /**

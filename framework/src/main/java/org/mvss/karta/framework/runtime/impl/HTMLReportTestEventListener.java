@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.core.RunResult;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.SerializableKVP;
@@ -156,7 +157,7 @@ public class HTMLReportTestEventListener implements TestEventListener
       return PLUGIN_NAME;
    }
 
-   @Override
+   @Initializer
    public boolean initialize() throws Throwable
    {
       if ( initialized )

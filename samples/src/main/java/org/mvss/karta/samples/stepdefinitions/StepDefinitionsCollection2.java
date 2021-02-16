@@ -13,11 +13,9 @@ import org.mvss.karta.framework.randomization.RandomizationUtils;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.utils.WaitUtil;
 
-import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@NoArgsConstructor
 public class StepDefinitionsCollection2
 {
    private Random          random = new Random();

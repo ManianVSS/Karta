@@ -88,4 +88,14 @@ tests:
     numberOfIterations: 1
     sourceArchive: samples.jar
 
+  # - name: UIAutomationWithError
+  #   priority: 1
+  #   description: UI Automation test with error
+  #   tags:
+  #     - UI
+  #     - negative
+  #   featureFileName: featureFiles/UITests/UIAutomationWithError.yaml
+  #   numberOfIterations: 1
+  #   sourceArchive: samples.jar
+
 subCategories: []

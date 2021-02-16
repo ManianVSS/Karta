@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
+import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
@@ -32,7 +33,7 @@ public class DumpToFileTestEventListener implements TestEventListener
       return PLUGIN_NAME;
    }
 
-   @Override
+   @Initializer
    public boolean initialize() throws Throwable
    {
       if ( initialized )

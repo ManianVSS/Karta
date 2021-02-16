@@ -25,6 +25,7 @@ import org.mvss.karta.framework.core.BeforeScenario;
 import org.mvss.karta.framework.core.ChaosActionDefinition;
 import org.mvss.karta.framework.core.ContextBean;
 import org.mvss.karta.framework.core.ContextVariable;
+import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.core.Pair;
 import org.mvss.karta.framework.core.PreparedChaosAction;
@@ -37,8 +38,8 @@ import org.mvss.karta.framework.core.TestData;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.nodes.KartaNodeRegistry;
 import org.mvss.karta.framework.runtime.BeanRegistry;
-import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.TestFailureException;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
@@ -89,10 +90,9 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    private ArrayList<String>                                 chaosActionDefinitionPackageNames      = new ArrayList<String>();
 
    @KartaAutoWired
-   private BeanRegistry                                      beanRegistry;
+   private KartaRuntime                                      kartaRuntime;
 
-   @KartaAutoWired
-   private Configurator                                      configurator;
+   private BeanRegistry                                      initializedClassesRegistry             = new BeanRegistry();
 
    @KartaAutoWired
    private EventProcessor                                    eventProcessor;
@@ -145,16 +145,19 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                      log.debug( "Mapping stepdef " + stepDefString + " to " + methodDescription );
 
                                                                      Class<?> stepDefinitionClass = candidateStepDefinitionMethod.getDeclaringClass();
-                                                                     if ( !beanRegistry.containsKey( stepDefinitionClass.getName() ) )
+
+                                                                     Object stepDefClassObj = initializedClassesRegistry.get( stepDefinitionClass.getName() );
+                                                                     if ( stepDefClassObj == null )
                                                                      {
-                                                                        beanRegistry.loadStaticBeans( stepDefinitionClass );
-                                                                        Object stepDefClassObj = stepDefinitionClass.newInstance();
-                                                                        configurator.loadProperties( stepDefClassObj );
-                                                                        beanRegistry.loadBeans( stepDefClassObj );
-                                                                        beanRegistry.add( stepDefClassObj );
+                                                                        stepDefClassObj = stepDefinitionClass.newInstance();
+                                                                        kartaRuntime.initializeObject( stepDefClassObj );
+                                                                        initializedClassesRegistry.add( stepDefClassObj );
                                                                      }
 
-                                                                     stepHandlerMap.put( stepDefString, new Pair<Object, Method>( beanRegistry.get( stepDefinitionClass.getName() ), candidateStepDefinitionMethod ) );
+                                                                     if ( stepDefClassObj != null )
+                                                                     {
+                                                                        stepHandlerMap.put( stepDefString, new Pair<Object, Method>( stepDefClassObj, candidateStepDefinitionMethod ) );
+                                                                     }
                                                                   }
                                                                }
                                                                catch ( Throwable t )
@@ -176,7 +179,6 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                   {
                                                                      String methodDescription = candidateChaosActionMethod.toString();
                                                                      String chaosActionName = chaosActionDefinition.value();
-                                                                     // Class<?>[] paramTypes = candidateChaosActionMethod.getParameterTypes();
 
                                                                      if ( chaosActionHandlerMap.containsKey( chaosActionName ) )
                                                                      {
@@ -210,15 +212,19 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                      log.debug( "Mapping chaos action definition " + chaosActionName + " to " + methodDescription );
 
                                                                      Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
-                                                                     if ( !beanRegistry.containsKey( chaosActionDefinitionClass.getName() ) )
+
+                                                                     Object chaosActionDefClassObj = initializedClassesRegistry.get( chaosActionDefinitionClass.getName() );
+                                                                     if ( chaosActionDefClassObj == null )
                                                                      {
-                                                                        beanRegistry.loadStaticBeans( chaosActionDefinitionClass );
-                                                                        Object chaosActionDefClassObj = chaosActionDefinitionClass.newInstance();
-                                                                        configurator.loadProperties( chaosActionDefClassObj );
-                                                                        beanRegistry.loadBeans( chaosActionDefClassObj );
-                                                                        beanRegistry.add( chaosActionDefClassObj );
+                                                                        chaosActionDefClassObj = chaosActionDefinitionClass.newInstance();
+                                                                        kartaRuntime.initializeObject( chaosActionDefClassObj );
+                                                                        initializedClassesRegistry.add( chaosActionDefClassObj );
                                                                      }
-                                                                     chaosActionHandlerMap.put( chaosActionName, new Pair<Object, Method>( beanRegistry.get( chaosActionDefinitionClass.getName() ), candidateChaosActionMethod ) );
+
+                                                                     if ( chaosActionDefClassObj != null )
+                                                                     {
+                                                                        chaosActionHandlerMap.put( chaosActionName, new Pair<Object, Method>( chaosActionDefClassObj, candidateChaosActionMethod ) );
+                                                                     }
                                                                   }
                                                                }
                                                                catch ( Throwable t )
@@ -256,14 +262,13 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       log.debug( "Mapping hook for " + tags + " to " + methodDescription );
 
       Class<?> hookClass = hookMethod.getDeclaringClass();
-      if ( !beanRegistry.containsKey( hookClass.getName() ) )
+      Object hookObj = initializedClassesRegistry.get( hookClass.getName() );
+
+      if ( hookObj == null )
       {
-         configurator.loadProperties( hookClass );
-         beanRegistry.loadStaticBeans( hookClass );
-         Object hookObj = hookClass.newInstance();
-         configurator.loadProperties( hookObj );
-         beanRegistry.loadBeans( hookObj );
-         beanRegistry.add( hookObj );
+         hookObj = hookClass.newInstance();
+         kartaRuntime.initializeObject( hookObj );
+         initializedClassesRegistry.add( hookObj );
       }
 
       for ( String tag : tags )
@@ -282,7 +287,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
          ArrayList<Pair<Object, Method>> hooksDef = taggedHooks.get( tagPattern );
 
-         Pair<Object, Method> hookdef = new Pair<Object, Method>( beanRegistry.get( hookClass.getName() ), hookMethod );
+         Pair<Object, Method> hookdef = new Pair<Object, Method>( hookObj, hookMethod );
 
          hooksDef.add( hookdef );
       }
@@ -409,7 +414,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                     }
                                                                  };
 
-   @Override
+   @Initializer
    public boolean initialize() throws Throwable
    {
       if ( initialized )

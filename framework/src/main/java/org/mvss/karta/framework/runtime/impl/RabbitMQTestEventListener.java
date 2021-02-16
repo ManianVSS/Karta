@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.runtime.impl;
 
 import org.apache.commons.lang3.SerializationUtils;
+import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
@@ -47,7 +48,7 @@ public class RabbitMQTestEventListener implements TestEventListener
       return PLUGIN_NAME;
    }
 
-   @Override
+   @Initializer
    public boolean initialize() throws Throwable
    {
       if ( initialized )

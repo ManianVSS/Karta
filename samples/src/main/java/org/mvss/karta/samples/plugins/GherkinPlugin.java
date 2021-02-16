@@ -3,6 +3,7 @@ package org.mvss.karta.samples.plugins;
 import java.util.Arrays;
 import java.util.List;
 
+import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.samples.utils.GherkinUtils;
@@ -24,7 +25,7 @@ public class GherkinPlugin implements FeatureSourceParser
       return PLUGIN_NAME;
    }
 
-   @Override
+   @Initializer
    public boolean initialize() throws Throwable
    {
       if ( initialized )

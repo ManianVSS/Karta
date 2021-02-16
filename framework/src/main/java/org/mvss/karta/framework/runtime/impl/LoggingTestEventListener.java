@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.runtime.impl;
 
 import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.runtime.event.ChaosActionJobCompleteEvent;
@@ -70,7 +71,7 @@ public class LoggingTestEventListener implements TestEventListener
       return PLUGIN_NAME;
    }
 
-   @Override
+   @Initializer
    public boolean initialize() throws Throwable
    {
       if ( initialized )

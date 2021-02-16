@@ -63,7 +63,10 @@ public class WaitUtil
             {
                return WaitResult.builder().successful( true ).startTime( initialTimeStamp ).endTime( System.currentTimeMillis() ).build();
             }
-            waitIterationTask.accept( i );
+            if ( waitIterationTask != null )
+            {
+               waitIterationTask.accept( i );
+            }
          }
          catch ( Throwable t )
          {

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
@@ -58,7 +59,7 @@ public class CSVTestDataSourcePlugin implements TestDataSource
       }
    }
 
-   @Override
+   @Initializer
    public boolean initialize() throws Throwable
    {
       if ( initialized )

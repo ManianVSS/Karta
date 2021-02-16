@@ -39,7 +39,7 @@ public class KartaNodeServer
    public KartaNodeServer( KartaRuntime kartaRuntime ) throws IllegalArgumentException, IllegalAccessException
    {
       this.kartaRuntime = kartaRuntime;
-      kartaRuntime.getConfigurator().loadProperties( this );
+      kartaRuntime.initializeObject( this );
    }
 
    /**
