@@ -104,7 +104,6 @@ public class KartaMain
          }
          else
          {
-
             boolean optionMissing = true;
             boolean runTargetAvailable = false;
 

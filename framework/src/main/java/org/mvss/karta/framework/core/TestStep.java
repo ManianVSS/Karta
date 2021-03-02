@@ -24,25 +24,32 @@ import lombok.ToString;
 @AllArgsConstructor
 public class TestStep implements Serializable
 {
-   private static final long                        serialVersionUID = 1L;
+   private static final long                              serialVersionUID = 1L;
 
    /**
     * The step identifier which is used to map the step in feature files to step definitions of step runner.
     */
-   private String                                   step;
+   private String                                         step;
 
    /**
     * The test data passed along with the step.
     */
-   private HashMap<String, Serializable>            testData;
+   private HashMap<String, Serializable>                  testData;
 
    /**
     * The possible test data values for the test step.
     */
-   private HashMap<String, ArrayList<Serializable>> testDataSet;
+   private HashMap<String, ArrayList<Serializable>>       testDataSet;
+
+   /**
+    * Object generation rule mapped by variable name to rule for generating test data.
+    * 
+    * @see org.mvss.karta.framework.randomization.ObjectGenerationRule
+    */
+   private HashMap<String, HashMap<String, Serializable>> variableTestDataRuleMap;
 
    /**
     * The node on which the step should be run. The node name is not a hostname/ip but a role say "InventoryServer" which is mapped to a host in Karta configuration.
     */
-   private String                                   node;
+   private String                                         node;
 }

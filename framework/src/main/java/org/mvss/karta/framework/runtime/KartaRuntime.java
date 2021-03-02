@@ -52,6 +52,7 @@ import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.nodes.KartaNodeConfiguration;
 import org.mvss.karta.framework.nodes.KartaNodeRegistry;
+import org.mvss.karta.framework.randomization.ObjectGenerationRule;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.RunCompleteEvent;
@@ -1159,10 +1160,42 @@ public class KartaRuntime implements AutoCloseable
    {
       StepRunner stepRunner = getStepRunner( runInfo );
       String stepIdentifier = step.getStep();
+
+      if ( StringUtils.isBlank( stepIdentifier ) )
+      {
+         log.error( "Empty step definition identifier for step " + step );
+
+      }
+
       String sanitizedStepIdentifer = stepRunner.sanitizeStepIdentifier( stepIdentifier );
       TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, sanitizedStepIdentifer, null, variables );
       testExecutionContext.setContextBeanRegistry( contextBeanRegistry );
-      testExecutionContext.mergeTestData( step.getTestData(), DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
+
+      HashMap<String, Serializable> mergedTestData = DataUtils.cloneMap( step.getTestData() );
+      HashMap<String, HashMap<String, Serializable>> variableTestDataRuleMap = step.getVariableTestDataRuleMap();
+      if ( variableTestDataRuleMap != null )
+      {
+         ObjectMapper objectMapper = ParserUtils.getObjectMapper();
+
+         for ( String objectKey : variableTestDataRuleMap.keySet() )
+         {
+            if ( !mergedTestData.containsKey( objectKey ) )
+            {
+               ObjectGenerationRule ruleToAdd = objectMapper.readValue( objectMapper.writeValueAsString( variableTestDataRuleMap.get( objectKey ) ), ObjectGenerationRule.class );
+
+               if ( !ruleToAdd.validateConfiguration() )
+               {
+                  log.error( "Object rule generation failed validation: " + ruleToAdd );
+                  continue;
+               }
+
+               mergedTestData.put( objectKey, ruleToAdd.generateNextValue( random ) );
+            }
+         }
+
+      }
+
+      testExecutionContext.mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
 
       return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).build();
    }

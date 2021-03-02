@@ -446,6 +446,12 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    @Override
    public String sanitizeStepIdentifier( String stepIdentifier )
    {
+      // Handle null stepIdentifier
+      if ( StringUtils.isBlank( stepIdentifier ) )
+      {
+         return stepIdentifier;
+      }
+
       stepIdentifier = stepIdentifier.trim();
       String words[] = stepIdentifier.split( WORD_FETCH_REGEX );
       String conjuctionUsed = null;

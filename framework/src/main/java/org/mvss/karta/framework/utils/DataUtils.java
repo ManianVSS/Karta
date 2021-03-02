@@ -25,7 +25,11 @@ public class DataUtils
    public static <K, V> HashMap<K, V> cloneMap( HashMap<K, V> source )
    {
       HashMap<K, V> clone = new HashMap<K, V>();
-      clone.putAll( source );
+
+      if ( source != null )
+      {
+         clone.putAll( source );
+      }
       return clone;
    }
 
