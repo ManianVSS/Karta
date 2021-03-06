@@ -1,6 +1,6 @@
 # This is the delete old package workflow that is manually triggered
 
-name: Manual workflow
+name: Delete old package
 
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
