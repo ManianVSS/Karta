@@ -5,20 +5,28 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import org.mvss.karta.framework.core.ClassMethodConsumer;
+import org.mvss.karta.framework.core.ObjectMethodConsumer;
 import org.mvss.karta.framework.runtime.Constants;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Utility class based on reflection to search for annotated classes, field and method and perform actions.
+ * 
+ * @author Manian
+ */
 @Log4j2
 public class AnnotationScanner
 {
@@ -100,7 +108,17 @@ public class AnnotationScanner
 
    public static final Predicate<Parameter[]> DOES_NOT_HAVE_PARAMETERS = HAS_PARAMS.negate();
 
-   public static void forEachMethod( ArrayList<String> annotationScanPackageNames, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks,
+   /**
+    * Scans every method in the packages with matching annotations, modifiers and return type and call the consumer action
+    * 
+    * @param annotationScanPackageNames
+    * @param annotation
+    * @param modifierChecks
+    * @param returnTypeCheck
+    * @param paramsChecks
+    * @param action
+    */
+   public static void forEachMethod( Collection<String> annotationScanPackageNames, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks,
                                      Consumer<Method> action )
    {
       for ( String annotationScanPackageName : annotationScanPackageNames )
@@ -125,7 +143,17 @@ public class AnnotationScanner
       }
    }
 
-   public static void forEachMethod( Class<?> classToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks, Consumer<Method> action )
+   /**
+    * Scans every method in the class with matching annotations, modifiers and return type and calls the consumer action
+    * 
+    * @param classToWorkWith
+    * @param annotation
+    * @param modifierChecks
+    * @param returnTypeCheck
+    * @param paramsChecks
+    * @param action
+    */
+   public static void forEachMethod( Class<?> classToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks, ClassMethodConsumer action )
    {
       for ( Method candidateMethod : classToWorkWith.getMethods() )
       {
@@ -136,7 +164,7 @@ public class AnnotationScanner
                if ( ( ( modifierChecks == null ) || modifierChecks.test( candidateMethod.getModifiers() ) ) && ( ( returnTypeCheck == null ) || returnTypeCheck.test( candidateMethod.getReturnType() ) )
                     && ( ( paramsChecks == null ) || paramsChecks.test( candidateMethod.getParameters() ) ) )
                {
-                  action.accept( candidateMethod );
+                  action.accept( classToWorkWith, candidateMethod );
                }
             }
          }
@@ -147,13 +175,55 @@ public class AnnotationScanner
       }
    }
 
-   public static void forEachClass( ArrayList<String> annotationScanPackageNames, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Consumer<Class<?>> action )
+   /**
+    * Scans every method in the object's class with matching annotations, modifiers and return type and calls the ObjectMethodConsumer action
+    * 
+    * @param objectToWorkWith
+    * @param annotation
+    * @param modifierChecks
+    * @param returnTypeCheck
+    * @param paramsChecks
+    * @param action
+    */
+   public static void forEachMethod( Object objectToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks, ObjectMethodConsumer action )
+   {
+      Class<?> classToWorkWith = objectToWorkWith.getClass();
+
+      for ( Method candidateMethod : classToWorkWith.getMethods() )
+      {
+         try
+         {
+            if ( candidateMethod.isAnnotationPresent( annotation ) )
+            {
+               if ( ( ( modifierChecks == null ) || modifierChecks.test( candidateMethod.getModifiers() ) ) && ( ( returnTypeCheck == null ) || returnTypeCheck.test( candidateMethod.getReturnType() ) )
+                    && ( ( paramsChecks == null ) || paramsChecks.test( candidateMethod.getParameters() ) ) )
+               {
+                  action.accept( objectToWorkWith, candidateMethod );
+               }
+            }
+         }
+         catch ( Throwable t )
+         {
+            log.error( Constants.EMPTY_STRING, t );
+         }
+      }
+   }
+
+   /**
+    * Scans every class in the packages with matching annotations and modifiers and call the consumer action
+    * 
+    * @param annotationScanPackageNames
+    * @param annotation
+    * @param modifierChecks
+    * @param action
+    */
+   public static void forEachClass( Collection<String> annotationScanPackageNames, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Consumer<Class<?>> action )
    {
       for ( String annotationScanPackageName : annotationScanPackageNames )
       {
          try
          {
-            Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( annotationScanPackageName ) ).setScanners( new TypeAnnotationsScanner() ) );
+            Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( annotationScanPackageName ) ).setScanners( new TypeAnnotationsScanner(), new SubTypesScanner() ) );
             Set<Class<?>> candidateClasses = reflections.getTypesAnnotatedWith( annotation );
 
             for ( Class<?> candidateMethod : candidateClasses )
@@ -171,6 +241,15 @@ public class AnnotationScanner
       }
    }
 
+   /**
+    * Scans every field in the class with matching annotations, modifiers and return type and call the consumer action
+    * 
+    * @param classToWorkWith
+    * @param annotation
+    * @param modifierChecks
+    * @param typeCheck
+    * @param action
+    */
    public static void forEachField( Class<?> classToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> typeCheck, AnnotatedFieldConsumer action )
    {
       if ( ( classToWorkWith == null ) || classToWorkWith.getName().equals( Object.class.getName() ) )
@@ -180,9 +259,14 @@ public class AnnotationScanner
 
       for ( Field fieldOfClass : classToWorkWith.getDeclaredFields() )
       {
-         Annotation annotationObject = fieldOfClass.getAnnotation( annotation );
+         Annotation annotationObject = null;
 
-         if ( ( annotationObject != null ) && ( ( modifierChecks == null ) || modifierChecks.test( fieldOfClass.getModifiers() ) ) )
+         if ( annotation != null )
+         {
+            annotationObject = fieldOfClass.getAnnotation( annotation );
+         }
+
+         if ( ( ( annotation == null ) || ( annotationObject != null ) ) && ( ( modifierChecks == null ) || modifierChecks.test( fieldOfClass.getModifiers() ) ) )
          {
             action.accept( classToWorkWith, fieldOfClass, annotationObject );
          }

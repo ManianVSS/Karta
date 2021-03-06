@@ -2,6 +2,11 @@ package org.mvss.karta.framework.utils;
 
 import lombok.Setter;
 
+/**
+ * Utility class to work with Java SSL properties
+ * 
+ * @author Manian
+ */
 public class SSLUtils
 {
    public static final String   JAVAX_NET_SSL_TRUSTSTORETYPE     = "javax.net.ssl.trustStoreType";
@@ -14,11 +19,19 @@ public class SSLUtils
    @Setter
    private static SSLProperties defaultSSLProperties             = new SSLProperties();
 
+   /**
+    * Set Java SSL properties to the default values
+    */
    public static void setSslProperties()
    {
       setSslProperties( defaultSSLProperties );
    }
 
+   /**
+    * Set Java SSL properties as specified by the SSLProperties object
+    * 
+    * @param sslProperties
+    */
    public static void setSslProperties( SSLProperties sslProperties )
    {
       System.setProperty( JAVAX_NET_SSL_TRUSTSTORETYPE, sslProperties.getTrustStoreType() );
@@ -30,6 +43,9 @@ public class SSLUtils
       System.setProperty( JAVAX_NET_SSL_KEYSTOREPASSWORD, sslProperties.getKeyStorePassword() );
    }
 
+   /**
+    * Clears the Java SSL properties
+    */
    public static void clearSslProperties()
    {
       System.clearProperty( JAVAX_NET_SSL_TRUSTSTORETYPE );

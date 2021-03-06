@@ -12,6 +12,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
 
@@ -40,19 +41,21 @@ public class TestCatalogManager
    public void mergeWithCatalog( String sourceArchive ) throws Throwable
    {
       InputStream fileStream = null;
-      ClassLoader loader = TestCatalogManager.class.getClassLoader();
 
       if ( StringUtils.isNotBlank( sourceArchive ) )
       {
-         loader = DynamicClassLoader.getClassLoaderForJar( sourceArchive );
+         ClassLoader loader = DynamicClassLoader.getClassLoaderForJar( sourceArchive );
 
          if ( loader == null )
          {
             return;
          }
+         fileStream = loader.getResourceAsStream( Constants.TEST_CATALOG_FRAGMENT_FILE_NAME );
       }
-
-      fileStream = loader.getResourceAsStream( Constants.TEST_CATALOG_FRAGMENT_FILE_NAME );
+      else
+      {
+         fileStream = ClassPathLoaderUtils.getFileStream( Constants.TEST_CATALOG_FRAGMENT_FILE_NAME );
+      }
 
       if ( fileStream == null )
       {
@@ -67,7 +70,6 @@ public class TestCatalogManager
 
    public void mergeRepositoryDirectoryIntoCatalog( File repositoryDirectory )
    {
-
       try
       {
          mergeWithCatalog( (String) null );

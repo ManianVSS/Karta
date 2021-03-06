@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.mvss.karta.framework.runtime.Constants;
+
 /**
  * This annotation is used by Kriya plug-in to allow definition of the after feature life cycle hook. </br>
  * The value are the regular expression tag patterns to match test(feature) with tag.</br>
@@ -15,5 +17,6 @@ import java.lang.annotation.Target;
 @Retention( RetentionPolicy.RUNTIME )
 public @interface AfterFeature
 {
-   public String[] value();
+   // Tags
+   public String[] value() default Constants.REGEX_ALL_STRING;
 }

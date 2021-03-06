@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
+@Getter
 @Log4j2
 public class PnPRegistry implements AutoCloseable
 {
@@ -135,6 +136,7 @@ public class PnPRegistry implements AutoCloseable
 
       if ( configurator != null )
       {
+         // TODO: Change to plugin properties yaml
          InputStream runtimePropertiesInputStream = ( jarFile == null ) ? ClassPathLoaderUtils.getFileStream( Constants.KARTA_RUNTIME_PROPERTIES_YAML )
                   : DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_RUNTIME_PROPERTIES_YAML );
 
@@ -180,32 +182,7 @@ public class PnPRegistry implements AutoCloseable
       }
    }
 
-   public boolean initializePlugins( BeanRegistry beanRegistry, Configurator configurator )
-   {
-      for ( Entry<String, Plugin> pluginEntry : enabledPlugins.entrySet() )
-      {
-         Plugin plugin = pluginEntry.getValue();
-         try
-         {
-            if ( beanRegistry != null )
-            {
-               beanRegistry.loadBeans( plugin );
-            }
-
-            if ( configurator != null )
-            {
-               configurator.loadProperties( plugin );
-            }
-            plugin.initialize();
-         }
-         catch ( Throwable t )
-         {
-            log.error( "Plugin failed to initialize: " + pluginEntry.getKey(), t );
-            return false;
-         }
-      }
-      return true;
-   }
+   // Initialize plugins moved to KartaRuntime using @Initializers
 
    @Override
    public void close()
@@ -227,6 +204,11 @@ public class PnPRegistry implements AutoCloseable
    public Plugin getPlugin( String name )
    {
       return registeredPlugins.get( name );
+   }
+
+   public Plugin getEnabledPlugin( String pluginName )
+   {
+      return enabledPlugins.get( pluginName );
    }
 
    public Collection<Plugin> getEnabledPluginsOfType( Class<? extends Plugin> pluginType )

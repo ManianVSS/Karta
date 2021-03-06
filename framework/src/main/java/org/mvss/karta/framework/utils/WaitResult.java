@@ -7,6 +7,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * This class groups the results for a wait activity
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @ToString

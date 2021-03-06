@@ -11,6 +11,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * This class implements RMIClientSocketFactory and RMIServerSocketFactory to allow listening on any available port.
+ * The actual port assigned is saved and the implementation is proxied to the provided implementations of RMIServerSocketFactory and RMIServerSocketFactory like SslRMIClientSocketFactory and SslRMIServerSocketFactory.
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,6 +25,10 @@ public class AvailablePortProxyRMISocketFactory implements RMIClientSocketFactor
 {
    private RMIClientSocketFactory clientSocketFactoryToProxy;
    private RMIServerSocketFactory serverSocketFactoryToProxy;
+
+   /**
+    * The actual port assigned for RMI server/client. Use the getter getPort() to obtain value.
+    */
    private int                    port;
 
    public AvailablePortProxyRMISocketFactory( RMIClientSocketFactory clientSocketFactoryToProxy, RMIServerSocketFactory serverSocketFactoryToProxy )

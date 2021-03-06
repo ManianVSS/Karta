@@ -68,7 +68,7 @@ public class TestObjectGenerationRule
          stringValueProbDist.add( ObjectGenerationRule.builder().probability( 0.22f ).values( new ArrayList<Serializable>( Arrays.asList( "Two", "Second" ) ) ).build() );
          stringValueProbDist.add( ObjectGenerationRule.builder().probability( 0.12f ).values( new ArrayList<Serializable>( Arrays.asList( "Three", "Third" ) ) ).build() );
 
-         ObjectGenerationRule stringValuesVP = ObjectGenerationRule.builder().fieldName( "StringValuesVar" ).ruleType( ObjectGenerationRuleType.MUTEX_OBJECT_RULE_VALUE ).objectRules( stringValueProbDist ).build();
+         ObjectGenerationRule stringValuesVP = ObjectGenerationRule.builder().fieldName( "StringValuesVar" ).ruleType( ObjectGenerationRuleType.MUTEX_OBJECT_RULE_VALUE ).fieldGenRules( stringValueProbDist ).build();
          testVariableParam( random, stringValuesVP, 1000000, true );
 
          System.out.println( "Demo random distribution for cricket scores" );
@@ -79,19 +79,19 @@ public class TestObjectGenerationRule
          cricketScoreProbDist.add( ObjectGenerationRule.builder().probability( 0.15f ).ruleType( ObjectGenerationRuleType.INTEGER_RANGE ).range( new Range( 70, 96 ) ).build() );
          cricketScoreProbDist.add( ObjectGenerationRule.builder().probability( 0.10f ).values( new ArrayList<Serializable>( Arrays.asList( 96, 97, 98, 99 ) ) ).build() );
          cricketScoreProbDist.add( ObjectGenerationRule.builder().probability( 0.25f ).ruleType( ObjectGenerationRuleType.INTEGER_RANGE ).range( new Range( 100, 151 ) ).build() );
-         ObjectGenerationRule cricketScoreVP = ObjectGenerationRule.builder().fieldName( "cricketScoreVar" ).ruleType( ObjectGenerationRuleType.MUTEX_OBJECT_RULE_VALUE ).objectRules( cricketScoreProbDist ).build();
+         ObjectGenerationRule cricketScoreVP = ObjectGenerationRule.builder().fieldName( "cricketScoreVar" ).ruleType( ObjectGenerationRuleType.MUTEX_OBJECT_RULE_VALUE ).fieldGenRules( cricketScoreProbDist ).build();
          testVariableParam( random, cricketScoreVP, 1000000, true );
 
          System.out.println( "Demo random distribution for mutex variable in set" );
          longVP.setProbability( 0.60f );
          stringValuesVP.setProbability( 0.40f );
-         ObjectGenerationRule mutexVarSet = ObjectGenerationRule.builder().fieldName( "mutexVarSet" ).ruleType( ObjectGenerationRuleType.MUTEX_OBJECT_RULE_VALUE ).build().addVariableParams( longVP, stringValuesVP );
+         ObjectGenerationRule mutexVarSet = ObjectGenerationRule.builder().fieldName( "mutexVarSet" ).ruleType( ObjectGenerationRuleType.MUTEX_OBJECT_RULE_VALUE ).build().addFieldGenRules( longVP, stringValuesVP );
          testVariableParam( random, mutexVarSet, 1000000, true );
 
          System.out.println( "Demo random distribution for variable set" );
          mutexVarSet.setProbability( 0.66f );
          cricketScoreVP.setProbability( 0.66f );
-         ObjectGenerationRule varSet = ObjectGenerationRule.builder().fieldName( "varSet" ).ruleType( ObjectGenerationRuleType.OBJECT_RULE ).build().addVariableParams( mutexVarSet, cricketScoreVP );
+         ObjectGenerationRule varSet = ObjectGenerationRule.builder().fieldName( "varSet" ).ruleType( ObjectGenerationRuleType.OBJECT_RULE ).build().addFieldGenRules( mutexVarSet, cricketScoreVP );
          testVariableParam( random, varSet, 1000000, true );
 
          ObjectMapper yamlParser = ParserUtils.getYamlObjectMapper();

@@ -5,10 +5,14 @@ public class Constants
    public static final String   KARTA                               = "Karta";
    public static final String   __KARTA__                           = "__Karta__";
 
+   public static final String   KARTA_HOME                          = "KARTA_HOME";
+   public static final String   BIN                                 = "bin";
    public static final String   KARTA_BASE_PLUGIN_CONFIG_YAML       = "KartaBasePluginsConfiguration.yaml";
    public static final String   KARTA_PLUGINS_CONFIG_YAML           = "KartaPluginsConfiguration.yaml";
    public static final String   KARTA_CONFIGURATION_YAML            = "KartaConfiguration.yaml";
+   public static final String   KARTA_CONFIGURATION_OVERRIDES_YAML  = "KartaConfigurationOverrides.yaml";
    public static final String   KARTA_RUNTIME_PROPERTIES_YAML       = "KartaRuntimeProperties.yaml";
+   public static final String   TEST_PROPERTIES_YAML                = "TestProperties.yaml";
 
    public static final String   TEST_CATALOG_FILE_NAME              = "KartaTestCatalog.yaml";
    public static final String   TEST_CATALOG_FRAGMENT_FILE_NAME     = "KartaTestCatalogFragment.yaml";
@@ -29,9 +33,15 @@ public class Constants
    public static final String   EMPTY_STRING                        = "";
 
    public static final String   DOT                                 = ".";
+   public static final String   COMMA                               = ",";
    public static final String   SLASH                               = "/";
    public static final String   COLON                               = ":";
    public static final String   HYPHEN                              = "-";
+   public static final String   UNDERSCORE                          = "_";
+   public static final String   DOUBLE_QUOTES                       = "\"";
+   public static final String   OPEN_SQ_BRACKET                     = "[";
+   public static final String   CLOSE_SQ_BRACKET                    = "]";
+   public static final String   SPACE                               = " ";
 
    public static final String   JAR                                 = "jar";
 
@@ -42,7 +52,8 @@ public class Constants
    public static final String   PROPERTIES                          = "properties";
 
    public static final String[] jarExtention                        = {JAR};
-   public static final String[] dataFileExtentions                  = {JSON, YAML, YML, XML};
+   public static final String[] dataFileExtentions                  = {JSON, YAML, YML, XML, PROPERTIES};
+   public static final String[] propertyFileExtentions              = {JSON, YAML, YML, XML, PROPERTIES};
 
    public static final String   UNNAMED                             = "Unnamed";
 
@@ -56,6 +67,7 @@ public class Constants
    public static final String   _TEARDOWN_                          = ":TearDown:";
 
    public static final String   __TESTS__                           = "__tests__";
+   public static final String   __DEFAULT__                         = "__default__";
 
    public static final String   CONTENT_TYPE                        = "Content-Type";
    public static final String   APPLICATION_JSON                    = "application/json";
@@ -70,7 +82,10 @@ public class Constants
    public static final String   PATH_RUN_FEATURESOURCE              = "/run/featureSource";
    public static final String   PATH_RUN_TARGET                     = "/run/target";
 
-   public static final String   PATH_API_DEF                        = "/api";
+   public static final String   PATH_REPORT_HTML_EVENT              = "/report/html/event";
+
+   public static final String   PATH_API                            = "/api";
+   public static final String   PATH_API_RUNS                       = "/api/runs";
 
    public static final String   RUN_NAME                            = "runName";
    public static final String   FEATURE                             = "feature";
@@ -99,4 +114,17 @@ public class Constants
    public static final String   NUMBER_OF_ITERATIONS_IN_PARALLEL    = "numberOfIterationsInParallel";
 
    public static final String   __ALL__                             = "__All__";
+
+   public static final String   REGEX_WHITESPACE                    = "\\s";
+   public static final String   REGEX_NON_ALPHANUMERIC              = "[^a-zA-Z0-9]+";
+   public static final String   REGEX_ALL_STRING                    = ".*";
+
+   public static final String   FAIL                                = "FAIL";
+   public static final String   PASS                                = "PASS";
+
+   public static final String   HTTPS                               = "https://";
+   public static final String   HTTP                                = "http://";
+   public static final String   LOCALHOST                           = "localhost";
+
+   public static final int      MAX_BLOB_SIZE                       = 1048576;
 }

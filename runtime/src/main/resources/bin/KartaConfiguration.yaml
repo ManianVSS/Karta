@@ -22,7 +22,9 @@ defaultTestDataSourcePlugins:
 
 ### The list of property files to load properties from (YAML/JSON/XML based on file extention)
 propertyFiles:
-  - KartaRuntimeProperties.yaml
+  - KartaProperties.yaml
+  - KartaPluginProperties.yaml
+  - KartaTestProperties
 
 ### The SSL connection properties for Karta if enabling SSL for node communication
 sslProperties:
@@ -47,7 +49,7 @@ nodeName: local
 
 ###   - name: Node2
 ###     host: localhost
-###     port: 18090
+###     port: 18080
 ###     enableSSL: true
 ###     nodeType: REST
 ###     minion: true
@@ -56,8 +58,43 @@ nodes: []
 ### If minions are to be enabled
 minionsEnabled: true
 
-### Number of threads to use to run tests with
-testThreadCount: 1
+### Thread group name map to the number of threads to use to run tests with for the thread group. __default__ is the name of the default thread group
+threadGroups:
+  __default__: 1
 
 ### The packages to look for configuration objects like Beans
 configurationScanPackages: []
+
+### The properties for various property groups.
+### Each group is a property key to value map
+properties:
+  Karta:
+    EventProcessor.numberOfThread: 1
+    EventProcessor.maxEventQueueSize: 100
+    node.config:
+      host: localhost
+      port: "17171"
+      enableSSL: true
+
+  ### Add your step definition and chaos definition package names here
+  Kriya:
+    stepDefinitionPackageNames: []
+    chaosActionDefinitionPackageNames: []
+
+  # DataFilesTestDataSource:
+  #   dataPath:
+  #     - testdata
+
+  DumpToFileTestEventListener:
+    fileName: KartaEventsRawDump.bin
+
+  HTMLReportTestEventListener:
+    runReportsBaseFolderName: reports
+
+  RabbitMQTestEventListener:
+    queueName: KartaEvents
+    userName: guest
+    password: guest
+    virtualHost: "/"
+    hostName: localhost
+    portNumber: 5672

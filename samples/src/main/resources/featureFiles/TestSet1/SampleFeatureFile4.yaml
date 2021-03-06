@@ -1,0 +1,34 @@
+---
+name: ChaoticCalculatorTest
+description: This is a sample Yerkin test for chaos testing
+setupSteps:
+  - step: Given the calculator is powered on
+
+scenarioSetupSteps:
+  - step: When the all clear button is pressed
+  - step: Then the calculator should display "0"
+
+testScenarios:
+  - name: Scenario1
+    chaosConfiguration:
+      subNodeSelectionType: MUTUALLY_EXCLUSIVE
+      chaosActions:
+        - name: the calculator is powered off
+          node: Node1
+          probability: 1.0
+          subjects:
+            - calculator1
+            - calculator2
+          chaos:
+            chaosLevel: 50
+            chaosUnit: PERCENTAGE
+
+    executionSteps:
+      - step: When the all clear button is pressed
+      - step: Then the calculator should display "0"
+
+scenarioTearDownSteps:
+  - step: Then dummy teardown step
+
+tearDownSteps:
+  - step: Then the calculator is powered off

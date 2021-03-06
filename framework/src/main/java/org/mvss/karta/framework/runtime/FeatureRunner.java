@@ -1,7 +1,10 @@
 package org.mvss.karta.framework.runtime;
 
 import java.io.Serializable;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
@@ -24,8 +27,8 @@ import org.mvss.karta.framework.core.TestJobIterationResultProcessor;
 import org.mvss.karta.framework.core.TestJobResult;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
-import org.mvss.karta.framework.minions.KartaMinion;
-import org.mvss.karta.framework.minions.KartaMinionRegistry;
+import org.mvss.karta.framework.nodes.KartaNode;
+import org.mvss.karta.framework.nodes.KartaNodeRegistry;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.FeatureCompleteEvent;
@@ -36,6 +39,7 @@ import org.mvss.karta.framework.runtime.event.FeatureTearDownStepCompleteEvent;
 import org.mvss.karta.framework.runtime.event.FeatureTearDownStepStartEvent;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
+import org.mvss.karta.framework.utils.WaitUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -47,6 +51,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Runner class to run TestFeatures for Karta
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -62,15 +71,29 @@ public class FeatureRunner implements Callable<FeatureResult>
 
    private TestFeature             testFeature;
 
+   /**
+    * The call back for updating execution result of the TestFeature after run completes.
+    */
    private Consumer<FeatureResult> resultConsumer;
 
    private FeatureResult           result;
 
+   /**
+    * The callback implementation for job iteration result updates for running Test Feature
+    * 
+    * @param testJob
+    * @param testJobResult
+    */
    private synchronized void accumulateJobIterationResult( String testJob, TestJobResult testJobResult )
    {
       result.addTestJobResult( testJob, testJobResult );
    }
 
+   /**
+    * The callback implementation for feature iteration result updates for running Test Feature
+    * 
+    * @param iterationResult
+    */
    private synchronized void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
    {
       result.addIterationResult( iterationResult );
@@ -79,7 +102,7 @@ public class FeatureRunner implements Callable<FeatureResult>
    @Builder.Default
    private ArrayList<Long> runningJobs = new ArrayList<Long>();
 
-   private boolean deleteJobs()
+   private void deleteJobs()
    {
       boolean deleteJobResults = QuartzJobScheduler.deleteJobs( runningJobs );
 
@@ -88,10 +111,21 @@ public class FeatureRunner implements Callable<FeatureResult>
          log.error( "Failed to delete test jobs" );
          result.setSuccessful( false );
       }
-
-      return deleteJobResults;
    }
 
+   public void updateResultCallBack()
+   {
+      result.setEndTime( new Date() );
+      if ( resultConsumer != null )
+      {
+         resultConsumer.accept( result );
+      }
+   }
+
+   /**
+    * After initializing calling this method would run the feature.
+    * Call implementation for asynchronous calling.
+    */
    @Override
    public FeatureResult call()
    {
@@ -101,10 +135,10 @@ public class FeatureRunner implements Callable<FeatureResult>
          HashSet<String> tags = runInfo.getTags();
 
          result = new FeatureResult();
-
+         result.setFeatureName( testFeature.getName() );
          EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-         KartaMinionRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
-         BeanRegistry contextBeanRegistry = new BeanRegistry( kartaRuntime.getConfigurator() );
+         KartaNodeRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
+         BeanRegistry contextBeanRegistry = new BeanRegistry();
 
          Random random = kartaRuntime.getRandom();
 
@@ -114,7 +148,13 @@ public class FeatureRunner implements Callable<FeatureResult>
 
          if ( tags != null )
          {
-            eventProcessor.featureStart( runName, testFeature, tags );
+            if ( !eventProcessor.featureStart( runName, testFeature, tags ) )
+            {
+               eventProcessor.featureStop( runName, testFeature, tags );
+               result.setError( true );
+               updateResultCallBack();
+               return result;
+            }
          }
 
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
@@ -148,11 +188,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             catch ( Throwable t )
             {
                log.error( "Exception occured while scheduling jobs ", t );
-               if ( !deleteJobs() )
-               {
-                  log.error( "Failed to delete test jobs" );
-                  result.setSuccessful( false );
-               }
+               deleteJobs();
             }
          }
 
@@ -161,9 +197,12 @@ public class FeatureRunner implements Callable<FeatureResult>
          HashMap<TestScenario, AtomicLong> scenarioIterationIndexMap = new HashMap<TestScenario, AtomicLong>();
          testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario, new AtomicLong() ) );
 
+         long setupStepIndex = -1;
          for ( TestStep step : testFeature.getSetupSteps() )
          {
+            setupStepIndex++;
             StepResult stepResult = new StepResult();
+            stepResult.setStepIndex( setupStepIndex );
             stepResult.setSuccessful( true );
 
             eventProcessor.raiseEvent( new FeatureSetupStepStartEvent( runName, testFeature, step ) );
@@ -171,6 +210,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             try
             {
                stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
+               stepResult.setStepIndex( setupStepIndex );
             }
             catch ( TestFailureException tfe )
             {
@@ -183,26 +223,25 @@ public class FeatureRunner implements Callable<FeatureResult>
             {
                eventProcessor.raiseEvent( new FeatureSetupStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-               result.getSetupResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), stepResult.isPassed() ) );
+               result.getSetupResults().add( new SerializableKVP<String, StepResult>( step.getStep(), stepResult ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )
                {
                   result.setSuccessful( false );
-
-                  if ( !deleteJobs() )
-                  {
-                     log.error( "Failed to delete test jobs" );
-                     result.setSuccessful( false );
-                  }
+                  deleteJobs();
 
                   eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature, result ) );
 
                   if ( tags != null )
                   {
-                     eventProcessor.featureStop( runName, testFeature, tags );
+                     if ( !eventProcessor.featureStop( runName, testFeature, tags ) )
+                     {
+                        result.setError( true );
+                     }
                   }
 
+                  updateResultCallBack();
                   return result;
                }
             }
@@ -212,11 +251,13 @@ public class FeatureRunner implements Callable<FeatureResult>
          int numberOfIterationsInParallel = runInfo.getNumberOfIterationsInParallel();
          boolean chanceBasedScenarioExecution = runInfo.isChanceBasedScenarioExecution();
          boolean exclusiveScenarioPerIteration = runInfo.isExclusiveScenarioPerIteration();
+         Duration targetRunDuration = runInfo.getRunDuration();
+         Duration coolDownBetweenDuration = runInfo.getCoolDownBetweenIterations();
 
-         if ( !DataUtils.inRange( numberOfIterations, 1, Integer.MAX_VALUE ) )
+         if ( !DataUtils.inRange( numberOfIterations, 0, Integer.MAX_VALUE ) )
          {
             log.error( "Configuration error: invalid number of iterations: " + numberOfIterations );
-            numberOfIterations = 1;
+            numberOfIterations = 0;
          }
 
          if ( !DataUtils.inRange( numberOfIterationsInParallel, 1, Integer.MAX_VALUE ) )
@@ -225,10 +266,26 @@ public class FeatureRunner implements Callable<FeatureResult>
             numberOfIterationsInParallel = 1;
          }
 
-         ExecutorService iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfIterationsInParallel ) );
+         ExecutorService iterationExecutionService = null;
+
+         if ( numberOfIterationsInParallel > 1 )
+         {
+            iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfIterationsInParallel ) );
+         }
+
+         Instant startTime = Instant.now();
 
          for ( iterationIndex = 0; ( numberOfIterations <= 0 ) || ( iterationIndex < numberOfIterations ); iterationIndex++ )
          {
+            // Break on target Run Duration
+            if ( targetRunDuration != null )
+            {
+               if ( targetRunDuration.compareTo( Duration.between( startTime, Instant.now() ) ) <= 0 )
+               {
+                  break;
+               }
+            }
+
             ArrayList<TestScenario> scenariosToRun = new ArrayList<TestScenario>();
 
             if ( chanceBasedScenarioExecution )
@@ -262,7 +319,7 @@ public class FeatureRunner implements Callable<FeatureResult>
 
             if ( useMinions )
             {
-               KartaMinion minion = nodeRegistry.getNextMinion();
+               KartaNode minion = nodeRegistry.getNextMinion();
 
                if ( minion != null )
                {
@@ -280,22 +337,37 @@ public class FeatureRunner implements Callable<FeatureResult>
                log.debug( "Iteration queued " + iterationIndex + " with scenarios " + scenariosToRun );
                iterationExecutionService.submit( iterationRunner );
             }
+
+            if ( coolDownBetweenDuration != null )
+            {
+               if ( iterationIndex % numberOfIterationsInParallel == 0 )
+               {
+                  WaitUtil.sleep( coolDownBetweenDuration.toMillis() );
+               }
+            }
          }
 
-         iterationExecutionService.shutdown();
-         iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
+         if ( numberOfIterationsInParallel > 1 )
+         {
+            iterationExecutionService.shutdown();
+            iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
+         }
 
          testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario ).set( 0 ) );
 
+         long teardownStepIndex = -1;
          iterationIndex = -1;
          for ( TestStep step : testFeature.getTearDownSteps() )
          {
+            teardownStepIndex++;
             StepResult stepResult = new StepResult();
+            stepResult.setStepIndex( teardownStepIndex );
             eventProcessor.raiseEvent( new FeatureTearDownStepStartEvent( runName, testFeature, step ) );
 
             try
             {
                stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
+               stepResult.setStepIndex( teardownStepIndex );
             }
             catch ( TestFailureException tfe )
             {
@@ -308,7 +380,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             {
                eventProcessor.raiseEvent( new FeatureTearDownStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-               result.getTearDownResults().add( new SerializableKVP<String, Boolean>( step.getIdentifier(), stepResult.isPassed() ) );
+               result.getTearDownResults().add( new SerializableKVP<String, StepResult>( step.getStep(), stepResult ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )
@@ -319,15 +391,14 @@ public class FeatureRunner implements Callable<FeatureResult>
             }
          }
 
-         if ( !deleteJobs() )
-         {
-            log.error( "Failed to delete test jobs" );
-            result.setSuccessful( false );
-         }
+         deleteJobs();
 
          if ( tags != null )
          {
-            eventProcessor.featureStop( runName, testFeature, tags );
+            if ( !eventProcessor.featureStop( runName, testFeature, tags ) )
+            {
+               result.setError( true );
+            }
          }
 
          eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature, result ) );
@@ -339,10 +410,7 @@ public class FeatureRunner implements Callable<FeatureResult>
          result.setError( true );
       }
 
-      if ( resultConsumer != null )
-      {
-         resultConsumer.accept( result );
-      }
+      updateResultCallBack();
       return result;
    }
 }

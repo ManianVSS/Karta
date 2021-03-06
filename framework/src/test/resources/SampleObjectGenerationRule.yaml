@@ -1,6 +1,6 @@
 ---
 ruleType: OBJECT_RULE
-objectRules:
+fieldGenRules:
   - fieldName: employeeId
     ruleType: STRING_RANGE
     range:
@@ -8,7 +8,7 @@ objectRules:
       max: 6
   - fieldName: name
     ruleType: OBJECT_RULE
-    objectRules:
+    fieldGenRules:
       - fieldName: firstName
         ruleType: STRING_RANGE
         range:
@@ -27,7 +27,7 @@ objectRules:
           max: 5
   - fieldName: gender
     ruleType: MUTEX_OBJECT_RULE_VALUE
-    objectRules:
+    fieldGenRules:
       - ruleType: VALUES
         values: [FEMALE, MALE]
         probability: 0.9
@@ -38,7 +38,7 @@ objectRules:
     ruleType: BOOLEAN
   - fieldName: role
     ruleType: MUTEX_OBJECT_RULE_VALUE
-    objectRules:
+    fieldGenRules:
       - ruleType: VALUES
         values: [ENGINEER]
         probability: 0.9
@@ -55,7 +55,7 @@ objectRules:
       max: 200000
   - fieldName: address
     ruleType: OBJECT_RULE
-    objectRules:
+    fieldGenRules:
       - fieldName: addressline1
         ruleType: STRING_RANGE
         range:

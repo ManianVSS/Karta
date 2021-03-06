@@ -11,8 +11,8 @@ import org.mvss.karta.framework.core.BeforeScenario;
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
+import org.mvss.karta.samples.config.AutomationDriverFactory;
 import org.mvss.karta.samples.resources.AutomationDriver;
-import org.mvss.karta.samples.resources.AutomationDriverImpl;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -44,7 +44,7 @@ public class Hooks
    {
       log.info( "Test hooks property mapping step definition package names: " + stepDefinitionPackageNames );
       log.info( "@BeforeScenario Kriya tag check " + runName + " " + featureName + " " + scenario.getName() );
-      AutomationDriver automationDriver = new AutomationDriverImpl( runName, featureName, scenario.getName() );
+      AutomationDriver automationDriver = AutomationDriverFactory.createAutomationDriver();
       scenario.getContextBeanRegistry().add( "AutomationDriverObject", automationDriver );
    }
 

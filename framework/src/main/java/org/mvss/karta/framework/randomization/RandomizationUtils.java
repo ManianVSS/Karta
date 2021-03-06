@@ -1,36 +1,82 @@
 package org.mvss.karta.framework.randomization;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.Random;
 
 import org.mvss.karta.framework.chaos.Chaos;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.DataUtils;
 
+/**
+ * Utility class for chance/probability based selection of objects
+ * 
+ * @author Manian
+ */
 public class RandomizationUtils
 {
-   public static <E extends ObjectWithChance> boolean checkForProbabilityCoverage( ArrayList<E> chanceObjects )
+   /**
+    * Check if the collection of objects with chance cover all possibilities (1.0f)
+    * 
+    * @param <E>
+    * @param chanceObjects
+    * @return
+    */
+   public static <E extends ObjectWithChance> boolean checkForProbabilityCoverage( Collection<E> chanceObjects )
    {
       return checkForProbabilityCoverage( chanceObjects, 1.0f );
    }
 
-   public static <E extends ObjectWithChance> boolean checkForProbabilityCoverage( ArrayList<E> chanceObjects, float probabilityToCover )
+   /**
+    * Check if the collection of objects with chance cover specified probability value.
+    * 
+    * @param <E>
+    * @param chanceObjects
+    * @param probabilityToCover
+    * @return
+    */
+   public static <E extends ObjectWithChance> boolean checkForProbabilityCoverage( Collection<E> chanceObjects, float probabilityToCover )
    {
       return getMissingProbabilityCoverage( chanceObjects, probabilityToCover ) == 0;
    }
 
-   public static <E extends ObjectWithChance> Float getMissingProbabilityCoverage( ArrayList<E> chanceObjects )
+   /**
+    * Evaluates the missing probability(assuming total to be 1.0f) from a collection of objects with chance.
+    * 
+    * @param <E>
+    * @param chanceObjects
+    * @return
+    */
+   public static <E extends ObjectWithChance> Float getMissingProbabilityCoverage( Collection<E> chanceObjects )
    {
       return getMissingProbabilityCoverage( chanceObjects, 1 );
    }
 
-   public static <E extends ObjectWithChance> Float getMissingProbabilityCoverage( ArrayList<E> chanceObjects, float probabilityToCover )
+   /**
+    * Evaluates the missing probability from a collection of objects with chance for the probability to cover.
+    * Returns null for over shooting
+    * 
+    * @param <E>
+    * @param chanceObjects
+    * @param probabilityToCover
+    * @return
+    */
+   public static <E extends ObjectWithChance> Float getMissingProbabilityCoverage( Collection<E> chanceObjects, float probabilityToCover )
    {
       return getMissingProbabilityCoverage( chanceObjects, probabilityToCover, false );
    }
 
-   public static <E extends ObjectWithChance> Float getMissingProbabilityCoverage( ArrayList<E> chanceObjects, float probabilityToCover, boolean ignoreOverflow )
+   /**
+    * Evaluates the missing probability from a collection of objects with chance for the probability to cover.
+    * ignoreOverflow if set to true won't return null on over shooting probability to cover.
+    * 
+    * @param <E>
+    * @param chanceObjects
+    * @param probabilityToCover
+    * @param ignoreOverflow
+    * @return
+    */
+   public static <E extends ObjectWithChance> Float getMissingProbabilityCoverage( Collection<E> chanceObjects, float probabilityToCover, boolean ignoreOverflow )
    {
       float probabilityNotCovered = probabilityToCover;
       for ( ObjectWithChance chanceObject : chanceObjects )
@@ -53,7 +99,15 @@ public class RandomizationUtils
       return (float) ( ( (long) ( probabilityNotCovered * 1000000.f ) ) / 1000000l );
    }
 
-   public static <E extends ObjectWithChance> ArrayList<E> generateNextComposition( Random random, ArrayList<E> objectsToChooseFrom )
+   /**
+    * Compose a ArrayList of objects selected from a collection of objects with individual probability of occurrences.
+    * 
+    * @param <E>
+    * @param random
+    * @param objectsToChooseFrom
+    * @return
+    */
+   public static <E extends ObjectWithChance> ArrayList<E> generateNextComposition( Random random, Collection<E> objectsToChooseFrom )
    {
       ArrayList<E> chosenObjects = new ArrayList<E>();
 
@@ -82,7 +136,16 @@ public class RandomizationUtils
       return chosenObjects;
    }
 
-   public static <E extends ObjectWithChance> E generateNextMutexComposition( Random random, ArrayList<E> objectsToChooseFrom )
+   /**
+    * Select one object from a collection of objects with chance taking into consideration their probability of occurrence.
+    * The sum of probabilities for the objects with chance should be 1.0f else null is returned.
+    * 
+    * @param <E>
+    * @param random
+    * @param objectsToChooseFrom
+    * @return
+    */
+   public static <E extends ObjectWithChance> E generateNextMutexComposition( Random random, Collection<E> objectsToChooseFrom )
    {
       if ( ( objectsToChooseFrom == null ) || ( objectsToChooseFrom.isEmpty() ) )
       {
@@ -122,7 +185,16 @@ public class RandomizationUtils
       return returnValue;
    }
 
-   public static <T> ArrayList<T> discardListItems( Random random, List<T> items, int count )
+   /**
+    * Randomly discard few items by count from list using the provided randomizer.
+    * 
+    * @param <T>
+    * @param random
+    * @param items
+    * @param count
+    * @return
+    */
+   public static <T> ArrayList<T> discardListItems( Random random, Collection<T> items, int count )
    {
       ArrayList<T> returnList = null;
 
@@ -148,7 +220,16 @@ public class RandomizationUtils
       return returnList;
    }
 
-   public static <T> ArrayList<T> selectListItems( Random random, List<T> items, int count )
+   /**
+    * Randomly select few items by count from list using the provided randomizer.
+    * 
+    * @param <T>
+    * @param random
+    * @param items
+    * @param count
+    * @return
+    */
+   public static <T> ArrayList<T> selectListItems( Random random, Collection<T> items, int count )
    {
       ArrayList<T> returnList = null;
 
@@ -177,7 +258,16 @@ public class RandomizationUtils
       return returnList;
    }
 
-   public static <T> ArrayList<T> selectByPercentage( Random random, List<T> items, float percentage )
+   /**
+    * Randomly select few items by percentage from list using the provided randomizer.
+    * 
+    * @param <T>
+    * @param random
+    * @param items
+    * @param percentage
+    * @return
+    */
+   public static <T> ArrayList<T> selectByPercentage( Random random, Collection<T> items, float percentage )
    {
       if ( items == null )
       {
@@ -188,7 +278,16 @@ public class RandomizationUtils
       return selectListItems( random, items, selectCount );
    }
 
-   public static <T> ArrayList<T> selectByMaxPercentage( Random random, List<T> items, float maxPercentage )
+   /**
+    * Randomly select few items by max percentage(0-maxPercentage selected randomly) from list using the provided randomizer.
+    * 
+    * @param <T>
+    * @param random
+    * @param items
+    * @param maxPercentage
+    * @return
+    */
+   public static <T> ArrayList<T> selectByMaxPercentage( Random random, Collection<T> items, float maxPercentage )
    {
       if ( items == null )
       {
@@ -201,7 +300,16 @@ public class RandomizationUtils
       return selectListItems( random, items, selectCount );
    }
 
-   public static <T> ArrayList<T> selectByChaos( Random random, ArrayList<T> items, Chaos chaos )
+   /**
+    * Randomly select few items by the chaos level and unit using the provided randomizer.
+    * 
+    * @param <T>
+    * @param random
+    * @param items
+    * @param chaos
+    * @return
+    */
+   public static <T> Collection<T> selectByChaos( Random random, Collection<T> items, Chaos chaos )
    {
       if ( ( items == null ) || items.isEmpty() )
       {
@@ -223,6 +331,13 @@ public class RandomizationUtils
       }
    }
 
+   /**
+    * Randomly generate an alpha numeric string of specified length.
+    * 
+    * @param random
+    * @param length
+    * @return
+    */
    public static String randomAlphaNumericString( Random random, int length )
    {
       String returnValue = Constants.EMPTY_STRING;

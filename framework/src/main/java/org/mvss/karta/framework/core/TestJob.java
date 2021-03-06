@@ -15,6 +15,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * This class describes an test job object.
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @ToString
@@ -23,9 +28,6 @@ import lombok.ToString;
 @NoArgsConstructor
 public class TestJob implements Serializable
 {
-   /**
-    * 
-    */
    private static final long                        serialVersionUID = 1L;
 
    private String                                   name;

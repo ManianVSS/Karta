@@ -23,6 +23,9 @@ import org.mvss.karta.framework.core.BeforeFeature;
 import org.mvss.karta.framework.core.BeforeRun;
 import org.mvss.karta.framework.core.BeforeScenario;
 import org.mvss.karta.framework.core.ChaosActionDefinition;
+import org.mvss.karta.framework.core.ContextBean;
+import org.mvss.karta.framework.core.ContextVariable;
+import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.core.Pair;
 import org.mvss.karta.framework.core.PreparedChaosAction;
@@ -30,12 +33,13 @@ import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepDefinition;
-import org.mvss.karta.framework.core.StepParam;
 import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.core.TestData;
 import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.minions.KartaMinionRegistry;
+import org.mvss.karta.framework.nodes.KartaNodeRegistry;
 import org.mvss.karta.framework.runtime.BeanRegistry;
-import org.mvss.karta.framework.runtime.Configurator;
+import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.TestFailureException;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
@@ -86,16 +90,15 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    private ArrayList<String>                                 chaosActionDefinitionPackageNames      = new ArrayList<String>();
 
    @KartaAutoWired
-   private BeanRegistry                                      beanRegistry;
+   private KartaRuntime                                      kartaRuntime;
 
-   @KartaAutoWired
-   private Configurator                                      configurator;
+   private BeanRegistry                                      initializedClassesRegistry             = new BeanRegistry();
 
    @KartaAutoWired
    private EventProcessor                                    eventProcessor;
 
    @KartaAutoWired
-   private KartaMinionRegistry                               minionRegistry;
+   private KartaNodeRegistry                                 minionRegistry;
 
    @Override
    public String getPluginName()
@@ -114,12 +117,20 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                   {
                                                                      String methodDescription = candidateStepDefinitionMethod.toString();
                                                                      String stepDefString = stepDefinition.value();
+
+                                                                     if ( stepHandlerMap.containsKey( stepDefString ) )
+                                                                     {
+                                                                        log.error( "Step definition is duplicate " + methodDescription );
+                                                                        continue;
+                                                                     }
+
                                                                      Parameter[] params = candidateStepDefinitionMethod.getParameters();
 
                                                                      int positionalArgumentsCount = 0;
                                                                      for ( int i = 0; i < params.length; i++ )
                                                                      {
-                                                                        if ( ( params[i].getType() != TestExecutionContext.class ) && ( params[i].getAnnotation( StepParam.class ) == null ) )
+                                                                        if ( ( params[i].getType() != TestExecutionContext.class ) && ( params[i].getAnnotation( TestData.class ) == null ) && ( params[i].getAnnotation( ContextBean.class ) == null )
+                                                                             && ( params[i].getAnnotation( ContextVariable.class ) == null ) )
                                                                         {
                                                                            positionalArgumentsCount++;
                                                                         }
@@ -134,15 +145,19 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                      log.debug( "Mapping stepdef " + stepDefString + " to " + methodDescription );
 
                                                                      Class<?> stepDefinitionClass = candidateStepDefinitionMethod.getDeclaringClass();
-                                                                     if ( !beanRegistry.containsKey( stepDefinitionClass.getName() ) )
+
+                                                                     Object stepDefClassObj = initializedClassesRegistry.get( stepDefinitionClass.getName() );
+                                                                     if ( stepDefClassObj == null )
                                                                      {
-                                                                        beanRegistry.loadStaticBeans( stepDefinitionClass );
-                                                                        Object stepDefClassObj = stepDefinitionClass.newInstance();
-                                                                        configurator.loadProperties( stepDefClassObj );
-                                                                        beanRegistry.loadBeans( stepDefClassObj );
-                                                                        beanRegistry.add( stepDefClassObj );
+                                                                        stepDefClassObj = stepDefinitionClass.newInstance();
+                                                                        kartaRuntime.initializeObject( stepDefClassObj );
+                                                                        initializedClassesRegistry.add( stepDefClassObj );
                                                                      }
-                                                                     stepHandlerMap.put( stepDefString, new Pair<Object, Method>( beanRegistry.get( stepDefinitionClass.getName() ), candidateStepDefinitionMethod ) );
+
+                                                                     if ( stepDefClassObj != null )
+                                                                     {
+                                                                        stepHandlerMap.put( stepDefString, new Pair<Object, Method>( stepDefClassObj, candidateStepDefinitionMethod ) );
+                                                                     }
                                                                   }
                                                                }
                                                                catch ( Throwable t )
@@ -164,27 +179,52 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                   {
                                                                      String methodDescription = candidateChaosActionMethod.toString();
                                                                      String chaosActionName = chaosActionDefinition.value();
-                                                                     Class<?>[] params = candidateChaosActionMethod.getParameterTypes();
 
-                                                                     if ( !( ( params.length >= 2 ) && ( TestExecutionContext.class == params[0] ) && ( PreparedChaosAction.class == params[1] ) ) )
+                                                                     if ( chaosActionHandlerMap.containsKey( chaosActionName ) )
+                                                                     {
+                                                                        log.error( "Chaos action definition is duplicate " + methodDescription );
+                                                                        continue;
+                                                                     }
+
+                                                                     Parameter[] params = candidateChaosActionMethod.getParameters();
+
+                                                                     if ( !( ( params.length >= 2 ) && ( TestExecutionContext.class == params[0].getType() ) && ( PreparedChaosAction.class == params[1].getType() ) ) )
                                                                      {
                                                                         log.error( "Chaos action definition method " + methodDescription + " should have first two parameters of types(" + TestExecutionContext.class.getName() + ", "
                                                                                    + PreparedChaosAction.class.getName() + ")" );
                                                                         continue;
                                                                      }
 
+                                                                     for ( int paramNo = 2; paramNo < params.length; paramNo++ )
+                                                                     {
+                                                                        TestData testDataAnnotation = params[paramNo].getAnnotation( TestData.class );
+                                                                        ContextBean contextBeanAnnotation = params[paramNo].getAnnotation( ContextBean.class );
+                                                                        ContextVariable contextVariableAnnotation = params[paramNo].getAnnotation( ContextVariable.class );
+
+                                                                        if ( ( testDataAnnotation == null ) && ( contextBeanAnnotation == null ) && ( contextVariableAnnotation == null ) )
+                                                                        {
+                                                                           log.error( "Chaos action definition method " + methodDescription + "'s parameter is not mapped mapped with an appropriate annotation(" + TestData.class.getName() + ", "
+                                                                                      + ContextBean.class.getName() + ", " + ContextVariable.class.getName() + ")" );
+                                                                           continue;
+                                                                        }
+                                                                     }
+
                                                                      log.debug( "Mapping chaos action definition " + chaosActionName + " to " + methodDescription );
 
                                                                      Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
-                                                                     if ( !beanRegistry.containsKey( chaosActionDefinitionClass.getName() ) )
+
+                                                                     Object chaosActionDefClassObj = initializedClassesRegistry.get( chaosActionDefinitionClass.getName() );
+                                                                     if ( chaosActionDefClassObj == null )
                                                                      {
-                                                                        beanRegistry.loadStaticBeans( chaosActionDefinitionClass );
-                                                                        Object chaosActionDefClassObj = chaosActionDefinitionClass.newInstance();
-                                                                        configurator.loadProperties( chaosActionDefClassObj );
-                                                                        beanRegistry.loadBeans( chaosActionDefClassObj );
-                                                                        beanRegistry.add( chaosActionDefClassObj );
+                                                                        chaosActionDefClassObj = chaosActionDefinitionClass.newInstance();
+                                                                        kartaRuntime.initializeObject( chaosActionDefClassObj );
+                                                                        initializedClassesRegistry.add( chaosActionDefClassObj );
                                                                      }
-                                                                     chaosActionHandlerMap.put( chaosActionName, new Pair<Object, Method>( beanRegistry.get( chaosActionDefinitionClass.getName() ), candidateChaosActionMethod ) );
+
+                                                                     if ( chaosActionDefClassObj != null )
+                                                                     {
+                                                                        chaosActionHandlerMap.put( chaosActionName, new Pair<Object, Method>( chaosActionDefClassObj, candidateChaosActionMethod ) );
+                                                                     }
                                                                   }
                                                                }
                                                                catch ( Throwable t )
@@ -222,14 +262,13 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       log.debug( "Mapping hook for " + tags + " to " + methodDescription );
 
       Class<?> hookClass = hookMethod.getDeclaringClass();
-      if ( !beanRegistry.containsKey( hookClass.getName() ) )
+      Object hookObj = initializedClassesRegistry.get( hookClass.getName() );
+
+      if ( hookObj == null )
       {
-         configurator.loadProperties( hookClass );
-         beanRegistry.loadStaticBeans( hookClass );
-         Object hookObj = hookClass.newInstance();
-         configurator.loadProperties( hookObj );
-         beanRegistry.loadBeans( hookObj );
-         beanRegistry.add( hookObj );
+         hookObj = hookClass.newInstance();
+         kartaRuntime.initializeObject( hookObj );
+         initializedClassesRegistry.add( hookObj );
       }
 
       for ( String tag : tags )
@@ -248,7 +287,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
          ArrayList<Pair<Object, Method>> hooksDef = taggedHooks.get( tagPattern );
 
-         Pair<Object, Method> hookdef = new Pair<Object, Method>( beanRegistry.get( hookClass.getName() ), hookMethod );
+         Pair<Object, Method> hookdef = new Pair<Object, Method>( hookObj, hookMethod );
 
          hooksDef.add( hookdef );
       }
@@ -375,7 +414,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                     }
                                                                  };
 
-   @Override
+   @Initializer
    public boolean initialize() throws Throwable
    {
       if ( initialized )
@@ -407,6 +446,12 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    @Override
    public String sanitizeStepIdentifier( String stepIdentifier )
    {
+      // Handle null stepIdentifier
+      if ( StringUtils.isBlank( stepIdentifier ) )
+      {
+         return stepIdentifier;
+      }
+
       stepIdentifier = stepIdentifier.trim();
       String words[] = stepIdentifier.split( WORD_FETCH_REGEX );
       String conjuctionUsed = null;
@@ -457,8 +502,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          {
             positionalParameters = positionalParameters + ", Serializable posArg" + ( i++ ) + " /*= " + inlineStepDefinitionParameterName + "*/";
          }
-         log.error( "Suggestion:\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava( stepIdentifier ) + "\" )\r\n" + "   public StepResult " + stepIdentifier.replaceAll( "\\s", "_" ) + "( TestExecutionContext context " + positionalParameters
-                    + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
+         log.error( "Suggestion:\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava( stepIdentifier ) + "\" )\r\n" + "   public StepResult " + stepIdentifier.replaceAll( Constants.REGEX_WHITESPACE, Constants.UNDERSCORE )
+                    + "( TestExecutionContext context " + positionalParameters + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
          return StandardStepResults.error( errorMessage );
       }
 
@@ -487,39 +532,36 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                continue;
             }
 
-            StepParam paramaterNameInfo = parametersObj[i].getAnnotation( StepParam.class );
+            TestData testDataAnnotation = parametersObj[i].getAnnotation( TestData.class );
+            ContextBean contextBeanAnnotation = parametersObj[i].getAnnotation( ContextBean.class );
+            ContextVariable contextVariableAnnotation = parametersObj[i].getAnnotation( ContextVariable.class );
 
-            if ( paramaterNameInfo == null )
+            if ( testDataAnnotation != null )
             {
-               values.add( ParserUtils.getObjectMapper().readValue( inlineStepDefinitionParameterNames.get( positionalArg++ ), paramType ) );
+               name = testDataAnnotation.value();
+               values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
+            }
+            else if ( contextBeanAnnotation != null )
+            {
+               name = contextBeanAnnotation.value();
+               BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
+               if ( beanRegistry != null )
+               {
+                  values.add( beanRegistry.get( name ) );
+               }
+               else
+               {
+                  values.add( null );
+               }
+            }
+            else if ( contextVariableAnnotation != null )
+            {
+               name = contextVariableAnnotation.value();
+               values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
             }
             else
             {
-               name = paramaterNameInfo.value();
-
-               switch ( paramaterNameInfo.mapto() )
-               {
-                  case CONTEXT_BEAN:
-                     BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
-                     if ( beanRegistry != null )
-                     {
-                        values.add( beanRegistry.get( name ) );
-                     }
-                     else
-                     {
-                        values.add( null );
-                     }
-                     break;
-
-                  case TESTDATA:
-                     values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
-                     break;
-
-                  case VARIABLE:
-                     values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
-                     break;
-
-               }
+               values.add( ParserUtils.getObjectMapper().readValue( inlineStepDefinitionParameterNames.get( positionalArg++ ), paramType ) );
             }
          }
 
@@ -576,7 +618,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             // TODO: Handling undefined chaos action to ask manual action(other configured handlers) if possible
             String errorMessage = "Missing chaos action handler definition: " + chaosActionName;
             log.error( errorMessage );
-            log.error( "Suggestion:\r\n   @ChaosActionDefinition( \"" + StringEscapeUtils.escapeJava( chaosActionName ) + "\" )\r\n" + "   public StepResult " + chaosActionName.replaceAll( "\\s", "_" )
+            log.error( "Suggestion:\r\n   @ChaosActionDefinition( \"" + StringEscapeUtils.escapeJava( chaosActionName ) + "\" )\r\n" + "   public StepResult " + chaosActionName.replaceAll( Constants.REGEX_NON_ALPHANUMERIC, Constants.UNDERSCORE )
                        + "( TestExecutionContext context, PreparedChaosAction actionToPerform) throws Throwable\r\n" + "   {\r\n...\r\n   }" );
             return StandardStepResults.error( errorMessage );
          }
@@ -598,35 +640,34 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                for ( int i = 2; i < parametersObj.length; i++ )
                {
                   String name = parametersObj[i].getName();
-                  StepParam paramaterNameInfo = parametersObj[i].getAnnotation( StepParam.class );
+                  // TestData paramaterNameInfo = parametersObj[i].getAnnotation( TestData.class );
 
-                  if ( paramaterNameInfo != null )
+                  TestData testDataAnnotation = parametersObj[i].getAnnotation( TestData.class );
+                  ContextBean contextBeanAnnotation = parametersObj[i].getAnnotation( ContextBean.class );
+                  ContextVariable contextVariableAnnotation = parametersObj[i].getAnnotation( ContextVariable.class );
+
+                  if ( testDataAnnotation != null )
                   {
-                     name = paramaterNameInfo.value();
-
-                     switch ( paramaterNameInfo.mapto() )
+                     name = testDataAnnotation.value();
+                     values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
+                  }
+                  else if ( contextBeanAnnotation != null )
+                  {
+                     name = contextBeanAnnotation.value();
+                     BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
+                     if ( beanRegistry != null )
                      {
-                        case CONTEXT_BEAN:
-                           BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
-                           if ( beanRegistry != null )
-                           {
-                              values.add( beanRegistry.get( name ) );
-                           }
-                           else
-                           {
-                              values.add( null );
-                           }
-                           break;
-
-                        case TESTDATA:
-                           values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
-                           break;
-
-                        case VARIABLE:
-                           values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
-                           break;
-
+                        values.add( beanRegistry.get( name ) );
                      }
+                     else
+                     {
+                        values.add( null );
+                     }
+                  }
+                  else if ( contextVariableAnnotation != null )
+                  {
+                     name = contextVariableAnnotation.value();
+                     values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
                   }
                }
             }
@@ -659,7 +700,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       return result;
    }
 
-   public void invokeTaggedMethods( HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooksList, HashSet<String> tags, Object... parameters )
+   public boolean invokeTaggedMethods( HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooksList, HashSet<String> tags, Object... parameters )
    {
       HashSet<Method> alreadyInvokedMethods = new HashSet<Method>();
 
@@ -691,66 +732,74 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                   catch ( Throwable e )
                   {
                      log.error( "", e );
+                     return false;
                   }
                }
             }
          }
-
       }
+
+      return true;
    }
 
    @Override
-   public void runStart( String runName, HashSet<String> tags )
+   public boolean runStart( String runName, HashSet<String> tags )
    {
       if ( tags != null )
       {
-         invokeTaggedMethods( taggedRunStartHooks, tags, runName );
+         return invokeTaggedMethods( taggedRunStartHooks, tags, runName );
       }
+      return true;
    }
 
    @Override
-   public void runStop( String runName, HashSet<String> tags )
+   public boolean runStop( String runName, HashSet<String> tags )
    {
       if ( tags != null )
       {
-         invokeTaggedMethods( taggedRunStopHooks, tags, runName );
+         return invokeTaggedMethods( taggedRunStopHooks, tags, runName );
       }
+      return true;
    }
 
    @Override
-   public void featureStart( String runName, TestFeature feature, HashSet<String> tags )
+   public boolean featureStart( String runName, TestFeature feature, HashSet<String> tags )
    {
       if ( tags != null )
       {
-         invokeTaggedMethods( taggedFeatureStartHooks, tags, runName, feature );
+         return invokeTaggedMethods( taggedFeatureStartHooks, tags, runName, feature );
       }
+      return true;
    }
 
    @Override
-   public void scenarioStart( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
+   public boolean scenarioStart( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
    {
       if ( tags != null )
       {
-         invokeTaggedMethods( taggedScenarioStartHooks, tags, runName, featureName, scenario );
+         return invokeTaggedMethods( taggedScenarioStartHooks, tags, runName, featureName, scenario );
       }
+      return true;
    }
 
    @Override
-   public void scenarioStop( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
+   public boolean scenarioStop( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags )
    {
       if ( tags != null )
       {
-         invokeTaggedMethods( taggedScenarioStopHooks, tags, runName, featureName, scenario );
+         return invokeTaggedMethods( taggedScenarioStopHooks, tags, runName, featureName, scenario );
       }
+      return true;
    }
 
    @Override
-   public void featureStop( String runName, TestFeature feature, HashSet<String> tags )
+   public boolean featureStop( String runName, TestFeature feature, HashSet<String> tags )
    {
       if ( tags != null )
       {
-         invokeTaggedMethods( taggedFeatureStopHooks, tags, runName, feature );
+         return invokeTaggedMethods( taggedFeatureStopHooks, tags, runName, feature );
       }
+      return true;
    }
 
 }

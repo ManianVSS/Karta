@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Random;
 
+import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.randomization.ObjectGenerationRule;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
@@ -40,7 +41,7 @@ public class ObjectGenTestDataSource implements TestDataSource
       return PLUGIN_NAME;
    }
 
-   @Override
+   @Initializer
    public boolean initialize() throws Throwable
    {
       if ( initialized )

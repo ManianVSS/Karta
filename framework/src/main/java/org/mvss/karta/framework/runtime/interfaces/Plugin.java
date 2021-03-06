@@ -4,7 +4,7 @@ public interface Plugin extends AutoCloseable
 {
    String getPluginName();
 
-   boolean initialize() throws Throwable;
+   // Plugin initialize approach is changed to using @Initializer
 
    @Override
    default void close()

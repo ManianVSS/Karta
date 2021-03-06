@@ -4,19 +4,18 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Random;
 
-import org.mvss.karta.framework.core.ParameterMapping;
+import org.mvss.karta.framework.core.ContextBean;
+import org.mvss.karta.framework.core.ContextVariable;
 import org.mvss.karta.framework.core.StepDefinition;
-import org.mvss.karta.framework.core.StepParam;
 import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.core.TestData;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.utils.WaitUtil;
 
-import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@NoArgsConstructor
 public class StepDefinitionsCollection2
 {
    private Random          random = new Random();
@@ -33,7 +32,7 @@ public class StepDefinitionsCollection2
    }
 
    @StepDefinition( value = "authenticate to get new token" )
-   public void authenticate_to_get_new_token( TestExecutionContext context, @StepParam( "userName" ) String userName, @StepParam( "password" ) String password ) throws Throwable
+   public void authenticate_to_get_new_token( TestExecutionContext context, @TestData( "userName" ) String userName, @TestData( "password" ) String password ) throws Throwable
    {
       log.info( "authenticating with username " + userName + " and password " + password + " . Test data passed is" + context.getData() );
       String oldToken = token;
@@ -50,8 +49,7 @@ public class StepDefinitionsCollection2
    }
 
    @StepDefinition( value = "logoff the old token" )
-   public void logoff_the_old_token( TestExecutionContext context, @StepParam( value = "nullBeanDemo", mapto = ParameterMapping.CONTEXT_BEAN ) String nullBean, @StepParam( value = "oldToken", mapto = ParameterMapping.VARIABLE ) String oldToken )
-            throws Throwable
+   public void logoff_the_old_token( TestExecutionContext context, @ContextBean( value = "nullBeanDemo" ) String nullBean, @ContextVariable( value = "oldToken" ) String oldToken ) throws Throwable
    {
       log.info( "Checking null bean: " + nullBean );
       log.info( "Logging off old token: " + oldToken );

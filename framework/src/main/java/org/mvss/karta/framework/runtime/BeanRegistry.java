@@ -1,58 +1,78 @@
 package org.mvss.karta.framework.runtime;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.KartaAutoWired;
-import org.mvss.karta.framework.core.KartaBean;
-import org.mvss.karta.framework.utils.AnnotationScanner;
 
-import lombok.extern.log4j.Log4j2;
-
-//TODO: Bean and property injection into bean with dependency tree 
+//TODO: Bean and property injection into bean with dependency tree
 //TODO: Reload bean definitions if changed in annotated locations
-@Log4j2
+
+/**
+ * A registry for named objects which are used throughout test life cycle.
+ * 
+ * @author Manian
+ */
+// @Log4j2
 public class BeanRegistry
 {
-   private HashMap<String, Object> beans                 = new HashMap<String, Object>();
+   private HashMap<String, Object> beans = new HashMap<String, Object>();
 
-   private Configurator            configurator;
-
-   private static List<Class<?>>   configuredBeanClasses = Collections.synchronizedList( new ArrayList<Class<?>>() );
-
+   /**
+    * Constructor: Add self to the registry with class name.
+    */
    public BeanRegistry()
    {
       beans.put( BeanRegistry.class.getName(), this );
    }
 
-   public BeanRegistry( Configurator configurator )
-   {
-      this();
-      this.configurator = configurator;
-   }
-
+   /**
+    * Add a bean to the registry returning the overridden existing bean by same name if any.
+    * Mapped to the class name.
+    * 
+    * @param bean
+    * @return
+    */
    public Object put( Object bean )
    {
       return put( bean.getClass().getName(), bean );
    }
 
+   /**
+    * Add a bean to bean registry with bean name returning the overridden existing bean by same name if any.
+    * 
+    * @param beanName
+    * @param bean
+    * @return
+    */
    public Object put( String beanName, Object bean )
    {
       return beans.put( beanName, bean );
    }
 
+   /**
+    * Add a bean to the registry if not mapped already.
+    * Returns false if bean name already registered.
+    * Bean name is the class name.
+    * 
+    * @param bean
+    * @return
+    */
    public boolean add( Object bean )
    {
       return add( bean.getClass().getName(), bean );
    }
 
+   /**
+    * Add a bean to the registry by name if not mapped already.
+    * Returns false if bean name already registered.
+    * 
+    * @param beanName
+    * @param bean
+    * @return
+    */
    public boolean add( String beanName, Object bean )
    {
       if ( beans.containsKey( beanName ) )
@@ -63,21 +83,53 @@ public class BeanRegistry
       return true;
    }
 
+   /**
+    * Get the bean in the bean registry by name.
+    * Returns null for non existent bean names.
+    * 
+    * @param beanName
+    * @return
+    */
    public Object get( String beanName )
    {
       return beans.get( beanName );
    }
 
+   /**
+    * Checks if the bean name key is mapped and return true if it does.
+    * 
+    * @param beanName
+    * @return
+    */
    public boolean containsKey( String beanName )
    {
       return beans.containsKey( beanName );
    }
 
+   /**
+    * Wires the object's mapped in the object using KartaAutoWired annotation to values from the bean registry.
+    * 
+    * @see KartaAutoWired
+    * @param object
+    * @throws IllegalArgumentException
+    * @throws IllegalAccessException
+    */
    public void loadBeans( Object object ) throws IllegalArgumentException, IllegalAccessException
    {
       loadBeans( object, object.getClass(), beans );
    }
 
+   /**
+    * Wires the instance fields mapped in the object using KartaAutoWired annotation to values from the bean map.
+    * The superclass to wire is provided by the parameter theClassOfObject
+    * Bean map is provided by parameter beans
+    * 
+    * @param object
+    * @param theClassOfObject
+    * @param beans
+    * @throws IllegalArgumentException
+    * @throws IllegalAccessException
+    */
    public static void loadBeans( Object object, Class<?> theClassOfObject, HashMap<String, Object> beans ) throws IllegalArgumentException, IllegalAccessException
    {
       if ( ( object == null ) || ( theClassOfObject == null ) || theClassOfObject.getName().equals( Object.class.getName() ) || !theClassOfObject.isAssignableFrom( object.getClass() ) )
@@ -124,11 +176,26 @@ public class BeanRegistry
       }
    }
 
+   /**
+    * Wires the static field mapped in the object using KartaAutoWired annotation to values from the bean registry.
+    * 
+    * @param theClassOfObject
+    * @throws IllegalArgumentException
+    * @throws IllegalAccessException
+    */
    public void loadStaticBeans( Class<?> theClassOfObject ) throws IllegalArgumentException, IllegalAccessException
    {
       loadStaticBeans( theClassOfObject, beans );
    }
 
+   /**
+    * Wires the static field mapped in the object using KartaAutoWired annotation to values from the bean map.
+    * 
+    * @param theClassOfObject
+    * @param beans
+    * @throws IllegalArgumentException
+    * @throws IllegalAccessException
+    */
    public static void loadStaticBeans( Class<?> theClassOfObject, HashMap<String, Object> beans ) throws IllegalArgumentException, IllegalAccessException
    {
       if ( ( theClassOfObject == null ) || theClassOfObject.getName().equals( Object.class.getName() ) )
@@ -173,77 +240,5 @@ public class BeanRegistry
       {
          loadStaticBeans( superClass, beans );
       }
-   }
-
-   private final Consumer<Method> processBeanDefinition = new Consumer<Method>()
-   {
-      @Override
-      public void accept( Method candidateBeanDefinitionMethod )
-      {
-         try
-         {
-            for ( KartaBean kartaBean : candidateBeanDefinitionMethod.getAnnotationsByType( KartaBean.class ) )
-            {
-
-               Class<?> beanDeclaringClass = candidateBeanDefinitionMethod.getDeclaringClass();
-
-               if ( !configuredBeanClasses.contains( beanDeclaringClass ) )
-               {
-                  try
-                  {
-                     if ( configurator != null )
-                     {
-                        configurator.loadProperties( beanDeclaringClass );
-                     }
-                     loadStaticBeans( beanDeclaringClass );
-                  }
-                  catch ( IllegalArgumentException | IllegalAccessException e )
-                  {
-                     log.error( "", e );
-                  }
-                  configuredBeanClasses.add( beanDeclaringClass );
-               }
-
-               String beanName = kartaBean.value();
-
-               Class<?>[] paramTypes = candidateBeanDefinitionMethod.getParameterTypes();
-
-               Object beanObj = null;
-
-               if ( paramTypes.length == 0 )
-               {
-                  beanObj = candidateBeanDefinitionMethod.invoke( null );
-               }
-               else
-               {
-                  continue;
-               }
-
-               if ( StringUtils.isAllBlank( beanName ) )
-               {
-                  beanName = beanObj.getClass().getName();
-               }
-
-               if ( !add( beanName, beanObj ) )
-               {
-                  log.error( "Bean: " + beanName + " is already registered." );
-               }
-               else
-               {
-                  log.info( "Bean: " + beanName + " registered." );
-               }
-            }
-         }
-         catch ( Throwable t )
-         {
-            log.error( "Exception while parsing bean definition from method  " + candidateBeanDefinitionMethod.getName(), t );
-         }
-
-      }
-   };
-
-   public void addBeansFromPackages( ArrayList<String> configurationScanPackageNames )
-   {
-      AnnotationScanner.forEachMethod( configurationScanPackageNames, KartaBean.class, AnnotationScanner.IS_PUBLIC_AND_STATIC, AnnotationScanner.IS_NON_VOID_RETURN_TYPE, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, processBeanDefinition );
    }
 }

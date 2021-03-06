@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
+import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
@@ -98,7 +99,7 @@ public class DataFilesTestDataSource implements TestDataSource
       }
    }
 
-   @Override
+   @Initializer
    public boolean initialize() throws Throwable
    {
       if ( initialized )

@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.mvss.karta.framework.runtime.Constants;
+
 /**
  * This annotation is used by Kriya plug-in to allow definition of the before run life cycle hook. </br>
  * The value are the regular expression tag patterns on run tags to match.</br>
@@ -16,5 +18,5 @@ import java.lang.annotation.Target;
 public @interface BeforeRun
 {
    // Tags
-   public String[] value();
+   public String[] value() default Constants.REGEX_ALL_STRING;
 }

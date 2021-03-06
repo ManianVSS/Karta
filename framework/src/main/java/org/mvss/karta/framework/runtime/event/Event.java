@@ -21,10 +21,6 @@ import lombok.ToString;
 @Builder
 public class Event implements Serializable
 {
-
-   /**
-    * 
-    */
    private static final long               serialVersionUID = 1L;
 
    protected String                        eventType;
@@ -55,5 +51,14 @@ public class Event implements Serializable
       this.id = id;
       this.timeOfOccurrence = timeOfOccurrence;
       this.parameters = new HashMap<String, Serializable>();
+   }
+
+   public Event( Event event )
+   {
+      this.eventType = event.eventType;
+      this.runName = event.runName;
+      this.id = event.id;
+      this.timeOfOccurrence = event.timeOfOccurrence;
+      this.parameters = event.getParameters();
    }
 }

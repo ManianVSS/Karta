@@ -1,10 +1,10 @@
 package org.mvss.karta.samples.stepdefinitions;
 
+import org.mvss.karta.framework.core.ContextBean;
 import org.mvss.karta.framework.core.KartaAutoWired;
-import org.mvss.karta.framework.core.ParameterMapping;
 import org.mvss.karta.framework.core.StepDefinition;
-import org.mvss.karta.framework.core.StepParam;
 import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.core.TestData;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.event.GenericTestEvent;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
@@ -25,14 +25,14 @@ public class StepDefinitionsCollection1
    private Employee           employee;
 
    @StepDefinition( value = "the calculator is powered on" )
-   public void the_calculator_is_powered_on( TestExecutionContext context, @StepParam( "employee" ) Employee employee ) throws Throwable
+   public void the_calculator_is_powered_on( TestExecutionContext context, @TestData( "employee" ) Employee employee ) throws Throwable
    {
       context.getVariables().put( "CalculatorState", "On" );
       log.info( "the calculator is powered on by " + username + " employee:" + employee + " and testdata=" + context.getData() );
    }
 
    @StepDefinition( value = "the all clear button is pressed" )
-   public StepResult the_all_clear_button_is_cleared( TestExecutionContext context, @StepParam( "csvEmployee" ) Employee csvEmployee ) throws Throwable
+   public StepResult the_all_clear_button_is_cleared( TestExecutionContext context, @TestData( "csvEmployee" ) Employee csvEmployee ) throws Throwable
    {
       log.info( "the all clear button is pressed. Employee from CSV: " + csvEmployee );
 
@@ -59,7 +59,7 @@ public class StepDefinitionsCollection1
    }
 
    @StepDefinition( "the UI button \"\" is pressed" )
-   public void the_UI_button_is_pressed( @StepParam( value = "AutomationDriverObject", mapto = ParameterMapping.CONTEXT_BEAN ) AutomationDriver driver, String button ) throws Throwable
+   public void the_UI_button_is_pressed( @ContextBean( value = "AutomationDriverObject" ) AutomationDriver driver, String button ) throws Throwable
    {
       log.info( "the UI button \"" + button + "\" is pressed" );
       driver.click( button );

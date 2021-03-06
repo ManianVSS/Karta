@@ -4,6 +4,7 @@ import org.mvss.karta.framework.core.TestScenario;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -11,13 +12,15 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
+@NoArgsConstructor
 public class ScenarioStartEvent extends ScenarioEvent
 {
-
-   /**
-    * 
-    */
    private static final long serialVersionUID = 1L;
+
+   public ScenarioStartEvent( Event event )
+   {
+      super( event );
+   }
 
    public ScenarioStartEvent( String runName, String featureName, long iterationNumber, TestScenario scenario )
    {

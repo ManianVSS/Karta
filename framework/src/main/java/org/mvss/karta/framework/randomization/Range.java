@@ -9,6 +9,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * A generic numeric range which can act as a range for numerical values
+ * 
+ * @author Manian
+ */
 @Getter
 @Setter
 @ToString
@@ -24,6 +29,12 @@ public class Range implements Serializable
    private long              min              = 0;
    private long              max              = Long.MAX_VALUE;
 
+   /**
+    * Select a random value in the range using the provided randomizer.
+    * 
+    * @param random
+    * @return
+    */
    public long getNext( Random random )
    {
       if ( max < min )

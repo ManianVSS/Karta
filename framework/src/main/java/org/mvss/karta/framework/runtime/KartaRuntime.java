@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -13,12 +15,14 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -27,10 +31,16 @@ import org.mvss.karta.configuration.KartaConfiguration;
 import org.mvss.karta.configuration.PluginConfig;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
+import org.mvss.karta.framework.core.ClassMethodConsumer;
 import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.Initializer;
+import org.mvss.karta.framework.core.KartaBean;
+import org.mvss.karta.framework.core.LoadConfiguration;
+import org.mvss.karta.framework.core.ObjectMethodConsumer;
 import org.mvss.karta.framework.core.PreparedChaosAction;
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.PreparedStep;
+import org.mvss.karta.framework.core.RunResult;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StandardFeatureResults;
 import org.mvss.karta.framework.core.StepResult;
@@ -40,14 +50,16 @@ import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.core.TestJobResult;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
-import org.mvss.karta.framework.minions.KartaMinionConfiguration;
-import org.mvss.karta.framework.minions.KartaMinionRegistry;
+import org.mvss.karta.framework.nodes.KartaNodeConfiguration;
+import org.mvss.karta.framework.nodes.KartaNodeRegistry;
+import org.mvss.karta.framework.randomization.ObjectGenerationRule;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.EventProcessor;
 import org.mvss.karta.framework.runtime.event.RunCompleteEvent;
 import org.mvss.karta.framework.runtime.event.RunStartEvent;
 import org.mvss.karta.framework.runtime.event.TestIncidentOccurrenceEvent;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
+import org.mvss.karta.framework.runtime.interfaces.Plugin;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
@@ -55,10 +67,12 @@ import org.mvss.karta.framework.runtime.interfaces.TestLifeCycleHook;
 import org.mvss.karta.framework.runtime.testcatalog.Test;
 import org.mvss.karta.framework.runtime.testcatalog.TestCatalogManager;
 import org.mvss.karta.framework.runtime.testcatalog.TestCategory;
+import org.mvss.karta.framework.utils.AnnotationScanner;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
+import org.mvss.karta.framework.utils.PropertyUtils;
 import org.mvss.karta.framework.utils.SSLUtils;
 import org.quartz.SchedulerException;
 
@@ -93,7 +107,7 @@ public class KartaRuntime implements AutoCloseable
    private EventProcessor         eventProcessor;
 
    @Getter
-   private KartaMinionRegistry    nodeRegistry;
+   private KartaNodeRegistry      nodeRegistry;
 
    private static ObjectMapper    yamlObjectMapper = ParserUtils.getYamlObjectMapper();
 
@@ -164,22 +178,50 @@ public class KartaRuntime implements AutoCloseable
     * @throws IllegalAccessException
     * @throws NotBoundException
     * @throws ClassNotFoundException
+    * @throws InvocationTargetException
     */
-   public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException, ClassNotFoundException
+   public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException, ClassNotFoundException, InvocationTargetException
    {
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize karta configuration
       /*---------------------------------------------------------------------------------------------------------------------*/
       String configString = ClassPathLoaderUtils.readAllText( Constants.KARTA_CONFIGURATION_YAML );
+
       if ( configString == null )
       {
-         return false;
+         if ( PropertyUtils.systemPropertyMap.containsKey( Constants.KARTA_HOME ) )
+         {
+            // TODO: Move all configuration file to user directory
+            File kartaHomeConfigFile = Paths.get( PropertyUtils.systemPropertyMap.get( Constants.KARTA_HOME ), Constants.BIN, Constants.KARTA_CONFIGURATION_YAML ).toFile();
+            if ( kartaHomeConfigFile.exists() )
+            {
+               configString = FileUtils.readFileToString( kartaHomeConfigFile, Charset.defaultCharset() );
+
+               if ( configString == null )
+               {
+                  return false;
+               }
+            }
+            else
+            {
+               return false;
+            }
+         }
       }
+
       kartaConfiguration = yamlObjectMapper.readValue( configString, KartaConfiguration.class );
+
+      configString = ClassPathLoaderUtils.readAllText( Constants.KARTA_CONFIGURATION_OVERRIDES_YAML );
+      if ( configString != null )
+      {
+         KartaConfiguration kartaOverrideConfiguration = yamlObjectMapper.readValue( configString, KartaConfiguration.class );
+         kartaConfiguration.overrideConfiguration( kartaOverrideConfiguration );
+      }
+
       kartaConfiguration.expandSystemAndEnvProperties();
 
       /*---------------------------------------------------------------------------------------------------------------------*/
-      // Intialize random
+      // Initialize random
       /*---------------------------------------------------------------------------------------------------------------------*/
       random = new Random();
 
@@ -192,13 +234,21 @@ public class KartaRuntime implements AutoCloseable
       // Configurator should be setup before plug-in initialization
       /*---------------------------------------------------------------------------------------------------------------------*/
       configurator = new Configurator();
+      configurator.mergeProperties( kartaConfiguration.getProperties() );
       ArrayList<String> propertiesFileList = kartaConfiguration.getPropertyFiles();
-      if ( ( propertiesFileList != null ) && !propertiesFileList.isEmpty() )
+      if ( propertiesFileList == null )
       {
-         String[] propertyFilesToLoad = new String[propertiesFileList.size()];
-         propertiesFileList.toArray( propertyFilesToLoad );
-         configurator.mergePropertiesFiles( propertyFilesToLoad );
+         propertiesFileList = new ArrayList<String>();
       }
+
+      if ( !propertiesFileList.isEmpty() )
+      {
+         propertiesFileList.add( Constants.KARTA_RUNTIME_PROPERTIES_YAML );
+      }
+
+      String[] propertyFilesToLoad = new String[propertiesFileList.size()];
+      propertiesFileList.toArray( propertyFilesToLoad );
+      configurator.mergePropertiesFiles( propertyFilesToLoad );
 
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Load and enable plug-ins
@@ -208,7 +258,7 @@ public class KartaRuntime implements AutoCloseable
       pnpRegistry.addPluginConfiguration( basePluginConfigs );
 
       ArrayList<String> pluginDirectories = kartaConfiguration.getPluginsDirectories();
-      if ( ( pluginDirectories == null ) || ( pluginDirectories.isEmpty() ) )
+      if ( Files.exists( Paths.get( Constants.KARTA_PLUGINS_CONFIG_YAML ) ) )
       {
          ArrayList<PluginConfig> additionalPluginConfig = PnPRegistry.readPluginsConfig( Constants.KARTA_PLUGINS_CONFIG_YAML );
          if ( additionalPluginConfig != null )
@@ -218,11 +268,14 @@ public class KartaRuntime implements AutoCloseable
       }
       else
       {
-         for ( String pluginsDirectory : pluginDirectories )
+         if ( pluginDirectories != null )
          {
-            if ( StringUtils.isNotEmpty( pluginsDirectory ) )
+            for ( String pluginsDirectory : pluginDirectories )
             {
-               pnpRegistry.loadPlugins( configurator, new File( pluginsDirectory ) );
+               if ( StringUtils.isNotEmpty( pluginsDirectory ) )
+               {
+                  pnpRegistry.loadPlugins( configurator, new File( pluginsDirectory ) );
+               }
             }
          }
       }
@@ -241,7 +294,7 @@ public class KartaRuntime implements AutoCloseable
       // Initialize node registry
       /*---------------------------------------------------------------------------------------------------------------------*/
       // TODO: Add task pulling worker minions to support minions as clients rather than open server sockets
-      nodeRegistry = new KartaMinionRegistry();
+      nodeRegistry = new KartaNodeRegistry();
 
       if ( initializeNodes )
       {
@@ -262,7 +315,7 @@ public class KartaRuntime implements AutoCloseable
       {
          for ( String testCatalogFragmentFile : kartaConfiguration.getTestCatalogFragmentFiles() )
          {
-            catalogFileText = FileUtils.readFileToString( new File( testCatalogFragmentFile ), Charset.defaultCharset() );
+            catalogFileText = ClassPathLoaderUtils.readAllText( testCatalogFragmentFile );
             testCategory = ( catalogFileText == null ) ? new TestCategory() : yamlObjectMapper.readValue( catalogFileText, TestCategory.class );
             testCatalogManager.mergeWithCatalog( testCategory );
          }
@@ -271,12 +324,14 @@ public class KartaRuntime implements AutoCloseable
       testCatalogManager.mergeRepositoryDirectoryIntoCatalog( new File( Constants.DOT ) );
 
       executorServiceManager = new ExecutorServiceManager();
-      executorServiceManager.getOrAddExecutorServiceForGroup( Constants.__TESTS__, kartaConfiguration.getTestThreadCount() );
+      executorServiceManager.addExecutorServiceForGroups( kartaConfiguration.getThreadGroups() );
+      executorServiceManager.getOrAddExecutorServiceForGroup( Constants.__DEFAULT__, 1 );
 
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize bean registry
       /*---------------------------------------------------------------------------------------------------------------------*/
-      beanRegistry = new BeanRegistry( configurator );
+      beanRegistry = new BeanRegistry();
+      beanRegistry.add( this );
       beanRegistry.add( configurator );
       beanRegistry.add( testCatalogManager );
       beanRegistry.add( eventProcessor );
@@ -287,16 +342,16 @@ public class KartaRuntime implements AutoCloseable
       ArrayList<String> packagesToScanBeans = kartaConfiguration.getConfigurationScanPackages();
       if ( packagesToScanBeans != null )
       {
-         beanRegistry.addBeansFromPackages( packagesToScanBeans );
+         processConfigBeans( packagesToScanBeans );
       }
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize enabled plug-ins only after all other beans are initialized
       /*---------------------------------------------------------------------------------------------------------------------*/
-      if ( !pnpRegistry.initializePlugins( beanRegistry, configurator ) )
-      {
-         return false;
-      }
 
+      for ( Plugin pluginEntry : pnpRegistry.getEnabledPlugins().values() )
+      {
+         initializeObject( pluginEntry );
+      }
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Start event processor with event listener plug-ins*
       /*---------------------------------------------------------------------------------------------------------------------*/
@@ -308,6 +363,164 @@ public class KartaRuntime implements AutoCloseable
       return true;
    }
 
+   private static List<Class<?>>    configuredBeanClasses           = Collections.synchronizedList( new ArrayList<Class<?>>() );
+
+   private final Consumer<Method>   processBeanDefinition           = new Consumer<Method>()
+                                                                    {
+                                                                       @Override
+                                                                       public void accept( Method beanDefinitionMethod )
+                                                                       {
+                                                                          try
+                                                                          {
+                                                                             for ( KartaBean kartaBean : beanDefinitionMethod.getAnnotationsByType( KartaBean.class ) )
+                                                                             {
+
+                                                                                Class<?> beanDeclaringClass = beanDefinitionMethod.getDeclaringClass();
+
+                                                                                initializeClass( beanDeclaringClass );
+
+                                                                                String beanName = kartaBean.value();
+
+                                                                                Class<?>[] paramTypes = beanDefinitionMethod.getParameterTypes();
+
+                                                                                Object beanObj = null;
+
+                                                                                if ( paramTypes.length == 0 )
+                                                                                {
+                                                                                   beanObj = beanDefinitionMethod.invoke( null );
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                   continue;
+                                                                                }
+
+                                                                                if ( StringUtils.isAllBlank( beanName ) )
+                                                                                {
+                                                                                   beanName = beanObj.getClass().getName();
+                                                                                }
+
+                                                                                if ( !beanRegistry.add( beanName, beanObj ) )
+                                                                                {
+                                                                                   log.error( "Bean: " + beanName + " is already registered." );
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                   log.info( "Bean: " + beanName + " registered." );
+                                                                                }
+                                                                             }
+                                                                          }
+                                                                          catch ( Throwable t )
+                                                                          {
+                                                                             log.error( "Exception while parsing bean definition from method  " + beanDefinitionMethod.getName(), t );
+                                                                          }
+
+                                                                       }
+                                                                    };
+
+   private final Consumer<Class<?>> processLoadPropertiesDefinition = new Consumer<Class<?>>()
+                                                                    {
+                                                                       @Override
+                                                                       public void accept( Class<?> classesToLoadPropertiesWith )
+                                                                       {
+                                                                          try
+                                                                          {
+                                                                             initializeClass( classesToLoadPropertiesWith );
+                                                                          }
+                                                                          catch ( Throwable t )
+                                                                          {
+                                                                             log.error( "Exception while loading static fileds from properties for class  " + classesToLoadPropertiesWith.getName(), t );
+                                                                          }
+
+                                                                       }
+                                                                    };
+
+   public void processConfigBeans( Collection<String> configurationScanPackageNames )
+   {
+      AnnotationScanner.forEachMethod( configurationScanPackageNames, KartaBean.class, AnnotationScanner.IS_PUBLIC_AND_STATIC, AnnotationScanner.IS_NON_VOID_RETURN_TYPE, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, processBeanDefinition );
+      AnnotationScanner.forEachClass( configurationScanPackageNames, LoadConfiguration.class, AnnotationScanner.IS_PUBLIC, processLoadPropertiesDefinition );
+   }
+
+   private final ObjectMethodConsumer callObjectInitializer = new ObjectMethodConsumer()
+   {
+      @Override
+      public void accept( Object object, Method method )
+      {
+         try
+         {
+            method.invoke( object );
+         }
+         catch ( Throwable t )
+         {
+            log.error( "Exception while parsing bean definition from method  " + method.getName(), t );
+         }
+      }
+   };
+
+   /**
+    * Sets the properties and beans(static and non-static) for the object and calls any initializer methods
+    * 
+    * @see Initializer
+    * @param object
+    */
+   public void initializeObject( Object object )
+   {
+      try
+      {
+         Class<?> classOfObject = object.getClass();
+         initializeClass( classOfObject );
+         // Not checking one time initialization for object level here which can prevent garbage collection
+         configurator.loadProperties( object );
+         beanRegistry.loadBeans( object );
+         AnnotationScanner.forEachMethod( object, Initializer.class, AnnotationScanner.IS_NON_STATIC, null, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, callObjectInitializer );
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while initializing object", t );
+      }
+   }
+
+   private final ClassMethodConsumer callClassInitializer = new ClassMethodConsumer()
+   {
+      @Override
+      public void accept( Class<?> classToWorkWith, Method beanDefinitionMethod )
+      {
+         try
+         {
+            beanDefinitionMethod.invoke( null );
+         }
+         catch ( Throwable t )
+         {
+            log.error( "Exception while parsing bean definition from method  " + beanDefinitionMethod.getName(), t );
+         }
+
+      }
+   };
+
+   /**
+    * Sets the properties and beans (static) for the class of object and calls any initializer methods
+    * 
+    * @see Initializer
+    * @param theClassOfObject
+    */
+   public void initializeClass( Class<?> theClassOfObject )
+   {
+      try
+      {
+         if ( !configuredBeanClasses.contains( theClassOfObject ) )
+         {
+            configurator.loadProperties( theClassOfObject );
+            beanRegistry.loadStaticBeans( theClassOfObject );
+
+            AnnotationScanner.forEachMethod( theClassOfObject, Initializer.class, AnnotationScanner.IS_STATIC, null, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, callClassInitializer );
+            configuredBeanClasses.add( theClassOfObject );
+         }
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while initializing object", t );
+      }
+   }
+
    /**
     * <b> This is typically required only when creating a customized KartaMinionServer</b>. </br>
     * Adds the nodes based on the configuration. </br>
@@ -315,9 +528,7 @@ public class KartaRuntime implements AutoCloseable
     */
    public void addNodes()
    {
-      ArrayList<KartaMinionConfiguration> nodes = kartaConfiguration.getNodes();
-
-      for ( KartaMinionConfiguration node : nodes )
+      for ( KartaNodeConfiguration node : kartaConfiguration.getNodes() )
       {
          nodeRegistry.addNode( node );
       }
@@ -382,7 +593,7 @@ public class KartaRuntime implements AutoCloseable
          {
             if ( !featureSourceParserMap.containsKey( featureSourceParserName ) )
             {
-               FeatureSourceParser featureSourceParser = (FeatureSourceParser) pnpRegistry.getPlugin( featureSourceParserName );
+               FeatureSourceParser featureSourceParser = (FeatureSourceParser) pnpRegistry.getEnabledPlugin( featureSourceParserName );
 
                if ( featureSourceParser == null )
                {
@@ -432,7 +643,7 @@ public class KartaRuntime implements AutoCloseable
          {
             if ( !stepRunnerMap.containsKey( stepRunnerPluginName ) )
             {
-               StepRunner stepRunner = (StepRunner) pnpRegistry.getPlugin( stepRunnerPluginName );
+               StepRunner stepRunner = (StepRunner) pnpRegistry.getEnabledPlugin( stepRunnerPluginName );
 
                if ( stepRunner == null )
                {
@@ -486,7 +697,7 @@ public class KartaRuntime implements AutoCloseable
 
                for ( String testDataSourcePlugin : testDataSourcesPluginNames )
                {
-                  TestDataSource testDataSource = (TestDataSource) pnpRegistry.getPlugin( testDataSourcePlugin );
+                  TestDataSource testDataSource = (TestDataSource) pnpRegistry.getEnabledPlugin( testDataSourcePlugin );
 
                   if ( testDataSource == null )
                   {
@@ -527,8 +738,10 @@ public class KartaRuntime implements AutoCloseable
     * @param runTarget
     * @return boolean
     */
-   public boolean runTestTarget( RunInfo runInfo, RunTarget runTarget )
+   public RunResult runTestTarget( RunInfo runInfo, RunTarget runTarget )
    {
+      RunResult runResult = new RunResult();
+
       runInfo.setDefaultPlugins( kartaConfiguration.getDefaultFeatureSourceParserPlugin(), kartaConfiguration.getDefaultStepRunnerPlugin(), kartaConfiguration.getDefaultTestDataSourcePlugins() );
 
       try
@@ -540,28 +753,56 @@ public class KartaRuntime implements AutoCloseable
 
          if ( StringUtils.isNotBlank( runTarget.getFeatureFile() ) )
          {
-            eventProcessor.runStart( runName, individualTestTags );
+            if ( !eventProcessor.runStart( runName, individualTestTags ) )
+            {
+               runResult.setError( true );
+               runResult.setEndTime( new Date() );
+               return runResult;
+            }
+
             eventProcessor.raiseEvent( new RunStartEvent( runName ) );
             FeatureResult result = runFeatureFile( runInfo, runTarget.getFeatureFile() );
-            eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
-            eventProcessor.runStop( runName, individualTestTags );
-            return result.isPassed();
+            runResult.setEndTime( new Date() );
+            runResult.addTestResult( result );
+            eventProcessor.raiseEvent( new RunCompleteEvent( runName, runResult ) );
+
+            if ( !eventProcessor.runStop( runName, individualTestTags ) )
+            {
+               runResult.setError( true );
+               runResult.setEndTime( new Date() );
+               return runResult;
+            }
+            return runResult;
          }
          else if ( StringUtils.isNotBlank( runTarget.getJavaTest() ) )
          {
             ArrayList<TestDataSource> testDataSources = getTestDataSources( runInfo );
             if ( testDataSources == null )
             {
-               return false;
+               runResult.setEndTime( new Date() );
+               runResult.setSuccessful( false );
+               return runResult;
             }
 
             JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).runInfo( runInfo ).javaTest( runTarget.getJavaTest() ).javaTestJarFile( runTarget.getJavaTestJarFile() ).build();
-            eventProcessor.runStart( runName, individualTestTags );
+            if ( !eventProcessor.runStart( runName, individualTestTags ) )
+            {
+               runResult.setError( true );
+               runResult.setEndTime( new Date() );
+               return runResult;
+            }
             eventProcessor.raiseEvent( new RunStartEvent( runName ) );
             FeatureResult result = testRunner.call();
-            eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
-            eventProcessor.runStop( runName, individualTestTags );
-            return result.isPassed();
+            runResult.setEndTime( new Date() );
+            runResult.addTestResult( result );
+            eventProcessor.raiseEvent( new RunCompleteEvent( runName, runResult ) );
+            if ( !eventProcessor.runStop( runName, individualTestTags ) )
+            {
+               runResult.setError( true );
+               runResult.setEndTime( new Date() );
+               return runResult;
+            }
+            return runResult;
          }
          else if ( ( runTarget.getRunTags() != null && !runTarget.getRunTags().isEmpty() ) )
          {
@@ -569,13 +810,17 @@ public class KartaRuntime implements AutoCloseable
          }
          else
          {
-            return false;
+            runResult.setEndTime( new Date() );
+            runResult.setSuccessful( false );
+            return runResult;
          }
       }
       catch ( Throwable t )
       {
          log.error( Constants.EMPTY_STRING, t );
-         return false;
+         runResult.setEndTime( new Date() );
+         runResult.setSuccessful( false );
+         return runResult;
       }
    }
 
@@ -587,17 +832,33 @@ public class KartaRuntime implements AutoCloseable
     * @return boolean
     * @throws Throwable
     */
-   public boolean runTestsWithTags( RunInfo runInfo, HashSet<String> tags ) throws Throwable
+   public RunResult runTestsWithTags( RunInfo runInfo, HashSet<String> tags ) throws Throwable
    {
+      RunResult runResult = new RunResult();
+
       String runName = runInfo.getRunName();
-      eventProcessor.runStart( runName, tags );
+
+      if ( !eventProcessor.runStart( runName, tags ) )
+      {
+         runResult.setError( true );
+         runResult.setEndTime( new Date() );
+         return runResult;
+      }
+
       eventProcessor.raiseEvent( new RunStartEvent( runName ) );
       ArrayList<Test> tests = testCatalogManager.filterTestsByTag( tags );
       Collections.sort( tests );
-      boolean result = runTest( runInfo, tests );
-      eventProcessor.raiseEvent( new RunCompleteEvent( runName ) );
-      eventProcessor.runStop( runName, tags );
-      return result;
+      runResult = runTest( runInfo, tests );
+      eventProcessor.raiseEvent( new RunCompleteEvent( runName, runResult ) );
+
+      if ( !eventProcessor.runStop( runName, tags ) )
+      {
+         runResult.setError( true );
+         runResult.setEndTime( new Date() );
+         return runResult;
+      }
+
+      return runResult;
    }
 
    /**
@@ -608,11 +869,12 @@ public class KartaRuntime implements AutoCloseable
     * @return boolean
     * @throws Throwable
     */
-   public boolean runTest( RunInfo runInfo, Collection<Test> tests ) throws Throwable
+   public RunResult runTest( RunInfo runInfo, Collection<Test> tests ) throws Throwable
    {
+      RunResult result = new RunResult();
       ArrayList<Future<FeatureResult>> futures = new ArrayList<Future<FeatureResult>>();
 
-      AtomicBoolean successful = new AtomicBoolean( true );
+      // AtomicBoolean successful = new AtomicBoolean( true );
 
       for ( Test test : tests )
       {
@@ -625,21 +887,27 @@ public class KartaRuntime implements AutoCloseable
                if ( featureParser == null )
                {
                   log.error( "Failed to get a feature source parser of type: " + runInfoForTest.getFeatureSourceParserPlugin() );
-                  return false;
+                  result.setEndTime( new Date() );
+                  result.setSuccessful( false );
+                  return result;
                }
 
                StepRunner stepRunner = getStepRunner( runInfoForTest );
                if ( stepRunner == null )
                {
                   log.error( "Failed to get a step runner for run: " + runInfo );
-                  return false;
+                  result.setEndTime( new Date() );
+                  result.setSuccessful( false );
+                  return result;
                }
 
                ArrayList<TestDataSource> testDataSources = getTestDataSources( runInfo );
                if ( testDataSources == null )
                {
                   log.error( "Failed to get test data sources for run: " + runInfo );
-                  return false;
+                  result.setEndTime( new Date() );
+                  result.setSuccessful( false );
+                  return result;
                }
 
                String sourceArchive = test.getSourceArchive();
@@ -683,14 +951,14 @@ public class KartaRuntime implements AutoCloseable
 
                ExecutorService testExecutorService = executorServiceManager.getExecutorServiceForGroup( test.getThreadGroup() );
 
-               FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).runInfo( runInfoForTest ).testFeature( testFeature ).resultConsumer( ( result ) -> successful.set( result.isSuccessful() && successful.get() ) ).build();
+               FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).runInfo( runInfoForTest ).testFeature( testFeature ).resultConsumer( ( featureResult ) -> result.addTestResult( featureResult ) ).build();
 
                futures.add( testExecutorService.submit( featureRunner ) );
                break;
 
             case JAVA_TEST:
                JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).runInfo( runInfo ).javaTest( test.getJavaTestClass() ).javaTestJarFile( test.getSourceArchive() )
-                        .resultConsumer( ( result ) -> successful.set( result.isSuccessful() && successful.get() ) ).build();
+                        .resultConsumer( ( featureResult ) -> result.addTestResult( featureResult ) ).build();
                testExecutorService = executorServiceManager.getExecutorServiceForGroup( test.getThreadGroup() );
                futures.add( testExecutorService.submit( testRunner ) );
                break;
@@ -702,7 +970,8 @@ public class KartaRuntime implements AutoCloseable
          future.get();
       }
 
-      return successful.get();
+      result.setEndTime( new Date() );
+      return result;
    }
 
    /**
@@ -722,14 +991,14 @@ public class KartaRuntime implements AutoCloseable
          {
             String errorMsg = "Feature file invalid: " + featureFileName;
             log.error( errorMsg );
-            return StandardFeatureResults.error( errorMsg );
+            return StandardFeatureResults.error( featureFileName, errorMsg );
          }
          return runFeatureSource( runInfo, featureSource );
       }
       catch ( Throwable t )
       {
          log.error( Constants.EMPTY_STRING, t );
-         return StandardFeatureResults.error( t );
+         return StandardFeatureResults.error( featureFileName, t );
       }
    }
 
@@ -750,7 +1019,7 @@ public class KartaRuntime implements AutoCloseable
          {
             String errorMsg = "Failed to get a feature source parser of type: " + runInfo.getFeatureSourceParserPlugin();
             log.error( errorMsg );
-            return StandardFeatureResults.error( errorMsg );
+            return StandardFeatureResults.error( Constants.UNNAMED, errorMsg );
          }
          TestFeature testFeature = featureParser.parseFeatureSource( featureFileSourceString );
 
@@ -759,7 +1028,7 @@ public class KartaRuntime implements AutoCloseable
       catch ( Throwable t )
       {
          log.error( Constants.EMPTY_STRING, t );
-         return StandardFeatureResults.error( t );
+         return StandardFeatureResults.error( Constants.UNNAMED, t );
       }
    }
 
@@ -778,7 +1047,7 @@ public class KartaRuntime implements AutoCloseable
       {
          String errorMsg = "Failed to get a step runner for run: " + runInfo;
          log.error( errorMsg );
-         return StandardFeatureResults.error( errorMsg );
+         return StandardFeatureResults.error( feature.getName(), errorMsg );
       }
 
       ArrayList<TestDataSource> testDataSources = getTestDataSources( runInfo );
@@ -787,7 +1056,7 @@ public class KartaRuntime implements AutoCloseable
       {
          String errorMsg = "Failed to get test data sources for run: " + runInfo;
          log.error( errorMsg );
-         return StandardFeatureResults.error( errorMsg );
+         return StandardFeatureResults.error( feature.getName(), errorMsg );
       }
       try
       {
@@ -798,7 +1067,7 @@ public class KartaRuntime implements AutoCloseable
       catch ( Throwable t )
       {
          log.error( Constants.EMPTY_STRING, t );
-         return StandardFeatureResults.error( t );
+         return StandardFeatureResults.error( feature.getName(), t );
       }
    }
 
@@ -822,6 +1091,7 @@ public class KartaRuntime implements AutoCloseable
          // TODO: Handle local node
          // TODO: Handle null node error
          jobResult = nodeRegistry.getNode( node ).runJobIteration( runInfo, featureName, job.toBuilder().node( null ).build(), iterationIndex );
+         jobResult.processRemoteResults();
       }
       else
       {
@@ -889,11 +1159,43 @@ public class KartaRuntime implements AutoCloseable
             throws Throwable
    {
       StepRunner stepRunner = getStepRunner( runInfo );
-      String stepIdentifier = step.getIdentifier();
+      String stepIdentifier = step.getStep();
+
+      if ( StringUtils.isBlank( stepIdentifier ) )
+      {
+         log.error( "Empty step definition identifier for step " + step );
+
+      }
+
       String sanitizedStepIdentifer = stepRunner.sanitizeStepIdentifier( stepIdentifier );
       TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, sanitizedStepIdentifer, null, variables );
       testExecutionContext.setContextBeanRegistry( contextBeanRegistry );
-      testExecutionContext.mergeTestData( step.getTestData(), DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
+
+      HashMap<String, Serializable> mergedTestData = DataUtils.cloneMap( step.getTestData() );
+      HashMap<String, HashMap<String, Serializable>> variableTestDataRuleMap = step.getVariableTestDataRuleMap();
+      if ( variableTestDataRuleMap != null )
+      {
+         ObjectMapper objectMapper = ParserUtils.getObjectMapper();
+
+         for ( String objectKey : variableTestDataRuleMap.keySet() )
+         {
+            if ( !mergedTestData.containsKey( objectKey ) )
+            {
+               ObjectGenerationRule ruleToAdd = objectMapper.readValue( objectMapper.writeValueAsString( variableTestDataRuleMap.get( objectKey ) ), ObjectGenerationRule.class );
+
+               if ( !ruleToAdd.validateConfiguration() )
+               {
+                  log.error( "Object rule generation failed validation: " + ruleToAdd );
+                  continue;
+               }
+
+               mergedTestData.put( objectKey, ruleToAdd.generateNextValue( random ) );
+            }
+         }
+
+      }
+
+      testExecutionContext.mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
 
       return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).build();
    }
@@ -940,7 +1242,7 @@ public class KartaRuntime implements AutoCloseable
                                                 TestScenario testScenario, ArrayList<TestStep> scenarioTearDownSteps )
             throws Throwable
    {
-      BeanRegistry contextBeanRegistry = new BeanRegistry( configurator );
+      BeanRegistry contextBeanRegistry = new BeanRegistry();
 
       PreparedScenario preparedScenario = PreparedScenario.builder().name( testScenario.getName() ).description( testScenario.getDescription() ).contextBeanRegistry( contextBeanRegistry ).build();
 
@@ -973,7 +1275,7 @@ public class KartaRuntime implements AutoCloseable
       ArrayList<PreparedStep> preparedExecutionSteps = new ArrayList<PreparedStep>();
       for ( TestStep step : testScenario.getExecutionSteps() )
       {
-         preparedSetupSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, step, contextBeanRegistry ) );
+         preparedExecutionSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, step, contextBeanRegistry ) );
       }
       preparedScenario.setExecutionSteps( preparedExecutionSteps );
 
@@ -1006,6 +1308,7 @@ public class KartaRuntime implements AutoCloseable
          // TODO: Handle local node
          // TODO: Handle null node error
          stepResult = nodeRegistry.getNode( node ).runStep( runInfo, step.toBuilder().node( null ).build() );
+         stepResult.processRemoteResults();
       }
       else
       {
@@ -1056,6 +1359,7 @@ public class KartaRuntime implements AutoCloseable
       if ( StringUtils.isNotEmpty( nodeName ) )
       {
          stepResult = nodeRegistry.getNode( nodeName ).performChaosAction( runInfo, preparedChaosAction.toBuilder().node( null ).build() );
+         stepResult.processRemoteResults();
       }
       else
       {

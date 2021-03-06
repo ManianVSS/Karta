@@ -1,12 +1,15 @@
 package org.mvss.karta.framework.runtime.event;
 
 import org.mvss.karta.framework.core.TestFeature;
+import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.utils.ParserUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -14,13 +17,17 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode( callSuper = true )
 @ToString
+@NoArgsConstructor
 public abstract class FeatureEvent extends Event
 {
-
-   /**
-    * 
-    */
    private static final long serialVersionUID = 1L;
+
+   public FeatureEvent( Event event )
+   {
+      super( event );
+      parameters.put( Constants.FEATURE, ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.FEATURE ), TestFeature.class ) );
+      parameters.put( Constants.FEATURE_NAME, ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.FEATURE_NAME ), String.class ) );
+   }
 
    public FeatureEvent( String eventName, String runName, String featureName )
    {

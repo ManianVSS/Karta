@@ -32,33 +32,35 @@ import lombok.ToString;
 @AllArgsConstructor
 public class FeatureResult implements Serializable
 {
-   private static final long                           serialVersionUID   = 1L;
+   private static final long                              serialVersionUID   = 1L;
+
+   private String                                         featureName;
 
    @Builder.Default
-   private Date                                        startTime          = new Date();
+   private Date                                           startTime          = new Date();
 
-   private Date                                        endTime;
-
-   @Builder.Default
-   private boolean                                     successful         = true;
+   private Date                                           endTime;
 
    @Builder.Default
-   private boolean                                     error              = false;
+   private boolean                                        successful         = true;
 
    @Builder.Default
-   private CopyOnWriteArrayList<TestIncident>          incidents          = new CopyOnWriteArrayList<TestIncident>();
+   private boolean                                        error              = false;
 
    @Builder.Default
-   private ArrayList<SerializableKVP<String, Boolean>> setupResults       = new ArrayList<SerializableKVP<String, Boolean>>();
+   private CopyOnWriteArrayList<TestIncident>             incidents          = new CopyOnWriteArrayList<TestIncident>();
 
    @Builder.Default
-   private HashMap<String, ArrayList<TestJobResult>>   jobsResultsMap     = new HashMap<String, ArrayList<TestJobResult>>();
+   private ArrayList<SerializableKVP<String, StepResult>> setupResults       = new ArrayList<SerializableKVP<String, StepResult>>();
 
    @Builder.Default
-   private HashMap<String, ArrayList<ScenarioResult>>  scenarioResultsMap = new HashMap<String, ArrayList<ScenarioResult>>();
+   private HashMap<String, ArrayList<TestJobResult>>      jobsResultsMap     = new HashMap<String, ArrayList<TestJobResult>>();
 
    @Builder.Default
-   private ArrayList<SerializableKVP<String, Boolean>> tearDownResults    = new ArrayList<SerializableKVP<String, Boolean>>();
+   private HashMap<String, ArrayList<ScenarioResult>>     scenarioResultsMap = new HashMap<String, ArrayList<ScenarioResult>>();
+
+   @Builder.Default
+   private ArrayList<SerializableKVP<String, StepResult>> tearDownResults    = new ArrayList<SerializableKVP<String, StepResult>>();
 
    public HashMap<String, ArrayList<TestJobResult>> addTestJobResult( String jobName, TestJobResult testJobResult )
    {
@@ -118,38 +120,39 @@ public class FeatureResult implements Serializable
       }
    }
 
-   public void addTestIterationResults( HashMap<TestScenario, ScenarioResult> iterationResults )
-   {
-      if ( scenarioResultsMap == null )
-      {
-         scenarioResultsMap = new HashMap<String, ArrayList<ScenarioResult>>();
-      }
-
-      if ( iterationResults == null )
-      {
-         return;
-      }
-
-      for ( Entry<TestScenario, ScenarioResult> entry : iterationResults.entrySet() )
-      {
-         TestScenario testScenario = entry.getKey();
-         ScenarioResult scenarioResult = entry.getValue();
-
-         successful = successful && scenarioResult.isPassed();
-         ArrayList<ScenarioResult> scenarioResults = scenarioResultsMap.get( testScenario.getName() );
-
-         if ( scenarioResults == null )
-         {
-            scenarioResults = new ArrayList<ScenarioResult>();
-            scenarioResultsMap.put( testScenario.getName(), scenarioResults );
-         }
-         scenarioResults.add( scenarioResult );
-      }
-   }
-
    public synchronized void sortResults()
    {
       jobsResultsMap.values().forEach( ( results ) -> Collections.sort( results ) );
       scenarioResultsMap.values().forEach( ( results ) -> Collections.sort( results ) );
+   }
+
+   /**
+    * Converts events and other objects received from remote execution to appropriate sub class
+    */
+   public void processRemoteResults()
+   {
+
+      for ( SerializableKVP<String, StepResult> setupResult : setupResults )
+      {
+         setupResult.getValue().processRemoteResults();
+      }
+      for ( Entry<String, ArrayList<TestJobResult>> chaosActionResult : jobsResultsMap.entrySet() )
+      {
+         for ( TestJobResult testJobResult : chaosActionResult.getValue() )
+         {
+            testJobResult.processRemoteResults();
+         }
+      }
+      for ( Entry<String, ArrayList<ScenarioResult>> runResult : scenarioResultsMap.entrySet() )
+      {
+         for ( ScenarioResult scenarioResult : runResult.getValue() )
+         {
+            scenarioResult.processRemoteResults();
+         }
+      }
+      for ( SerializableKVP<String, StepResult> tearDownResult : tearDownResults )
+      {
+         tearDownResult.getValue().processRemoteResults();
+      }
    }
 }
