@@ -35,10 +35,12 @@ public class KartaConfiguration implements Serializable
    private static final long                              serialVersionUID                 = 1L;
 
    /**
-    * The directories where plug-in jars are to be loaded from.
+    * The list of plug-in details
+    * 
+    * @see PluginConfig
     */
    @Builder.Default
-   private ArrayList<String>                              pluginsDirectories               = new ArrayList<String>();
+   private ArrayList<PluginConfig>                        pluginConfigurations             = new ArrayList<PluginConfig>();
 
    /**
     * The default feature source parser plug-in
@@ -136,7 +138,6 @@ public class KartaConfiguration implements Serializable
    public synchronized void expandSystemAndEnvProperties()
    {
       // TODO: Change to a generic utility for expanding env vars with annotations
-      PropertyUtils.expandEnvVars( pluginsDirectories );
       defaultFeatureSourceParserPlugin = PropertyUtils.expandEnvVars( defaultFeatureSourceParserPlugin );
       defaultStepRunnerPlugin = PropertyUtils.expandEnvVars( defaultStepRunnerPlugin );
       PropertyUtils.expandEnvVars( defaultTestDataSourcePlugins );
@@ -150,7 +151,7 @@ public class KartaConfiguration implements Serializable
    public synchronized void overrideConfiguration( KartaConfiguration override )
    {
       // TODO: Change to a generic utility to copy properties with an annotation for mapping
-      DataUtils.addMissing( pluginsDirectories, override.pluginsDirectories );
+      DataUtils.addMissing( pluginConfigurations, override.pluginConfigurations );
       defaultFeatureSourceParserPlugin = NullAwareBeanUtilsBean.getOverridenValue( defaultFeatureSourceParserPlugin, override.defaultFeatureSourceParserPlugin );
       defaultStepRunnerPlugin = NullAwareBeanUtilsBean.getOverridenValue( defaultStepRunnerPlugin, override.defaultStepRunnerPlugin );
       DataUtils.addMissing( defaultTestDataSourcePlugins, override.defaultTestDataSourcePlugins );

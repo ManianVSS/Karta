@@ -48,7 +48,7 @@ public class Timer implements Serializable, Comparable<Timer>
    }
 
    @JsonIgnore
-   public Duration getTimerDuration()
+   public Duration getDuration()
    {
       return Duration.between( startTime, endTime );
    }
@@ -56,7 +56,6 @@ public class Timer implements Serializable, Comparable<Timer>
    @Override
    public int compareTo( Timer otherTimer )
    {
-
       if ( startTime == null )
       {
          if ( otherTimer.startTime != null )
@@ -80,7 +79,7 @@ public class Timer implements Serializable, Comparable<Timer>
 
             if ( startTimeCompare == 0 )
             {
-               return getTimerDuration().compareTo( otherTimer.getTimerDuration() );
+               return getDuration().compareTo( otherTimer.getDuration() );
             }
             else
             {

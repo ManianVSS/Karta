@@ -108,10 +108,13 @@ public class Constants
    public static final String   SCENARIO_TEAR_DOWN_STEPS            = "scenarioTearDownSteps";
    public static final String   SCENARIO_ITERATION_NUMBER           = "scenarioIterationNumber";
 
+   public static final String   RELEASE                             = "release";
+   public static final String   BUILD                               = "build";
    public static final String   CHANCE_BASED_SCENARIO_EXECUTION     = "chanceBasedScenarioExecution";
    public static final String   EXCLUSIVE_SCENARIO_PER_ITERATION    = "exclusiveScenarioPerIteration";
    public static final String   NUMBER_OF_ITERATIONS                = "numberOfIterations";
-   public static final String   NUMBER_OF_ITERATIONS_IN_PARALLEL    = "numberOfIterationsInParallel";
+   public static final String   ITERATION_THREAD_COUNT              = "iterationThreadCount";
+   // public static final String NUMBER_OF_THREADS = "numberOfThreads";
 
    public static final String   __ALL__                             = "__All__";
 
@@ -127,4 +130,11 @@ public class Constants
    public static final String   LOCALHOST                           = "localhost";
 
    public static final int      MAX_BLOB_SIZE                       = 1048576;
+
+   public static final String   HELP                                = "help";
+   public static final String   TAGS                                = "tags";
+   public static final String   FEATURE_FILE                        = "featureFile";
+   public static final String   JAVA_TEST                           = "javaTest";
+   public static final String   JAVA_TEST_JAR                       = "javaTestJar";
+   public static final String   START_NODE                          = "startNode";
 }

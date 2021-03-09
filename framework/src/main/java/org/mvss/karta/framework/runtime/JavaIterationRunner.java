@@ -24,9 +24,6 @@ import org.mvss.karta.framework.runtime.event.JavaScenarioTearDownCompleteEvent;
 import org.mvss.karta.framework.runtime.event.JavaScenarioTearDownStartEvent;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -39,7 +36,6 @@ import lombok.extern.log4j.Log4j2;
 @NoArgsConstructor
 @AllArgsConstructor
 @Log4j2
-@JsonInclude( value = Include.NON_ABSENT, content = Include.NON_ABSENT )
 @Builder
 public class JavaIterationRunner implements Callable<HashMap<String, ScenarioResult>>
 {

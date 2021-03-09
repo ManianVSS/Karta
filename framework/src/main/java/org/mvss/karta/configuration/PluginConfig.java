@@ -43,4 +43,34 @@ public class PluginConfig implements Serializable
     */
    @Builder.Default
    private String            jarFile          = null;
+
+   @Override
+   public int hashCode()
+   {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ( ( pluginName == null ) ? 0 : pluginName.hashCode() );
+      return result;
+   }
+
+   @Override
+   public boolean equals( Object obj )
+   {
+      if ( this == obj )
+         return true;
+      if ( obj == null )
+         return false;
+      if ( getClass() != obj.getClass() )
+         return false;
+      PluginConfig other = (PluginConfig) obj;
+      if ( pluginName == null )
+      {
+         if ( other.pluginName != null )
+            return false;
+      }
+      else if ( !pluginName.equals( other.pluginName ) )
+         return false;
+      return true;
+   }
+
 }
