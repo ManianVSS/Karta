@@ -22,13 +22,14 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.configuration.KartaConfiguration;
-import org.mvss.karta.configuration.PluginConfig;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.core.ClassMethodConsumer;
@@ -67,6 +68,7 @@ import org.mvss.karta.framework.runtime.interfaces.TestLifeCycleHook;
 import org.mvss.karta.framework.runtime.testcatalog.Test;
 import org.mvss.karta.framework.runtime.testcatalog.TestCatalogManager;
 import org.mvss.karta.framework.runtime.testcatalog.TestCategory;
+import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.AnnotationScanner;
 import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.DataUtils;
@@ -254,31 +256,7 @@ public class KartaRuntime implements AutoCloseable
       // Load and enable plug-ins
       /*---------------------------------------------------------------------------------------------------------------------*/
       pnpRegistry = new PnPRegistry();
-      ArrayList<PluginConfig> basePluginConfigs = PnPRegistry.readPluginsConfig( Constants.KARTA_BASE_PLUGIN_CONFIG_YAML );
-      pnpRegistry.addPluginConfiguration( basePluginConfigs );
-
-      ArrayList<String> pluginDirectories = kartaConfiguration.getPluginsDirectories();
-      if ( Files.exists( Paths.get( Constants.KARTA_PLUGINS_CONFIG_YAML ) ) )
-      {
-         ArrayList<PluginConfig> additionalPluginConfig = PnPRegistry.readPluginsConfig( Constants.KARTA_PLUGINS_CONFIG_YAML );
-         if ( additionalPluginConfig != null )
-         {
-            pnpRegistry.addPluginConfiguration( additionalPluginConfig );
-         }
-      }
-      else
-      {
-         if ( pluginDirectories != null )
-         {
-            for ( String pluginsDirectory : pluginDirectories )
-            {
-               if ( StringUtils.isNotEmpty( pluginsDirectory ) )
-               {
-                  pnpRegistry.loadPlugins( configurator, new File( pluginsDirectory ) );
-               }
-            }
-         }
-      }
+      pnpRegistry.addPluginConfiguration( kartaConfiguration.getPluginConfigurations() );
 
       pnpRegistry.enablePlugins( kartaConfiguration.getEnabledPlugins() );
 
@@ -874,8 +852,6 @@ public class KartaRuntime implements AutoCloseable
       RunResult result = new RunResult();
       ArrayList<Future<FeatureResult>> futures = new ArrayList<Future<FeatureResult>>();
 
-      // AtomicBoolean successful = new AtomicBoolean( true );
-
       for ( Test test : tests )
       {
          switch ( test.getTestType() )
@@ -1123,11 +1099,22 @@ public class KartaRuntime implements AutoCloseable
     * - raises other events returned in the StepResult </br>
     * - merges the result map into the variables of the TestExecutionContext </br>
     * 
+    * @param startTime
     * @param stepResult
     * @param testExecutionContext
     */
-   public void processStepResult( StepResult stepResult, TestExecutionContext testExecutionContext )
+   public void processStepResult( Date startTime, StepResult stepResult, TestExecutionContext testExecutionContext )
    {
+      if ( stepResult.getStartTime() == null )
+      {
+         stepResult.setStartTime( startTime );
+      }
+
+      if ( stepResult.getEndTime() == null )
+      {
+         stepResult.setEndTime( new Date() );
+      }
+
       for ( TestIncident incident : stepResult.getIncidents() )
       {
          eventProcessor.raiseEvent( new TestIncidentOccurrenceEvent( testExecutionContext, incident ) );
@@ -1139,6 +1126,41 @@ public class KartaRuntime implements AutoCloseable
       }
 
       DataUtils.mergeMapInto( stepResult.getResults(), testExecutionContext.getVariables() );
+   }
+
+   /**
+    * Returns merged test data from test step and variable test data from rules
+    * 
+    * @param step
+    * @return
+    * @throws Throwable
+    */
+   public HashMap<String, Serializable> getMergedTestData( TestStep step ) throws Throwable
+   {
+      HashMap<String, Serializable> mergedTestData = DataUtils.cloneMap( step.getTestData() );
+      HashMap<String, HashMap<String, Serializable>> variableTestDataRuleMap = step.getVariableTestDataRuleMap();
+      if ( variableTestDataRuleMap != null )
+      {
+         ObjectMapper objectMapper = ParserUtils.getObjectMapper();
+
+         for ( String objectKey : variableTestDataRuleMap.keySet() )
+         {
+            if ( !mergedTestData.containsKey( objectKey ) )
+            {
+               ObjectGenerationRule ruleToAdd = objectMapper.readValue( objectMapper.writeValueAsString( variableTestDataRuleMap.get( objectKey ) ), ObjectGenerationRule.class );
+
+               if ( !ruleToAdd.validateConfiguration() )
+               {
+                  log.error( "Object rule generation failed validation: " + ruleToAdd );
+                  continue;
+               }
+
+               mergedTestData.put( objectKey, ruleToAdd.generateNextValue( random ) );
+            }
+         }
+      }
+
+      return mergedTestData;
    }
 
    /**
@@ -1161,43 +1183,44 @@ public class KartaRuntime implements AutoCloseable
       StepRunner stepRunner = getStepRunner( runInfo );
       String stepIdentifier = step.getStep();
 
-      if ( StringUtils.isBlank( stepIdentifier ) )
+      ArrayList<TestStep> nestedSteps = step.getNestedSteps();
+
+      if ( nestedSteps == null )
       {
-         log.error( "Empty step definition identifier for step " + step );
-
-      }
-
-      String sanitizedStepIdentifer = stepRunner.sanitizeStepIdentifier( stepIdentifier );
-      TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, sanitizedStepIdentifer, null, variables );
-      testExecutionContext.setContextBeanRegistry( contextBeanRegistry );
-
-      HashMap<String, Serializable> mergedTestData = DataUtils.cloneMap( step.getTestData() );
-      HashMap<String, HashMap<String, Serializable>> variableTestDataRuleMap = step.getVariableTestDataRuleMap();
-      if ( variableTestDataRuleMap != null )
-      {
-         ObjectMapper objectMapper = ParserUtils.getObjectMapper();
-
-         for ( String objectKey : variableTestDataRuleMap.keySet() )
+         if ( StringUtils.isBlank( stepIdentifier ) )
          {
-            if ( !mergedTestData.containsKey( objectKey ) )
-            {
-               ObjectGenerationRule ruleToAdd = objectMapper.readValue( objectMapper.writeValueAsString( variableTestDataRuleMap.get( objectKey ) ), ObjectGenerationRule.class );
-
-               if ( !ruleToAdd.validateConfiguration() )
-               {
-                  log.error( "Object rule generation failed validation: " + ruleToAdd );
-                  continue;
-               }
-
-               mergedTestData.put( objectKey, ruleToAdd.generateNextValue( random ) );
-            }
+            log.error( "Empty step definition identifier for step " + step );
          }
 
+         String sanitizedStepIdentifer = stepRunner.sanitizeStepIdentifier( stepIdentifier );
+         TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, sanitizedStepIdentifer, null, variables );
+         testExecutionContext.setContextBeanRegistry( contextBeanRegistry );
+
+         HashMap<String, Serializable> mergedTestData = getMergedTestData( step );
+         testExecutionContext.mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
+
+         return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).build();
       }
+      else
+      {
+         HashMap<String, Serializable> mergedTestData = getMergedTestData( step );
+         TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, stepIdentifier, null, variables );
+         testExecutionContext.mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
+         testExecutionContext.setContextBeanRegistry( contextBeanRegistry );
 
-      testExecutionContext.mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
+         PreparedStep preparedStepGroup = PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).build();
+         ArrayList<PreparedStep> nestedPreparedSteps = new ArrayList<PreparedStep>();
 
-      return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).build();
+         for ( TestStep nestedStep : nestedSteps )
+         {
+            nestedPreparedSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, scenarioName, variables, commonTestDataSet, nestedStep, contextBeanRegistry ) );
+         }
+
+         preparedStepGroup.setNestedSteps( nestedPreparedSteps );
+         Boolean runInParallel = step.getRunNestedStepsInParallel();
+         preparedStepGroup.setRunNestedStepsInParallel( runInParallel == null ? false : runInParallel );
+         return preparedStepGroup;
+      }
    }
 
    /**
@@ -1300,6 +1323,7 @@ public class KartaRuntime implements AutoCloseable
     */
    public StepResult runStep( RunInfo runInfo, PreparedStep step ) throws TestFailureException, RemoteException
    {
+      Date startTime = new Date();
       StepResult stepResult;
 
       String node = step.getNode();
@@ -1312,11 +1336,42 @@ public class KartaRuntime implements AutoCloseable
       }
       else
       {
-         StepRunner stepRunner = getStepRunner( runInfo );
-         stepResult = stepRunner.runStep( step );
+         int numberOfThreadsInParallel = step.getNumberOfThreadsInParallel();
+
+         // TODO: Add max validations
+         if ( numberOfThreadsInParallel > 1 )
+         {
+            stepResult = new StepResult();
+            ExecutorService stepExecutorService = new ThreadPoolExecutor( numberOfThreadsInParallel, numberOfThreadsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfThreadsInParallel ) );
+
+            for ( int i = 0; i < numberOfThreadsInParallel; i++ )
+            {
+               PreparedStepRunner preparedStepRunner = PreparedStepRunner.builder().kartaRuntime( this ).runInfo( runInfo ).step( step ).resultConsumer( ( threadStepResult ) -> stepResult.mergeResults( threadStepResult ) ).build();
+               stepExecutorService.submit( preparedStepRunner );
+            }
+
+            stepExecutorService.shutdown();
+            try
+            {
+               // TODO: Change to WaitUtil implementation with max timeout
+               stepExecutorService.awaitTermination( Long.MAX_VALUE, TimeUnit.SECONDS );
+            }
+            catch ( InterruptedException ie )
+            {
+               if ( !stepExecutorService.isTerminated() )
+               {
+                  log.warn( "Wait for parallel step threads was interrupted ", ie );
+               }
+            }
+         }
+         else
+         {
+            PreparedStepRunner preparedStepRunner = PreparedStepRunner.builder().kartaRuntime( this ).runInfo( runInfo ).step( step ).build();
+            stepResult = preparedStepRunner.call();
+         }
       }
 
-      processStepResult( stepResult, step.getTestExecutionContext() );
+      processStepResult( startTime, stepResult, step.getTestExecutionContext() );
 
       return stepResult;
    }
@@ -1353,6 +1408,7 @@ public class KartaRuntime implements AutoCloseable
     */
    public StepResult runChaosAction( RunInfo runInfo, PreparedChaosAction preparedChaosAction ) throws TestFailureException, RemoteException
    {
+      Date startTime = new Date();
       StepResult stepResult;
 
       String nodeName = preparedChaosAction.getNode();
@@ -1367,7 +1423,7 @@ public class KartaRuntime implements AutoCloseable
          stepResult = stepRunner.performChaosAction( preparedChaosAction );
       }
 
-      processStepResult( stepResult, preparedChaosAction.getTestExecutionContext() );
+      processStepResult( startTime, stepResult, preparedChaosAction.getTestExecutionContext() );
 
       return stepResult;
    }

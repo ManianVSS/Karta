@@ -32,18 +32,8 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class KartaMain
 {
-   private static final String  HELP          = "help";
 
-   private static final String  TAGS          = "tags";
-
-   private static final String  FEATURE_FILE  = "featureFile";
-
-   private static final String  JAVA_TEST     = "javaTest";
-   private static final String  JAVA_TEST_JAR = "javaTestJar";
-
-   private static final String  START_NODE    = "startNode";
-
-   public static List<Runnable> exitHooks     = Collections.synchronizedList( new ArrayList<Runnable>() );
+   public static List<Runnable> exitHooks = Collections.synchronizedList( new ArrayList<Runnable>() );
 
    private static void jvmExitHook()
    {
@@ -63,29 +53,35 @@ public class KartaMain
       HelpFormatter formatter = new HelpFormatter();
       DefaultParser parser = new DefaultParser();
 
-      options.addOption( "t", TAGS, true, "tags to run" );
+      options.addOption( "t", Constants.TAGS, true, "tags to run" );
 
-      options.addOption( "f", FEATURE_FILE, true, "feature file to run" );
+      options.addOption( "f", Constants.FEATURE_FILE, true, "feature file to run" );
 
-      options.addOption( "j", JAVA_TEST, true, "test case class to run" );
-      options.addOption( JAVA_TEST_JAR, true, "jar file which contains the test" );
+      options.addOption( "j", Constants.JAVA_TEST, true, "test case class to run" );
+      options.addOption( Constants.JAVA_TEST_JAR, true, "jar file which contains the test" );
 
-      options.addOption( Constants.RUN_NAME, true, "the name of this test run" );
+      options.addOption( "r", Constants.RUN_NAME, true, "the name of this test run" );
 
-      options.addOption( START_NODE, false, "starts Karta RMI node server" );
+      options.addOption( Constants.RELEASE, true, "the release of the application under test" );
+      options.addOption( Constants.BUILD, true, "the build of the application under test" );
 
-      options.addOption( null, HELP, false, "prints this help message" );
+      options.addOption( Constants.NUMBER_OF_ITERATIONS, true, "number of iterations. Applicable only  for feature file/java test" );
+      options.addOption( Constants.ITERATION_THREAD_COUNT, true, "number of threads to run iterations in parallel with. Applicable only for feature file/java test" );
+
+      options.addOption( Constants.START_NODE, false, "starts Karta RMI node server" );
+
+      options.addOption( null, Constants.HELP, false, "prints this help message" );
 
       try
       {
          CommandLine cmd = parser.parse( options, args );
 
-         if ( cmd.hasOption( HELP ) )
+         if ( cmd.hasOption( Constants.HELP ) )
          {
             formatter.printHelp( Constants.KARTA, options );
             System.exit( 0 );
          }
-         else if ( cmd.hasOption( START_NODE ) )
+         else if ( cmd.hasOption( Constants.START_NODE ) )
          {
             KartaRuntime.initializeNodes = false;
             try (KartaRuntime kartaRuntime = KartaRuntime.getInstance())
@@ -110,29 +106,29 @@ public class KartaMain
             RunInfo runInfo = new RunInfo();
             RunTarget runTarget = new RunTarget();
 
-            if ( cmd.hasOption( JAVA_TEST ) )
+            if ( cmd.hasOption( Constants.JAVA_TEST ) )
             {
                optionMissing = false;
-               runTarget.setJavaTest( cmd.getOptionValue( JAVA_TEST ) );
+               runTarget.setJavaTest( cmd.getOptionValue( Constants.JAVA_TEST ) );
             }
 
-            if ( cmd.hasOption( JAVA_TEST_JAR ) )
+            if ( cmd.hasOption( Constants.JAVA_TEST_JAR ) )
             {
                optionMissing = false;
-               runTarget.setJavaTestJarFile( cmd.getOptionValue( JAVA_TEST_JAR ) );
+               runTarget.setJavaTestJarFile( cmd.getOptionValue( Constants.JAVA_TEST_JAR ) );
             }
 
-            if ( cmd.hasOption( FEATURE_FILE ) )
+            if ( cmd.hasOption( Constants.FEATURE_FILE ) )
             {
                optionMissing = false;
-               runTarget.setFeatureFile( cmd.getOptionValue( FEATURE_FILE ) );
+               runTarget.setFeatureFile( cmd.getOptionValue( Constants.FEATURE_FILE ) );
             }
 
-            if ( cmd.hasOption( TAGS ) )
+            if ( cmd.hasOption( Constants.TAGS ) )
             {
                optionMissing = false;
                HashSet<String> tags = new HashSet<String>();
-               for ( String tag : cmd.getOptionValue( TAGS ).split( Constants.COMMA ) )
+               for ( String tag : cmd.getOptionValue( Constants.TAGS ).split( Constants.COMMA ) )
                {
                   tags.add( tag );
                }
@@ -146,6 +142,36 @@ public class KartaMain
             else
             {
                runInfo.setRunName( Constants.UNNAMED + Constants.HYPHEN + System.currentTimeMillis() );
+            }
+
+            if ( cmd.hasOption( Constants.RELEASE ) )
+            {
+               runInfo.setRelease( cmd.getOptionValue( Constants.RELEASE ) );
+            }
+
+            if ( cmd.hasOption( Constants.BUILD ) )
+            {
+               runInfo.setBuild( cmd.getOptionValue( Constants.BUILD ) );
+            }
+
+            if ( cmd.hasOption( Constants.NUMBER_OF_ITERATIONS ) )
+            {
+               String numberOfIterationsStr = cmd.getOptionValue( Constants.NUMBER_OF_ITERATIONS );
+
+               if ( !StringUtils.isBlank( numberOfIterationsStr ) )
+               {
+                  runInfo.setNumberOfIterations( Long.parseLong( numberOfIterationsStr ) );
+               }
+            }
+
+            if ( cmd.hasOption( Constants.ITERATION_THREAD_COUNT ) )
+            {
+               String iterationThreadCountStr = cmd.getOptionValue( Constants.ITERATION_THREAD_COUNT );
+
+               if ( !StringUtils.isBlank( iterationThreadCountStr ) )
+               {
+                  runInfo.setNumberOfIterationsInParallel( Integer.parseInt( iterationThreadCountStr ) );
+               }
             }
 
             Runtime.getRuntime().addShutdownHook( new Thread( () -> jvmExitHook() ) );

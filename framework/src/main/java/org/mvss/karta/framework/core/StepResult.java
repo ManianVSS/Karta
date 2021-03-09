@@ -116,7 +116,7 @@ public class StepResult implements Serializable
     * 
     * @param stepResult
     */
-   public void merge( StepResult stepResult )
+   public synchronized void merge( StepResult stepResult )
    {
       if ( stepResult == null )
       {
@@ -132,9 +132,18 @@ public class StepResult implements Serializable
       {
          this.endTime = stepResult.endTime;
       }
+      mergeResults( stepResult );
+   }
 
+   /**
+    * Merges the results from one step result into this.
+    * 
+    * @param stepResult
+    */
+   public synchronized void mergeResults( StepResult stepResult )
+   {
       successful = successful && stepResult.successful;
-      error = error && stepResult.error;
+      error = error || stepResult.error;
 
       if ( stepResult.incidents != null )
       {
@@ -163,6 +172,14 @@ public class StepResult implements Serializable
          events.addAll( stepResult.events );
       }
 
+      if ( stepResult.attachments != null )
+      {
+         if ( attachments == null )
+         {
+            attachments = new HashMap<String, Serializable>();
+         }
+         attachments.putAll( stepResult.attachments );
+      }
    }
 
    /**

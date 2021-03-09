@@ -36,7 +36,11 @@ public class QuartzTestJob implements Job
 
          // Run the job iteration on a remote node or local node using utility method
          TestJobResult testJobResult = kartaRuntime.runJobIteration( runInfo, featureName, testJob, iterationCounter.getAndIncrement(), contextBeanRegistry );
-         testJobIterationResultProcessor.consume( testJob.getName(), testJobResult );
+
+         if ( testJobIterationResultProcessor != null )
+         {
+            testJobIterationResultProcessor.consume( testJob.getName(), testJobResult );
+         }
       }
       catch ( Throwable e )
       {

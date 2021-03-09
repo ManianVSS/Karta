@@ -33,6 +33,10 @@ public class RunInfo implements Serializable
 
    private String            runName;
 
+   private String            release;
+
+   private String            build;
+
    private HashSet<String>   tags;
 
    @Builder.Default

@@ -42,9 +42,6 @@ import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -57,7 +54,6 @@ import lombok.extern.log4j.Log4j2;
 @NoArgsConstructor
 @AllArgsConstructor
 @Log4j2
-@JsonInclude( value = Include.NON_ABSENT, content = Include.NON_ABSENT )
 @Builder
 public class JavaFeatureRunner implements Callable<FeatureResult>
 {
@@ -316,6 +312,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
    public static StepResult runTestMethod( KartaRuntime kartaRuntime, ArrayList<TestDataSource> testDataSources, Object testCaseObject, TestExecutionContext testExecutionContext, Method methodToInvoke ) throws Throwable
    {
+      Date startTime = new Date();
       StepResult stepResult;
       testExecutionContext.mergeTestData( null, null, testDataSources );
 
@@ -336,7 +333,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          stepResult.setEndTime( new Date() );
       }
 
-      kartaRuntime.processStepResult( stepResult, testExecutionContext );
+      kartaRuntime.processStepResult( startTime, stepResult, testExecutionContext );
       return stepResult;
    }
 }

@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.core;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 
@@ -24,11 +25,36 @@ import lombok.ToString;
 @AllArgsConstructor
 public class PreparedStep implements Serializable
 {
-   private static final long    serialVersionUID = 1L;
+   private static final long       serialVersionUID          = 1L;
 
-   private String               identifier;
+   /**
+    * The step identifier.
+    */
+   private String                  identifier;
 
-   private TestExecutionContext testExecutionContext;
+   /**
+    * The test execution context object for running the step.
+    */
+   private TestExecutionContext    testExecutionContext;
 
-   private String               node;
+   /**
+    * The remote node on which to run the step on.
+    */
+   private String                  node;
+
+   /**
+    * Indicates if the same step is to be run in multiple threads in parallel.
+    */
+   @Builder.Default
+   private int                     numberOfThreadsInParallel = 1;
+
+   /**
+    * The group of prepared steps to run.
+    */
+   private ArrayList<PreparedStep> nestedSteps;
+
+   /**
+    * Indicates if this is a group of steps to be run in parallel or in sequence.
+    */
+   private Boolean                 runNestedStepsInParallel;
 }
