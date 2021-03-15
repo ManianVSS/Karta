@@ -98,6 +98,17 @@ public class StepResult implements Serializable
    }
 
    /**
+    * Indicates if the test failed and does not have error
+    * 
+    * @return boolean
+    */
+   @JsonIgnore
+   public boolean isFailed()
+   {
+      return !error && !( successful && incidents.isEmpty() );
+   }
+
+   /**
     * Add a test incident to the step result
     * 
     * @param testIncident
@@ -142,6 +153,11 @@ public class StepResult implements Serializable
     */
    public synchronized void mergeResults( StepResult stepResult )
    {
+      if ( stepResult == null )
+      {
+         return;
+      }
+
       successful = successful && stepResult.successful;
       error = error || stepResult.error;
 

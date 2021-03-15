@@ -35,11 +35,9 @@ public class PreparedStepRunner implements Callable<StepResult>
    private PreparedStep         step;
    private Consumer<StepResult> resultConsumer;
 
-   @Override
-   public StepResult call()
+   public StepResult execute()
    {
       StepResult stepResult;
-      Date startTime = new Date();
 
       try
       {
@@ -96,11 +94,44 @@ public class PreparedStepRunner implements Callable<StepResult>
             }
          }
       }
+      catch ( TestFailureException t )
+      {
+         stepResult = StandardStepResults.failure( t );
+      }
+
+      return stepResult;
+   }
+
+   @Override
+   public StepResult call()
+   {
+      Date startTime = new Date();
+      StepResult stepResult = new StepResult();
+
+      try
+      {
+         stepResult = execute();
+
+         if ( stepResult.isFailed() )
+         {
+            for ( int currentRetry = 0; currentRetry < step.getMaxRetries(); currentRetry++ )
+            {
+               StepResult retryResult = execute();
+               stepResult.mergeResults( retryResult );
+
+               if ( !retryResult.isFailed() )
+               {
+                  break;
+               }
+            }
+         }
+      }
       catch ( Throwable t )
       {
          stepResult = StandardStepResults.error( t );
-         stepResult.setStartTime( startTime );
       }
+
+      stepResult.setStartTime( startTime );
 
       if ( resultConsumer != null )
       {

@@ -322,6 +322,40 @@ public class DataUtils
    }
 
    /**
+    * Converts a Serializable object of types Integer/String to int value
+    * 
+    * @param serializable
+    * @param defaultValue
+    * @return
+    */
+   public static int serializableToInteger( Serializable serializable, int defaultValue )
+   {
+      int returnValue = defaultValue;
+
+      try
+      {
+         if ( serializable != null )
+         {
+            if ( serializable instanceof Integer )
+            {
+               returnValue = Integer.valueOf( (Integer) serializable );
+            }
+
+            if ( serializable instanceof String )
+            {
+               returnValue = Integer.valueOf( (String) serializable );
+            }
+         }
+      }
+      catch ( Throwable t )
+      {
+
+      }
+
+      return returnValue;
+   }
+
+   /**
     * Converts a Serializable object of types Long/Integer/String to long value
     * 
     * @param serializable

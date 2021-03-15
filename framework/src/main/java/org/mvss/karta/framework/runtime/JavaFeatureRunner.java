@@ -14,7 +14,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
@@ -156,10 +156,10 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
          HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
 
-         long iterationIndex = -1;
+         int iterationIndex = -1;
 
-         HashMap<Method, AtomicLong> scenarioIterationIndexMap = new HashMap<Method, AtomicLong>();
-         scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario.getObject(), new AtomicLong() ) );
+         HashMap<Method, AtomicInteger> scenarioIterationIndexMap = new HashMap<Method, AtomicInteger>();
+         scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario.getObject(), new AtomicInteger() ) );
 
          eventProcessor.raiseEvent( new JavaFeatureStartEvent( runName, featureName ) );
 

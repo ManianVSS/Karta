@@ -46,7 +46,13 @@ public class PreparedStep implements Serializable
     * Indicates if the same step is to be run in multiple threads in parallel.
     */
    @Builder.Default
-   private int                     numberOfThreadsInParallel = 1;
+   private Integer                 numberOfThreadsInParallel = 1;
+
+   /**
+    * The number of times this step should be retried if failed
+    */
+   @Builder.Default
+   private Integer                 maxRetries                = 0;
 
    /**
     * The group of prepared steps to run.
@@ -56,5 +62,7 @@ public class PreparedStep implements Serializable
    /**
     * Indicates if this is a group of steps to be run in parallel or in sequence.
     */
-   private Boolean                 runNestedStepsInParallel;
+   @Builder.Default
+   private Boolean                 runNestedStepsInParallel  = false;
+
 }

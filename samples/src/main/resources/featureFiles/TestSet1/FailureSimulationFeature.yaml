@@ -1,0 +1,26 @@
+---
+name: FailureSimulationFeature
+description: This is a sample YAML format feature file testing failure reporting
+
+scenarioSetupSteps:
+  - step: Given running pass simulation step
+
+testScenarios:
+  - name: Scenario1
+    executionSteps:
+      - step: When running failure simulation step
+        variableTestDataRules:
+          failTheStep:
+            ruleType: MUTEX_OBJECT_RULE_VALUE
+            fieldGenRules:
+              - ruleType: VALUES
+                probability: 0.9
+                values:
+                  - false
+              - ruleType: VALUES
+                probability: 0.1
+                values:
+                  - true
+
+scenarioTearDownSteps:
+  - step: And running pass simulation step

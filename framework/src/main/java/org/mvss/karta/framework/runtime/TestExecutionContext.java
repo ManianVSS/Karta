@@ -34,7 +34,7 @@ public class TestExecutionContext implements Serializable
    private String                        featureName;
 
    @Builder.Default
-   private long                          iterationIndex   = -1;
+   private int                           iterationIndex   = -1;
 
    private String                        scenarioName;
    private String                        stepIdentifier;
@@ -47,7 +47,7 @@ public class TestExecutionContext implements Serializable
    @JsonIgnore
    private transient BeanRegistry        contextBeanRegistry;
 
-   public TestExecutionContext( String runName, String featureName, long iterationIndex, String scenarioName, String stepIdentifier, HashMap<String, Serializable> data, HashMap<String, Serializable> variables )
+   public TestExecutionContext( String runName, String featureName, int iterationIndex, String scenarioName, String stepIdentifier, HashMap<String, Serializable> data, HashMap<String, Serializable> variables )
    {
       super();
       this.runName = runName;

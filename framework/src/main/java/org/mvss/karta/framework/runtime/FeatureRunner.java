@@ -12,7 +12,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -23,8 +23,6 @@ import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.core.TestJob;
-import org.mvss.karta.framework.core.TestJobIterationResultProcessor;
-import org.mvss.karta.framework.core.TestJobResult;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.core.TestStep;
 import org.mvss.karta.framework.nodes.KartaNode;
@@ -75,22 +73,11 @@ public class FeatureRunner implements Callable<FeatureResult>
    private FeatureResult           result;
 
    /**
-    * The callback implementation for job iteration result updates for running Test Feature
-    * 
-    * @param testJob
-    * @param testJobResult
-    */
-   private synchronized void accumulateJobIterationResult( String testJob, TestJobResult testJobResult )
-   {
-      result.addTestJobResult( testJob, testJobResult );
-   }
-
-   /**
     * The callback implementation for feature iteration result updates for running Test Feature
     * 
     * @param iterationResult
     */
-   private synchronized void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
+   private void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
    {
       result.addIterationResult( iterationResult );
    }
@@ -169,9 +156,7 @@ public class FeatureRunner implements Callable<FeatureResult>
                   jobData.put( Constants.RUN_INFO, runInfo );
                   jobData.put( Constants.FEATURE_NAME, testFeature.getName() );
                   jobData.put( Constants.TEST_JOB, job );
-                  jobData.put( Constants.ITERATION_COUNTER, new AtomicLong() );
-                  TestJobIterationResultProcessor testJobIterationResultProcessor = ( jobName, testJobResult ) -> accumulateJobIterationResult( jobName, testJobResult );
-                  jobData.put( Constants.TEST_JOB_ITERATION_RESULT_PROCESSOR, testJobIterationResultProcessor );
+                  jobData.put( Constants.ITERATION_COUNTER, new AtomicInteger() );
                   jobData.put( Constants.BEAN_REGISTRY, contextBeanRegistry );
                   long jobId = QuartzJobScheduler.scheduleJob( QuartzTestJob.class, jobInterval, repeatCount, jobData );
                   runningJobs.add( jobId );
@@ -188,10 +173,10 @@ public class FeatureRunner implements Callable<FeatureResult>
             }
          }
 
-         long iterationIndex = -1;
+         int iterationIndex = -1;
 
-         HashMap<TestScenario, AtomicLong> scenarioIterationIndexMap = new HashMap<TestScenario, AtomicLong>();
-         testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario, new AtomicLong() ) );
+         HashMap<TestScenario, AtomicInteger> scenarioIterationIndexMap = new HashMap<TestScenario, AtomicInteger>();
+         testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario, new AtomicInteger() ) );
 
          long setupStepIndex = -1;
          for ( TestStep step : testFeature.getSetupSteps() )

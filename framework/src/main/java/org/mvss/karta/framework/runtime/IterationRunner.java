@@ -7,7 +7,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.mvss.karta.framework.core.PreparedScenario;
@@ -40,7 +40,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
    private RunInfo                                   runInfo;
    private String                                    featureName;
 
-   private long                                      iterationIndex;
+   private int                                       iterationIndex;
 
    private HashMap<String, ArrayList<Serializable>>  commonTestDataSet;
    private ArrayList<TestStep>                       scenarioSetupSteps;
@@ -50,7 +50,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
    @Builder.Default
    private KartaNode                                 minionToUse     = null;
 
-   private HashMap<TestScenario, AtomicLong>         scenarioIterationIndexMap;
+   private HashMap<TestScenario, AtomicInteger>      scenarioIterationIndexMap;
 
    @Builder.Default
    private HashMap<String, Serializable>             variables       = new HashMap<String, Serializable>();;
@@ -96,7 +96,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
 
          for ( TestScenario testScenario : scenariosToRun )
          {
-            long scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( testScenario ) ) ) ? scenarioIterationIndexMap.get( testScenario ).getAndIncrement() : 0;
+            int scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( testScenario ) ) ) ? scenarioIterationIndexMap.get( testScenario ).getAndIncrement() : 0;
             log.debug( "Running Scenario: " + testScenario.getName() + "[" + scenarioIterationNumber + "]:" );
 
             PreparedScenario preparedScenario = null;

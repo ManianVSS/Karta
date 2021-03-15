@@ -1,6 +1,6 @@
 package org.mvss.karta.framework.runtime;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.core.TestJobIterationResultProcessor;
@@ -30,7 +30,7 @@ public class QuartzTestJob implements Job
          RunInfo runInfo = (RunInfo) jobData.get( Constants.RUN_INFO );
          String featureName = (String) jobData.get( Constants.FEATURE_NAME );
          TestJob testJob = (TestJob) jobData.get( Constants.TEST_JOB );
-         AtomicLong iterationCounter = (AtomicLong) jobData.get( Constants.ITERATION_COUNTER );
+         AtomicInteger iterationCounter = (AtomicInteger) jobData.get( Constants.ITERATION_COUNTER );
          TestJobIterationResultProcessor testJobIterationResultProcessor = (TestJobIterationResultProcessor) jobData.get( Constants.TEST_JOB_ITERATION_RESULT_PROCESSOR );
          BeanRegistry contextBeanRegistry = (BeanRegistry) jobData.get( Constants.BEAN_REGISTRY );
 

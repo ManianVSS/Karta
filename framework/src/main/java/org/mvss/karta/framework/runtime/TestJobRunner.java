@@ -23,7 +23,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class TestJobRunner
 {
-   public static TestJobResult run( KartaRuntime kartaRuntime, RunInfo runInfo, String featureName, TestJob job, long iterationIndex, BeanRegistry contextBeanRegistry ) throws Throwable
+   public static TestJobResult run( KartaRuntime kartaRuntime, RunInfo runInfo, String featureName, TestJob job, int iterationIndex, BeanRegistry contextBeanRegistry ) throws Throwable
    {
       EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
       String runName = runInfo.getRunName();

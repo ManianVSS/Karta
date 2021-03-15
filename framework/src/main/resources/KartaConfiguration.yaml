@@ -25,7 +25,6 @@ enabledPlugins:
   - DataFilesTestDataSource
   - ObjectGenTestDataSource
   - LoggingTestEventListener
-  - HTMLReportTestEventListener
 
 defaultFeatureSourceParserPlugin: Kriya
 defaultStepRunnerPlugin: Kriya

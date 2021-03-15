@@ -32,7 +32,7 @@ public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
    private static final long                              serialVersionUID   = 1L;
 
    @Builder.Default
-   private long                                           iterationIndex     = 0;
+   private int                                            iterationIndex     = 0;
 
    @Builder.Default
    private Date                                           startTime          = new Date();
@@ -54,7 +54,6 @@ public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
    @Builder.Default
    private ArrayList<SerializableKVP<String, StepResult>> chaosActionResults = new ArrayList<SerializableKVP<String, StepResult>>();
 
-   // TODO: Add more details to step results: start time and end time
    @Builder.Default
    private ArrayList<SerializableKVP<String, StepResult>> runResults         = new ArrayList<SerializableKVP<String, StepResult>>();
 

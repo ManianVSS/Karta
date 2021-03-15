@@ -1058,7 +1058,7 @@ public class KartaRuntime implements AutoCloseable
     * @return TestJobResult
     * @throws Throwable
     */
-   public TestJobResult runJobIteration( RunInfo runInfo, String featureName, TestJob job, long iterationIndex, BeanRegistry contextBeanRegistry ) throws Throwable
+   public TestJobResult runJobIteration( RunInfo runInfo, String featureName, TestJob job, int iterationIndex, BeanRegistry contextBeanRegistry ) throws Throwable
    {
       TestJobResult jobResult = null;
       String node = job.getNode();
@@ -1087,7 +1087,7 @@ public class KartaRuntime implements AutoCloseable
     * @param scenarioIterationNumber
     * @return ScenarioResult
     */
-   public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, long iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber )
+   public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber )
    {
       ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( this ).runInfo( runInfo ).featureName( featureName ).iterationIndex( iterationIndex ).testScenario( testScenario ).scenarioIterationNumber( scenarioIterationNumber ).build();
       return scenarioRunner.call();
@@ -1138,7 +1138,7 @@ public class KartaRuntime implements AutoCloseable
    public HashMap<String, Serializable> getMergedTestData( TestStep step ) throws Throwable
    {
       HashMap<String, Serializable> mergedTestData = DataUtils.cloneMap( step.getTestData() );
-      HashMap<String, HashMap<String, Serializable>> variableTestDataRuleMap = step.getVariableTestDataRuleMap();
+      HashMap<String, HashMap<String, Serializable>> variableTestDataRuleMap = step.getVariableTestDataRules();
       if ( variableTestDataRuleMap != null )
       {
          ObjectMapper objectMapper = ParserUtils.getObjectMapper();
@@ -1176,7 +1176,7 @@ public class KartaRuntime implements AutoCloseable
     * @return PreparedStep
     * @throws Throwable
     */
-   public PreparedStep getPreparedStep( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestStep step,
+   public PreparedStep getPreparedStep( RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestStep step,
                                         BeanRegistry contextBeanRegistry )
             throws Throwable
    {
@@ -1199,7 +1199,7 @@ public class KartaRuntime implements AutoCloseable
          HashMap<String, Serializable> mergedTestData = getMergedTestData( step );
          testExecutionContext.mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
 
-         return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).build();
+         return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).numberOfThreadsInParallel( step.getNumberOfThreadsInParallel() ).maxRetries( step.getMaxRetries() ).build();
       }
       else
       {
@@ -1208,7 +1208,8 @@ public class KartaRuntime implements AutoCloseable
          testExecutionContext.mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
          testExecutionContext.setContextBeanRegistry( contextBeanRegistry );
 
-         PreparedStep preparedStepGroup = PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).build();
+         PreparedStep preparedStepGroup = PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).numberOfThreadsInParallel( step.getNumberOfThreadsInParallel() )
+                  .maxRetries( step.getMaxRetries() ).build();
          ArrayList<PreparedStep> nestedPreparedSteps = new ArrayList<PreparedStep>();
 
          for ( TestStep nestedStep : nestedSteps )
@@ -1237,7 +1238,7 @@ public class KartaRuntime implements AutoCloseable
     * @return PreparedChaosAction
     * @throws Throwable
     */
-   public PreparedChaosAction getPreparedChaosAction( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet,
+   public PreparedChaosAction getPreparedChaosAction( RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet,
                                                       ChaosAction chaosAction, BeanRegistry contextBeanRegistry )
             throws Throwable
    {
@@ -1261,7 +1262,7 @@ public class KartaRuntime implements AutoCloseable
     * @return PreparedScenario
     * @throws Throwable
     */
-   public PreparedScenario getPreparedScenario( RunInfo runInfo, String featureName, long iterationIndex, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, ArrayList<TestStep> scenarioSetupSteps,
+   public PreparedScenario getPreparedScenario( RunInfo runInfo, String featureName, int iterationIndex, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, ArrayList<TestStep> scenarioSetupSteps,
                                                 TestScenario testScenario, ArrayList<TestStep> scenarioTearDownSteps )
             throws Throwable
    {
@@ -1390,7 +1391,7 @@ public class KartaRuntime implements AutoCloseable
     * @return StepResult
     * @throws Throwable
     */
-   public StepResult runStep( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestStep step,
+   public StepResult runStep( RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestStep step,
                               BeanRegistry contextBeanRegistry )
             throws Throwable
    {
@@ -1442,7 +1443,7 @@ public class KartaRuntime implements AutoCloseable
     * @return StepResult
     * @throws Throwable
     */
-   public StepResult runChaosAction( RunInfo runInfo, String featureName, long iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, ChaosAction chaosAction,
+   public StepResult runChaosAction( RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, ChaosAction chaosAction,
                                      BeanRegistry contextBeanRegistry )
             throws Throwable
    {

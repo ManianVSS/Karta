@@ -123,7 +123,7 @@ public class MinionController
 
          RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ? objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) : kartaRuntime.getDefaultRunInfo();
          String featureName = (String) parameters.get( Constants.FEATURE_NAME );
-         long iterationIndex = DataUtils.serializableToLong( parameters.get( Constants.ITERATION_INDEX ), -1 );
+         int iterationIndex = DataUtils.serializableToInteger( parameters.get( Constants.ITERATION_INDEX ), -1 );
          PreparedScenario testScenario = objectMapper.convertValue( parameters.get( Constants.TEST_SCENARIO ), PreparedScenario.class );
          long scenarioIterationNumber = DataUtils.serializableToLong( parameters.get( Constants.SCENARIO_ITERATION_NUMBER ), -1 );
 
@@ -152,7 +152,7 @@ public class MinionController
       RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ? objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) : kartaRuntime.getDefaultRunInfo();
       String featureName = (String) parameters.get( Constants.FEATURE_NAME );
       TestJob job = objectMapper.convertValue( parameters.get( Constants.JOB ), TestJob.class );
-      long iterationIndex = DataUtils.serializableToLong( parameters.get( Constants.ITERATION_INDEX ), -1 );
+      int iterationIndex = DataUtils.serializableToInteger( parameters.get( Constants.ITERATION_INDEX ), -1 );
 
       if ( job == null )
       {

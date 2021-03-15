@@ -43,7 +43,7 @@ public interface KartaNode extends Remote
     * @return
     * @throws RemoteException
     */
-   TestJobResult runJobIteration( RunInfo runInfo, String featureName, TestJob job, long iterationIndex ) throws RemoteException;
+   TestJobResult runJobIteration( RunInfo runInfo, String featureName, TestJob job, int iterationIndex ) throws RemoteException;
 
    /**
     * Run a scenario iteration
@@ -56,7 +56,7 @@ public interface KartaNode extends Remote
     * @return
     * @throws RemoteException
     */
-   ScenarioResult runTestScenario( RunInfo runInfo, String featureName, long iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber ) throws RemoteException;
+   ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber ) throws RemoteException;
 
    /**
     * Run a prepared test step.

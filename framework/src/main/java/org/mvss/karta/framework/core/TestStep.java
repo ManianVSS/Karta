@@ -24,7 +24,7 @@ import lombok.ToString;
 @AllArgsConstructor
 public class TestStep implements Serializable
 {
-   private static final long                              serialVersionUID = 1L;
+   private static final long                              serialVersionUID          = 1L;
 
    /**
     * The step identifier which is used to map the step in feature files to step definitions of step runner.
@@ -46,7 +46,7 @@ public class TestStep implements Serializable
     * 
     * @see org.mvss.karta.framework.randomization.ObjectGenerationRule
     */
-   private HashMap<String, HashMap<String, Serializable>> variableTestDataRuleMap;
+   private HashMap<String, HashMap<String, Serializable>> variableTestDataRules;
 
    /**
     * The node on which the step should be run. The node name is not a hostname/ip but a role say "InventoryServer" which is mapped to a host in Karta configuration.
@@ -56,7 +56,14 @@ public class TestStep implements Serializable
    /**
     * Indicates if the same step is to be run in multiple threads in parallel.
     */
-   private Integer                                        numberOfThreadsInParallel;
+   @Builder.Default
+   private Integer                                        numberOfThreadsInParallel = 1;
+
+   /**
+    * The number of times this step should be retried if failed
+    */
+   @Builder.Default
+   private Integer                                        maxRetries                = 0;
 
    /**
     * The group of steps to run.
@@ -66,5 +73,7 @@ public class TestStep implements Serializable
    /**
     * Indicates if this is a group of steps to be run in parallel or in sequence.
     */
-   private Boolean                                        runNestedStepsInParallel;
+   @Builder.Default
+   private Boolean                                        runNestedStepsInParallel  = false;
+
 }

@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
@@ -82,6 +81,8 @@ public class HTMLReportTestEventListener implements TestEventListener
 
    private static final String B_START_TIME_B           = "<b>StartTime</b>: ";
 
+   private static final String B_FAILED_ITERATIONS_B    = "<b>FailedIterations</b>: ";
+
    private static final String DOT_JSON                 = ".json";
 
    private static final String DOT_HTML                 = ".html";
@@ -97,7 +98,7 @@ public class HTMLReportTestEventListener implements TestEventListener
 
    private static final String STATUS                   = "Status";
 
-   private static final String ITERATION_INDEX          = "IterationIndex";
+   // private static final String ITERATION_INDEX = "IterationIndex";
 
    private static final String DOT_HTML_CLOSE_TAG       = ".html\">";
 
@@ -292,27 +293,7 @@ public class HTMLReportTestEventListener implements TestEventListener
                }
                featureReportBuilder.append( CLOSE_TABLE );
 
-               HashMap<String, ArrayList<ScenarioResult>> scenarioResults = featureResult.getScenarioResultsMap();
-               keySet = new ArrayList<String>();
-               keySet.addAll( scenarioResults.keySet() );
-               Collections.sort( keySet );
-
-               for ( String scenarioName : keySet )
-               {
-                  ArrayList<ScenarioResult> scenarioResult = scenarioResults.get( scenarioName );
-
-                  featureReportBuilder.append( "<h3>" + scenarioName + "</h3>\r\n" + OPEN_TABLE + OPEN_TR + TH_BGCOLOR_BLUE + ITERATION_INDEX + CLOSE_TH + TH_BGCOLOR_BLUE + STATUS + CLOSE_TH + CLOSE_TR );
-
-                  for ( ScenarioResult scenarioIterationResult : scenarioResult )
-                  {
-                     boolean passed = scenarioIterationResult.isPassed();
-                     String tdText = TD_BGCOLOR + ( passed ? GREEN : RED ) + QUOTE_CLOSE_TAG;
-                     long iterationIndex = scenarioIterationResult.getIterationIndex() + 1;
-                     featureReportBuilder.append( OPEN_TR + SPACE_TAB + tdText + A_HREF + featureName + Constants.SLASH + iterationIndex + Constants.SLASH + scenarioName + DOT_HTML_CLOSE_TAG + iterationIndex + CLOSE_TD + SPACE_TAB + tdText
-                                                  + ( passed ? Constants.PASS : Constants.FAIL ) + CLOSE_TD + CLOSE_TR );
-                  }
-                  featureReportBuilder.append( CLOSE_TABLE );
-               }
+               featureReportBuilder.append( BR + B_FAILED_ITERATIONS_B + featureResult.getFailedIterations() + BR );
 
                featureReportBuilder.append( "<h3>Feature teardown</h3>\r\n" + OPEN_TABLE + OPEN_TR + TH_BGCOLOR_BLUE + STEP_IDENTIFIER + CLOSE_TH + TH_BGCOLOR_BLUE + TIME_TAKEN + CLOSE_TH + TH_BGCOLOR_BLUE + STATUS + CLOSE_TH + CLOSE_TR );
                for ( SerializableKVP<String, StepResult> stepResultPair : featureResult.getTearDownResults() )

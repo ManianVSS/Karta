@@ -89,7 +89,7 @@ public class KartaRestNode implements KartaNode
    }
 
    @Override
-   public TestJobResult runJobIteration( RunInfo runInfo, String featureName, TestJob job, long iterationIndex ) throws RemoteException
+   public TestJobResult runJobIteration( RunInfo runInfo, String featureName, TestJob job, int iterationIndex ) throws RemoteException
    {
       HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
       parameters.put( Constants.RUN_INFO, runInfo );
@@ -109,7 +109,7 @@ public class KartaRestNode implements KartaNode
    }
 
    @Override
-   public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, long iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber ) throws RemoteException
+   public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber ) throws RemoteException
    {
       HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
       parameters.put( Constants.RUN_INFO, runInfo );

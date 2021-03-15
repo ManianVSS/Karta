@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
@@ -50,9 +50,9 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
    private String                                    featureName;
    private String                                    featureDescription;
 
-   private long                                      iterationIndex;
+   private int                                       iterationIndex;
 
-   private HashMap<Method, AtomicLong>               scenarioIterationIndexMap;
+   private HashMap<Method, AtomicInteger>            scenarioIterationIndexMap;
 
    @Builder.Default
    private HashMap<String, Serializable>             variables = new HashMap<String, Serializable>();
@@ -74,7 +74,7 @@ public class JavaIterationRunner implements Callable<HashMap<String, ScenarioRes
       long stepIndex = 0;
       nextScenarioMethod: for ( Method scenarioMethod : scenariosMethodsToRun )
       {
-         long scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( scenarioMethod ) ) ) ? scenarioIterationIndexMap.get( scenarioMethod ).getAndIncrement() : 0;
+         int scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( scenarioMethod ) ) ) ? scenarioIterationIndexMap.get( scenarioMethod ).getAndIncrement() : 0;
 
          String scenarioName = scenarioMethod.getName();
          Scenario scenarioAnnotation = scenarioMethod.getAnnotation( Scenario.class );

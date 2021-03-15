@@ -48,7 +48,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
    private RunInfo                                      runInfo;
 
    private String                                       featureName;
-   private long                                         iterationIndex;
+   private int                                          iterationIndex;
 
    private PreparedScenario                             testScenario;
 
