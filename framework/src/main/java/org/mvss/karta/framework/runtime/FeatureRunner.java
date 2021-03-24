@@ -35,6 +35,7 @@ import org.mvss.karta.framework.runtime.event.FeatureSetupStepStartEvent;
 import org.mvss.karta.framework.runtime.event.FeatureStartEvent;
 import org.mvss.karta.framework.runtime.event.FeatureTearDownStepCompleteEvent;
 import org.mvss.karta.framework.runtime.event.FeatureTearDownStepStartEvent;
+import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.WaitUtil;
@@ -72,6 +73,9 @@ public class FeatureRunner implements Callable<FeatureResult>
 
    private FeatureResult           result;
 
+   @PropertyMapping( value = "detailedResults" )
+   private static boolean          detailedResults = false;
+
    /**
     * The callback implementation for feature iteration result updates for running Test Feature
     * 
@@ -79,7 +83,7 @@ public class FeatureRunner implements Callable<FeatureResult>
     */
    private void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
    {
-      result.addIterationResult( iterationResult );
+      result.addIterationResult( iterationResult, detailedResults );
    }
 
    @Builder.Default

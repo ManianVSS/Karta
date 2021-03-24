@@ -71,6 +71,7 @@ properties:
   Karta:
     EventProcessor.numberOfThread: 1
     EventProcessor.maxEventQueueSize: 100
+    detailedResults: false
     node.config:
       host: localhost
       port: "17171"

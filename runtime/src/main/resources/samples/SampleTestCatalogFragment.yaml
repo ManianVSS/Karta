@@ -19,7 +19,7 @@ tests:
     description: sample Gherkin feature file4
     featureSourceParserPlugin: Gherkin
     tags:
-      - Gherkin    
+      - Gherkin
     featureFileName: featureFiles/GherkinTestSet/SampleFeatureFile5.feature
     numberOfIterations: 4
     sourceArchive: samples.jar
@@ -40,10 +40,28 @@ tests:
   - name: UIAutomation
     priority: 1
     description: UI Automation test
-    tags:      
+    tags:
       - UI
     featureFileName: featureFiles/UITests/UIAutomation.yaml
     numberOfIterations: 1
     sourceArchive: samples.jar
+
+  - name: FailureSimulationFeature
+    description: sample feature file
+    tags:
+      - negative
+    featureFileName: featureFiles/TestSet1/FailureSimulationFeature.yaml
+    numberOfIterations: 1000000
+    numberOfThreads: 100
+
+  # - name: UIAutomationWithError
+  #   priority: 1
+  #   description: UI Automation test with error
+  #   tags:
+  #     - UI
+  #     - negative
+  #   featureFileName: featureFiles/UITests/UIAutomationWithError.yaml
+  #   numberOfIterations: 1
+  #   sourceArchive: samples.jar
 
 subCategories: []

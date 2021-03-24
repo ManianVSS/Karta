@@ -24,7 +24,7 @@ import lombok.ToString;
 @AllArgsConstructor
 public class TestStep implements Serializable
 {
-   private static final long                              serialVersionUID          = 1L;
+   private static final long                              serialVersionUID   = 1L;
 
    /**
     * The step identifier which is used to map the step in feature files to step definitions of step runner.
@@ -57,23 +57,23 @@ public class TestStep implements Serializable
     * Indicates if the same step is to be run in multiple threads in parallel.
     */
    @Builder.Default
-   private Integer                                        numberOfThreadsInParallel = 1;
+   private Integer                                        numberOfThreads    = 1;
 
    /**
     * The number of times this step should be retried if failed
     */
    @Builder.Default
-   private Integer                                        maxRetries                = 0;
+   private Integer                                        maxRetries         = 0;
 
    /**
     * The group of steps to run.
     */
-   private ArrayList<TestStep>                            nestedSteps;
+   private ArrayList<TestStep>                            steps;
 
    /**
     * Indicates if this is a group of steps to be run in parallel or in sequence.
     */
    @Builder.Default
-   private Boolean                                        runNestedStepsInParallel  = false;
+   private Boolean                                        runStepsInParallel = false;
 
 }

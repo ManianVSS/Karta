@@ -50,9 +50,6 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class HTMLReportTestEventListener implements TestEventListener
 {
-
-   // private static final String JOB = "__JOB__";
-
    private static final String _CHAOS                   = "_CHAOS";
 
    private static final String _SETUP                   = "_SETUP";
@@ -97,8 +94,6 @@ public class HTMLReportTestEventListener implements TestEventListener
    private static final String TIME_TAKEN               = "TimeTaken";
 
    private static final String STATUS                   = "Status";
-
-   // private static final String ITERATION_INDEX = "IterationIndex";
 
    private static final String DOT_HTML_CLOSE_TAG       = ".html\">";
 
@@ -309,53 +304,10 @@ public class HTMLReportTestEventListener implements TestEventListener
                }
                featureReportBuilder.append( CLOSE_BODY_AND_HTML );
 
-               // featureReportBuilder.append( "<h3>Job Results </h3></br>\r\n" );
-               // for ( Entry<String, ArrayList<TestJobResult>> jobResultEntry : featureResult.getJobsResultsMap().entrySet() )
-               // {
-               // String jobName = jobResultEntry.getKey();
-               // ArrayList<TestJobResult> jobResult = jobResultEntry.getValue();
-               //
-               // featureReportBuilder.append( "<h3>" + jobName + "</h3>\r\n" + OPEN_TABLE + OPEN_TR + TH_BGCOLOR_BLUE + ITERATION_INDEX + CLOSE_TH + TH_BGCOLOR_BLUE + STATUS + CLOSE_TH + CLOSE_TR );
-               //
-               // for ( TestJobResult jobIterationResult : jobResult )
-               // {
-               // boolean passed = jobIterationResult.isPassed();
-               // String tdText = TD_BGCOLOR + ( passed ? GREEN : RED ) + QUOTE_CLOSE_TAG;
-               // long iterationIndex = jobIterationResult.getIterationIndex() + 1;
-               // featureReportBuilder.append( OPEN_TR + SPACE_TAB + tdText + A_HREF + featureName + Constants.SLASH + iterationIndex + Constants.SLASH + JOB + jobName + DOT_HTML_CLOSE_TAG + iterationIndex + CLOSE_TD + SPACE_TAB + tdText
-               // + ( passed ? Constants.PASS : Constants.FAIL ) + CLOSE_TD + CLOSE_TR );
-               // }
-               // featureReportBuilder.append( CLOSE_TABLE );
-               // }
-
                FileUtils.write( featureReportFile, featureReportBuilder.toString(), Charset.defaultCharset() );
                FileUtils.write( featureJSONDumpFile, ParserUtils.getObjectMapper().writeValueAsString( featureResult ), Charset.defaultCharset() );
 
                break;
-
-            // case StandardEventsTypes.JOB_STEP_COMPLETE_EVENT:
-            // StepResult result = null;
-            // featureName = null;
-            // String stepId = null;
-            // String jobName = null;
-            // long iterationIndex = 0;
-            //
-            // if ( event instanceof JobStepCompleteEvent )
-            // {
-            // JobStepCompleteEvent jobStepCompleteEvent = (JobStepCompleteEvent) event;
-            // featureName = jobStepCompleteEvent.getFeatureName();
-            // result = jobStepCompleteEvent.getResult();
-            // stepId = jobStepCompleteEvent.getStep().getIdentifier();
-            // jobName = jobStepCompleteEvent.getJob().getName();
-            // iterationIndex = jobStepCompleteEvent.getIterationNumber();
-            // }
-            // else
-            // {
-            // break;
-            // }
-            // writeStepReport( runName, featureName, -1, JOB + jobName, result, stepId );
-            //
-            // break;
 
             case StandardEventsTypes.FEATURE_SETUP_STEP_COMPLETE_EVENT:
             case StandardEventsTypes.JAVA_FEATURE_SETUP_COMPLETE_EVENT:

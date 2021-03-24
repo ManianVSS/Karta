@@ -37,6 +37,7 @@ import org.mvss.karta.framework.runtime.event.JavaFeatureSetupStartEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureStartEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureTearDownCompleteEvent;
 import org.mvss.karta.framework.runtime.event.JavaFeatureTearDownStartEvent;
+import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
@@ -67,9 +68,12 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
    private FeatureResult           result;
 
+   @PropertyMapping( value = "detailedResults" )
+   private static boolean          detailedResults = false;
+
    private synchronized void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
    {
-      result.addIterationResult( iterationResult );
+      result.addIterationResult( iterationResult, detailedResults );
    }
 
    @Override

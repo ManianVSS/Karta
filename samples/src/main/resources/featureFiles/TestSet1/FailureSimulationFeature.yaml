@@ -9,6 +9,9 @@ testScenarios:
   - name: Scenario1
     executionSteps:
       - step: When running failure simulation step
+        testData:
+          failureType: incident
+          failureMessage: Test failure message
         variableTestDataRules:
           failTheStep:
             ruleType: MUTEX_OBJECT_RULE_VALUE
@@ -21,6 +24,21 @@ testScenarios:
                 probability: 0.1
                 values:
                   - true
+          failureType:
+            ruleType: MUTEX_OBJECT_RULE_VALUE
+            fieldGenRules:
+              - ruleType: VALUES
+                probability: 0.5
+                values:
+                  - simple
+              - ruleType: VALUES
+                probability: 0.25
+                values:
+                  - test failure exception
+              - ruleType: VALUES
+                probability: 0.25
+                values:
+                  - incident
 
 scenarioTearDownSteps:
   - step: And running pass simulation step

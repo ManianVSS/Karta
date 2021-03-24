@@ -1183,7 +1183,7 @@ public class KartaRuntime implements AutoCloseable
       StepRunner stepRunner = getStepRunner( runInfo );
       String stepIdentifier = step.getStep();
 
-      ArrayList<TestStep> nestedSteps = step.getNestedSteps();
+      ArrayList<TestStep> nestedSteps = step.getSteps();
 
       if ( nestedSteps == null )
       {
@@ -1199,7 +1199,7 @@ public class KartaRuntime implements AutoCloseable
          HashMap<String, Serializable> mergedTestData = getMergedTestData( step );
          testExecutionContext.mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
 
-         return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).numberOfThreadsInParallel( step.getNumberOfThreadsInParallel() ).maxRetries( step.getMaxRetries() ).build();
+         return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).numberOfThreads( step.getNumberOfThreads() ).maxRetries( step.getMaxRetries() ).build();
       }
       else
       {
@@ -1208,8 +1208,7 @@ public class KartaRuntime implements AutoCloseable
          testExecutionContext.mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
          testExecutionContext.setContextBeanRegistry( contextBeanRegistry );
 
-         PreparedStep preparedStepGroup = PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).numberOfThreadsInParallel( step.getNumberOfThreadsInParallel() )
-                  .maxRetries( step.getMaxRetries() ).build();
+         PreparedStep preparedStepGroup = PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).numberOfThreads( step.getNumberOfThreads() ).maxRetries( step.getMaxRetries() ).build();
          ArrayList<PreparedStep> nestedPreparedSteps = new ArrayList<PreparedStep>();
 
          for ( TestStep nestedStep : nestedSteps )
@@ -1217,9 +1216,9 @@ public class KartaRuntime implements AutoCloseable
             nestedPreparedSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, scenarioName, variables, commonTestDataSet, nestedStep, contextBeanRegistry ) );
          }
 
-         preparedStepGroup.setNestedSteps( nestedPreparedSteps );
-         Boolean runInParallel = step.getRunNestedStepsInParallel();
-         preparedStepGroup.setRunNestedStepsInParallel( runInParallel == null ? false : runInParallel );
+         preparedStepGroup.setSteps( nestedPreparedSteps );
+         Boolean runInParallel = step.getRunStepsInParallel();
+         preparedStepGroup.setRunStepsInParallel( runInParallel == null ? false : runInParallel );
          return preparedStepGroup;
       }
    }
@@ -1337,7 +1336,7 @@ public class KartaRuntime implements AutoCloseable
       }
       else
       {
-         int numberOfThreadsInParallel = step.getNumberOfThreadsInParallel();
+         int numberOfThreadsInParallel = step.getNumberOfThreads();
 
          // TODO: Add max validations
          if ( numberOfThreadsInParallel > 1 )

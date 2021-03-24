@@ -41,7 +41,7 @@ public class PreparedStepRunner implements Callable<StepResult>
 
       try
       {
-         ArrayList<PreparedStep> nestedSteps = step.getNestedSteps();
+         ArrayList<PreparedStep> nestedSteps = step.getSteps();
 
          if ( nestedSteps == null )
          {
@@ -51,7 +51,7 @@ public class PreparedStepRunner implements Callable<StepResult>
          }
          else
          {
-            Boolean runInParallel = step.getRunNestedStepsInParallel();
+            Boolean runInParallel = step.getRunStepsInParallel();
 
             if ( ( runInParallel != null ) && runInParallel )
             {

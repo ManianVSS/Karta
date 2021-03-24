@@ -16,6 +16,7 @@ pluginConfigurations:
     jarFile: samples.jar
 
 enabledPlugins:
+  # - HTMLReportTestEventListener
   - ObjectGenTestDataSource
   - RandomTestDataSource
   - DumpToFileTestEventListener

@@ -16,7 +16,7 @@ pluginConfigurations:
     jarFile: samples.jar
 
 enabledPlugins:
-  - HTMLReportTestEventListener
+  # - HTMLReportTestEventListener
   - ObjectGenTestDataSource
   - RandomTestDataSource
   - DumpToFileTestEventListener
@@ -55,6 +55,7 @@ testCatalogFragmentFiles:
 
 properties:
   Karta:
+    detailedResults: false
     EventProcessor.numberOfThread: 10
 
   Kriya:
