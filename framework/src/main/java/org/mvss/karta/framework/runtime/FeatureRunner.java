@@ -237,7 +237,7 @@ public class FeatureRunner implements Callable<FeatureResult>
          boolean chanceBasedScenarioExecution = runInfo.isChanceBasedScenarioExecution();
          boolean exclusiveScenarioPerIteration = runInfo.isExclusiveScenarioPerIteration();
          Duration targetRunDuration = runInfo.getRunDuration();
-         Duration coolDownBetweenDuration = runInfo.getCoolDownBetweenIterations();
+         Duration coolDownBetweenIterations = runInfo.getCoolDownBetweenIterations();
 
          if ( !DataUtils.inRange( numberOfIterations, 0, Integer.MAX_VALUE ) )
          {
@@ -323,11 +323,11 @@ public class FeatureRunner implements Callable<FeatureResult>
                iterationExecutionService.submit( iterationRunner );
             }
 
-            if ( coolDownBetweenDuration != null )
+            if ( coolDownBetweenIterations != null )
             {
                if ( iterationIndex % numberOfIterationsInParallel == 0 )
                {
-                  WaitUtil.sleep( coolDownBetweenDuration.toMillis() );
+                  WaitUtil.sleep( coolDownBetweenIterations.toMillis() );
                }
             }
          }

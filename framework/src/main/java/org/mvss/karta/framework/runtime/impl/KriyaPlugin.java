@@ -36,6 +36,7 @@ import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestData;
 import org.mvss.karta.framework.core.TestFeature;
+import org.mvss.karta.framework.enums.StepOutputType;
 import org.mvss.karta.framework.nodes.KartaNodeRegistry;
 import org.mvss.karta.framework.runtime.BeanRegistry;
 import org.mvss.karta.framework.runtime.Constants;
@@ -521,6 +522,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
          Parameter[] parametersObj = stepDefMethodToInvoke.getParameters();
 
+         BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
+
          for ( int i = 0, positionalArg = 0; i < parametersObj.length; i++ )
          {
             String name = parametersObj[i].getName();
@@ -544,7 +547,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             else if ( contextBeanAnnotation != null )
             {
                name = contextBeanAnnotation.value();
-               BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
+
                if ( beanRegistry != null )
                {
                   values.add( beanRegistry.get( name ) );
@@ -568,18 +571,17 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          Class<?> returnType = stepDefMethodToInvoke.getReturnType();
          Object returnValue = values.isEmpty() ? stepDefMethodToInvoke.invoke( stepDefObject ) : stepDefMethodToInvoke.invoke( stepDefObject, values.toArray() );
 
-         if ( returnType.equals( StepResult.class ) )
+         StepDefinition stepDefinition = stepDefMethodToInvoke.getAnnotation( StepDefinition.class );
+         StepOutputType stepOutputType = StepOutputType.AUTO_RESOLVE;
+         String outputName = null;
+
+         if ( stepDefinition != null )
          {
-            result = (StepResult) returnValue;
+            stepOutputType = stepDefinition.outputType();
+            outputName = stepDefinition.outputName();
          }
-         else if ( boolean.class.isAssignableFrom( returnType ) )
-         {
-            result = StepResult.builder().successful( (boolean) returnValue ).build();
-         }
-         else
-         {
-            result.setSuccessful( true );
-         }
+
+         result = extractAndProcessStepResult( result, beanRegistry, returnType, returnValue, stepOutputType, outputName );
       }
       catch ( Throwable t )
       {
@@ -589,6 +591,86 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       }
 
       result.setEndTime( new Date() );
+      return result;
+   }
+
+   private StepResult extractAndProcessStepResult( StepResult result, BeanRegistry beanRegistry, Class<?> returnType, Object returnValue, StepOutputType stepOutputType, String outputName )
+   {
+      switch ( stepOutputType )
+      {
+         case STEP_RESULT:
+            if ( returnType.equals( StepResult.class ) )
+            {
+               result = (StepResult) returnValue;
+            }
+            else
+            {
+               result.setSuccessful( true );
+            }
+            break;
+
+         case NONE:
+            result.setSuccessful( true );
+            break;
+
+         case VARIABLE:
+            result.setSuccessful( true );
+
+            if ( !StringUtils.isBlank( outputName ) && Serializable.class.isAssignableFrom( returnType ) )
+            {
+               result.getResults().put( outputName, (Serializable) returnValue );
+            }
+
+            break;
+
+         case BEAN:
+            result.setSuccessful( true );
+            if ( !StringUtils.isBlank( outputName ) && !Void.class.isAssignableFrom( returnType ) )
+            {
+               beanRegistry.put( outputName, returnValue );
+            }
+            break;
+
+         case BOOLEAN:
+            if ( boolean.class.isAssignableFrom( returnType ) )
+            {
+               result = StepResult.builder().successful( (boolean) returnValue ).build();
+            }
+            else
+            {
+               result.setSuccessful( true );
+            }
+            break;
+
+         case AUTO_RESOLVE:
+         default:
+            if ( returnType.equals( StepResult.class ) )
+            {
+               result = (StepResult) returnValue;
+            }
+            else if ( !StringUtils.isBlank( outputName ) && !Void.class.isAssignableFrom( returnType ) )
+            {
+               result.setSuccessful( true );
+
+               if ( Serializable.class.isAssignableFrom( returnType ) )
+               {
+                  result.getResults().put( outputName, (Serializable) returnValue );
+               }
+               else
+               {
+                  beanRegistry.put( outputName, returnValue );
+               }
+            }
+            else if ( boolean.class.isAssignableFrom( returnType ) )
+            {
+               result = StepResult.builder().successful( (boolean) returnValue ).build();
+            }
+            else
+            {
+               result.setSuccessful( true );
+            }
+            break;
+      }
       return result;
    }
 
@@ -635,6 +717,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             values.add( testExecutionContext );
             values.add( preparedChaosAction );
 
+            BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
+
             if ( parametersObj.length > 2 )
             {
                for ( int i = 2; i < parametersObj.length; i++ )
@@ -654,7 +738,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                   else if ( contextBeanAnnotation != null )
                   {
                      name = contextBeanAnnotation.value();
-                     BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
+
                      if ( beanRegistry != null )
                      {
                         values.add( beanRegistry.get( name ) );
@@ -675,18 +759,17 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             Class<?> returnType = chaosActionHandlerMethodToInvoke.getReturnType();
             Object returnValue = chaosActionHandlerMethodToInvoke.invoke( chaosActionHandlerObject, values.toArray() );
 
-            if ( returnType.equals( StepResult.class ) )
+            ChaosActionDefinition chaosActionDefinition = chaosActionHandlerMethodToInvoke.getAnnotation( ChaosActionDefinition.class );
+            StepOutputType stepOutputType = StepOutputType.AUTO_RESOLVE;
+            String outputName = null;
+
+            if ( chaosActionDefinition != null )
             {
-               result = (StepResult) returnValue;
+               stepOutputType = chaosActionDefinition.outputType();
+               outputName = chaosActionDefinition.outputName();
             }
-            else if ( boolean.class.isAssignableFrom( returnType ) )
-            {
-               result = StepResult.builder().successful( (boolean) returnValue ).build();
-            }
-            else
-            {
-               result.setSuccessful( true );
-            }
+
+            result = extractAndProcessStepResult( result, beanRegistry, returnType, returnValue, stepOutputType, outputName );
          }
       }
       catch ( Throwable t )

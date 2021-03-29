@@ -340,6 +340,11 @@ public class RandomizationUtils
     */
    public static String randomAlphaNumericString( Random random, int length )
    {
+      if ( random == null )
+      {
+         random = new Random();
+      }
+
       String returnValue = Constants.EMPTY_STRING;
 
       for ( int i = 0; i < length; i++ )

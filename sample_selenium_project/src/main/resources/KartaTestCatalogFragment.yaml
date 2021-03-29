@@ -1,0 +1,24 @@
+---
+name: Samples
+description: sample tests category
+
+tags:
+  - sample
+
+featureSourceParserPlugin: Kriya
+stepRunnerPlugin: Kriya
+testDataSourcePlugins:
+  - DataFilesTestDataSource
+  - ObjectGenTestDataSource
+
+tests:
+  - name: SampleFeature
+    description: sample feature file
+    tags:
+      - cycle
+      - UI
+    featureFileName: SampleFeatureFile.yaml    
+    numberOfIterations: 10
+    numberOfThreads: 5
+
+subCategories: []
