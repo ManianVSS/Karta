@@ -7,18 +7,15 @@ import org.openqa.selenium.support.FindBy;
 
 import automation.framework.webui.AbstractPage;
 
-public class W3SHomePage extends AbstractPage
+public class W3SchoolsHomePage extends AbstractPage
 {
-   // @FindBy( xpath = "/html/body/div[6]/div[1]/div[1]/p[text()='The language for building web pages']" )
-   // private WebElement homeVerifyText;
-
    @FindBy( xpath = "/html/body/nav[1]/div/a[1]" )
    private WebElement learnHtmlButton;
 
    @FindBy( xpath = "/html/body/nav[1]/div/a[2]" )
    private WebElement learnCSSButton;
 
-   public W3SHomePage( WebDriver driver ) throws TestFailureException
+   public W3SchoolsHomePage( WebDriver driver ) throws TestFailureException
    {
       super( driver );
    }
@@ -29,10 +26,10 @@ public class W3SHomePage extends AbstractPage
       return waitForVisibility( learnHtmlButton );
    }
 
-   public W3SLHHomePage clickOnLeanHTML() throws TestFailureException
+   public W3SLearnHTMLHomePage clickOnLeanHTML() throws TestFailureException
    {
       clickElement( learnHtmlButton );
-      W3SLHHomePage w3slhHomePage = new W3SLHHomePage( driver );
+      W3SLearnHTMLHomePage w3slhHomePage = new W3SLearnHTMLHomePage( driver );
       return w3slhHomePage;
    }
 }

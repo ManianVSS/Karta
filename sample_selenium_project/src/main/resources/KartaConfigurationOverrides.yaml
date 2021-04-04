@@ -1,3 +1,5 @@
 
 configurationScanPackages:
   - automation.framework.webui
+    mysample.pom
+    mysample.stepdefinitions
