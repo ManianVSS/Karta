@@ -33,8 +33,8 @@ public class TestCatalogManager
 
    public void mergeWithCatalog( TestCategory updatesToRootCategory )
    {
-      updatesToRootCategory.propogateAttributes( null, updatesToRootCategory.getFeatureSourceParserPlugin(), updatesToRootCategory.getFeatureSourceParserPlugin(), updatesToRootCategory.getTestDataSourcePlugins(), updatesToRootCategory
-               .getThreadGroup(), updatesToRootCategory.getTags() );
+      updatesToRootCategory.propogateAttributes( null, updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getTestDataSources(), updatesToRootCategory.getThreadGroup(), updatesToRootCategory
+               .getTags() );
       testCatalog.mergeWithTestCategory( updatesToRootCategory );
    }
 
@@ -63,7 +63,7 @@ public class TestCatalogManager
       }
 
       TestCategory updatesToRootCategory = yamlObjectMapper.readValue( IOUtils.toString( fileStream, Charset.defaultCharset() ), TestCategory.class );
-      updatesToRootCategory.propogateAttributes( sourceArchive, updatesToRootCategory.getFeatureSourceParserPlugin(), updatesToRootCategory.getFeatureSourceParserPlugin(), updatesToRootCategory.getTestDataSourcePlugins(), updatesToRootCategory
+      updatesToRootCategory.propogateAttributes( sourceArchive, updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getTestDataSources(), updatesToRootCategory
                .getThreadGroup(), updatesToRootCategory.getTags() );
       testCatalog.mergeWithTestCategory( updatesToRootCategory );
    }

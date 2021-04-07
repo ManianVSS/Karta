@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
+import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.SerializableKVP;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestJob;
@@ -72,8 +73,14 @@ public class TestJobRunner
                long stepIndex = 0;
                for ( TestStep step : steps )
                {
+                  PreparedStep preparedStep = kartaRuntime.getPreparedStep( runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), step, contextBeanRegistry );
+                  if ( !kartaRuntime.shouldStepBeRun( runInfo, preparedStep ) )
+                  {
+                     continue;
+                  }
+
                   eventProcessor.raiseEvent( new JobStepStartEvent( runName, featureName, job, iterationIndex, step ) );
-                  StepResult result = kartaRuntime.runStep( runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), step, contextBeanRegistry );
+                  StepResult result = kartaRuntime.runStep( runInfo, preparedStep );
                   result.setStepIndex( stepIndex++ );
                   eventProcessor.raiseEvent( new JobStepCompleteEvent( runName, featureName, job, iterationIndex, step, result ) );
 

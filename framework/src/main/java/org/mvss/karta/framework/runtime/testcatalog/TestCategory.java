@@ -28,25 +28,25 @@ public class TestCategory implements Serializable
    /**
     * 
     */
-   private static final long       serialVersionUID      = 1L;
+   private static final long       serialVersionUID = 1L;
 
    private String                  name;
    private String                  description;
 
    @Builder.Default
-   private HashSet<String>         tags                  = new HashSet<String>();
+   private HashSet<String>         tags             = new HashSet<String>();
 
-   private String                  featureSourceParserPlugin;
-   private String                  stepRunnerPlugin;
-
-   @Builder.Default
-   private HashSet<String>         testDataSourcePlugins = new HashSet<String>();
+   private String                  featureSourceParser;
+   private String                  stepRunner;
 
    @Builder.Default
-   private ArrayList<TestCategory> subCategories         = new ArrayList<TestCategory>();
+   private HashSet<String>         testDataSources  = new HashSet<String>();
 
    @Builder.Default
-   private ArrayList<Test>         tests                 = new ArrayList<Test>();
+   private ArrayList<TestCategory> subCategories    = new ArrayList<TestCategory>();
+
+   @Builder.Default
+   private ArrayList<Test>         tests            = new ArrayList<Test>();
 
    private String                  threadGroup;
 
@@ -135,23 +135,23 @@ public class TestCategory implements Serializable
 
    public void propogateAttributes( String sourceArchive, String fspp, String srp, HashSet<String> tdsp, String tg, HashSet<String> tags )
    {
-      if ( StringUtils.isEmpty( featureSourceParserPlugin ) && StringUtils.isNotEmpty( fspp ) )
+      if ( StringUtils.isEmpty( featureSourceParser ) && StringUtils.isNotEmpty( fspp ) )
       {
-         featureSourceParserPlugin = fspp;
+         featureSourceParser = fspp;
       }
 
-      if ( StringUtils.isEmpty( stepRunnerPlugin ) && StringUtils.isNotEmpty( srp ) )
+      if ( StringUtils.isEmpty( stepRunner ) && StringUtils.isNotEmpty( srp ) )
       {
-         stepRunnerPlugin = srp;
+         stepRunner = srp;
       }
 
       if ( tdsp != null )
       {
-         for ( String testDataSourcePlugin : tdsp )
+         for ( String testDataSource : tdsp )
          {
-            if ( !testDataSourcePlugins.contains( testDataSourcePlugin ) )
+            if ( !testDataSources.contains( testDataSource ) )
             {
-               testDataSourcePlugins.add( testDataSourcePlugin );
+               testDataSources.add( testDataSource );
             }
          }
       }
@@ -174,12 +174,12 @@ public class TestCategory implements Serializable
 
       for ( TestCategory testCategory : subCategories )
       {
-         testCategory.propogateAttributes( sourceArchive, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, threadGroup, tags );
+         testCategory.propogateAttributes( sourceArchive, featureSourceParser, stepRunner, testDataSources, threadGroup, tags );
       }
 
       for ( Test test : tests )
       {
-         test.propogateAttributes( sourceArchive, featureSourceParserPlugin, stepRunnerPlugin, testDataSourcePlugins, threadGroup, tags );
+         test.propogateAttributes( sourceArchive, featureSourceParser, stepRunner, testDataSources, threadGroup, tags );
       }
    }
 
@@ -208,19 +208,19 @@ public class TestCategory implements Serializable
          }
       }
 
-      if ( StringUtils.isEmpty( featureSourceParserPlugin ) && StringUtils.isNotEmpty( testCategory.featureSourceParserPlugin ) )
+      if ( StringUtils.isEmpty( featureSourceParser ) && StringUtils.isNotEmpty( testCategory.featureSourceParser ) )
       {
-         featureSourceParserPlugin = testCategory.featureSourceParserPlugin;
+         featureSourceParser = testCategory.featureSourceParser;
       }
 
-      if ( StringUtils.isEmpty( stepRunnerPlugin ) && StringUtils.isNotEmpty( testCategory.stepRunnerPlugin ) )
+      if ( StringUtils.isEmpty( stepRunner ) && StringUtils.isNotEmpty( testCategory.stepRunner ) )
       {
-         stepRunnerPlugin = testCategory.stepRunnerPlugin;
+         stepRunner = testCategory.stepRunner;
       }
 
-      if ( testDataSourcePlugins.isEmpty() && !testCategory.testDataSourcePlugins.isEmpty() )
+      if ( testDataSources.isEmpty() && !testCategory.testDataSources.isEmpty() )
       {
-         testDataSourcePlugins.addAll( testCategory.testDataSourcePlugins );
+         testDataSources.addAll( testCategory.testDataSources );
       }
 
       for ( TestCategory testSubCatToAdd : testCategory.getSubCategories() )

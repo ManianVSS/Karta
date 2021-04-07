@@ -46,6 +46,8 @@ public class DataFilesTestDataSource implements TestDataSource
 
    public void mergeDataStore( HashMap<String, HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>>> dataStoreToMerge )
    {
+      // TODO: Handle nested steps data as well.
+
       for ( String featureDataKey : dataStoreToMerge.keySet() )
       {
          if ( !dataStore.containsKey( featureDataKey ) )

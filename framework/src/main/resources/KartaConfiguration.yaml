@@ -26,9 +26,9 @@ enabledPlugins:
   - ObjectGenTestDataSource
   - LoggingTestEventListener
 
-defaultFeatureSourceParserPlugin: Kriya
-defaultStepRunnerPlugin: Kriya
-defaultTestDataSourcePlugins:
+defaultFeatureSourceParser: Kriya
+defaultStepRunner: Kriya
+defaultTestDataSources:
   - DataFilesTestDataSource
 
 propertyFiles:

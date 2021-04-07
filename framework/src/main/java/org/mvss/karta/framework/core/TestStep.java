@@ -76,4 +76,10 @@ public class TestStep implements Serializable
    @Builder.Default
    private Boolean                                        runStepsInParallel = false;
 
+   /**
+    * The condition identifier indicates if the step is to be run
+    */
+   @Builder.Default
+   private String                                         condition          = null;
+
 }

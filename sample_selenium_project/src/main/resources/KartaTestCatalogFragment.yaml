@@ -5,9 +5,9 @@ description: sample tests category
 tags:
   - sample
 
-featureSourceParserPlugin: Kriya
-stepRunnerPlugin: Kriya
-testDataSourcePlugins:
+featureSourceParser: Kriya
+stepRunner: Kriya
+testDataSources:
   - DataFilesTestDataSource
   - ObjectGenTestDataSource
 

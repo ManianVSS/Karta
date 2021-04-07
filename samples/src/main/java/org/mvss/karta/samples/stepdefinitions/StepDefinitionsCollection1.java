@@ -1,10 +1,14 @@
 package org.mvss.karta.samples.stepdefinitions;
 
+import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.core.ConditionDefinition;
 import org.mvss.karta.framework.core.ContextBean;
+import org.mvss.karta.framework.core.ContextVariable;
 import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestData;
+import org.mvss.karta.framework.enums.StepOutputType;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.event.GenericTestEvent;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
@@ -15,20 +19,45 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class StepDefinitionsCollection1
 {
+   private static final String OFF      = "Off";
+
+   private static final String ON       = "On";
+
    @PropertyMapping( group = "groupName", value = "variable1" )
-   private String             username = "default";
+   private String              username = "default";
 
    @PropertyMapping( group = "groupName", value = "variable2" )
-   private SamplePropertyType variable2;
+   private SamplePropertyType  variable2;
 
    @KartaAutoWired( "EmployeeBean" )
-   private Employee           employee;
+   private Employee            employee;
 
-   @StepDefinition( value = "the calculator is powered on" )
-   public void the_calculator_is_powered_on( TestExecutionContext context, @TestData( "employee" ) Employee employee ) throws Throwable
+   @ConditionDefinition( value = "the calculator is powered \"\"" )
+   public boolean is_the_calculator_is_powered_on( @ContextVariable( "CalculatorState" ) String calculatorState, String expectedState ) throws Throwable
    {
-      context.getVariables().put( "CalculatorState", "On" );
+      if ( StringUtils.isBlank( calculatorState ) )
+      {
+         if ( StringUtils.isBlank( expectedState ) )
+         {
+            return true;
+         }
+         return false;
+      }
+      else if ( StringUtils.isBlank( expectedState ) )
+      {
+         return false;
+      }
+      else
+      {
+         return expectedState.equals( calculatorState );
+      }
+   }
+
+   @StepDefinition( value = "the calculator is powered on", outputName = "CalculatorState", outputType = StepOutputType.VARIABLE )
+   public String the_calculator_is_powered_on( TestExecutionContext context, @TestData( "employee" ) Employee employee ) throws Throwable
+   {
       log.info( "the calculator is powered on by " + username + " employee:" + employee + " and testdata=" + context.getData() );
+      return ON;
    }
 
    @StepDefinition( value = "the all clear button is pressed" )
@@ -71,10 +100,11 @@ public class StepDefinitionsCollection1
       log.info( "dummy teardown step " + variable2 + " bean employee= " + employee );
    }
 
-   @StepDefinition( "the calculator is powered off" )
-   public void the_calculator_is_powered_off( TestExecutionContext context ) throws Throwable
+   @StepDefinition( value = "the calculator is powered off", outputName = "CalculatorState", outputType = StepOutputType.VARIABLE )
+   public String the_calculator_is_powered_off( TestExecutionContext context ) throws Throwable
    {
       log.info( "the calculator is powered off by " + username + " and testdata=" + context.getData() );
+      return OFF;
    }
 
 }

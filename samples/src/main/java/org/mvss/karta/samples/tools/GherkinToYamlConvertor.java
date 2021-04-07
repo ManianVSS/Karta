@@ -107,7 +107,7 @@ public class GherkinToYamlConvertor
          test.setDescription( feature.getDescription() );
          test.setPriority( null );
          test.getTags().addAll( featureTagList );
-         test.setTestDataSourcePlugins( null );
+         test.setTestDataSources( null );
          test.setFeatureFileName( outputYamlFileName );
          test.setChanceBasedScenarioExecution( null );
          test.setExclusiveScenarioPerIteration( null );
@@ -176,7 +176,7 @@ public class GherkinToYamlConvertor
                testCategory.setName( CONVERTED + Instant.now().toEpochMilli() );
                testCategory.setDescription( "Tests coverted from Gherkin to YAML format on " + Instant.now().toString() + "." );
                // testCategory.setTags( null );
-               testCategory.setTestDataSourcePlugins( null );
+               testCategory.setTestDataSources( null );
                testCategory.setSubCategories( null );
             }
             convertFeatureFile( featureFile, outputYamlFile, testCategory );
@@ -211,7 +211,7 @@ public class GherkinToYamlConvertor
                testCategory.setName( CONVERTED + Instant.now().toEpochMilli() );
                testCategory.setDescription( "Tests coverted from Gherkin to YAML format on " + Instant.now().toString() + "." );
                // testCategory.setTags( null );
-               testCategory.setTestDataSourcePlugins( null );
+               testCategory.setTestDataSources( null );
                testCategory.setSubCategories( null );
             }
 

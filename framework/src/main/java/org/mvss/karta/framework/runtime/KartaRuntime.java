@@ -335,8 +335,8 @@ public class KartaRuntime implements AutoCloseable
       /*---------------------------------------------------------------------------------------------------------------------*/
       eventProcessor.start();
 
-      defaultRunInfo = RunInfo.builder().runName( Constants.UNNAMED ).featureSourceParserPlugin( kartaConfiguration.getDefaultFeatureSourceParserPlugin() ).stepRunnerPluginName( kartaConfiguration.getDefaultStepRunnerPlugin() )
-               .testDataSourcePlugins( kartaConfiguration.getDefaultTestDataSourcePlugins() ).build();
+      defaultRunInfo = RunInfo.builder().runName( Constants.UNNAMED ).featureSourceParserPlugin( kartaConfiguration.getDefaultFeatureSourceParser() ).stepRunnerPluginName( kartaConfiguration.getDefaultStepRunner() )
+               .testDataSourcePlugins( kartaConfiguration.getDefaultTestDataSources() ).build();
 
       return true;
    }
@@ -720,7 +720,7 @@ public class KartaRuntime implements AutoCloseable
    {
       RunResult runResult = new RunResult();
 
-      runInfo.setDefaultPlugins( kartaConfiguration.getDefaultFeatureSourceParserPlugin(), kartaConfiguration.getDefaultStepRunnerPlugin(), kartaConfiguration.getDefaultTestDataSourcePlugins() );
+      runInfo.setDefaultPlugins( kartaConfiguration.getDefaultFeatureSourceParser(), kartaConfiguration.getDefaultStepRunner(), kartaConfiguration.getDefaultTestDataSources() );
 
       try
       {
@@ -1199,7 +1199,8 @@ public class KartaRuntime implements AutoCloseable
          HashMap<String, Serializable> mergedTestData = getMergedTestData( step );
          testExecutionContext.mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
 
-         return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).numberOfThreads( step.getNumberOfThreads() ).maxRetries( step.getMaxRetries() ).build();
+         return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).numberOfThreads( step.getNumberOfThreads() ).maxRetries( step.getMaxRetries() ).condition( step.getCondition() )
+                  .build();
       }
       else
       {
@@ -1219,6 +1220,7 @@ public class KartaRuntime implements AutoCloseable
          preparedStepGroup.setSteps( nestedPreparedSteps );
          Boolean runInParallel = step.getRunStepsInParallel();
          preparedStepGroup.setRunStepsInParallel( runInParallel == null ? false : runInParallel );
+         preparedStepGroup.setCondition( step.getCondition() );
          return preparedStepGroup;
       }
    }
@@ -1313,6 +1315,24 @@ public class KartaRuntime implements AutoCloseable
    }
 
    /**
+    * Evaluates if the step to run based on condition in the step. True if no condition mentioned.
+    * 
+    * @param runInfo
+    * @param step
+    * @return
+    */
+   public boolean shouldStepBeRun( RunInfo runInfo, PreparedStep step )
+   {
+      String condition = step.getCondition();
+      if ( StringUtils.isNotBlank( condition ) )
+      {
+         StepRunner stepRunner = getStepRunner( runInfo );
+         return stepRunner.runCondition( step.getTestExecutionContext(), condition );
+      }
+      return true;
+   }
+
+   /**
     * Runs a PreparedStep based on the RunInfo locally or on a remote node and returns the StepResult
     * 
     * @param runInfo
@@ -1378,7 +1398,7 @@ public class KartaRuntime implements AutoCloseable
 
    /**
     * Runs a TestStep based on the RunInfo locally or on a remote node and returns the StepResult
-    * 
+    *
     * @param runInfo
     * @param featureName
     * @param iterationIndex

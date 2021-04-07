@@ -5,9 +5,9 @@ description: sample tests category
 tags:
   - sample
 
-featureSourceParserPlugin: Kriya
-stepRunnerPlugin: Kriya
-testDataSourcePlugins:
+featureSourceParser: Kriya
+stepRunner: Kriya
+testDataSources:
   - DataFilesTestDataSource
   - ObjectGenTestDataSource
   - RandomTestDataSource
@@ -17,7 +17,7 @@ tests:
   - name: SampleGherkinFile5
     priority: 2
     description: sample Gherkin feature file4
-    featureSourceParserPlugin: Gherkin
+    featureSourceParser: Gherkin
     tags:
       - Gherkin
     featureFileName: featureFiles/GherkinTestSet/SampleFeatureFile5.feature
@@ -51,7 +51,7 @@ tests:
     tags:
       - negative
     featureFileName: featureFiles/TestSet1/FailureSimulationFeature.yaml
-    numberOfIterations: 1000000
+    numberOfIterations: 1000
     numberOfThreads: 100
 
   # - name: UIAutomationWithError

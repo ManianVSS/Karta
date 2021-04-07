@@ -1,8 +1,6 @@
 Kriya:
   stepDefinitionPackageNames:
     - mysample.stepdefinitions
-  chaosActionDefinitionPackageNames:
-    - mysample.stepdefinitions
 
 HTMLReportTestEventListener:
   runReportsBaseFolderName: sampleReports

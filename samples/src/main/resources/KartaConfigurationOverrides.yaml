@@ -49,7 +49,7 @@ threadGroups:
   calcChaos: 1
 
 configurationScanPackages:
-  - org.mvss.karta.samples.config
+  - org.mvss.karta.samples
 
 testCatalogFragmentFiles: []
 
@@ -65,9 +65,7 @@ properties:
 
   KriyaExt:
     stepDefinitionPackageNames:
-      - org.mvss.karta.samples.stepdefinitions
-    actionGroupPackageNames:
-      - org.mvss.karta.samples.chaosdefinitions
+      - org.mvss.karta.samples    
 
   RandomTestDataSource:
     seed: 1723

@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.runtime.impl;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import org.mvss.karta.framework.core.BeforeFeature;
 import org.mvss.karta.framework.core.BeforeRun;
 import org.mvss.karta.framework.core.BeforeScenario;
 import org.mvss.karta.framework.core.ChaosActionDefinition;
+import org.mvss.karta.framework.core.ConditionDefinition;
 import org.mvss.karta.framework.core.ContextBean;
 import org.mvss.karta.framework.core.ContextVariable;
 import org.mvss.karta.framework.core.Initializer;
@@ -51,6 +53,8 @@ import org.mvss.karta.framework.runtime.interfaces.TestLifeCycleHook;
 import org.mvss.karta.framework.utils.AnnotationScanner;
 import org.mvss.karta.framework.utils.ParserUtils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.log4j.Log4j2;
@@ -75,6 +79,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
    private HashMap<String, Pair<Object, Method>>             stepHandlerMap                         = new HashMap<String, Pair<Object, Method>>();
    private HashMap<String, Pair<Object, Method>>             chaosActionHandlerMap                  = new HashMap<String, Pair<Object, Method>>();
+   private HashMap<String, Pair<Object, Method>>             conditionDefinitionMap                 = new HashMap<String, Pair<Object, Method>>();
 
    private static Pattern                                    testDataPattern                        = Pattern.compile( INLINE_TEST_DATA_PATTERN );
 
@@ -86,9 +91,6 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
    @PropertyMapping( group = PLUGIN_NAME, value = "stepDefinitionPackageNames" )
    private ArrayList<String>                                 stepDefinitionPackageNames             = new ArrayList<String>();
-
-   @PropertyMapping( group = PLUGIN_NAME, value = "chaosActionDefinitionPackageNames" )
-   private ArrayList<String>                                 chaosActionDefinitionPackageNames      = new ArrayList<String>();
 
    @KartaAutoWired
    private KartaRuntime                                      kartaRuntime;
@@ -164,6 +166,73 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                catch ( Throwable t )
                                                                {
                                                                   log.error( "Exception while parsing step definition from method  " + candidateStepDefinitionMethod.getName(), t );
+                                                               }
+
+                                                            }
+                                                         };
+
+   private final Consumer<Method> processConditions      = new Consumer<Method>()
+                                                         {
+                                                            @Override
+                                                            public void accept( Method candidateConditionMethod )
+                                                            {
+                                                               try
+                                                               {
+                                                                  for ( ConditionDefinition conditionDefinition : candidateConditionMethod.getAnnotationsByType( ConditionDefinition.class ) )
+                                                                  {
+                                                                     String methodDescription = candidateConditionMethod.toString();
+                                                                     String conditionDefString = conditionDefinition.value();
+
+                                                                     if ( conditionDefinitionMap.containsKey( conditionDefString ) )
+                                                                     {
+                                                                        log.error( "Condition definition is duplicate " + methodDescription );
+                                                                        continue;
+                                                                     }
+
+                                                                     if ( ( candidateConditionMethod.getReturnType() != boolean.class ) && ( ( candidateConditionMethod.getReturnType() != Boolean.class ) ) )
+                                                                     {
+                                                                        log.error( "Condition definition method " + methodDescription + " should return boolean" );
+                                                                        continue;
+                                                                     }
+
+                                                                     Parameter[] params = candidateConditionMethod.getParameters();
+                                                                     int positionalArgumentsCount = 0;
+                                                                     for ( int i = 0; i < params.length; i++ )
+                                                                     {
+                                                                        if ( ( params[i].getType() != TestExecutionContext.class ) && ( params[i].getAnnotation( TestData.class ) == null ) && ( params[i].getAnnotation( ContextBean.class ) == null )
+                                                                             && ( params[i].getAnnotation( ContextVariable.class ) == null ) )
+                                                                        {
+                                                                           positionalArgumentsCount++;
+                                                                        }
+                                                                     }
+
+                                                                     if ( positionalArgumentsCount != StringUtils.countMatches( conditionDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) )
+                                                                     {
+                                                                        log.error( "Candidate condition definition method " + methodDescription + " does not match the argument count as per the identifier" );
+                                                                        continue;
+                                                                     }
+
+                                                                     log.debug( "Mapping condition definition " + conditionDefString + " to " + methodDescription );
+
+                                                                     Class<?> conditionDefinitionClass = candidateConditionMethod.getDeclaringClass();
+
+                                                                     Object conditionDefClassObj = initializedClassesRegistry.get( conditionDefinitionClass.getName() );
+                                                                     if ( conditionDefClassObj == null )
+                                                                     {
+                                                                        conditionDefClassObj = conditionDefinitionClass.newInstance();
+                                                                        kartaRuntime.initializeObject( conditionDefClassObj );
+                                                                        initializedClassesRegistry.add( conditionDefClassObj );
+                                                                     }
+
+                                                                     if ( conditionDefClassObj != null )
+                                                                     {
+                                                                        conditionDefinitionMap.put( conditionDefString, new Pair<Object, Method>( conditionDefClassObj, candidateConditionMethod ) );
+                                                                     }
+                                                                  }
+                                                               }
+                                                               catch ( Throwable t )
+                                                               {
+                                                                  log.error( "Exception while parsing condition definition from method  " + candidateConditionMethod.getName(), t );
                                                                }
 
                                                             }
@@ -425,7 +494,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       log.info( "Initializing " + PLUGIN_NAME + " plugin" );
 
       AnnotationScanner.forEachMethod( stepDefinitionPackageNames, StepDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processStepDefinition );
-      AnnotationScanner.forEachMethod( chaosActionDefinitionPackageNames, ChaosActionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processChaosDefinition );
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, ChaosActionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processChaosDefinition );
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, ConditionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processConditions );
 
       AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeRun.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedRunStartHook );
       AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterRun.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedRunStopHook );
@@ -510,66 +580,14 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
       try
       {
-         HashMap<String, Serializable> testData = testExecutionContext.getData();
-         HashMap<String, Serializable> variables = testExecutionContext.getVariables();
-
-         ArrayList<Object> values = new ArrayList<Object>();
-
          Pair<Object, Method> stepDefHandlerObjectMethodPair = stepHandlerMap.get( stepIdentifier );
-
          Object stepDefObject = stepDefHandlerObjectMethodPair.getLeft();
          Method stepDefMethodToInvoke = stepDefHandlerObjectMethodPair.getRight();
-
-         Parameter[] parametersObj = stepDefMethodToInvoke.getParameters();
-
          BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
 
-         for ( int i = 0, positionalArg = 0; i < parametersObj.length; i++ )
-         {
-            String name = parametersObj[i].getName();
-
-            Class<?> paramType = parametersObj[i].getType();
-            if ( paramType == TestExecutionContext.class )
-            {
-               values.add( testExecutionContext );
-               continue;
-            }
-
-            TestData testDataAnnotation = parametersObj[i].getAnnotation( TestData.class );
-            ContextBean contextBeanAnnotation = parametersObj[i].getAnnotation( ContextBean.class );
-            ContextVariable contextVariableAnnotation = parametersObj[i].getAnnotation( ContextVariable.class );
-
-            if ( testDataAnnotation != null )
-            {
-               name = testDataAnnotation.value();
-               values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
-            }
-            else if ( contextBeanAnnotation != null )
-            {
-               name = contextBeanAnnotation.value();
-
-               if ( beanRegistry != null )
-               {
-                  values.add( beanRegistry.get( name ) );
-               }
-               else
-               {
-                  values.add( null );
-               }
-            }
-            else if ( contextVariableAnnotation != null )
-            {
-               name = contextVariableAnnotation.value();
-               values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
-            }
-            else
-            {
-               values.add( ParserUtils.getObjectMapper().readValue( inlineStepDefinitionParameterNames.get( positionalArg++ ), paramType ) );
-            }
-         }
+         Object returnValue = runStepDefMethodWithParameters( testExecutionContext, inlineStepDefinitionParameterNames, stepDefMethodToInvoke, stepDefObject );
 
          Class<?> returnType = stepDefMethodToInvoke.getReturnType();
-         Object returnValue = values.isEmpty() ? stepDefMethodToInvoke.invoke( stepDefObject ) : stepDefMethodToInvoke.invoke( stepDefObject, values.toArray() );
 
          StepDefinition stepDefinition = stepDefMethodToInvoke.getAnnotation( StepDefinition.class );
          StepOutputType stepOutputType = StepOutputType.AUTO_RESOLVE;
@@ -592,6 +610,65 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
       result.setEndTime( new Date() );
       return result;
+   }
+
+   public Object runStepDefMethodWithParameters( TestExecutionContext testExecutionContext, ArrayList<String> inlineParameterNames, Method methodToInvoke, Object methodDefiningClassObject )
+            throws JsonProcessingException, JsonMappingException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+   {
+      HashMap<String, Serializable> testData = testExecutionContext.getData();
+      HashMap<String, Serializable> variables = testExecutionContext.getVariables();
+
+      Parameter[] parametersObj = methodToInvoke.getParameters();
+
+      BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
+
+      ArrayList<Object> values = new ArrayList<Object>();
+
+      for ( int i = 0, positionalArg = 0; i < parametersObj.length; i++ )
+      {
+         String name = parametersObj[i].getName();
+
+         Class<?> paramType = parametersObj[i].getType();
+         if ( paramType == TestExecutionContext.class )
+         {
+            values.add( testExecutionContext );
+            continue;
+         }
+
+         TestData testDataAnnotation = parametersObj[i].getAnnotation( TestData.class );
+         ContextBean contextBeanAnnotation = parametersObj[i].getAnnotation( ContextBean.class );
+         ContextVariable contextVariableAnnotation = parametersObj[i].getAnnotation( ContextVariable.class );
+
+         if ( testDataAnnotation != null )
+         {
+            name = testDataAnnotation.value();
+            values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
+         }
+         else if ( contextBeanAnnotation != null )
+         {
+            name = contextBeanAnnotation.value();
+
+            if ( beanRegistry != null )
+            {
+               values.add( beanRegistry.get( name ) );
+            }
+            else
+            {
+               values.add( null );
+            }
+         }
+         else if ( contextVariableAnnotation != null )
+         {
+            name = contextVariableAnnotation.value();
+            values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
+         }
+         else
+         {
+            values.add( ParserUtils.getObjectMapper().readValue( inlineParameterNames.get( positionalArg++ ), paramType ) );
+         }
+      }
+
+      return values.isEmpty() ? methodToInvoke.invoke( methodDefiningClassObject ) : methodToInvoke.invoke( methodDefiningClassObject, values.toArray() );
    }
 
    private StepResult extractAndProcessStepResult( StepResult result, BeanRegistry beanRegistry, Class<?> returnType, Object returnValue, StepOutputType stepOutputType, String outputName )
@@ -781,6 +858,68 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
       result.setEndTime( new Date() );
       return result;
+   }
+
+   @Override
+   public boolean runCondition( TestExecutionContext testExecutionContext, String conditionIdentifier )
+   {
+      // TestExecutionContext testExecutionContext = testStep.getTestExecutionContext();
+
+      log.debug( "Condition check" + conditionIdentifier );
+
+      if ( StringUtils.isBlank( conditionIdentifier ) )
+      {
+         log.error( "Empty condition definition identifier " + conditionIdentifier );
+         return false;
+      }
+
+      // Fetch the positional argument names
+      ArrayList<String> inlineStepDefinitionParameterNames = new ArrayList<String>();
+      Matcher matcher = testDataPattern.matcher( conditionIdentifier.trim() );
+      while ( matcher.find() )
+      {
+         inlineStepDefinitionParameterNames.add( matcher.group() );
+      }
+
+      conditionIdentifier = sanitizeStepIdentifier( conditionIdentifier );
+      if ( !conditionDefinitionMap.containsKey( conditionIdentifier ) )
+      {
+         // TODO: Handling undefined step to ask manual action(other configured handlers) if possible
+         String errorMessage = "Missing condition definition: " + conditionIdentifier;
+         log.error( errorMessage );
+         String positionalParameters = "";
+
+         int i = 0;
+         for ( String inlineConditionDefinitionParameterName : inlineStepDefinitionParameterNames )
+         {
+            positionalParameters = positionalParameters + ", Serializable posArg" + ( i++ ) + " /*= " + inlineConditionDefinitionParameterName + "*/";
+         }
+         log.error( "Suggestion:\r\n   @ConditionDefinition( \"" + StringEscapeUtils.escapeJava( conditionIdentifier ) + "\" )\r\n" + "   public boolean " + conditionIdentifier.replaceAll( Constants.REGEX_WHITESPACE, Constants.UNDERSCORE ) + "(  "
+                    + positionalParameters + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
+         return false;
+      }
+
+      try
+      {
+         Pair<Object, Method> conditionHandlerObjectMethodPair = conditionDefinitionMap.get( conditionIdentifier );
+         Object conditionDefObject = conditionHandlerObjectMethodPair.getLeft();
+         Method conditionDefMethodToInvoke = conditionHandlerObjectMethodPair.getRight();
+         Class<?> returnType = conditionDefMethodToInvoke.getReturnType();
+
+         if ( ( returnType != boolean.class ) && ( returnType != Boolean.class ) )
+         {
+            return false;
+         }
+
+         boolean returnValue = (Boolean) runStepDefMethodWithParameters( testExecutionContext, inlineStepDefinitionParameterNames, conditionDefMethodToInvoke, conditionDefObject );
+         return returnValue;
+      }
+      catch ( Throwable t )
+      {
+         String errorMessage = "Exception occured while running step definition " + conditionIdentifier;
+         log.error( errorMessage, t );
+         return false;
+      }
    }
 
    public boolean invokeTaggedMethods( HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooksList, HashSet<String> tags, Object... parameters )

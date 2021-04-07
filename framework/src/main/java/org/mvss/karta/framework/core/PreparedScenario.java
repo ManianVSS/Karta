@@ -2,8 +2,11 @@ package org.mvss.karta.framework.core;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.mvss.karta.framework.runtime.BeanRegistry;
+import org.mvss.karta.framework.runtime.TestExecutionContext;
+import org.mvss.karta.framework.utils.DataUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -115,5 +118,39 @@ public class PreparedScenario implements Serializable
       {
          step.getTestExecutionContext().setContextBeanRegistry( contextBeanRegistry );
       }
+   }
+
+   public void normalizeVariables()
+   {
+      HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
+
+      for ( PreparedStep step : tearDownSteps )
+      {
+         TestExecutionContext testExecutionContext = step.getTestExecutionContext();
+         DataUtils.mergeMapInto( testExecutionContext.getVariables(), variables );
+         testExecutionContext.setVariables( variables );
+      }
+
+      for ( PreparedStep step : executionSteps )
+      {
+         TestExecutionContext testExecutionContext = step.getTestExecutionContext();
+         DataUtils.mergeMapInto( testExecutionContext.getVariables(), variables );
+         testExecutionContext.setVariables( variables );
+      }
+
+      for ( PreparedChaosAction chaosAction : chaosActions )
+      {
+         TestExecutionContext testExecutionContext = chaosAction.getTestExecutionContext();
+         DataUtils.mergeMapInto( testExecutionContext.getVariables(), variables );
+         testExecutionContext.setVariables( variables );
+      }
+
+      for ( PreparedStep step : setupSteps )
+      {
+         TestExecutionContext testExecutionContext = step.getTestExecutionContext();
+         DataUtils.mergeMapInto( testExecutionContext.getVariables(), variables );
+         testExecutionContext.setVariables( variables );
+      }
+
    }
 }

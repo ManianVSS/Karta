@@ -131,7 +131,7 @@ public class MinionController
          {
             return StandardScenarioResults.error( "Scenario to run missing in parameters" );
          }
-
+         testScenario.normalizeVariables();
          return kartaRuntime.runTestScenario( runInfo, featureName, iterationIndex, testScenario, scenarioIterationNumber );
       }
       catch ( Throwable t )

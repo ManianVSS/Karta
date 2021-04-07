@@ -92,19 +92,19 @@ public class RunInfo implements Serializable
 
    public void setPlugins( Test test )
    {
-      String featureSourceParserPlugin = test.getFeatureSourceParserPlugin();
+      String featureSourceParserPlugin = test.getFeatureSourceParser();
       if ( StringUtils.isNotBlank( featureSourceParserPlugin ) )
       {
          this.featureSourceParserPlugin = featureSourceParserPlugin;
       }
 
-      String stepRunnerPluginName = test.getStepRunnerPlugin();
+      String stepRunnerPluginName = test.getStepRunner();
       if ( StringUtils.isNotBlank( stepRunnerPluginName ) )
       {
          this.stepRunnerPluginName = stepRunnerPluginName;
       }
 
-      HashSet<String> testDataSourcePlugins = test.getTestDataSourcePlugins();
+      HashSet<String> testDataSourcePlugins = test.getTestDataSources();
       if ( ( testDataSourcePlugins != null ) && !testDataSourcePlugins.isEmpty() )
       {
          this.testDataSourcePlugins = testDataSourcePlugins;

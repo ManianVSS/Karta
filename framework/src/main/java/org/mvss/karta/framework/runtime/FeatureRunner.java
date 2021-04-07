@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.SerializableKVP;
 import org.mvss.karta.framework.core.StepResult;
@@ -190,11 +191,18 @@ public class FeatureRunner implements Callable<FeatureResult>
             stepResult.setStepIndex( setupStepIndex );
             stepResult.setSuccessful( true );
 
+            PreparedStep preparedStep = kartaRuntime.getPreparedStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
+
+            if ( !kartaRuntime.shouldStepBeRun( runInfo, preparedStep ) )
+            {
+               continue;
+            }
+
             eventProcessor.raiseEvent( new FeatureSetupStepStartEvent( runName, testFeature, step ) );
 
             try
             {
-               stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
+               stepResult = kartaRuntime.runStep( runInfo, preparedStep );
                stepResult.setStepIndex( setupStepIndex );
             }
             catch ( TestFailureException tfe )
@@ -347,11 +355,18 @@ public class FeatureRunner implements Callable<FeatureResult>
             teardownStepIndex++;
             StepResult stepResult = new StepResult();
             stepResult.setStepIndex( teardownStepIndex );
+            PreparedStep preparedStep = kartaRuntime.getPreparedStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
+
+            if ( !kartaRuntime.shouldStepBeRun( runInfo, preparedStep ) )
+            {
+               continue;
+            }
+
             eventProcessor.raiseEvent( new FeatureTearDownStepStartEvent( runName, testFeature, step ) );
 
             try
             {
-               stepResult = kartaRuntime.runStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
+               stepResult = kartaRuntime.runStep( runInfo, preparedStep );
                stepResult.setStepIndex( teardownStepIndex );
             }
             catch ( TestFailureException tfe )

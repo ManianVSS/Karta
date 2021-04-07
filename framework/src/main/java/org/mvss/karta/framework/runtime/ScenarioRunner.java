@@ -105,6 +105,11 @@ public class ScenarioRunner implements Callable<ScenarioResult>
             long setupStepIndex = 0;
             for ( PreparedStep step : testScenario.getSetupSteps() )
             {
+               if ( !kartaRuntime.shouldStepBeRun( runInfo, step ) )
+               {
+                  continue;
+               }
+
                eventProcessor.raiseEvent( new ScenarioSetupStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
                StepResult stepResult = kartaRuntime.runStep( runInfo, step );
                stepResult.setStepIndex( setupStepIndex++ );
@@ -144,6 +149,11 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                   long runStepIndex = 0;
                   for ( PreparedStep step : testScenario.getExecutionSteps() )
                   {
+                     if ( !kartaRuntime.shouldStepBeRun( runInfo, step ) )
+                     {
+                        continue;
+                     }
+
                      eventProcessor.raiseEvent( new ScenarioStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
                      StepResult stepResult = kartaRuntime.runStep( runInfo, step );
                      stepResult.setStepIndex( runStepIndex++ );
@@ -174,6 +184,11 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                long teardownStepIndex = 0;
                for ( PreparedStep step : testScenario.getTearDownSteps() )
                {
+                  if ( !kartaRuntime.shouldStepBeRun( runInfo, step ) )
+                  {
+                     continue;
+                  }
+
                   eventProcessor.raiseEvent( new ScenarioTearDownStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
                   StepResult stepResult = kartaRuntime.runStep( runInfo, step );
                   stepResult.setStepIndex( teardownStepIndex++ );

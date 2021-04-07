@@ -51,8 +51,34 @@ testScenarios:
               max: 100000
       - step: And the calculator should display "0"
 
+  - name: ConditionalStepExecution
+    setupSteps:
+      - step: Given the calculator is powered on
+    executionSteps:
+      - step: When Testing group of steps if calculator is On
+        steps:
+          - step: When the button "2" is pressed
+            testData:
+              someData1: dataValue1
+              someData2: dataValue2
+          - step: And the button "+" is pressed
+          - step: And the button "3" is pressed
+          - step: And the button "=" is pressed
+          - step: And the calculator should display "5"
+          - step: Given the calculator is powered off
+        condition: When the calculator is powered "On"
+        testData:
+          someData1: dataValue1
+          someData2: dataValue2
+      - step: Given the calculator is powered on
+        condition: When the calculator is powered "Off"
+      - step: Given the calculator is powered off
+        condition: When the calculator is powered "On"
+      - step: Given the calculator is powered off
+        condition: When the calculator is powered "On"
 scenarioTearDownSteps:
   - step: Then dummy teardown step
 
 tearDownSteps:
   - step: Then the calculator is powered off
+    condition: When the calculator is powered "On"

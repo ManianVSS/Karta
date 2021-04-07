@@ -43,7 +43,7 @@ public class PreparedStepRunner implements Callable<StepResult>
       {
          ArrayList<PreparedStep> nestedSteps = step.getSteps();
 
-         if ( nestedSteps == null )
+         if ( ( nestedSteps == null ) || nestedSteps.isEmpty() )
          {
             // TODO:Handle null exceptions
             StepRunner stepRunner = kartaRuntime.getStepRunner( runInfo );
@@ -51,6 +51,7 @@ public class PreparedStepRunner implements Callable<StepResult>
          }
          else
          {
+            // TODO: Forward test data and test data set from parent step to nested steps
             Boolean runInParallel = step.getRunStepsInParallel();
 
             if ( ( runInParallel != null ) && runInParallel )
