@@ -232,4 +232,21 @@ public class ParserUtils
       }
    }
 
+   public static String serializableToString( Serializable serializable )
+   {
+      if ( serializable.getClass() == String.class )
+      {
+         return (String) serializable;
+      }
+
+      try
+      {
+         return objectMapper.writeValueAsString( serializable );
+      }
+      catch ( JsonProcessingException jpe )
+      {
+         return null;
+      }
+   }
+
 }

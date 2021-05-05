@@ -1,7 +1,6 @@
 package org.mvss.karta.framework.nodes;
 
 import java.io.Serializable;
-import java.lang.reflect.Type;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 
@@ -14,19 +13,14 @@ import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.core.TestJobResult;
+import org.mvss.karta.framework.restclient.Response;
+import org.mvss.karta.framework.restclient.RestClient;
+import org.mvss.karta.framework.restclient.RestRequest;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.RunInfo;
-import org.mvss.karta.framework.utils.ParserUtils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.config.ObjectMapperConfig;
-import io.restassured.config.RestAssuredConfig;
-import io.restassured.mapper.factory.Jackson2ObjectMapperFactory;
-import io.restassured.response.Response;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * Default REST based Karta Node implementation.
@@ -35,39 +29,22 @@ import lombok.Getter;
  * 
  * @author Manian
  */
+@Log4j2
 @Getter
 public class KartaRestNode implements KartaNode
 {
-   private RequestSpecBuilder requestSpecBuilder;
+   private String  url;
+   private Boolean disableCertificateCheck = true;
 
-   static
-   {
-      RestAssured.config = RestAssuredConfig.config().objectMapperConfig( new ObjectMapperConfig().jackson2ObjectMapperFactory( new Jackson2ObjectMapperFactory()
-      {
-
-         @Override
-         public ObjectMapper create( Type arg0, String arg1 )
-         {
-            return ParserUtils.getObjectMapper();
-         }
-      } ) );
-   }
    public KartaRestNode( String url )
    {
-      requestSpecBuilder = new RequestSpecBuilder();
-      requestSpecBuilder.setBaseUri( url );
-
-      requestSpecBuilder.addHeader( Constants.CONTENT_TYPE, Constants.APPLICATION_JSON );
-      requestSpecBuilder.addHeader( Constants.ACCEPT, Constants.APPLICATION_JSON );
+      this.url = url;
    }
 
    public KartaRestNode( String url, boolean disableCertificateCheck )
    {
       this( url );
-      if ( disableCertificateCheck )
-      {
-         requestSpecBuilder.setRelaxedHTTPSValidation();
-      }
+      this.disableCertificateCheck = disableCertificateCheck;
    }
 
    @Override
@@ -77,14 +54,25 @@ public class KartaRestNode implements KartaNode
       parameters.put( Constants.RUN_INFO, runInfo );
       parameters.put( Constants.FEATURE, feature );
 
-      Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_FEATURE );
-
       FeatureResult result = null;
-      int statusCode = response.getStatusCode();
-      if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+
+      try (RestClient restClient = new RestClient( disableCertificateCheck ))
       {
-         result = response.getBody().as( FeatureResult.class );
+         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.CONTENT_TYPE, Constants.APPLICATION_JSON ).header( Constants.ACCEPT, Constants.APPLICATION_JSON ).body( parameters ).build();
+         Response response = restClient.post( restRequest, Constants.PATH_RUN_FEATURE );
+
+         int statusCode = response.getStatusCode();
+         if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+         {
+            result = response.getBodyAs( FeatureResult.class );
+         }
       }
+      catch ( Exception e )
+      {
+         log.error( "", e );
+         return result;
+      }
+
       return result;
    }
 
@@ -97,14 +85,26 @@ public class KartaRestNode implements KartaNode
       parameters.put( Constants.JOB, job );
       parameters.put( Constants.ITERATION_INDEX, iterationIndex );
 
-      Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_JOB_ITERATION );
-
       TestJobResult result = null;
-      int statusCode = response.getStatusCode();
-      if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+
+      try (RestClient restClient = new RestClient( disableCertificateCheck ))
       {
-         result = response.getBody().as( TestJobResult.class );
+
+         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.CONTENT_TYPE, Constants.APPLICATION_JSON ).header( Constants.ACCEPT, Constants.APPLICATION_JSON ).body( parameters ).build();
+         Response response = restClient.post( restRequest, Constants.PATH_RUN_JOB_ITERATION );
+
+         int statusCode = response.getStatusCode();
+         if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+         {
+            result = response.getBodyAs( TestJobResult.class );
+         }
       }
+      catch ( Exception e )
+      {
+         log.error( "", e );
+         return result;
+      }
+
       return result;
    }
 
@@ -118,14 +118,26 @@ public class KartaRestNode implements KartaNode
       parameters.put( Constants.TEST_SCENARIO, testScenario );
       parameters.put( Constants.SCENARIO_ITERATION_NUMBER, scenarioIterationNumber );
 
-      Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_SCENARIO );
-
       ScenarioResult result = null;
-      int statusCode = response.getStatusCode();
-      if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+
+      try (RestClient restClient = new RestClient( disableCertificateCheck ))
       {
-         result = response.getBody().as( ScenarioResult.class );
+
+         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.CONTENT_TYPE, Constants.APPLICATION_JSON ).header( Constants.ACCEPT, Constants.APPLICATION_JSON ).body( parameters ).build();
+         Response response = restClient.post( restRequest, Constants.PATH_RUN_SCENARIO );
+
+         int statusCode = response.getStatusCode();
+         if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+         {
+            result = response.getBodyAs( ScenarioResult.class );
+         }
       }
+      catch ( Exception e )
+      {
+         log.error( "", e );
+         return result;
+      }
+
       return result;
    }
 
@@ -136,13 +148,23 @@ public class KartaRestNode implements KartaNode
       parameters.put( Constants.RUN_INFO, runInfo );
       parameters.put( Constants.TEST_STEP, step );
 
-      Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_STEP );
-
       StepResult result = null;
-      int statusCode = response.getStatusCode();
-      if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+
+      try (RestClient restClient = new RestClient( disableCertificateCheck ))
       {
-         result = response.getBody().as( StepResult.class );
+         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.CONTENT_TYPE, Constants.APPLICATION_JSON ).header( Constants.ACCEPT, Constants.APPLICATION_JSON ).body( parameters ).build();
+         Response response = restClient.post( restRequest, Constants.PATH_RUN_STEP );
+
+         int statusCode = response.getStatusCode();
+         if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+         {
+            result = response.getBodyAs( StepResult.class );
+         }
+      }
+      catch ( Exception e )
+      {
+         log.error( "", e );
+         return result;
       }
       return result;
    }
@@ -154,13 +176,23 @@ public class KartaRestNode implements KartaNode
       parameters.put( Constants.RUN_INFO, runInfo );
       parameters.put( Constants.CHAOS_ACTION, chaosAction );
 
-      Response response = RestAssured.given( requestSpecBuilder.build() ).body( parameters ).post( Constants.PATH_RUN_CHAOS_ACTION );
-
       StepResult result = null;
-      int statusCode = response.getStatusCode();
-      if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+
+      try (RestClient restClient = new RestClient( disableCertificateCheck ))
       {
-         result = response.getBody().as( StepResult.class );
+         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.CONTENT_TYPE, Constants.APPLICATION_JSON ).header( Constants.ACCEPT, Constants.APPLICATION_JSON ).body( parameters ).build();
+         Response response = restClient.post( restRequest, Constants.PATH_RUN_CHAOS_ACTION );
+
+         int statusCode = response.getStatusCode();
+         if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+         {
+            result = response.getBodyAs( StepResult.class );
+         }
+      }
+      catch ( Exception e )
+      {
+         log.error( "", e );
+         return result;
       }
       return result;
    }
@@ -168,8 +200,18 @@ public class KartaRestNode implements KartaNode
    @Override
    public boolean healthCheck() throws RemoteException
    {
-      Response response = RestAssured.given( requestSpecBuilder.build() ).get( Constants.PATH_HEALTH );
-      int statusCode = response.getStatusCode();
-      return ( statusCode == 200 ) ? response.as( Boolean.class ) : false;
+      try (RestClient restClient = new RestClient( disableCertificateCheck ))
+      {
+         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.CONTENT_TYPE, Constants.APPLICATION_JSON ).header( Constants.ACCEPT, Constants.APPLICATION_JSON ).build();
+
+         Response response = restClient.get( restRequest, Constants.PATH_HEALTH );
+         int statusCode = response.getStatusCode();
+         return ( statusCode == 200 ) ? response.getBodyAs( Boolean.class ) : false;
+      }
+      catch ( Exception e )
+      {
+         log.error( "", e );
+         return false;
+      }
    }
 }
