@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 
+import org.apache.http.entity.ContentType;
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.PreparedChaosAction;
 import org.mvss.karta.framework.core.PreparedScenario;
@@ -58,7 +59,8 @@ public class KartaRestNode implements KartaNode
 
       try (RestClient restClient = new RestClient( disableCertificateCheck ))
       {
-         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.CONTENT_TYPE, Constants.APPLICATION_JSON ).header( Constants.ACCEPT, Constants.APPLICATION_JSON ).body( parameters ).build();
+         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.ACCEPT, Constants.APPLICATION_JSON )
+                  .contentType( ContentType.APPLICATION_JSON ).body( parameters ).build();
          Response response = restClient.post( restRequest, Constants.PATH_RUN_FEATURE );
 
          int statusCode = response.getStatusCode();
@@ -90,7 +92,8 @@ public class KartaRestNode implements KartaNode
       try (RestClient restClient = new RestClient( disableCertificateCheck ))
       {
 
-         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.CONTENT_TYPE, Constants.APPLICATION_JSON ).header( Constants.ACCEPT, Constants.APPLICATION_JSON ).body( parameters ).build();
+         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.ACCEPT, Constants.APPLICATION_JSON )
+                  .contentType( ContentType.APPLICATION_JSON ).body( parameters ).build();
          Response response = restClient.post( restRequest, Constants.PATH_RUN_JOB_ITERATION );
 
          int statusCode = response.getStatusCode();
@@ -109,7 +112,9 @@ public class KartaRestNode implements KartaNode
    }
 
    @Override
-   public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber ) throws RemoteException
+   public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario,
+                                          long scenarioIterationNumber )
+            throws RemoteException
    {
       HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
       parameters.put( Constants.RUN_INFO, runInfo );
@@ -123,7 +128,8 @@ public class KartaRestNode implements KartaNode
       try (RestClient restClient = new RestClient( disableCertificateCheck ))
       {
 
-         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.CONTENT_TYPE, Constants.APPLICATION_JSON ).header( Constants.ACCEPT, Constants.APPLICATION_JSON ).body( parameters ).build();
+         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.ACCEPT, Constants.APPLICATION_JSON )
+                  .contentType( ContentType.APPLICATION_JSON ).body( parameters ).build();
          Response response = restClient.post( restRequest, Constants.PATH_RUN_SCENARIO );
 
          int statusCode = response.getStatusCode();
@@ -152,7 +158,8 @@ public class KartaRestNode implements KartaNode
 
       try (RestClient restClient = new RestClient( disableCertificateCheck ))
       {
-         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.CONTENT_TYPE, Constants.APPLICATION_JSON ).header( Constants.ACCEPT, Constants.APPLICATION_JSON ).body( parameters ).build();
+         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.ACCEPT, Constants.APPLICATION_JSON )
+                  .contentType( ContentType.APPLICATION_JSON ).body( parameters ).build();
          Response response = restClient.post( restRequest, Constants.PATH_RUN_STEP );
 
          int statusCode = response.getStatusCode();
@@ -180,7 +187,8 @@ public class KartaRestNode implements KartaNode
 
       try (RestClient restClient = new RestClient( disableCertificateCheck ))
       {
-         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.CONTENT_TYPE, Constants.APPLICATION_JSON ).header( Constants.ACCEPT, Constants.APPLICATION_JSON ).body( parameters ).build();
+         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.ACCEPT, Constants.APPLICATION_JSON )
+                  .contentType( ContentType.APPLICATION_JSON ).body( parameters ).build();
          Response response = restClient.post( restRequest, Constants.PATH_RUN_CHAOS_ACTION );
 
          int statusCode = response.getStatusCode();
@@ -202,7 +210,8 @@ public class KartaRestNode implements KartaNode
    {
       try (RestClient restClient = new RestClient( disableCertificateCheck ))
       {
-         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.CONTENT_TYPE, Constants.APPLICATION_JSON ).header( Constants.ACCEPT, Constants.APPLICATION_JSON ).build();
+         RestRequest restRequest = RestRequest.builder().url( url ).header( Constants.ACCEPT, Constants.APPLICATION_JSON )
+                  .contentType( ContentType.APPLICATION_JSON ).build();
 
          Response response = restClient.get( restRequest, Constants.PATH_HEALTH );
          int statusCode = response.getStatusCode();

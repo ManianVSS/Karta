@@ -8,7 +8,10 @@ import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.SerializableEntity;
+import org.apache.http.entity.StringEntity;
+import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
 
@@ -20,7 +23,8 @@ public class RestRequest
    private String                  url;
    private HashMap<String, String> headers    = new HashMap<String, String>();
    private HashMap<String, String> parameters = new HashMap<String, String>();
-   private byte[]                  body;
+   private ContentType             contentType;
+   private Serializable            body;
 
    private RestRequest()
    {
@@ -46,7 +50,14 @@ public class RestRequest
 
       if ( body != null )
       {
-         requestBuilder.setEntity( new ByteArrayEntity( body ) );
+         if ( contentType == ContentType.APPLICATION_OCTET_STREAM )
+         {
+            requestBuilder.setEntity( new SerializableEntity( body ) );
+         }
+         else
+         {
+            requestBuilder.setEntity( new StringEntity( (String) body, contentType ) );
+         }
       }
 
       return requestBuilder;
@@ -131,9 +142,10 @@ public class RestRequest
    public static class RestRequestBuilder
    {
       private String                        url;
-      private HashMap<String, Serializable> headers    = new HashMap<String, Serializable>();
-      private HashMap<String, Serializable> parameters = new HashMap<String, Serializable>();
-      private byte[]                        body;
+      private HashMap<String, Serializable> headers     = new HashMap<String, Serializable>();
+      private HashMap<String, Serializable> parameters  = new HashMap<String, Serializable>();
+      private ContentType                   contentType = ContentType.APPLICATION_JSON;
+      private Serializable                  body;
 
       private RestRequestBuilder()
       {
@@ -170,6 +182,13 @@ public class RestRequest
          return this;
       }
 
+      public RestRequestBuilder contentType( ContentType contentType )
+      {
+         this.contentType = contentType;
+         this.header( Constants.CONTENT_TYPE, contentType.toString() );
+         return this;
+      }
+
       public RestRequestBuilder body( Serializable body )
       {
          try
@@ -181,54 +200,40 @@ public class RestRequest
             }
             else if ( body.getClass().equals( byte[].class ) )
             {
-               this.body = (byte[]) body;
+               this.body = new String( (byte[]) body );
             }
             else if ( body.getClass().equals( String.class ) )
             {
-               this.body = ( (String) body ).getBytes();
+               this.body = (String) body;
             }
             else
             {
-               String contentTypeStr = (String) headers.get( "Content-Type" );
-
-               if ( StringUtils.isNotEmpty( contentTypeStr ) )
+               if ( contentType != null )
                {
-                  ContentType contentType = ContentType.tryValueOf( contentTypeStr );
-
-                  if ( contentType != null )
+                  switch ( contentType.toString() )
                   {
+                     case "text/html":
+                     case "text/plain":
+                        this.body = body.toString();
+                        break;
 
-                     switch ( contentType )
-                     {
-                        case TEXT_HTML:
-                        case TEXT_PLAIN:
-                           this.body = body.toString().getBytes();
-                           break;
+                     default:
+                     case "application/json":
+                        this.body = ParserUtils.getObjectMapper().writeValueAsString( body );
+                        break;
+                     case "application/xml":
+                        this.body = ParserUtils.getXmlMapper().writeValueAsString( body );
+                        break;
+                     case "application/yaml":
+                        this.body = ParserUtils.getYamlObjectMapper().writeValueAsString( body );
+                        break;
+                     case "application/octet-stream":
+                        this.body = SerializationUtils.serialize( body );
+                        break;
+                  }
 
-                        default:
-                        case APPLICATION_JSON:
-                           this.body = ParserUtils.getObjectMapper().writeValueAsString( body ).getBytes();
-                           break;
-                        case APPLICATION_XML:
-                           this.body = ParserUtils.getXmlMapper().writeValueAsString( body ).getBytes();
-                           break;
-                        case APPLICATION_YAML:
-                           this.body = ParserUtils.getYamlObjectMapper().writeValueAsString( body ).getBytes();
-                           break;
-                        case BINARY:
-                           this.body = SerializationUtils.serialize( body );
-                           break;
-                     }
-                  }
-                  else
-                  {
-                     this.body = SerializationUtils.serialize( body );
-                  }
                }
-               else
-               {
-                  this.body = SerializationUtils.serialize( body );
-               }
+
             }
          }
          catch ( Throwable t )
@@ -255,7 +260,7 @@ public class RestRequest
          }
 
          restClient.body = this.body;
-
+         restClient.contentType = this.contentType;
          return restClient;
       }
    }
