@@ -463,4 +463,9 @@ public class DataUtils
       return String.valueOf( chararray );
    }
 
+   public static double round2( double value )
+   {
+      return Math.round( value * 100 ) / 100.0;
+   }
+
 }

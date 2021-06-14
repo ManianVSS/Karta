@@ -61,7 +61,8 @@ public class Configurator
     * @param propertiesStore
     * @param propertiesToMerge
     */
-   public static void mergeProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, HashMap<String, HashMap<String, Serializable>> propertiesToMerge )
+   public static void mergeProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore,
+                                       HashMap<String, HashMap<String, Serializable>> propertiesToMerge )
    {
       if ( propertiesToMerge == null )
       {
@@ -93,7 +94,8 @@ public class Configurator
     * @param propertyToMerge
     * @param propertyValue
     */
-   public static void mergeProperty( HashMap<String, HashMap<String, Serializable>> propertiesStore, String propertyGroupToMerge, String propertyToMerge, String propertyValue )
+   public static void mergeProperty( HashMap<String, HashMap<String, Serializable>> propertiesStore, String propertyGroupToMerge,
+                                     String propertyToMerge, String propertyValue )
    {
       if ( !propertiesStore.containsKey( propertyGroupToMerge ) )
       {
@@ -113,7 +115,8 @@ public class Configurator
     * @return
     * @throws IOException
     */
-   public static HashMap<String, HashMap<String, Serializable>> readPropertiesFromString( DataFormat dataFormat, String propertiesDataString ) throws IOException
+   public static HashMap<String, HashMap<String, Serializable>> readPropertiesFromString( DataFormat dataFormat, String propertiesDataString )
+            throws IOException
    {
       if ( dataFormat == DataFormat.PROPERTIES )
       {
@@ -227,10 +230,12 @@ public class Configurator
     * @throws IllegalArgumentException
     * @throws IllegalAccessException
     */
-   public static void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object ) throws IllegalArgumentException, IllegalAccessException
+   public static void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object )
+            throws IllegalArgumentException, IllegalAccessException
    {
       AnnotationScanner.forEachField( object.getClass(), PropertyMapping.class, AnnotationScanner.IS_NON_STATIC
-               .and( AnnotationScanner.IS_NON_FINAL ), null, ( type, field, annotation ) -> PropertyUtils.setFieldValue( propertiesStore, object, field, (PropertyMapping) annotation ) );
+               .and( AnnotationScanner.IS_NON_FINAL ), null, ( type, field, annotation ) -> PropertyUtils
+                        .setFieldValue( propertiesStore, object, field, (PropertyMapping) annotation ) );
    }
 
    /**
@@ -256,10 +261,12 @@ public class Configurator
     * @throws IllegalArgumentException
     * @throws IllegalAccessException
     */
-   public void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Class<?> classToLoadPropertiesWith ) throws IllegalArgumentException, IllegalAccessException
+   public void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Class<?> classToLoadPropertiesWith )
+            throws IllegalArgumentException, IllegalAccessException
    {
       AnnotationScanner.forEachField( classToLoadPropertiesWith, PropertyMapping.class, AnnotationScanner.IS_STATIC
-               .and( AnnotationScanner.IS_NON_FINAL ), null, ( type, field, annotation ) -> PropertyUtils.setFieldValue( propertiesStore, null, field, (PropertyMapping) annotation ) );
+               .and( AnnotationScanner.IS_NON_FINAL ), null, ( type, field, annotation ) -> PropertyUtils
+                        .setFieldValue( propertiesStore, null, field, (PropertyMapping) annotation ) );
    }
 
    /**
@@ -275,5 +282,16 @@ public class Configurator
       {
          loadProperties( propertiesStore, classToLoadPropertiesWith );
       }
+   }
+
+   public String expandPropertiesIntoText( String text )
+   {
+      return PropertyUtils.expandPropertiesStoreIntoText( propertiesStore, text );
+   }
+
+   public void createFileFromTemplate( String templateFileName, String fileToCreate ) throws IOException
+   {
+      String templateString = FileUtils.readFileToString( new File( templateFileName ), Charset.defaultCharset() );
+      FileUtils.writeStringToFile( new File( fileToCreate ), expandPropertiesIntoText( templateString ), Charset.defaultCharset() );
    }
 }

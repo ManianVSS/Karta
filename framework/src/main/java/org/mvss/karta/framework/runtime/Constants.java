@@ -42,6 +42,8 @@ public class Constants
    public static final String   OPEN_SQ_BRACKET                     = "[";
    public static final String   CLOSE_SQ_BRACKET                    = "]";
    public static final String   SPACE                               = " ";
+   public static final String   DOUBLE_BACKSLASH                    = "\\\\";
+   public static final String   BACKSLASH                           = "\\";
 
    public static final String   JAR                                 = "jar";
 
@@ -137,4 +139,15 @@ public class Constants
    public static final String   JAVA_TEST                           = "javaTest";
    public static final String   JAVA_TEST_JAR                       = "javaTestJar";
    public static final String   START_NODE                          = "startNode";
+
+   public static final String   KARTA_TEST_PROPERTIES               = "KartaTestProperties";
+   public static final String   KARTA_PLUGIN_PROPERTIES_YAML        = "KartaPluginProperties.yaml";
+   public static final String   KARTA_PROPERTIES_YAML               = "KartaProperties.yaml";
+   public static final String   HTML_REPORT_TEST_EVENT_LISTENER     = "HTMLReportTestEventListener";
+   public static final String   DUMP_TO_FILE_TEST_EVENT_LISTENER    = "DumpToFileTestEventListener";
+   public static final String   RABBIT_MQ_TEST_EVENT_LISTENER       = "RabbitMQTestEventListener";
+   public static final String   LOGGING_TEST_EVENT_LISTENER         = "LoggingTestEventListener";
+   public static final String   OBJECT_GEN_TEST_DATA_SOURCE         = "ObjectGenTestDataSource";
+   public static final String   DATA_FILES_TEST_DATA_SOURCE         = "DataFilesTestDataSource";
+   public static final String   KRIYA                               = "Kriya";
 }

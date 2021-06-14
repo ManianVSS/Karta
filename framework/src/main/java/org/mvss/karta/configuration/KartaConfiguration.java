@@ -7,6 +7,14 @@ import java.util.HashSet;
 
 import org.mvss.karta.framework.nodes.KartaNodeConfiguration;
 import org.mvss.karta.framework.runtime.Configurator;
+import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.runtime.impl.DataFilesTestDataSource;
+import org.mvss.karta.framework.runtime.impl.DumpToFileTestEventListener;
+import org.mvss.karta.framework.runtime.impl.HTMLReportTestEventListener;
+import org.mvss.karta.framework.runtime.impl.KriyaPlugin;
+import org.mvss.karta.framework.runtime.impl.LoggingTestEventListener;
+import org.mvss.karta.framework.runtime.impl.ObjectGenTestDataSource;
+import org.mvss.karta.framework.runtime.impl.RabbitMQTestEventListener;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.NullAwareBeanUtilsBean;
 import org.mvss.karta.framework.utils.PropertyUtils;
@@ -165,5 +173,46 @@ public class KartaConfiguration implements Serializable
       DataUtils.mergeMapInto( override.threadGroups, threadGroups );
       DataUtils.addMissing( configurationScanPackages, override.configurationScanPackages );
       Configurator.mergeProperties( properties, override.properties );
+   }
+
+   public static synchronized KartaConfiguration getDefaultConfiguration()
+   {
+      KartaConfiguration kartaConfiguration = new KartaConfiguration();
+
+      kartaConfiguration.pluginConfigurations.add( new PluginConfig( Constants.KRIYA, KriyaPlugin.class.getName(), null ) );
+      kartaConfiguration.pluginConfigurations
+               .add( new PluginConfig( Constants.DATA_FILES_TEST_DATA_SOURCE, DataFilesTestDataSource.class.getName(), null ) );
+      kartaConfiguration.pluginConfigurations
+               .add( new PluginConfig( Constants.OBJECT_GEN_TEST_DATA_SOURCE, ObjectGenTestDataSource.class.getName(), null ) );
+      kartaConfiguration.pluginConfigurations
+               .add( new PluginConfig( Constants.LOGGING_TEST_EVENT_LISTENER, LoggingTestEventListener.class.getName(), null ) );
+      kartaConfiguration.pluginConfigurations
+               .add( new PluginConfig( Constants.DUMP_TO_FILE_TEST_EVENT_LISTENER, DumpToFileTestEventListener.class.getName(), null ) );
+      kartaConfiguration.pluginConfigurations
+               .add( new PluginConfig( Constants.RABBIT_MQ_TEST_EVENT_LISTENER, RabbitMQTestEventListener.class.getName(), null ) );
+      kartaConfiguration.pluginConfigurations
+               .add( new PluginConfig( Constants.HTML_REPORT_TEST_EVENT_LISTENER, HTMLReportTestEventListener.class.getName(), null ) );
+
+      kartaConfiguration.enabledPlugins = new HashSet<String>();
+      kartaConfiguration.enabledPlugins.add( Constants.KRIYA );
+      kartaConfiguration.enabledPlugins.add( Constants.DATA_FILES_TEST_DATA_SOURCE );
+      kartaConfiguration.enabledPlugins.add( Constants.OBJECT_GEN_TEST_DATA_SOURCE );
+      kartaConfiguration.enabledPlugins.add( Constants.LOGGING_TEST_EVENT_LISTENER );
+
+      kartaConfiguration.defaultFeatureSourceParser = Constants.KRIYA;
+      kartaConfiguration.defaultStepRunner = Constants.KRIYA;
+      kartaConfiguration.defaultTestDataSources.add( Constants.DATA_FILES_TEST_DATA_SOURCE );
+
+      kartaConfiguration.propertyFiles.add( Constants.KARTA_PROPERTIES_YAML );
+      kartaConfiguration.propertyFiles.add( Constants.KARTA_PLUGIN_PROPERTIES_YAML );
+      kartaConfiguration.propertyFiles.add( Constants.KARTA_TEST_PROPERTIES );
+
+      kartaConfiguration.sslProperties = new SSLProperties();
+
+      kartaConfiguration.minionsEnabled = true;
+
+      kartaConfiguration.threadGroups.put( Constants.__DEFAULT__, 1 );
+
+      return kartaConfiguration;
    }
 }

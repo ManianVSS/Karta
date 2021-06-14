@@ -182,7 +182,8 @@ public class KartaRuntime implements AutoCloseable
     * @throws ClassNotFoundException
     * @throws InvocationTargetException
     */
-   public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException, IllegalAccessException, NotBoundException, ClassNotFoundException, InvocationTargetException
+   public boolean initializeRuntime() throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException, IllegalArgumentException,
+            IllegalAccessException, NotBoundException, ClassNotFoundException, InvocationTargetException
    {
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize karta configuration
@@ -194,7 +195,8 @@ public class KartaRuntime implements AutoCloseable
          if ( PropertyUtils.systemPropertyMap.containsKey( Constants.KARTA_HOME ) )
          {
             // TODO: Move all configuration file to user directory
-            File kartaHomeConfigFile = Paths.get( PropertyUtils.systemPropertyMap.get( Constants.KARTA_HOME ), Constants.BIN, Constants.KARTA_CONFIGURATION_YAML ).toFile();
+            File kartaHomeConfigFile = Paths
+                     .get( PropertyUtils.systemPropertyMap.get( Constants.KARTA_HOME ), Constants.BIN, Constants.KARTA_CONFIGURATION_YAML ).toFile();
             if ( kartaHomeConfigFile.exists() )
             {
                configString = FileUtils.readFileToString( kartaHomeConfigFile, Charset.defaultCharset() );
@@ -211,7 +213,15 @@ public class KartaRuntime implements AutoCloseable
          }
       }
 
-      kartaConfiguration = yamlObjectMapper.readValue( configString, KartaConfiguration.class );
+      if ( ( configString != null ) && StringUtils.isNotEmpty( configString.trim() ) )
+      {
+         kartaConfiguration = yamlObjectMapper.readValue( configString, KartaConfiguration.class );
+      }
+
+      if ( kartaConfiguration == null )
+      {
+         kartaConfiguration = KartaConfiguration.getDefaultConfiguration();
+      }
 
       configString = ClassPathLoaderUtils.readAllText( Constants.KARTA_CONFIGURATION_OVERRIDES_YAML );
       if ( configString != null )
@@ -265,8 +275,10 @@ public class KartaRuntime implements AutoCloseable
       /*---------------------------------------------------------------------------------------------------------------------*/
       eventProcessor = new EventProcessor();
       configurator.loadProperties( eventProcessor );
-      pnpRegistry.getEnabledPluginsOfType( TestEventListener.class ).forEach( ( plugin ) -> eventProcessor.addEventListener( (TestEventListener) plugin ) );
-      pnpRegistry.getEnabledPluginsOfType( TestLifeCycleHook.class ).forEach( ( plugin ) -> eventProcessor.addLifeCycleHook( (TestLifeCycleHook) plugin ) );
+      pnpRegistry.getEnabledPluginsOfType( TestEventListener.class )
+               .forEach( ( plugin ) -> eventProcessor.addEventListener( (TestEventListener) plugin ) );
+      pnpRegistry.getEnabledPluginsOfType( TestLifeCycleHook.class )
+               .forEach( ( plugin ) -> eventProcessor.addLifeCycleHook( (TestLifeCycleHook) plugin ) );
 
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize node registry
@@ -284,7 +296,8 @@ public class KartaRuntime implements AutoCloseable
       /*---------------------------------------------------------------------------------------------------------------------*/
       testCatalogManager = new TestCatalogManager();
       String catalogFileText = ClassPathLoaderUtils.readAllText( Constants.TEST_CATALOG_FILE_NAME );
-      TestCategory testCategory = ( catalogFileText == null ) ? new TestCategory() : yamlObjectMapper.readValue( catalogFileText, TestCategory.class );
+      TestCategory testCategory = ( catalogFileText == null ) ? new TestCategory()
+               : yamlObjectMapper.readValue( catalogFileText, TestCategory.class );
       testCatalogManager.mergeWithCatalog( testCategory );
 
       ArrayList<String> testCatalogFragmentFiles = kartaConfiguration.getTestCatalogFragmentFiles();
@@ -335,7 +348,8 @@ public class KartaRuntime implements AutoCloseable
       /*---------------------------------------------------------------------------------------------------------------------*/
       eventProcessor.start();
 
-      defaultRunInfo = RunInfo.builder().runName( Constants.UNNAMED ).featureSourceParserPlugin( kartaConfiguration.getDefaultFeatureSourceParser() ).stepRunnerPluginName( kartaConfiguration.getDefaultStepRunner() )
+      defaultRunInfo = RunInfo.builder().runName( Constants.UNNAMED ).featureSourceParserPlugin( kartaConfiguration.getDefaultFeatureSourceParser() )
+               .stepRunnerPluginName( kartaConfiguration.getDefaultStepRunner() )
                .testDataSourcePlugins( kartaConfiguration.getDefaultTestDataSources() ).build();
 
       return true;
@@ -350,10 +364,12 @@ public class KartaRuntime implements AutoCloseable
                                                                        {
                                                                           try
                                                                           {
-                                                                             for ( KartaBean kartaBean : beanDefinitionMethod.getAnnotationsByType( KartaBean.class ) )
+                                                                             for ( KartaBean kartaBean : beanDefinitionMethod
+                                                                                      .getAnnotationsByType( KartaBean.class ) )
                                                                              {
 
-                                                                                Class<?> beanDeclaringClass = beanDefinitionMethod.getDeclaringClass();
+                                                                                Class<?> beanDeclaringClass = beanDefinitionMethod
+                                                                                         .getDeclaringClass();
 
                                                                                 initializeClass( beanDeclaringClass );
 
@@ -389,7 +405,8 @@ public class KartaRuntime implements AutoCloseable
                                                                           }
                                                                           catch ( Throwable t )
                                                                           {
-                                                                             log.error( "Exception while parsing bean definition from method  " + beanDefinitionMethod.getName(), t );
+                                                                             log.error( "Exception while parsing bean definition from method  "
+                                                                                        + beanDefinitionMethod.getName(), t );
                                                                           }
 
                                                                        }
@@ -406,7 +423,8 @@ public class KartaRuntime implements AutoCloseable
                                                                           }
                                                                           catch ( Throwable t )
                                                                           {
-                                                                             log.error( "Exception while loading static fileds from properties for class  " + classesToLoadPropertiesWith.getName(), t );
+                                                                             log.error( "Exception while loading static fileds from properties for class  "
+                                                                                        + classesToLoadPropertiesWith.getName(), t );
                                                                           }
 
                                                                        }
@@ -414,8 +432,10 @@ public class KartaRuntime implements AutoCloseable
 
    public void processConfigBeans( Collection<String> configurationScanPackageNames )
    {
-      AnnotationScanner.forEachMethod( configurationScanPackageNames, KartaBean.class, AnnotationScanner.IS_PUBLIC_AND_STATIC, AnnotationScanner.IS_NON_VOID_RETURN_TYPE, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, processBeanDefinition );
-      AnnotationScanner.forEachClass( configurationScanPackageNames, LoadConfiguration.class, AnnotationScanner.IS_PUBLIC, processLoadPropertiesDefinition );
+      AnnotationScanner
+               .forEachMethod( configurationScanPackageNames, KartaBean.class, AnnotationScanner.IS_PUBLIC_AND_STATIC, AnnotationScanner.IS_NON_VOID_RETURN_TYPE, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, processBeanDefinition );
+      AnnotationScanner
+               .forEachClass( configurationScanPackageNames, LoadConfiguration.class, AnnotationScanner.IS_PUBLIC, processLoadPropertiesDefinition );
    }
 
    private final ObjectMethodConsumer callObjectInitializer = new ObjectMethodConsumer()
@@ -449,7 +469,8 @@ public class KartaRuntime implements AutoCloseable
          // Not checking one time initialization for object level here which can prevent garbage collection
          configurator.loadProperties( object );
          beanRegistry.loadBeans( object );
-         AnnotationScanner.forEachMethod( object, Initializer.class, AnnotationScanner.IS_NON_STATIC, null, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, callObjectInitializer );
+         AnnotationScanner
+                  .forEachMethod( object, Initializer.class, AnnotationScanner.IS_NON_STATIC, null, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, callObjectInitializer );
       }
       catch ( Throwable t )
       {
@@ -489,7 +510,8 @@ public class KartaRuntime implements AutoCloseable
             configurator.loadProperties( theClassOfObject );
             beanRegistry.loadStaticBeans( theClassOfObject );
 
-            AnnotationScanner.forEachMethod( theClassOfObject, Initializer.class, AnnotationScanner.IS_STATIC, null, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, callClassInitializer );
+            AnnotationScanner
+                     .forEachMethod( theClassOfObject, Initializer.class, AnnotationScanner.IS_STATIC, null, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, callClassInitializer );
             configuredBeanClasses.add( theClassOfObject );
          }
       }
@@ -720,7 +742,8 @@ public class KartaRuntime implements AutoCloseable
    {
       RunResult runResult = new RunResult();
 
-      runInfo.setDefaultPlugins( kartaConfiguration.getDefaultFeatureSourceParser(), kartaConfiguration.getDefaultStepRunner(), kartaConfiguration.getDefaultTestDataSources() );
+      runInfo.setDefaultPlugins( kartaConfiguration.getDefaultFeatureSourceParser(), kartaConfiguration.getDefaultStepRunner(), kartaConfiguration
+               .getDefaultTestDataSources() );
 
       try
       {
@@ -762,7 +785,8 @@ public class KartaRuntime implements AutoCloseable
                return runResult;
             }
 
-            JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).runInfo( runInfo ).javaTest( runTarget.getJavaTest() ).javaTestJarFile( runTarget.getJavaTestJarFile() ).build();
+            JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).runInfo( runInfo ).javaTest( runTarget.getJavaTest() )
+                     .javaTestJarFile( runTarget.getJavaTestJarFile() ).build();
             if ( !eventProcessor.runStart( runName, individualTestTags ) )
             {
                runResult.setError( true );
@@ -927,14 +951,16 @@ public class KartaRuntime implements AutoCloseable
 
                ExecutorService testExecutorService = executorServiceManager.getExecutorServiceForGroup( test.getThreadGroup() );
 
-               FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).runInfo( runInfoForTest ).testFeature( testFeature ).resultConsumer( ( featureResult ) -> result.addTestResult( featureResult ) ).build();
+               FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).runInfo( runInfoForTest ).testFeature( testFeature )
+                        .resultConsumer( ( featureResult ) -> result.addTestResult( featureResult ) ).build();
 
                futures.add( testExecutorService.submit( featureRunner ) );
                break;
 
             case JAVA_TEST:
-               JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).runInfo( runInfo ).javaTest( test.getJavaTestClass() ).javaTestJarFile( test.getSourceArchive() )
-                        .resultConsumer( ( featureResult ) -> result.addTestResult( featureResult ) ).build();
+               JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime( this ).runInfo( runInfo ).javaTest( test.getJavaTestClass() )
+                        .javaTestJarFile( test.getSourceArchive() ).resultConsumer( ( featureResult ) -> result.addTestResult( featureResult ) )
+                        .build();
                testExecutorService = executorServiceManager.getExecutorServiceForGroup( test.getThreadGroup() );
                futures.add( testExecutorService.submit( testRunner ) );
                break;
@@ -1058,7 +1084,8 @@ public class KartaRuntime implements AutoCloseable
     * @return TestJobResult
     * @throws Throwable
     */
-   public TestJobResult runJobIteration( RunInfo runInfo, String featureName, TestJob job, int iterationIndex, BeanRegistry contextBeanRegistry ) throws Throwable
+   public TestJobResult runJobIteration( RunInfo runInfo, String featureName, TestJob job, int iterationIndex, BeanRegistry contextBeanRegistry )
+            throws Throwable
    {
       TestJobResult jobResult = null;
       String node = job.getNode();
@@ -1087,9 +1114,11 @@ public class KartaRuntime implements AutoCloseable
     * @param scenarioIterationNumber
     * @return ScenarioResult
     */
-   public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber )
+   public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario,
+                                          long scenarioIterationNumber )
    {
-      ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( this ).runInfo( runInfo ).featureName( featureName ).iterationIndex( iterationIndex ).testScenario( testScenario ).scenarioIterationNumber( scenarioIterationNumber ).build();
+      ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( this ).runInfo( runInfo ).featureName( featureName )
+               .iterationIndex( iterationIndex ).testScenario( testScenario ).scenarioIterationNumber( scenarioIterationNumber ).build();
       return scenarioRunner.call();
    }
 
@@ -1147,7 +1176,8 @@ public class KartaRuntime implements AutoCloseable
          {
             if ( !mergedTestData.containsKey( objectKey ) )
             {
-               ObjectGenerationRule ruleToAdd = objectMapper.readValue( objectMapper.writeValueAsString( variableTestDataRuleMap.get( objectKey ) ), ObjectGenerationRule.class );
+               ObjectGenerationRule ruleToAdd = objectMapper
+                        .readValue( objectMapper.writeValueAsString( variableTestDataRuleMap.get( objectKey ) ), ObjectGenerationRule.class );
 
                if ( !ruleToAdd.validateConfiguration() )
                {
@@ -1176,8 +1206,9 @@ public class KartaRuntime implements AutoCloseable
     * @return PreparedStep
     * @throws Throwable
     */
-   public PreparedStep getPreparedStep( RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestStep step,
-                                        BeanRegistry contextBeanRegistry )
+   public PreparedStep getPreparedStep( RunInfo runInfo, String featureName, int iterationIndex, String scenarioName,
+                                        HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet,
+                                        TestStep step, BeanRegistry contextBeanRegistry )
             throws Throwable
    {
       StepRunner stepRunner = getStepRunner( runInfo );
@@ -1193,28 +1224,34 @@ public class KartaRuntime implements AutoCloseable
          }
 
          String sanitizedStepIdentifer = stepRunner.sanitizeStepIdentifier( stepIdentifier );
-         TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, sanitizedStepIdentifer, null, variables );
+         TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName,
+                                                                               sanitizedStepIdentifer, null, variables );
          testExecutionContext.setContextBeanRegistry( contextBeanRegistry );
 
          HashMap<String, Serializable> mergedTestData = getMergedTestData( step );
-         testExecutionContext.mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
+         testExecutionContext
+                  .mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
 
-         return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).numberOfThreads( step.getNumberOfThreads() ).maxRetries( step.getMaxRetries() ).condition( step.getCondition() )
-                  .build();
+         return PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() )
+                  .numberOfThreads( step.getNumberOfThreads() ).maxRetries( step.getMaxRetries() ).condition( step.getCondition() ).build();
       }
       else
       {
          HashMap<String, Serializable> mergedTestData = getMergedTestData( step );
-         TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, stepIdentifier, null, variables );
-         testExecutionContext.mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
+         TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName,
+                                                                               stepIdentifier, null, variables );
+         testExecutionContext
+                  .mergeTestData( mergedTestData, DataUtils.mergeMaps( commonTestDataSet, step.getTestDataSet() ), getTestDataSources( runInfo ) );
          testExecutionContext.setContextBeanRegistry( contextBeanRegistry );
 
-         PreparedStep preparedStepGroup = PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext ).node( step.getNode() ).numberOfThreads( step.getNumberOfThreads() ).maxRetries( step.getMaxRetries() ).build();
+         PreparedStep preparedStepGroup = PreparedStep.builder().identifier( stepIdentifier ).testExecutionContext( testExecutionContext )
+                  .node( step.getNode() ).numberOfThreads( step.getNumberOfThreads() ).maxRetries( step.getMaxRetries() ).build();
          ArrayList<PreparedStep> nestedPreparedSteps = new ArrayList<PreparedStep>();
 
          for ( TestStep nestedStep : nestedSteps )
          {
-            nestedPreparedSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, scenarioName, variables, commonTestDataSet, nestedStep, contextBeanRegistry ) );
+            nestedPreparedSteps
+                     .add( getPreparedStep( runInfo, featureName, iterationIndex, scenarioName, variables, commonTestDataSet, nestedStep, contextBeanRegistry ) );
          }
 
          preparedStepGroup.setSteps( nestedPreparedSteps );
@@ -1239,14 +1276,18 @@ public class KartaRuntime implements AutoCloseable
     * @return PreparedChaosAction
     * @throws Throwable
     */
-   public PreparedChaosAction getPreparedChaosAction( RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet,
-                                                      ChaosAction chaosAction, BeanRegistry contextBeanRegistry )
+   public PreparedChaosAction getPreparedChaosAction( RunInfo runInfo, String featureName, int iterationIndex, String scenarioName,
+                                                      HashMap<String, Serializable> variables,
+                                                      HashMap<String, ArrayList<Serializable>> commonTestDataSet, ChaosAction chaosAction,
+                                                      BeanRegistry contextBeanRegistry )
             throws Throwable
    {
-      TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName, chaosAction.getName(), null, variables );
+      TestExecutionContext testExecutionContext = new TestExecutionContext( runInfo.getRunName(), featureName, iterationIndex, scenarioName,
+                                                                            chaosAction.getName(), null, variables );
       testExecutionContext.setContextBeanRegistry( contextBeanRegistry );
       testExecutionContext.mergeTestData( null, commonTestDataSet, getTestDataSources( runInfo ) );
-      return PreparedChaosAction.builder().name( chaosAction.getName() ).node( chaosAction.getNode() ).subjects( chaosAction.getSubjects() ).chaos( chaosAction.getChaos() ).testExecutionContext( testExecutionContext ).build();
+      return PreparedChaosAction.builder().name( chaosAction.getName() ).node( chaosAction.getNode() ).subjects( chaosAction.getSubjects() )
+               .chaos( chaosAction.getChaos() ).testExecutionContext( testExecutionContext ).build();
    }
 
    /**
@@ -1263,20 +1304,23 @@ public class KartaRuntime implements AutoCloseable
     * @return PreparedScenario
     * @throws Throwable
     */
-   public PreparedScenario getPreparedScenario( RunInfo runInfo, String featureName, int iterationIndex, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, ArrayList<TestStep> scenarioSetupSteps,
+   public PreparedScenario getPreparedScenario( RunInfo runInfo, String featureName, int iterationIndex, HashMap<String, Serializable> variables,
+                                                HashMap<String, ArrayList<Serializable>> commonTestDataSet, ArrayList<TestStep> scenarioSetupSteps,
                                                 TestScenario testScenario, ArrayList<TestStep> scenarioTearDownSteps )
             throws Throwable
    {
       BeanRegistry contextBeanRegistry = new BeanRegistry();
 
-      PreparedScenario preparedScenario = PreparedScenario.builder().name( testScenario.getName() ).description( testScenario.getDescription() ).contextBeanRegistry( contextBeanRegistry ).build();
+      PreparedScenario preparedScenario = PreparedScenario.builder().name( testScenario.getName() ).description( testScenario.getDescription() )
+               .contextBeanRegistry( contextBeanRegistry ).build();
 
       HashMap<String, ArrayList<Serializable>> mergedCommonTestDataSet = DataUtils.mergeMaps( commonTestDataSet, testScenario.getTestDataSet() );
 
       ArrayList<PreparedStep> preparedSetupSteps = new ArrayList<PreparedStep>();
       for ( TestStep step : DataUtils.mergeLists( scenarioSetupSteps, testScenario.getSetupSteps() ) )
       {
-         preparedSetupSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, step, contextBeanRegistry ) );
+         preparedSetupSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario
+                  .getName(), variables, mergedCommonTestDataSet, step, contextBeanRegistry ) );
       }
       preparedScenario.setSetupSteps( preparedSetupSteps );
 
@@ -1291,7 +1335,8 @@ public class KartaRuntime implements AutoCloseable
 
             for ( ChaosAction chaosAction : chaosActionsToPerform )
             {
-               preparedChaosActions.add( getPreparedChaosAction( runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, chaosAction, contextBeanRegistry ) );
+               preparedChaosActions.add( getPreparedChaosAction( runInfo, featureName, iterationIndex, testScenario
+                        .getName(), variables, mergedCommonTestDataSet, chaosAction, contextBeanRegistry ) );
             }
          }
       }
@@ -1300,14 +1345,16 @@ public class KartaRuntime implements AutoCloseable
       ArrayList<PreparedStep> preparedExecutionSteps = new ArrayList<PreparedStep>();
       for ( TestStep step : testScenario.getExecutionSteps() )
       {
-         preparedExecutionSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, step, contextBeanRegistry ) );
+         preparedExecutionSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario
+                  .getName(), variables, mergedCommonTestDataSet, step, contextBeanRegistry ) );
       }
       preparedScenario.setExecutionSteps( preparedExecutionSteps );
 
       ArrayList<PreparedStep> preparedTearDownSteps = new ArrayList<PreparedStep>();
       for ( TestStep step : DataUtils.mergeLists( testScenario.getTearDownSteps(), scenarioTearDownSteps ) )
       {
-         preparedTearDownSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, step, contextBeanRegistry ) );
+         preparedTearDownSteps.add( getPreparedStep( runInfo, featureName, iterationIndex, testScenario
+                  .getName(), variables, mergedCommonTestDataSet, step, contextBeanRegistry ) );
       }
       preparedScenario.setTearDownSteps( preparedTearDownSteps );
 
@@ -1362,11 +1409,14 @@ public class KartaRuntime implements AutoCloseable
          if ( numberOfThreadsInParallel > 1 )
          {
             stepResult = new StepResult();
-            ExecutorService stepExecutorService = new ThreadPoolExecutor( numberOfThreadsInParallel, numberOfThreadsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfThreadsInParallel ) );
+            ExecutorService stepExecutorService = new ThreadPoolExecutor( numberOfThreadsInParallel, numberOfThreadsInParallel, 0L,
+                                                                          TimeUnit.MILLISECONDS,
+                                                                          new BlockingRunnableQueue( numberOfThreadsInParallel ) );
 
             for ( int i = 0; i < numberOfThreadsInParallel; i++ )
             {
-               PreparedStepRunner preparedStepRunner = PreparedStepRunner.builder().kartaRuntime( this ).runInfo( runInfo ).step( step ).resultConsumer( ( threadStepResult ) -> stepResult.mergeResults( threadStepResult ) ).build();
+               PreparedStepRunner preparedStepRunner = PreparedStepRunner.builder().kartaRuntime( this ).runInfo( runInfo ).step( step )
+                        .resultConsumer( ( threadStepResult ) -> stepResult.mergeResults( threadStepResult ) ).build();
                stepExecutorService.submit( preparedStepRunner );
             }
 
@@ -1410,8 +1460,8 @@ public class KartaRuntime implements AutoCloseable
     * @return StepResult
     * @throws Throwable
     */
-   public StepResult runStep( RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestStep step,
-                              BeanRegistry contextBeanRegistry )
+   public StepResult runStep( RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables,
+                              HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestStep step, BeanRegistry contextBeanRegistry )
             throws Throwable
    {
       return runStep( runInfo, getPreparedStep( runInfo, featureName, iterationIndex, scenarioName, variables, commonTestDataSet, step, contextBeanRegistry ) );
@@ -1462,8 +1512,9 @@ public class KartaRuntime implements AutoCloseable
     * @return StepResult
     * @throws Throwable
     */
-   public StepResult runChaosAction( RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, ChaosAction chaosAction,
-                                     BeanRegistry contextBeanRegistry )
+   public StepResult runChaosAction( RunInfo runInfo, String featureName, int iterationIndex, String scenarioName,
+                                     HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet,
+                                     ChaosAction chaosAction, BeanRegistry contextBeanRegistry )
             throws Throwable
    {
       return runChaosAction( runInfo, getPreparedChaosAction( runInfo, featureName, iterationIndex, scenarioName, variables, commonTestDataSet, chaosAction, contextBeanRegistry ) );

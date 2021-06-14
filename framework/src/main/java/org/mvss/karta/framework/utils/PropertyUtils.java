@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.log4j.Log4j2;
@@ -25,18 +27,19 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class PropertyUtils
 {
+
    /**
     * The compiled regex patter for matching property references in format ${propertyName}
     */
-   public static Pattern                 propertyPattern   = Pattern.compile( "\\$\\{([_A-Za-z0-9]+)\\}" );
+   public static Pattern                       propertyPattern   = Pattern.compile( "\\$\\{([_A-Za-z0-9]+)\\}" );
 
    /**
     * Cached environment and system properties with system properties having higher precedence
     */
-   public static HashMap<String, String> systemPropertyMap = new HashMap<String, String>();
+   public final static HashMap<String, String> systemPropertyMap = new HashMap<String, String>();
 
-   private static ObjectMapper           objectMapper      = ParserUtils.getObjectMapper();
-   private static ObjectMapper           yamlObjectMapper  = ParserUtils.getYamlObjectMapper();
+   private static ObjectMapper                 objectMapper      = ParserUtils.getObjectMapper();
+   private static ObjectMapper                 yamlObjectMapper  = ParserUtils.getYamlObjectMapper();
 
    static
    {
@@ -96,7 +99,7 @@ public class PropertyUtils
       {
          return null;
       }
-      return expandEnvVars( text, systemPropertyMap );
+      return expandPropertiesIntoText( systemPropertyMap, text );
    }
 
    /**
@@ -106,31 +109,27 @@ public class PropertyUtils
     */
    public static void mergeEnvValuesIntoMap( HashMap<String, String> propertyMap )
    {
-      propertyMap.putAll( systemPropertyMap );
+      if ( propertyMap != PropertyUtils.systemPropertyMap )
+      {
+         propertyMap.putAll( systemPropertyMap );
+      }
    }
 
    /**
-    * Expand system properties in a string with a given system properites map
+    * Expand system properties in a string with a given properties map
     * 
+    * @param propertyMap
     * @param text
-    * @param systemPropertyMap
     * @return
     */
-   public static String expandEnvVars( String text, HashMap<String, String> systemPropertyMap )
+   public static String expandPropertiesIntoText( HashMap<String, String> propertyMap, String text )
    {
       if ( text == null )
       {
          return null;
       }
 
-      HashMap<String, String> newMap = systemPropertyMap;
-
-      if ( systemPropertyMap != PropertyUtils.systemPropertyMap )
-      {
-         newMap = new HashMap<String, String>();
-         newMap.putAll( systemPropertyMap );
-         newMap.putAll( PropertyUtils.systemPropertyMap );
-      }
+      mergeEnvValuesIntoMap( propertyMap );
 
       boolean found = false;
       do
@@ -140,11 +139,11 @@ public class PropertyUtils
 
          while ( matcher.find() )
          {
-            String propValue = systemPropertyMap.get( matcher.group( 1 ).toUpperCase() );
+            String propValue = propertyMap.get( matcher.group( 1 ).toUpperCase() );
             if ( propValue != null )
             {
                found = true;
-               propValue = propValue.replace( "\\", "\\\\" );
+               propValue = propValue.replace( Constants.BACKSLASH, Constants.DOUBLE_BACKSLASH );
                Pattern subexpr = Pattern.compile( Pattern.quote( matcher.group( 0 ) ) );
                text = subexpr.matcher( text ).replaceAll( propValue );
             }
@@ -153,6 +152,42 @@ public class PropertyUtils
       while ( found == true );
 
       return text;
+   }
+
+   /**
+    * Converts a property store into a properties map which can be used to substitute values
+    * 
+    * @param propertiesStore
+    * @return
+    */
+   public static HashMap<String, String> convertToPropertyMap( HashMap<String, HashMap<String, Serializable>> propertiesStore )
+   {
+      HashMap<String, String> propertyMap = new HashMap<String, String>();
+
+      for ( Entry<String, HashMap<String, Serializable>> propertyStoreEntry : propertiesStore.entrySet() )
+      {
+         for ( Entry<String, Serializable> properties : propertyStoreEntry.getValue().entrySet() )
+         {
+            try
+            {
+               propertyMap.put( propertyStoreEntry.getKey() + Constants.DOT + properties.getKey(), objectMapper
+                        .writeValueAsString( properties.getValue() ) );
+            }
+            catch ( JsonProcessingException e )
+            {
+               propertyMap.put( propertyStoreEntry.getKey() + Constants.DOT + properties.getKey(), properties.getValue().toString() );
+            }
+         }
+      }
+
+      mergeEnvValuesIntoMap( propertyMap );
+
+      return propertyMap;
+   }
+
+   public static String expandPropertiesStoreIntoText( HashMap<String, HashMap<String, Serializable>> propertiesStore, String text )
+   {
+      return expandPropertiesIntoText( convertToPropertyMap( propertiesStore ), text );
    }
 
    /**
@@ -249,7 +284,8 @@ public class PropertyUtils
     * @param field
     * @param propertyMapping
     */
-   public static void setFieldValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object, Field field, PropertyMapping propertyMapping )
+   public static void setFieldValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object, Field field,
+                                     PropertyMapping propertyMapping )
    {
       try
       {
