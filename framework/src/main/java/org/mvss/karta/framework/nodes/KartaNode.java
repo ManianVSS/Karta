@@ -19,7 +19,7 @@ import org.mvss.karta.framework.runtime.RunInfo;
  * 
  * @author Manian
  */
-public interface KartaNode extends Remote
+public interface KartaNode extends Remote, AutoCloseable
 {
    // TODO: Add passing minion name information to implement minion routing and gateway.
    // TODO: Events and incidents should be passed back to caller rather than being raised locally
@@ -56,7 +56,9 @@ public interface KartaNode extends Remote
     * @return
     * @throws RemoteException
     */
-   ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber ) throws RemoteException;
+   ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario,
+                                   long scenarioIterationNumber )
+            throws RemoteException;
 
    /**
     * Run a prepared test step.

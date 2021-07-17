@@ -150,4 +150,7 @@ public class Constants
    public static final String   OBJECT_GEN_TEST_DATA_SOURCE         = "ObjectGenTestDataSource";
    public static final String   DATA_FILES_TEST_DATA_SOURCE         = "DataFilesTestDataSource";
    public static final String   KRIYA                               = "Kriya";
+
+   public static final String   ANT_MATCHER_RUN                     = "/run/**";
+   public static final String   ANT_MATCHER_API                     = "/api/**";
 }

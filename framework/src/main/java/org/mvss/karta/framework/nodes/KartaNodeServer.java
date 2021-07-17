@@ -18,7 +18,7 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 @Getter
-public class KartaNodeServer
+public class KartaNodeServer implements AutoCloseable
 {
    private KartaRuntime           kartaRuntime;
    private Registry               rmiRegistry;
@@ -74,6 +74,16 @@ public class KartaNodeServer
             }
          } );
          started = true;
+      }
+   }
+
+   @Override
+   public void close() throws Exception
+   {
+      if ( this.kartaNode != null )
+      {
+         this.kartaNode.close();
+         this.kartaNode = null;
       }
    }
 }

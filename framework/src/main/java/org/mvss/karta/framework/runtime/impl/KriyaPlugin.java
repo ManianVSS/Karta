@@ -70,12 +70,18 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    public static final String                                INLINE_TEST_DATA_PATTERN               = "\"(?:[^\\\\\"]+|\\\\.|\\\\\\\\)*\"";
 
    private HashMap<String, Pattern>                          tagPatternMap                          = new HashMap<String, Pattern>();
-   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedRunStartHooks                    = new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedRunStopHooks                     = new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedFeatureStartHooks                = new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedFeatureStopHooks                 = new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStartHooks               = new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStopHooks                = new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedRunStartHooks                    =
+            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedRunStopHooks                     =
+            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedFeatureStartHooks                =
+            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedFeatureStopHooks                 =
+            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStartHooks               =
+            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStopHooks                =
+            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
 
    private HashMap<String, Pair<Object, Method>>             stepHandlerMap                         = new HashMap<String, Pair<Object, Method>>();
    private HashMap<String, Pair<Object, Method>>             chaosActionHandlerMap                  = new HashMap<String, Pair<Object, Method>>();
@@ -83,7 +89,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
    private static Pattern                                    testDataPattern                        = Pattern.compile( INLINE_TEST_DATA_PATTERN );
 
-   public static final List<String>                          conjunctions                           = Arrays.asList( "Given", "When", "Then", "And", "But" );
+   public static final List<String>                          conjunctions                           =
+            Arrays.asList( "Given", "When", "Then", "And", "But" );
 
    private static ObjectMapper                               objectMapper                           = ParserUtils.getObjectMapper();
 
@@ -116,7 +123,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                             {
                                                                try
                                                                {
-                                                                  for ( StepDefinition stepDefinition : candidateStepDefinitionMethod.getAnnotationsByType( StepDefinition.class ) )
+                                                                  for ( StepDefinition stepDefinition : candidateStepDefinitionMethod
+                                                                           .getAnnotationsByType( StepDefinition.class ) )
                                                                   {
                                                                      String methodDescription = candidateStepDefinitionMethod.toString();
                                                                      String stepDefString = stepDefinition.value();
@@ -132,16 +140,20 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                      int positionalArgumentsCount = 0;
                                                                      for ( int i = 0; i < params.length; i++ )
                                                                      {
-                                                                        if ( ( params[i].getType() != TestExecutionContext.class ) && ( params[i].getAnnotation( TestData.class ) == null ) && ( params[i].getAnnotation( ContextBean.class ) == null )
+                                                                        if ( ( params[i].getType() != TestExecutionContext.class )
+                                                                             && ( params[i].getAnnotation( TestData.class ) == null )
+                                                                             && ( params[i].getAnnotation( ContextBean.class ) == null )
                                                                              && ( params[i].getAnnotation( ContextVariable.class ) == null ) )
                                                                         {
                                                                            positionalArgumentsCount++;
                                                                         }
                                                                      }
 
-                                                                     if ( positionalArgumentsCount != StringUtils.countMatches( stepDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) )
+                                                                     if ( positionalArgumentsCount != StringUtils
+                                                                              .countMatches( stepDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) )
                                                                      {
-                                                                        log.error( "Step definition method " + methodDescription + " does not match the argument count as per the identifier" );
+                                                                        log.error( "Step definition method " + methodDescription
+                                                                                   + " does not match the argument count as per the identifier" );
                                                                         continue;
                                                                      }
 
@@ -149,23 +161,27 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
                                                                      Class<?> stepDefinitionClass = candidateStepDefinitionMethod.getDeclaringClass();
 
-                                                                     Object stepDefClassObj = initializedClassesRegistry.get( stepDefinitionClass.getName() );
+                                                                     Object stepDefClassObj =
+                                                                              initializedClassesRegistry.get( stepDefinitionClass.getName() );
                                                                      if ( stepDefClassObj == null )
                                                                      {
-                                                                        stepDefClassObj = stepDefinitionClass.newInstance();
+                                                                        stepDefClassObj = stepDefinitionClass.getDeclaredConstructor().newInstance();
                                                                         kartaRuntime.initializeObject( stepDefClassObj );
                                                                         initializedClassesRegistry.add( stepDefClassObj );
                                                                      }
 
                                                                      if ( stepDefClassObj != null )
                                                                      {
-                                                                        stepHandlerMap.put( stepDefString, new Pair<Object, Method>( stepDefClassObj, candidateStepDefinitionMethod ) );
+                                                                        stepHandlerMap
+                                                                                 .put( stepDefString, new Pair<Object, Method>( stepDefClassObj,
+                                                                                                                                candidateStepDefinitionMethod ) );
                                                                      }
                                                                   }
                                                                }
                                                                catch ( Throwable t )
                                                                {
-                                                                  log.error( "Exception while parsing step definition from method  " + candidateStepDefinitionMethod.getName(), t );
+                                                                  log.error( "Exception while parsing step definition from method  "
+                                                                             + candidateStepDefinitionMethod.getName(), t );
                                                                }
 
                                                             }
@@ -178,7 +194,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                             {
                                                                try
                                                                {
-                                                                  for ( ConditionDefinition conditionDefinition : candidateConditionMethod.getAnnotationsByType( ConditionDefinition.class ) )
+                                                                  for ( ConditionDefinition conditionDefinition : candidateConditionMethod
+                                                                           .getAnnotationsByType( ConditionDefinition.class ) )
                                                                   {
                                                                      String methodDescription = candidateConditionMethod.toString();
                                                                      String conditionDefString = conditionDefinition.value();
@@ -189,9 +206,11 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                         continue;
                                                                      }
 
-                                                                     if ( ( candidateConditionMethod.getReturnType() != boolean.class ) && ( ( candidateConditionMethod.getReturnType() != Boolean.class ) ) )
+                                                                     if ( ( candidateConditionMethod.getReturnType() != boolean.class )
+                                                                          && ( ( candidateConditionMethod.getReturnType() != Boolean.class ) ) )
                                                                      {
-                                                                        log.error( "Condition definition method " + methodDescription + " should return boolean" );
+                                                                        log.error( "Condition definition method " + methodDescription
+                                                                                   + " should return boolean" );
                                                                         continue;
                                                                      }
 
@@ -199,40 +218,50 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                      int positionalArgumentsCount = 0;
                                                                      for ( int i = 0; i < params.length; i++ )
                                                                      {
-                                                                        if ( ( params[i].getType() != TestExecutionContext.class ) && ( params[i].getAnnotation( TestData.class ) == null ) && ( params[i].getAnnotation( ContextBean.class ) == null )
+                                                                        if ( ( params[i].getType() != TestExecutionContext.class )
+                                                                             && ( params[i].getAnnotation( TestData.class ) == null )
+                                                                             && ( params[i].getAnnotation( ContextBean.class ) == null )
                                                                              && ( params[i].getAnnotation( ContextVariable.class ) == null ) )
                                                                         {
                                                                            positionalArgumentsCount++;
                                                                         }
                                                                      }
 
-                                                                     if ( positionalArgumentsCount != StringUtils.countMatches( conditionDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) )
+                                                                     if ( positionalArgumentsCount != StringUtils
+                                                                              .countMatches( conditionDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) )
                                                                      {
-                                                                        log.error( "Candidate condition definition method " + methodDescription + " does not match the argument count as per the identifier" );
+                                                                        log.error( "Candidate condition definition method " + methodDescription
+                                                                                   + " does not match the argument count as per the identifier" );
                                                                         continue;
                                                                      }
 
-                                                                     log.debug( "Mapping condition definition " + conditionDefString + " to " + methodDescription );
+                                                                     log.debug( "Mapping condition definition " + conditionDefString + " to "
+                                                                                + methodDescription );
 
                                                                      Class<?> conditionDefinitionClass = candidateConditionMethod.getDeclaringClass();
 
-                                                                     Object conditionDefClassObj = initializedClassesRegistry.get( conditionDefinitionClass.getName() );
+                                                                     Object conditionDefClassObj =
+                                                                              initializedClassesRegistry.get( conditionDefinitionClass.getName() );
                                                                      if ( conditionDefClassObj == null )
                                                                      {
-                                                                        conditionDefClassObj = conditionDefinitionClass.newInstance();
+                                                                        conditionDefClassObj =
+                                                                                 conditionDefinitionClass.getDeclaredConstructor().newInstance();
                                                                         kartaRuntime.initializeObject( conditionDefClassObj );
                                                                         initializedClassesRegistry.add( conditionDefClassObj );
                                                                      }
 
                                                                      if ( conditionDefClassObj != null )
                                                                      {
-                                                                        conditionDefinitionMap.put( conditionDefString, new Pair<Object, Method>( conditionDefClassObj, candidateConditionMethod ) );
+                                                                        conditionDefinitionMap
+                                                                                 .put( conditionDefString, new Pair<Object, Method>( conditionDefClassObj,
+                                                                                                                                     candidateConditionMethod ) );
                                                                      }
                                                                   }
                                                                }
                                                                catch ( Throwable t )
                                                                {
-                                                                  log.error( "Exception while parsing condition definition from method  " + candidateConditionMethod.getName(), t );
+                                                                  log.error( "Exception while parsing condition definition from method  "
+                                                                             + candidateConditionMethod.getName(), t );
                                                                }
 
                                                             }
@@ -245,7 +274,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                             {
                                                                try
                                                                {
-                                                                  for ( ChaosActionDefinition chaosActionDefinition : candidateChaosActionMethod.getAnnotationsByType( ChaosActionDefinition.class ) )
+                                                                  for ( ChaosActionDefinition chaosActionDefinition : candidateChaosActionMethod
+                                                                           .getAnnotationsByType( ChaosActionDefinition.class ) )
                                                                   {
                                                                      String methodDescription = candidateChaosActionMethod.toString();
                                                                      String chaosActionName = chaosActionDefinition.value();
@@ -258,9 +288,13 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
                                                                      Parameter[] params = candidateChaosActionMethod.getParameters();
 
-                                                                     if ( !( ( params.length >= 2 ) && ( TestExecutionContext.class == params[0].getType() ) && ( PreparedChaosAction.class == params[1].getType() ) ) )
+                                                                     if ( !( ( params.length >= 2 )
+                                                                             && ( TestExecutionContext.class == params[0].getType() )
+                                                                             && ( PreparedChaosAction.class == params[1].getType() ) ) )
                                                                      {
-                                                                        log.error( "Chaos action definition method " + methodDescription + " should have first two parameters of types(" + TestExecutionContext.class.getName() + ", "
+                                                                        log.error( "Chaos action definition method " + methodDescription
+                                                                                   + " should have first two parameters of types("
+                                                                                   + TestExecutionContext.class.getName() + ", "
                                                                                    + PreparedChaosAction.class.getName() + ")" );
                                                                         continue;
                                                                      }
@@ -268,44 +302,59 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                      for ( int paramNo = 2; paramNo < params.length; paramNo++ )
                                                                      {
                                                                         TestData testDataAnnotation = params[paramNo].getAnnotation( TestData.class );
-                                                                        ContextBean contextBeanAnnotation = params[paramNo].getAnnotation( ContextBean.class );
-                                                                        ContextVariable contextVariableAnnotation = params[paramNo].getAnnotation( ContextVariable.class );
+                                                                        ContextBean contextBeanAnnotation =
+                                                                                 params[paramNo].getAnnotation( ContextBean.class );
+                                                                        ContextVariable contextVariableAnnotation =
+                                                                                 params[paramNo].getAnnotation( ContextVariable.class );
 
-                                                                        if ( ( testDataAnnotation == null ) && ( contextBeanAnnotation == null ) && ( contextVariableAnnotation == null ) )
+                                                                        if ( ( testDataAnnotation == null ) && ( contextBeanAnnotation == null )
+                                                                             && ( contextVariableAnnotation == null ) )
                                                                         {
-                                                                           log.error( "Chaos action definition method " + methodDescription + "'s parameter is not mapped mapped with an appropriate annotation(" + TestData.class.getName() + ", "
-                                                                                      + ContextBean.class.getName() + ", " + ContextVariable.class.getName() + ")" );
+                                                                           log.error( "Chaos action definition method " + methodDescription
+                                                                                      + "'s parameter is not mapped mapped with an appropriate annotation("
+                                                                                      + TestData.class.getName() + ", " + ContextBean.class.getName()
+                                                                                      + ", " + ContextVariable.class.getName() + ")" );
                                                                            continue;
                                                                         }
                                                                      }
 
-                                                                     log.debug( "Mapping chaos action definition " + chaosActionName + " to " + methodDescription );
+                                                                     log.debug( "Mapping chaos action definition " + chaosActionName + " to "
+                                                                                + methodDescription );
 
-                                                                     Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
+                                                                     Class<?> chaosActionDefinitionClass =
+                                                                              candidateChaosActionMethod.getDeclaringClass();
 
-                                                                     Object chaosActionDefClassObj = initializedClassesRegistry.get( chaosActionDefinitionClass.getName() );
+                                                                     Object chaosActionDefClassObj =
+                                                                              initializedClassesRegistry.get( chaosActionDefinitionClass.getName() );
                                                                      if ( chaosActionDefClassObj == null )
                                                                      {
-                                                                        chaosActionDefClassObj = chaosActionDefinitionClass.newInstance();
+                                                                        chaosActionDefClassObj =
+                                                                                 chaosActionDefinitionClass.getDeclaredConstructor().newInstance();
                                                                         kartaRuntime.initializeObject( chaosActionDefClassObj );
                                                                         initializedClassesRegistry.add( chaosActionDefClassObj );
                                                                      }
 
                                                                      if ( chaosActionDefClassObj != null )
                                                                      {
-                                                                        chaosActionHandlerMap.put( chaosActionName, new Pair<Object, Method>( chaosActionDefClassObj, candidateChaosActionMethod ) );
+                                                                        chaosActionHandlerMap
+                                                                                 .put( chaosActionName, new Pair<Object, Method>( chaosActionDefClassObj,
+                                                                                                                                  candidateChaosActionMethod ) );
                                                                      }
                                                                   }
                                                                }
                                                                catch ( Throwable t )
                                                                {
-                                                                  log.error( "Exception while parsing chaos action definition from method  " + candidateChaosActionMethod.getName(), t );
+                                                                  log.error( "Exception while parsing chaos action definition from method  "
+                                                                             + candidateChaosActionMethod.getName(), t );
                                                                }
                                                             }
 
                                                          };
 
-   private void processTaggedHook( HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooks, String[] tags, Method hookMethod, Class<?>... parameters ) throws InstantiationException, IllegalAccessException
+   private void processTaggedHook( HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooks, String[] tags, Method hookMethod,
+                                   Class<?>... parameters )
+            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
+            SecurityException
    {
       String methodDescription = hookMethod.toString();
       Class<?>[] params = hookMethod.getParameterTypes();
@@ -336,7 +385,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
       if ( hookObj == null )
       {
-         hookObj = hookClass.newInstance();
+         hookObj = hookClass.getDeclaredConstructor().newInstance();
          kartaRuntime.initializeObject( hookObj );
          initializedClassesRegistry.add( hookObj );
       }
@@ -371,7 +420,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                     {
                                                                        try
                                                                        {
-                                                                          for ( BeforeRun beforeRun : runStartHookMethod.getAnnotationsByType( BeforeRun.class ) )
+                                                                          for ( BeforeRun beforeRun : runStartHookMethod
+                                                                                   .getAnnotationsByType( BeforeRun.class ) )
                                                                           {
                                                                              String[] tags = beforeRun.value();
                                                                              processTaggedHook( taggedRunStartHooks, tags, runStartHookMethod, String.class );
@@ -379,7 +429,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                        }
                                                                        catch ( Throwable t )
                                                                        {
-                                                                          log.error( "Exception while parsing run start hook from method  " + runStartHookMethod.getName(), t );
+                                                                          log.error( "Exception while parsing run start hook from method  "
+                                                                                     + runStartHookMethod.getName(), t );
                                                                        }
                                                                     }
                                                                  };
@@ -391,7 +442,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                     {
                                                                        try
                                                                        {
-                                                                          for ( AfterRun afterRun : runStopHookMethod.getAnnotationsByType( AfterRun.class ) )
+                                                                          for ( AfterRun afterRun : runStopHookMethod
+                                                                                   .getAnnotationsByType( AfterRun.class ) )
                                                                           {
                                                                              String[] tags = afterRun.value();
                                                                              processTaggedHook( taggedRunStopHooks, tags, runStopHookMethod, String.class );
@@ -399,7 +451,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                        }
                                                                        catch ( Throwable t )
                                                                        {
-                                                                          log.error( "Exception while parsing run stop hook from method  " + runStopHookMethod.getName(), t );
+                                                                          log.error( "Exception while parsing run stop hook from method  "
+                                                                                     + runStopHookMethod.getName(), t );
                                                                        }
                                                                     }
                                                                  };
@@ -411,7 +464,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                     {
                                                                        try
                                                                        {
-                                                                          for ( BeforeFeature beforeFeature : featureStartHookMethod.getAnnotationsByType( BeforeFeature.class ) )
+                                                                          for ( BeforeFeature beforeFeature : featureStartHookMethod
+                                                                                   .getAnnotationsByType( BeforeFeature.class ) )
                                                                           {
                                                                              String[] tags = beforeFeature.value();
                                                                              processTaggedHook( taggedFeatureStartHooks, tags, featureStartHookMethod, String.class, TestFeature.class );
@@ -419,7 +473,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                        }
                                                                        catch ( Throwable t )
                                                                        {
-                                                                          log.error( "Exception while parsing feature start hook from method  " + featureStartHookMethod.getName(), t );
+                                                                          log.error( "Exception while parsing feature start hook from method  "
+                                                                                     + featureStartHookMethod.getName(), t );
                                                                        }
                                                                     }
                                                                  };
@@ -431,7 +486,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                     {
                                                                        try
                                                                        {
-                                                                          for ( AfterFeature afterFeature : featureStopHookMethod.getAnnotationsByType( AfterFeature.class ) )
+                                                                          for ( AfterFeature afterFeature : featureStopHookMethod
+                                                                                   .getAnnotationsByType( AfterFeature.class ) )
                                                                           {
                                                                              String[] tags = afterFeature.value();
                                                                              processTaggedHook( taggedFeatureStopHooks, tags, featureStopHookMethod, String.class, TestFeature.class );
@@ -439,7 +495,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                        }
                                                                        catch ( Throwable t )
                                                                        {
-                                                                          log.error( "Exception while parsing feature stop hook from method  " + featureStopHookMethod.getName(), t );
+                                                                          log.error( "Exception while parsing feature stop hook from method  "
+                                                                                     + featureStopHookMethod.getName(), t );
                                                                        }
                                                                     }
                                                                  };
@@ -451,7 +508,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                     {
                                                                        try
                                                                        {
-                                                                          for ( BeforeScenario beforeScenario : scenarioStartHookMethod.getAnnotationsByType( BeforeScenario.class ) )
+                                                                          for ( BeforeScenario beforeScenario : scenarioStartHookMethod
+                                                                                   .getAnnotationsByType( BeforeScenario.class ) )
                                                                           {
                                                                              String[] tags = beforeScenario.value();
                                                                              processTaggedHook( taggedScenarioStartHooks, tags, scenarioStartHookMethod, String.class, String.class, PreparedScenario.class );
@@ -459,7 +517,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                        }
                                                                        catch ( Throwable t )
                                                                        {
-                                                                          log.error( "Exception while parsing scenario start hook from method  " + scenarioStartHookMethod.getName(), t );
+                                                                          log.error( "Exception while parsing scenario start hook from method  "
+                                                                                     + scenarioStartHookMethod.getName(), t );
                                                                        }
                                                                     }
                                                                  };
@@ -471,7 +530,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                     {
                                                                        try
                                                                        {
-                                                                          for ( AfterScenario afterScenario : scenarioStopHookMethod.getAnnotationsByType( AfterScenario.class ) )
+                                                                          for ( AfterScenario afterScenario : scenarioStopHookMethod
+                                                                                   .getAnnotationsByType( AfterScenario.class ) )
                                                                           {
                                                                              String[] tags = afterScenario.value();
                                                                              processTaggedHook( taggedScenarioStopHooks, tags, scenarioStopHookMethod, String.class, String.class, PreparedScenario.class );
@@ -479,7 +539,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                                                                        }
                                                                        catch ( Throwable t )
                                                                        {
-                                                                          log.error( "Exception while parsing scenario stop hook from method  " + scenarioStopHookMethod.getName(), t );
+                                                                          log.error( "Exception while parsing scenario stop hook from method  "
+                                                                                     + scenarioStopHookMethod.getName(), t );
                                                                        }
                                                                     }
                                                                  };
@@ -493,16 +554,25 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       }
       log.info( "Initializing " + PLUGIN_NAME + " plugin" );
 
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, StepDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processStepDefinition );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, ChaosActionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processChaosDefinition );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, ConditionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processConditions );
+      AnnotationScanner
+               .forEachMethod( stepDefinitionPackageNames, StepDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processStepDefinition );
+      AnnotationScanner
+               .forEachMethod( stepDefinitionPackageNames, ChaosActionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processChaosDefinition );
+      AnnotationScanner
+               .forEachMethod( stepDefinitionPackageNames, ConditionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processConditions );
 
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeRun.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedRunStartHook );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterRun.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedRunStopHook );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeFeature.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedFeatureStartHook );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterFeature.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedFeatureStopHook );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeScenario.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedScenarioStartHook );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterScenario.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedScenarioStopHook );
+      AnnotationScanner
+               .forEachMethod( stepDefinitionPackageNames, BeforeRun.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedRunStartHook );
+      AnnotationScanner
+               .forEachMethod( stepDefinitionPackageNames, AfterRun.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedRunStopHook );
+      AnnotationScanner
+               .forEachMethod( stepDefinitionPackageNames, BeforeFeature.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedFeatureStartHook );
+      AnnotationScanner
+               .forEachMethod( stepDefinitionPackageNames, AfterFeature.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedFeatureStopHook );
+      AnnotationScanner
+               .forEachMethod( stepDefinitionPackageNames, BeforeScenario.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedScenarioStartHook );
+      AnnotationScanner
+               .forEachMethod( stepDefinitionPackageNames, AfterScenario.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedScenarioStopHook );
 
       initialized = true;
       return true;
@@ -573,8 +643,9 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          {
             positionalParameters = positionalParameters + ", Serializable posArg" + ( i++ ) + " /*= " + inlineStepDefinitionParameterName + "*/";
          }
-         log.error( "Suggestion:\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava( stepIdentifier ) + "\" )\r\n" + "   public StepResult " + stepIdentifier.replaceAll( Constants.REGEX_WHITESPACE, Constants.UNDERSCORE )
-                    + "( TestExecutionContext context " + positionalParameters + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
+         log.error( "Suggestion:\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava( stepIdentifier ) + "\" )\r\n" + "   public StepResult "
+                    + stepIdentifier.replaceAll( Constants.REGEX_WHITESPACE, Constants.UNDERSCORE ) + "( TestExecutionContext context "
+                    + positionalParameters + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
          return StandardStepResults.error( errorMessage );
       }
 
@@ -585,7 +656,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          Method stepDefMethodToInvoke = stepDefHandlerObjectMethodPair.getRight();
          BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
 
-         Object returnValue = runStepDefMethodWithParameters( testExecutionContext, inlineStepDefinitionParameterNames, stepDefMethodToInvoke, stepDefObject );
+         Object returnValue =
+                  runStepDefMethodWithParameters( testExecutionContext, inlineStepDefinitionParameterNames, stepDefMethodToInvoke, stepDefObject );
 
          Class<?> returnType = stepDefMethodToInvoke.getReturnType();
 
@@ -612,7 +684,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       return result;
    }
 
-   public Object runStepDefMethodWithParameters( TestExecutionContext testExecutionContext, ArrayList<String> inlineParameterNames, Method methodToInvoke, Object methodDefiningClassObject )
+   public Object runStepDefMethodWithParameters( TestExecutionContext testExecutionContext, ArrayList<String> inlineParameterNames,
+                                                 Method methodToInvoke, Object methodDefiningClassObject )
             throws JsonProcessingException, JsonMappingException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
    {
       HashMap<String, Serializable> testData = testExecutionContext.getData();
@@ -668,10 +741,12 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          }
       }
 
-      return values.isEmpty() ? methodToInvoke.invoke( methodDefiningClassObject ) : methodToInvoke.invoke( methodDefiningClassObject, values.toArray() );
+      return values.isEmpty() ? methodToInvoke.invoke( methodDefiningClassObject )
+               : methodToInvoke.invoke( methodDefiningClassObject, values.toArray() );
    }
 
-   private StepResult extractAndProcessStepResult( StepResult result, BeanRegistry beanRegistry, Class<?> returnType, Object returnValue, StepOutputType stepOutputType, String outputName )
+   private StepResult extractAndProcessStepResult( StepResult result, BeanRegistry beanRegistry, Class<?> returnType, Object returnValue,
+                                                   StepOutputType stepOutputType, String outputName )
    {
       switch ( stepOutputType )
       {
@@ -777,7 +852,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             // TODO: Handling undefined chaos action to ask manual action(other configured handlers) if possible
             String errorMessage = "Missing chaos action handler definition: " + chaosActionName;
             log.error( errorMessage );
-            log.error( "Suggestion:\r\n   @ChaosActionDefinition( \"" + StringEscapeUtils.escapeJava( chaosActionName ) + "\" )\r\n" + "   public StepResult " + chaosActionName.replaceAll( Constants.REGEX_NON_ALPHANUMERIC, Constants.UNDERSCORE )
+            log.error( "Suggestion:\r\n   @ChaosActionDefinition( \"" + StringEscapeUtils.escapeJava( chaosActionName ) + "\" )\r\n"
+                       + "   public StepResult " + chaosActionName.replaceAll( Constants.REGEX_NON_ALPHANUMERIC, Constants.UNDERSCORE )
                        + "( TestExecutionContext context, PreparedChaosAction actionToPerform) throws Throwable\r\n" + "   {\r\n...\r\n   }" );
             return StandardStepResults.error( errorMessage );
          }
@@ -894,7 +970,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          {
             positionalParameters = positionalParameters + ", Serializable posArg" + ( i++ ) + " /*= " + inlineConditionDefinitionParameterName + "*/";
          }
-         log.error( "Suggestion:\r\n   @ConditionDefinition( \"" + StringEscapeUtils.escapeJava( conditionIdentifier ) + "\" )\r\n" + "   public boolean " + conditionIdentifier.replaceAll( Constants.REGEX_WHITESPACE, Constants.UNDERSCORE ) + "(  "
+         log.error( "Suggestion:\r\n   @ConditionDefinition( \"" + StringEscapeUtils.escapeJava( conditionIdentifier ) + "\" )\r\n"
+                    + "   public boolean " + conditionIdentifier.replaceAll( Constants.REGEX_WHITESPACE, Constants.UNDERSCORE ) + "(  "
                     + positionalParameters + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
          return false;
       }
@@ -911,7 +988,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             return false;
          }
 
-         boolean returnValue = (Boolean) runStepDefMethodWithParameters( testExecutionContext, inlineStepDefinitionParameterNames, conditionDefMethodToInvoke, conditionDefObject );
+         boolean returnValue =
+                  (Boolean) runStepDefMethodWithParameters( testExecutionContext, inlineStepDefinitionParameterNames, conditionDefMethodToInvoke, conditionDefObject );
          return returnValue;
       }
       catch ( Throwable t )

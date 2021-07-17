@@ -42,7 +42,8 @@ public class PnPRegistry implements AutoCloseable
    private HashMap<String, Plugin>                       registeredPlugins         = new HashMap<String, Plugin>();
    private HashMap<String, Plugin>                       enabledPlugins            = new HashMap<String, Plugin>();
 
-   public static ArrayList<PluginConfig> readPluginsConfig( String fileName ) throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException
+   public static ArrayList<PluginConfig> readPluginsConfig( String fileName )
+            throws JsonMappingException, JsonProcessingException, IOException, URISyntaxException
    {
       return ParserUtils.getYamlObjectMapper().readValue( ClassPathLoaderUtils.readAllText( fileName ), pluginConfigArrayListType );
    }
@@ -90,8 +91,10 @@ public class PnPRegistry implements AutoCloseable
 
       log.debug( "Registering plugin from configuration " + pluginConfig );
       @SuppressWarnings( "unchecked" )
-      Class<? extends Plugin> pluginClass = ( jarFile != null ) ? (Class<? extends Plugin>) DynamicClassLoader.loadClass( jarFile, pluginConfig.getClassName() ) : (Class<? extends Plugin>) Class.forName( pluginConfig.getClassName() );
-      Plugin plugin = pluginClass.newInstance();
+      Class<? extends Plugin> pluginClass = ( jarFile != null )
+               ? (Class<? extends Plugin>) DynamicClassLoader.loadClass( jarFile, pluginConfig.getClassName() )
+               : (Class<? extends Plugin>) Class.forName( pluginConfig.getClassName() );
+      Plugin plugin = pluginClass.getDeclaredConstructor().newInstance();
       return registerPlugin( plugin );
    }
 
@@ -101,7 +104,8 @@ public class PnPRegistry implements AutoCloseable
       {
          try
          {
-            File evaluatedJarFile = ( jarFile == null ) ? ( ( pluginConfig.getJarFile() == null ) ? null : new File( pluginConfig.getJarFile() ) ) : jarFile;
+            File evaluatedJarFile = ( jarFile == null ) ? ( ( pluginConfig.getJarFile() == null ) ? null : new File( pluginConfig.getJarFile() ) )
+                     : jarFile;
 
             if ( !registerPlugin( evaluatedJarFile, pluginConfig ) )
             {
@@ -123,7 +127,8 @@ public class PnPRegistry implements AutoCloseable
 
    public void loadPluginJar( Configurator configurator, File jarFile ) throws MalformedURLException, IOException, URISyntaxException
    {
-      InputStream jarFileInputStream = ( jarFile == null ) ? ClassPathLoaderUtils.getFileStream( Constants.KARTA_PLUGINS_CONFIG_YAML ) : DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_PLUGINS_CONFIG_YAML );
+      InputStream jarFileInputStream = ( jarFile == null ) ? ClassPathLoaderUtils.getFileStream( Constants.KARTA_PLUGINS_CONFIG_YAML )
+               : DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_PLUGINS_CONFIG_YAML );
 
       if ( jarFileInputStream == null )
       {
@@ -137,13 +142,15 @@ public class PnPRegistry implements AutoCloseable
       if ( configurator != null )
       {
          // TODO: Change to plugin properties yaml
-         InputStream runtimePropertiesInputStream = ( jarFile == null ) ? ClassPathLoaderUtils.getFileStream( Constants.KARTA_RUNTIME_PROPERTIES_YAML )
+         InputStream runtimePropertiesInputStream = ( jarFile == null )
+                  ? ClassPathLoaderUtils.getFileStream( Constants.KARTA_RUNTIME_PROPERTIES_YAML )
                   : DynamicClassLoader.getClassPathResourceInJarAsStream( jarFile, Constants.KARTA_RUNTIME_PROPERTIES_YAML );
 
          if ( runtimePropertiesInputStream != null )
          {
             String runtimePropertiesStr = IOUtils.toString( runtimePropertiesInputStream, Charset.defaultCharset() );
-            HashMap<String, HashMap<String, Serializable>> runtimeProperties = Configurator.readPropertiesFromString( DataFormat.YAML, runtimePropertiesStr );
+            HashMap<String, HashMap<String, Serializable>> runtimeProperties = Configurator
+                     .readPropertiesFromString( DataFormat.YAML, runtimePropertiesStr );
             configurator.mergeProperties( runtimeProperties );
          }
       }
@@ -213,7 +220,8 @@ public class PnPRegistry implements AutoCloseable
 
    public Collection<Plugin> getEnabledPluginsOfType( Class<? extends Plugin> pluginType )
    {
-      return getPluginsOfType( pluginType ).stream().filter( ( plugin ) -> enabledPlugins.values().contains( plugin ) ).collect( Collectors.toList() );
+      return getPluginsOfType( pluginType ).stream().filter( ( plugin ) -> enabledPlugins.values().contains( plugin ) )
+               .collect( Collectors.toList() );
    }
 
    public Collection<Plugin> getPluginsOfType( Class<? extends Plugin> pluginType )

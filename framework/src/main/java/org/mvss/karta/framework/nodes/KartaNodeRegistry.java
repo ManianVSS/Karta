@@ -17,7 +17,7 @@ import lombok.extern.log4j.Log4j2;
  * @author Manian
  */
 @Log4j2
-public class KartaNodeRegistry
+public class KartaNodeRegistry implements AutoCloseable
 {
    @Getter
    private ArrayList<KartaNode>       minions            = new ArrayList<KartaNode>();
@@ -28,6 +28,20 @@ public class KartaNodeRegistry
    private volatile int               lastMinonIndexUsed = -1;
 
    private Object                     lock               = new Object();
+
+   @Override
+   public void close() throws Exception
+   {
+      if ( this.nodes != null )
+      {
+         for ( KartaNode node : nodes.values() )
+         {
+            node.close();
+         }
+         this.nodes.clear();
+      }
+
+   }
 
    /**
     * Add a karta node/minion by configuration
@@ -50,12 +64,14 @@ public class KartaNodeRegistry
                {
                   // TODO: Handle local node
                   case RMI:
-                     Registry nodeRegistry = RMIUtils.getRemoteRegistry( nodeConfiguration.getHost(), nodeConfiguration.getPort(), nodeConfiguration.isEnableSSL() );
+                     Registry nodeRegistry = RMIUtils
+                              .getRemoteRegistry( nodeConfiguration.getHost(), nodeConfiguration.getPort(), nodeConfiguration.isEnableSSL() );
                      kartaNode = (KartaNode) nodeRegistry.lookup( KartaNode.class.getName() );
                      break;
 
                   case REST:
-                     String url = ( nodeConfiguration.isEnableSSL() ? Constants.HTTPS : Constants.HTTP ) + nodeConfiguration.getHost() + Constants.COLON + nodeConfiguration.getPort();
+                     String url = ( nodeConfiguration.isEnableSSL() ? Constants.HTTPS : Constants.HTTP ) + nodeConfiguration.getHost()
+                                  + Constants.COLON + nodeConfiguration.getPort();
                      kartaNode = new KartaRestNode( url, true );
                      break;
 

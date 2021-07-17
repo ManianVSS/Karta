@@ -44,6 +44,7 @@ import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.RunResult;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StandardFeatureResults;
+import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
@@ -76,7 +77,6 @@ import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.ParserUtils;
 import org.mvss.karta.framework.utils.PropertyUtils;
 import org.mvss.karta.framework.utils.SSLUtils;
-import org.quartz.SchedulerException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -540,28 +540,37 @@ public class KartaRuntime implements AutoCloseable
    @Override
    public void close()
    {
-      if ( executorServiceManager != null )
-      {
-         executorServiceManager.close();
-      }
-
       try
       {
+         if ( executorServiceManager != null )
+         {
+            executorServiceManager.close();
+            executorServiceManager = null;
+         }
+
          QuartzJobScheduler.shutdown();
+
+         if ( eventProcessor != null )
+         {
+            eventProcessor.close();
+            eventProcessor = null;
+         }
+
+         if ( pnpRegistry != null )
+         {
+            pnpRegistry.close();
+            pnpRegistry = null;
+         }
+
+         if ( nodeRegistry != null )
+         {
+            nodeRegistry.close();
+            nodeRegistry = null;
+         }
       }
-      catch ( SchedulerException e )
+      catch ( Exception e )
       {
          log.error( e );
-      }
-
-      if ( eventProcessor != null )
-      {
-         eventProcessor.close();
-      }
-
-      if ( pnpRegistry != null )
-      {
-         pnpRegistry.close();
       }
    }
 
@@ -1094,6 +1103,13 @@ public class KartaRuntime implements AutoCloseable
          // TODO: Handle local node
          // TODO: Handle null node error
          jobResult = nodeRegistry.getNode( node ).runJobIteration( runInfo, featureName, job.toBuilder().node( null ).build(), iterationIndex );
+
+         if ( jobResult == null )
+         {
+            // ( "Null job result received from remote node" );
+            return TestJobResult.builder().successful( false ).error( true ).build();
+         }
+
          jobResult.processRemoteResults();
       }
       else
@@ -1399,6 +1415,12 @@ public class KartaRuntime implements AutoCloseable
          // TODO: Handle local node
          // TODO: Handle null node error
          stepResult = nodeRegistry.getNode( node ).runStep( runInfo, step.toBuilder().node( null ).build() );
+
+         if ( stepResult == null )
+         {
+            return StandardStepResults.error( "Null step result received from remote node" );
+         }
+
          stepResult.processRemoteResults();
       }
       else
@@ -1485,6 +1507,12 @@ public class KartaRuntime implements AutoCloseable
       if ( StringUtils.isNotEmpty( nodeName ) )
       {
          stepResult = nodeRegistry.getNode( nodeName ).performChaosAction( runInfo, preparedChaosAction.toBuilder().node( null ).build() );
+
+         if ( stepResult == null )
+         {
+            return StandardStepResults.error( "Null step result received from remote node" );
+         }
+
          stepResult.processRemoteResults();
       }
       else

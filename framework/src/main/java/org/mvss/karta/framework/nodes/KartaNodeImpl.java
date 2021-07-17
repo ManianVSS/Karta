@@ -39,6 +39,16 @@ public class KartaNodeImpl extends UnicastRemoteObject implements KartaNode, Ser
    }
 
    @Override
+   public void close() throws Exception
+   {
+      if ( this.kartaRuntime != null )
+      {
+         this.kartaRuntime.close();
+         this.kartaRuntime = null;
+      }
+   }
+
+   @Override
    public FeatureResult runFeature( RunInfo runInfo, TestFeature feature ) throws RemoteException
    {
       return kartaRuntime.runFeature( runInfo, feature );
@@ -58,7 +68,9 @@ public class KartaNodeImpl extends UnicastRemoteObject implements KartaNode, Ser
    }
 
    @Override
-   public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber ) throws RemoteException
+   public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario,
+                                          long scenarioIterationNumber )
+            throws RemoteException
    {
       return kartaRuntime.runTestScenario( runInfo, featureName, iterationIndex, testScenario, scenarioIterationNumber );
    }
@@ -95,4 +107,5 @@ public class KartaNodeImpl extends UnicastRemoteObject implements KartaNode, Ser
       log.debug( "Health check ping" );
       return true;
    }
+
 }

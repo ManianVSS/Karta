@@ -91,11 +91,13 @@ public class KartaMain
                   log.error( "Karta runtime could not be initialized. Please check the directory and config files" );
                   System.exit( -1 );
                }
-               KartaNodeServer kartaRMIServer = new KartaNodeServer( kartaRuntime );
-               kartaRMIServer.startServer();
-               kartaRuntime.addNodes();
-               log.info( "Karta node server started " + kartaRMIServer.getNodeConfig() );
-               Thread.currentThread().join();
+               try (KartaNodeServer kartaRMIServer = new KartaNodeServer( kartaRuntime ))
+               {
+                  kartaRMIServer.startServer();
+                  kartaRuntime.addNodes();
+                  log.info( "Karta node server started " + kartaRMIServer.getNodeConfig() );
+                  Thread.currentThread().join();
+               }
             }
          }
          else
@@ -194,7 +196,8 @@ public class KartaMain
                   ConcurrentHashMap<String, FeatureResult> resultMap = runResult.getTestResultMap();
                   for ( Entry<String, FeatureResult> entry : resultMap.entrySet() )
                   {
-                     System.out.println( entry.getKey() + Constants.COLON + Constants.SPACE + ( entry.getValue().isPassed() ? Constants.PASS : Constants.FAIL ) );
+                     System.out.println( entry.getKey() + Constants.COLON + Constants.SPACE
+                                         + ( entry.getValue().isPassed() ? Constants.PASS : Constants.FAIL ) );
                   }
 
                   if ( !runResult.isSuccessful() )

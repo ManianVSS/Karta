@@ -2,13 +2,11 @@
 <projectDescription>
 	<name>Karta</name>
 	<comment>Katra Test Automation Framework parent project</comment>
-	<projects>
-	</projects>
-	<buildSpec>	
+	<projects></projects>
+	<buildSpec>
 		<buildCommand>
 			<name>org.eclipse.m2e.core.maven2Builder</name>
-			<arguments>
-			</arguments>
+			<arguments></arguments>
 		</buildCommand>
 	</buildSpec>
 	<natures>
