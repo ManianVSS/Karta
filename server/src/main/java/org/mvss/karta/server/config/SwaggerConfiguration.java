@@ -21,7 +21,7 @@ public class SwaggerConfiguration
    @Bean
    public Docket swaggerDocket()
    {
-      ApiInfo apiInfo = new ApiInfo( "Karta", "Karta Server", "0.0.9", "BSD-3-Clause License",
+      ApiInfo apiInfo = new ApiInfo( "Karta", "Karta Server", "0.1.0", "BSD-3-Clause License",
                                      new Contact( "Manian VSS", "https://github.com/ManianVSS/Karta", "manianvss@hotmail.com" ), "API License",
                                      "https://github.com/ManianVSS/Karta/blob/master/LICENSE", Collections.emptyList() );
       return new Docket( DocumentationType.SWAGGER_2 ).select()

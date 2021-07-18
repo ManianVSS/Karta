@@ -24,10 +24,6 @@ import lombok.ToString;
 @Builder
 public class Test implements Serializable, Comparable<Test>
 {
-
-   /**
-    * 
-    */
    private static final long serialVersionUID              = 1L;
 
    @Builder.Default
@@ -77,7 +73,8 @@ public class Test implements Serializable, Comparable<Test>
    @Builder.Default
    private int               numberOfThreads               = 1;
 
-   public void propogateAttributes( String sourceArchive, String featureSourceParser, String stepRunner, HashSet<String> testDataSources, String threadGroup, HashSet<String> tags )
+   public void propogateAttributes( String sourceArchive, String featureSourceParser, String stepRunner, HashSet<String> testDataSources,
+                                    String threadGroup, HashSet<String> tags )
    {
       if ( StringUtils.isEmpty( this.sourceArchive ) && StringUtils.isNotEmpty( sourceArchive ) )
       {

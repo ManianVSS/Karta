@@ -24,10 +24,6 @@ import lombok.ToString;
 @Builder
 public class TestCategory implements Serializable
 {
-
-   /**
-    * 
-    */
    private static final long       serialVersionUID = 1L;
 
    private String                  name;
@@ -62,7 +58,8 @@ public class TestCategory implements Serializable
       return null;
    }
 
-   private static ConcurrentHashMap<Pattern, ConcurrentHashMap<String, Matcher>> patternMatcherMap = new ConcurrentHashMap<Pattern, ConcurrentHashMap<String, Matcher>>();
+   private static ConcurrentHashMap<Pattern, ConcurrentHashMap<String, Matcher>> patternMatcherMap =
+            new ConcurrentHashMap<Pattern, ConcurrentHashMap<String, Matcher>>();
 
    public synchronized void filterTestsByTag( ArrayList<Test> outputFilteredTests, HashSet<Pattern> tagPatterns )
    {

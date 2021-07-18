@@ -18,7 +18,7 @@
 		<dependency>
 			<groupId>org.mvss.karta</groupId>
 			<artifactId>framework</artifactId>
-			<version>0.0.9</version>
+			<version>0.1.0</version>
 			<scope>provided</scope>
 		</dependency>
 
