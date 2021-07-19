@@ -44,6 +44,8 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class ScenarioRunner implements Callable<ScenarioResult>
 {
+   private static final String                          SCENARIO_FAILURE_HOOKS_PROCESSING_FAILED = "Scenario failure hooks processing failed.";
+
    private KartaRuntime                                 kartaRuntime;
    private RunInfo                                      runInfo;
 
@@ -57,7 +59,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
    private ScenarioResult                               result;
 
    @Builder.Default
-   private KartaNode                                    minionToUse = null;
+   private KartaNode                                    minionToUse                              = null;
 
    private BiConsumer<PreparedScenario, ScenarioResult> resultConsumer;
 
@@ -113,13 +115,18 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                eventProcessor.raiseEvent( new ScenarioSetupStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
                StepResult stepResult = kartaRuntime.runStep( runInfo, step );
                stepResult.setStepIndex( setupStepIndex++ );
-               eventProcessor.raiseEvent( new ScenarioSetupStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
+               eventProcessor.raiseEvent( new ScenarioSetupStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step,
+                                                                              stepResult ) );
                result.getSetupResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )
                {
                   result.setSuccessful( false );
+                  if ( ( tags != null ) && !eventProcessor.scenarioFailed( runName, runName, testScenario, tags, result ) )
+                  {
+                     log.error( SCENARIO_FAILURE_HOOKS_PROCESSING_FAILED );
+                  }
                   break;
                }
 
@@ -130,16 +137,22 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                long chaosStepIndex = 0;
                for ( PreparedChaosAction preparedChaosAction : testScenario.getChaosActions() )
                {
-                  eventProcessor.raiseEvent( new ScenarioChaosActionStartEvent( runName, featureName, iterationIndex, testScenario.getName(), preparedChaosAction ) );
+                  eventProcessor.raiseEvent( new ScenarioChaosActionStartEvent( runName, featureName, iterationIndex, testScenario.getName(),
+                                                                                preparedChaosAction ) );
                   StepResult stepResult = kartaRuntime.runChaosAction( runInfo, preparedChaosAction );
                   stepResult.setStepIndex( chaosStepIndex++ );
-                  eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), preparedChaosAction, stepResult ) );
+                  eventProcessor.raiseEvent( new ScenarioChaosActionCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(),
+                                                                                   preparedChaosAction, stepResult ) );
                   result.getChaosActionResults().add( new SerializableKVP<String, StepResult>( preparedChaosAction.getName(), stepResult ) );
                   result.getIncidents().addAll( stepResult.getIncidents() );
 
                   if ( !stepResult.isPassed() )
                   {
                      result.setSuccessful( false );
+                     if ( ( tags != null ) && !eventProcessor.scenarioFailed( runName, runName, testScenario, tags, result ) )
+                     {
+                        log.error( SCENARIO_FAILURE_HOOKS_PROCESSING_FAILED );
+                     }
                      break;
                   }
                }
@@ -157,13 +170,18 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                      eventProcessor.raiseEvent( new ScenarioStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
                      StepResult stepResult = kartaRuntime.runStep( runInfo, step );
                      stepResult.setStepIndex( runStepIndex++ );
-                     eventProcessor.raiseEvent( new ScenarioStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
+                     eventProcessor.raiseEvent( new ScenarioStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step,
+                                                                               stepResult ) );
                      result.getRunResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
                      result.getIncidents().addAll( stepResult.getIncidents() );
 
                      if ( !stepResult.isPassed() )
                      {
                         result.setSuccessful( false );
+                        if ( ( tags != null ) && !eventProcessor.scenarioFailed( runName, runName, testScenario, tags, result ) )
+                        {
+                           log.error( SCENARIO_FAILURE_HOOKS_PROCESSING_FAILED );
+                        }
                         break;
                      }
                   }
@@ -189,16 +207,23 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                      continue;
                   }
 
-                  eventProcessor.raiseEvent( new ScenarioTearDownStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
+                  eventProcessor
+                           .raiseEvent( new ScenarioTearDownStepStartEvent( runName, featureName, iterationIndex, testScenario.getName(), step ) );
                   StepResult stepResult = kartaRuntime.runStep( runInfo, step );
                   stepResult.setStepIndex( teardownStepIndex++ );
-                  eventProcessor.raiseEvent( new ScenarioTearDownStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(), step, stepResult ) );
+                  eventProcessor.raiseEvent( new ScenarioTearDownStepCompleteEvent( runName, featureName, iterationIndex, testScenario.getName(),
+                                                                                    step, stepResult ) );
                   result.getTearDownResults().add( new SerializableKVP<String, StepResult>( step.getIdentifier(), stepResult ) );
                   result.getIncidents().addAll( stepResult.getIncidents() );
 
                   if ( !stepResult.isPassed() )
                   {
                      result.setSuccessful( false );
+                     if ( ( tags != null ) && !eventProcessor.scenarioFailed( runName, runName, testScenario, tags, result ) )
+                     {
+                        log.error( SCENARIO_FAILURE_HOOKS_PROCESSING_FAILED );
+                     }
+                     break;
                   }
                }
 
