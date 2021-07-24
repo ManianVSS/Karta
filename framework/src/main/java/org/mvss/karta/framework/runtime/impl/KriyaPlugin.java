@@ -33,6 +33,8 @@ import org.mvss.karta.framework.core.Pair;
 import org.mvss.karta.framework.core.PreparedChaosAction;
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.PreparedStep;
+import org.mvss.karta.framework.core.ScenarioFailed;
+import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepDefinition;
 import org.mvss.karta.framework.core.StepResult;
@@ -81,6 +83,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStartHooks               =
             new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
    private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStopHooks                =
+            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
+   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioFailureHooks             =
             new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
 
    private HashMap<String, Pair<Object, Method>>             stepHandlerMap                         = new HashMap<String, Pair<Object, Method>>();
@@ -413,137 +417,159 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
    }
 
-   private final Consumer<Method> processTaggedRunStartHook      = new Consumer<Method>()
-                                                                 {
-                                                                    @Override
-                                                                    public void accept( Method runStartHookMethod )
-                                                                    {
-                                                                       try
-                                                                       {
-                                                                          for ( BeforeRun beforeRun : runStartHookMethod
-                                                                                   .getAnnotationsByType( BeforeRun.class ) )
-                                                                          {
-                                                                             String[] tags = beforeRun.value();
-                                                                             processTaggedHook( taggedRunStartHooks, tags, runStartHookMethod, String.class );
-                                                                          }
-                                                                       }
-                                                                       catch ( Throwable t )
-                                                                       {
-                                                                          log.error( "Exception while parsing run start hook from method  "
-                                                                                     + runStartHookMethod.getName(), t );
-                                                                       }
-                                                                    }
-                                                                 };
+   private final Consumer<Method> processTaggedRunStartHook       = new Consumer<Method>()
+                                                                  {
+                                                                     @Override
+                                                                     public void accept( Method runStartHookMethod )
+                                                                     {
+                                                                        try
+                                                                        {
+                                                                           for ( BeforeRun beforeRun : runStartHookMethod
+                                                                                    .getAnnotationsByType( BeforeRun.class ) )
+                                                                           {
+                                                                              String[] tags = beforeRun.value();
+                                                                              processTaggedHook( taggedRunStartHooks, tags, runStartHookMethod, String.class );
+                                                                           }
+                                                                        }
+                                                                        catch ( Throwable t )
+                                                                        {
+                                                                           log.error( "Exception while parsing run start hook from method  "
+                                                                                      + runStartHookMethod.getName(), t );
+                                                                        }
+                                                                     }
+                                                                  };
 
-   private final Consumer<Method> processTaggedRunStopHook       = new Consumer<Method>()
-                                                                 {
-                                                                    @Override
-                                                                    public void accept( Method runStopHookMethod )
-                                                                    {
-                                                                       try
-                                                                       {
-                                                                          for ( AfterRun afterRun : runStopHookMethod
-                                                                                   .getAnnotationsByType( AfterRun.class ) )
-                                                                          {
-                                                                             String[] tags = afterRun.value();
-                                                                             processTaggedHook( taggedRunStopHooks, tags, runStopHookMethod, String.class );
-                                                                          }
-                                                                       }
-                                                                       catch ( Throwable t )
-                                                                       {
-                                                                          log.error( "Exception while parsing run stop hook from method  "
-                                                                                     + runStopHookMethod.getName(), t );
-                                                                       }
-                                                                    }
-                                                                 };
+   private final Consumer<Method> processTaggedRunStopHook        = new Consumer<Method>()
+                                                                  {
+                                                                     @Override
+                                                                     public void accept( Method runStopHookMethod )
+                                                                     {
+                                                                        try
+                                                                        {
+                                                                           for ( AfterRun afterRun : runStopHookMethod
+                                                                                    .getAnnotationsByType( AfterRun.class ) )
+                                                                           {
+                                                                              String[] tags = afterRun.value();
+                                                                              processTaggedHook( taggedRunStopHooks, tags, runStopHookMethod, String.class );
+                                                                           }
+                                                                        }
+                                                                        catch ( Throwable t )
+                                                                        {
+                                                                           log.error( "Exception while parsing run stop hook from method  "
+                                                                                      + runStopHookMethod.getName(), t );
+                                                                        }
+                                                                     }
+                                                                  };
 
-   private final Consumer<Method> processTaggedFeatureStartHook  = new Consumer<Method>()
-                                                                 {
-                                                                    @Override
-                                                                    public void accept( Method featureStartHookMethod )
-                                                                    {
-                                                                       try
-                                                                       {
-                                                                          for ( BeforeFeature beforeFeature : featureStartHookMethod
-                                                                                   .getAnnotationsByType( BeforeFeature.class ) )
-                                                                          {
-                                                                             String[] tags = beforeFeature.value();
-                                                                             processTaggedHook( taggedFeatureStartHooks, tags, featureStartHookMethod, String.class, TestFeature.class );
-                                                                          }
-                                                                       }
-                                                                       catch ( Throwable t )
-                                                                       {
-                                                                          log.error( "Exception while parsing feature start hook from method  "
-                                                                                     + featureStartHookMethod.getName(), t );
-                                                                       }
-                                                                    }
-                                                                 };
+   private final Consumer<Method> processTaggedFeatureStartHook   = new Consumer<Method>()
+                                                                  {
+                                                                     @Override
+                                                                     public void accept( Method featureStartHookMethod )
+                                                                     {
+                                                                        try
+                                                                        {
+                                                                           for ( BeforeFeature beforeFeature : featureStartHookMethod
+                                                                                    .getAnnotationsByType( BeforeFeature.class ) )
+                                                                           {
+                                                                              String[] tags = beforeFeature.value();
+                                                                              processTaggedHook( taggedFeatureStartHooks, tags, featureStartHookMethod, String.class, TestFeature.class );
+                                                                           }
+                                                                        }
+                                                                        catch ( Throwable t )
+                                                                        {
+                                                                           log.error( "Exception while parsing feature start hook from method  "
+                                                                                      + featureStartHookMethod.getName(), t );
+                                                                        }
+                                                                     }
+                                                                  };
 
-   private final Consumer<Method> processTaggedFeatureStopHook   = new Consumer<Method>()
-                                                                 {
-                                                                    @Override
-                                                                    public void accept( Method featureStopHookMethod )
-                                                                    {
-                                                                       try
-                                                                       {
-                                                                          for ( AfterFeature afterFeature : featureStopHookMethod
-                                                                                   .getAnnotationsByType( AfterFeature.class ) )
-                                                                          {
-                                                                             String[] tags = afterFeature.value();
-                                                                             processTaggedHook( taggedFeatureStopHooks, tags, featureStopHookMethod, String.class, TestFeature.class );
-                                                                          }
-                                                                       }
-                                                                       catch ( Throwable t )
-                                                                       {
-                                                                          log.error( "Exception while parsing feature stop hook from method  "
-                                                                                     + featureStopHookMethod.getName(), t );
-                                                                       }
-                                                                    }
-                                                                 };
+   private final Consumer<Method> processTaggedFeatureStopHook    = new Consumer<Method>()
+                                                                  {
+                                                                     @Override
+                                                                     public void accept( Method featureStopHookMethod )
+                                                                     {
+                                                                        try
+                                                                        {
+                                                                           for ( AfterFeature afterFeature : featureStopHookMethod
+                                                                                    .getAnnotationsByType( AfterFeature.class ) )
+                                                                           {
+                                                                              String[] tags = afterFeature.value();
+                                                                              processTaggedHook( taggedFeatureStopHooks, tags, featureStopHookMethod, String.class, TestFeature.class );
+                                                                           }
+                                                                        }
+                                                                        catch ( Throwable t )
+                                                                        {
+                                                                           log.error( "Exception while parsing feature stop hook from method  "
+                                                                                      + featureStopHookMethod.getName(), t );
+                                                                        }
+                                                                     }
+                                                                  };
 
-   private final Consumer<Method> processTaggedScenarioStartHook = new Consumer<Method>()
-                                                                 {
-                                                                    @Override
-                                                                    public void accept( Method scenarioStartHookMethod )
-                                                                    {
-                                                                       try
-                                                                       {
-                                                                          for ( BeforeScenario beforeScenario : scenarioStartHookMethod
-                                                                                   .getAnnotationsByType( BeforeScenario.class ) )
-                                                                          {
-                                                                             String[] tags = beforeScenario.value();
-                                                                             processTaggedHook( taggedScenarioStartHooks, tags, scenarioStartHookMethod, String.class, String.class, PreparedScenario.class );
-                                                                          }
-                                                                       }
-                                                                       catch ( Throwable t )
-                                                                       {
-                                                                          log.error( "Exception while parsing scenario start hook from method  "
-                                                                                     + scenarioStartHookMethod.getName(), t );
-                                                                       }
-                                                                    }
-                                                                 };
+   private final Consumer<Method> processTaggedScenarioStartHook  = new Consumer<Method>()
+                                                                  {
+                                                                     @Override
+                                                                     public void accept( Method scenarioStartHookMethod )
+                                                                     {
+                                                                        try
+                                                                        {
+                                                                           for ( BeforeScenario beforeScenario : scenarioStartHookMethod
+                                                                                    .getAnnotationsByType( BeforeScenario.class ) )
+                                                                           {
+                                                                              String[] tags = beforeScenario.value();
+                                                                              processTaggedHook( taggedScenarioStartHooks, tags, scenarioStartHookMethod, String.class, String.class, PreparedScenario.class );
+                                                                           }
+                                                                        }
+                                                                        catch ( Throwable t )
+                                                                        {
+                                                                           log.error( "Exception while parsing scenario start hook from method  "
+                                                                                      + scenarioStartHookMethod.getName(), t );
+                                                                        }
+                                                                     }
+                                                                  };
 
-   private final Consumer<Method> processTaggedScenarioStopHook  = new Consumer<Method>()
-                                                                 {
-                                                                    @Override
-                                                                    public void accept( Method scenarioStopHookMethod )
-                                                                    {
-                                                                       try
-                                                                       {
-                                                                          for ( AfterScenario afterScenario : scenarioStopHookMethod
-                                                                                   .getAnnotationsByType( AfterScenario.class ) )
-                                                                          {
-                                                                             String[] tags = afterScenario.value();
-                                                                             processTaggedHook( taggedScenarioStopHooks, tags, scenarioStopHookMethod, String.class, String.class, PreparedScenario.class );
-                                                                          }
-                                                                       }
-                                                                       catch ( Throwable t )
-                                                                       {
-                                                                          log.error( "Exception while parsing scenario stop hook from method  "
-                                                                                     + scenarioStopHookMethod.getName(), t );
-                                                                       }
-                                                                    }
-                                                                 };
+   private final Consumer<Method> processTaggedScenarioStopHook   = new Consumer<Method>()
+                                                                  {
+                                                                     @Override
+                                                                     public void accept( Method scenarioStopHookMethod )
+                                                                     {
+                                                                        try
+                                                                        {
+                                                                           for ( AfterScenario afterScenario : scenarioStopHookMethod
+                                                                                    .getAnnotationsByType( AfterScenario.class ) )
+                                                                           {
+                                                                              String[] tags = afterScenario.value();
+                                                                              processTaggedHook( taggedScenarioStopHooks, tags, scenarioStopHookMethod, String.class, String.class, PreparedScenario.class );
+                                                                           }
+                                                                        }
+                                                                        catch ( Throwable t )
+                                                                        {
+                                                                           log.error( "Exception while parsing scenario stop hook from method  "
+                                                                                      + scenarioStopHookMethod.getName(), t );
+                                                                        }
+                                                                     }
+                                                                  };
+
+   private final Consumer<Method> processTaggedScenarioFailedHook = new Consumer<Method>()
+                                                                  {
+                                                                     @Override
+                                                                     public void accept( Method scenarioFailureHookMethod )
+                                                                     {
+                                                                        try
+                                                                        {
+                                                                           for ( ScenarioFailed afterScenario : scenarioFailureHookMethod
+                                                                                    .getAnnotationsByType( ScenarioFailed.class ) )
+                                                                           {
+                                                                              String[] tags = afterScenario.value();
+                                                                              processTaggedHook( taggedScenarioFailureHooks, tags, scenarioFailureHookMethod, String.class, String.class, PreparedScenario.class, ScenarioResult.class );
+                                                                           }
+                                                                        }
+                                                                        catch ( Throwable t )
+                                                                        {
+                                                                           log.error( "Exception while parsing scenario failure hook from method  "
+                                                                                      + scenarioFailureHookMethod.getName(), t );
+                                                                        }
+                                                                     }
+                                                                  };
 
    @Initializer
    public boolean initialize() throws Throwable
@@ -573,6 +599,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                .forEachMethod( stepDefinitionPackageNames, BeforeScenario.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedScenarioStartHook );
       AnnotationScanner
                .forEachMethod( stepDefinitionPackageNames, AfterScenario.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedScenarioStopHook );
+      AnnotationScanner
+               .forEachMethod( stepDefinitionPackageNames, ScenarioFailed.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedScenarioFailedHook );
 
       initialized = true;
       return true;
@@ -1088,6 +1116,16 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       if ( tags != null )
       {
          return invokeTaggedMethods( taggedScenarioStopHooks, tags, runName, featureName, scenario );
+      }
+      return true;
+   }
+
+   @Override
+   public boolean scenarioFailed( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags, ScenarioResult scenarioResult )
+   {
+      if ( tags != null )
+      {
+         return invokeTaggedMethods( taggedScenarioFailureHooks, tags, runName, featureName, scenario, scenarioResult );
       }
       return true;
    }

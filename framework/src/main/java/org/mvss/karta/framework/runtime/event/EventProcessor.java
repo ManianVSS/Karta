@@ -6,6 +6,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.mvss.karta.framework.core.PreparedScenario;
+import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.TestFeature;
 import org.mvss.karta.framework.core.TestIncident;
 import org.mvss.karta.framework.runtime.TestFailureException;
@@ -108,7 +109,8 @@ public class EventProcessor implements AutoCloseable
       sendEventsToListeners( event );
    }
 
-   public void fail( String runName, String featureName, Long iterationIndex, String scenarioName, String stepIdentifier, TestIncident incident ) throws TestFailureException
+   public void fail( String runName, String featureName, Long iterationIndex, String scenarioName, String stepIdentifier, TestIncident incident )
+            throws TestFailureException
    {
       if ( incident != null )
       {
@@ -117,7 +119,8 @@ public class EventProcessor implements AutoCloseable
       }
    }
 
-   public void raiseIncident( String runName, String featureName, Long iterationIndex, String scenarioName, String stepIdentifier, TestIncident incident )
+   public void raiseIncident( String runName, String featureName, Long iterationIndex, String scenarioName, String stepIdentifier,
+                              TestIncident incident )
    {
       if ( incident != null )
       {
@@ -176,6 +179,21 @@ public class EventProcessor implements AutoCloseable
          for ( TestLifeCycleHook lifeCycleHook : lifeCycleHooks )
          {
             success = success && lifeCycleHook.scenarioStop( runName, featureName, scenario, tags );
+         }
+      }
+
+      return success;
+   }
+
+   public boolean scenarioFailed( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags, ScenarioResult scenarioResult )
+   {
+      boolean success = true;
+
+      if ( tags != null )
+      {
+         for ( TestLifeCycleHook lifeCycleHook : lifeCycleHooks )
+         {
+            success = success && lifeCycleHook.scenarioFailed( runName, featureName, scenario, tags, scenarioResult );
          }
       }
 

@@ -3,6 +3,7 @@ package org.mvss.karta.framework.runtime.interfaces;
 import java.util.HashSet;
 
 import org.mvss.karta.framework.core.PreparedScenario;
+import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.TestFeature;
 
 public interface TestLifeCycleHook extends Plugin
@@ -14,6 +15,8 @@ public interface TestLifeCycleHook extends Plugin
    boolean scenarioStart( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags );
 
    boolean scenarioStop( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags );
+
+   boolean scenarioFailed( String runName, String featureName, PreparedScenario scenario, HashSet<String> tags, ScenarioResult result );
 
    boolean featureStop( String runName, TestFeature feature, HashSet<String> tags );
 
