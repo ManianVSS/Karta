@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Predicate;
 
 /**
  * Utility class to work with generic maps, lists and other vectors
@@ -468,4 +469,31 @@ public class DataUtils
       return Math.round( value * 100 ) / 100.0;
    }
 
+   public static <T> T pick( Predicate<T> condition, T[] values )
+   {
+      if ( values == null )
+      {
+         return null;
+      }
+
+      for ( T value : values )
+      {
+         if ( condition.test( value ) )
+         {
+            return value;
+         }
+      }
+
+      return values[values.length - 1];
+   }
+
+   public static String pickString( Predicate<String> condition, String... strings )
+   {
+      return pick( condition, strings );
+   }
+
+   public static String pickNonNull( String... strings )
+   {
+      return pick( ( str ) -> ( str != null ), strings );
+   }
 }

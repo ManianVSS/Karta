@@ -11,6 +11,9 @@ import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.ParserUtils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
@@ -123,4 +126,10 @@ public class ApacheRestResponse implements RestResponse
       }
    }
 
+   @Override
+   @SuppressWarnings( "unchecked" )
+   public <T> T getBodyAs( TypeReference<T> type )
+   {
+      return (T) getBodyAs( TypeFactory.rawClass( type.getType() ) );
+   }
 }

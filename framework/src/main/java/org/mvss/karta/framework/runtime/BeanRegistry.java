@@ -1,11 +1,18 @@
 package org.mvss.karta.framework.runtime;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.HashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.KartaAutoWired;
+import org.mvss.karta.framework.enums.ContextType;
+import org.mvss.karta.framework.utils.AnnotatedFieldConsumer;
+import org.mvss.karta.framework.utils.AnnotationScanner;
+import org.mvss.karta.framework.utils.DataUtils;
+
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 //TODO: Bean and property injection into bean with dependency tree
 //TODO: Reload bean definitions if changed in annotated locations
@@ -15,17 +22,61 @@ import org.mvss.karta.framework.core.KartaAutoWired;
  * 
  * @author Manian
  */
-// @Log4j2
+@Log4j2
+@Getter
 public class BeanRegistry
 {
-   private HashMap<String, Object> beans = new HashMap<String, Object>();
+   private HashMap<String, Object>                  globalBeans         = new HashMap<String, Object>();
+
+   private HashMap<Thread, HashMap<String, Object>> threadContextBeanMap  = new HashMap<Thread, HashMap<String, Object>>();
+
+   private HashMap<String, HashMap<String, Object>> namedContextBeanMap = new HashMap<String, HashMap<String, Object>>();
 
    /**
     * Constructor: Add self to the registry with class name.
     */
    public BeanRegistry()
    {
-      beans.put( BeanRegistry.class.getName(), this );
+      globalBeans.put( BeanRegistry.class.getName(), this );
+      initThreadContextRegistry();
+   }
+
+   /**
+    * Initialize the thread specific registry for calling thread
+    */
+   public void initThreadContextRegistry()
+   {
+      initThreadContextRegistry( Thread.currentThread() );
+   }
+
+   /**
+    * Initialize the thread specific registry for a thread
+    * 
+    * @param thread
+    */
+   public void initThreadContextRegistry( Thread thread )
+   {
+      if ( ( thread != null ) && !threadContextBeanMap.containsKey( thread ) )
+      {
+         HashMap<String, Object> threadBeanRegistry = new HashMap<String, Object>();
+         threadContextBeanMap.put( thread, threadBeanRegistry );
+         threadBeanRegistry.put( BeanRegistry.class.getName(), this );
+      }
+   }
+
+   /**
+    * Initialize the named context specific registry for context name
+    * 
+    * @param contextName
+    */
+   public void initNamedContextRegistry( String contextName )
+   {
+      if ( ( contextName != null ) && !namedContextBeanMap.containsKey( contextName ) )
+      {
+         HashMap<String, Object> contextBeanRegistry = new HashMap<String, Object>();
+         namedContextBeanMap.put( contextName, contextBeanRegistry );
+         contextBeanRegistry.put( BeanRegistry.class.getName(), this );
+      }
    }
 
    /**
@@ -49,7 +100,7 @@ public class BeanRegistry
     */
    public Object put( String beanName, Object bean )
    {
-      return beans.put( beanName, bean );
+      return globalBeans.put( beanName, bean );
    }
 
    /**
@@ -75,11 +126,11 @@ public class BeanRegistry
     */
    public boolean add( String beanName, Object bean )
    {
-      if ( beans.containsKey( beanName ) )
+      if ( globalBeans.containsKey( beanName ) )
       {
          return false;
       }
-      beans.put( beanName, bean );
+      globalBeans.put( beanName, bean );
       return true;
    }
 
@@ -92,7 +143,20 @@ public class BeanRegistry
     */
    public Object get( String beanName )
    {
-      return beans.get( beanName );
+      return globalBeans.get( beanName );
+   }
+
+   /**
+    * Get the bean by class
+    * 
+    * @param <T>
+    * @param beanClass
+    * @return
+    */
+   @SuppressWarnings( "unchecked" )
+   public <T> T get( Class<T> beanClass )
+   {
+      return (T) globalBeans.get( beanClass.getName() );
    }
 
    /**
@@ -103,7 +167,41 @@ public class BeanRegistry
     */
    public boolean containsKey( String beanName )
    {
-      return beans.containsKey( beanName );
+      return globalBeans.containsKey( beanName );
+   }
+
+   /**
+    * Gets the bean map based on the wiring context type.
+    * 
+    * @param contextType
+    * @param contextName
+    * @return
+    */
+   public HashMap<String, Object> getBeanMap( ContextType contextType, String contextName )
+   {
+      switch ( contextType )
+      {
+         case NAMED:
+            return namedContextBeanMap.get( DataUtils.pickString( StringUtils::isNotEmpty, contextName, Constants.EMPTY_STRING ) );
+
+         case THREAD:
+            return threadContextBeanMap.get( Thread.currentThread() );
+
+         default:
+         case GLOBAL:
+            return globalBeans;
+      }
+   }
+
+   /**
+    * Gets the bean map based on the wiring context type.
+    * 
+    * @param kartaAutoWired
+    * @return
+    */
+   public HashMap<String, Object> getBeanMap( KartaAutoWired kartaAutoWired )
+   {
+      return getBeanMap( kartaAutoWired.contextType(), kartaAutoWired.contextName() );
    }
 
    /**
@@ -116,7 +214,40 @@ public class BeanRegistry
     */
    public void loadBeans( Object object ) throws IllegalArgumentException, IllegalAccessException
    {
-      loadBeans( object, object.getClass(), beans );
+      loadBeans( object, object.getClass(), this );
+   }
+
+   /**
+    * Sets the value for a field of a object/class based on the registry and auto wiring type.
+    * 
+    * @param object
+    * @param processAsType
+    * @param field
+    * @param kartaAutoWired
+    */
+   public void setFieldValue( Object object, Class<?> processAsType, Field field, KartaAutoWired kartaAutoWired )
+   {
+      try
+      {
+         HashMap<String, Object> beanMap = getBeanMap( kartaAutoWired );
+
+         if ( beanMap != null )
+         {
+            field.setAccessible( true );
+            Class<?> fieldClass = field.getType();
+            String beanName = DataUtils.pickString( StringUtils::isNotEmpty, kartaAutoWired.value(), kartaAutoWired.name(), fieldClass.getName() );
+            Object valueToSet = beanMap.get( beanName );
+
+            if ( valueToSet != null )
+            {
+               field.set( object, valueToSet );
+            }
+         }
+      }
+      catch ( IllegalArgumentException | IllegalAccessException e )
+      {
+         log.error( "", e );
+      }
    }
 
    /**
@@ -126,44 +257,28 @@ public class BeanRegistry
     * 
     * @param object
     * @param theClassOfObject
-    * @param beans
+    * @param beanRegistry
     * @throws IllegalArgumentException
     * @throws IllegalAccessException
     */
-   public static void loadBeans( Object object, Class<?> theClassOfObject, HashMap<String, Object> beans ) throws IllegalArgumentException, IllegalAccessException
+   public static void loadBeans( Object object, Class<?> theClassOfObject, BeanRegistry beanRegistry )
+            throws IllegalArgumentException, IllegalAccessException
    {
-      if ( ( object == null ) || ( theClassOfObject == null ) || theClassOfObject.getName().equals( Object.class.getName() ) || !theClassOfObject.isAssignableFrom( object.getClass() ) )
+      if ( ( object == null ) || ( theClassOfObject == null ) || theClassOfObject.getName().equals( Object.class.getName() )
+           || !theClassOfObject.isAssignableFrom( object.getClass() ) )
       {
          return;
       }
-      for ( Field field : theClassOfObject.getDeclaredFields() )
-      {
-         int modifiers = field.getModifiers();
-         if ( !Modifier.isStatic( modifiers ) && !Modifier.isFinal( modifiers ) )
-         {
-            field.setAccessible( true );
 
-            KartaAutoWired propertyMapping = field.getDeclaredAnnotation( KartaAutoWired.class );
-
-            if ( propertyMapping != null )
-            {
-               Class<?> fieldClass = field.getType();
-               String beanName = propertyMapping.value();
-
-               if ( StringUtils.isEmpty( beanName ) )
+      AnnotationScanner.forEachField( theClassOfObject, KartaAutoWired.class, AnnotationScanner.IS_NON_STATIC
+               .and( AnnotationScanner.IS_NON_FINAL ), AnnotationScanner.IS_NON_VOID_TYPE, new AnnotatedFieldConsumer()
                {
-                  beanName = fieldClass.getName();
-               }
-
-               Object valueToSet = beans.get( beanName );
-
-               if ( valueToSet != null )
-               {
-                  field.set( object, valueToSet );
-               }
-            }
-         }
-      }
+                  @Override
+                  public void accept( Class<?> type, Field field, Annotation annotationObject )
+                  {
+                     beanRegistry.setFieldValue( object, type, field, (KartaAutoWired) annotationObject );
+                  }
+               } );
 
       Class<?> superClass = theClassOfObject.getSuperclass();
       if ( superClass.getName().equals( Object.class.getName() ) )
@@ -172,7 +287,7 @@ public class BeanRegistry
       }
       else
       {
-         loadBeans( object, superClass, beans );
+         loadBeans( object, superClass, beanRegistry );
       }
    }
 
@@ -185,51 +300,33 @@ public class BeanRegistry
     */
    public void loadStaticBeans( Class<?> theClassOfObject ) throws IllegalArgumentException, IllegalAccessException
    {
-      loadStaticBeans( theClassOfObject, beans );
+      loadStaticBeans( theClassOfObject, this );
    }
 
    /**
     * Wires the static field mapped in the object using KartaAutoWired annotation to values from the bean map.
     * 
     * @param theClassOfObject
-    * @param beans
+    * @param beanRegistry
     * @throws IllegalArgumentException
     * @throws IllegalAccessException
     */
-   public static void loadStaticBeans( Class<?> theClassOfObject, HashMap<String, Object> beans ) throws IllegalArgumentException, IllegalAccessException
+   public static void loadStaticBeans( Class<?> theClassOfObject, BeanRegistry beanRegistry ) throws IllegalArgumentException, IllegalAccessException
    {
       if ( ( theClassOfObject == null ) || theClassOfObject.getName().equals( Object.class.getName() ) )
       {
          return;
       }
-      for ( Field field : theClassOfObject.getDeclaredFields() )
-      {
-         int modifiers = field.getModifiers();
-         if ( Modifier.isStatic( modifiers ) && !Modifier.isFinal( modifiers ) )
-         {
-            field.setAccessible( true );
 
-            KartaAutoWired propertyMapping = field.getDeclaredAnnotation( KartaAutoWired.class );
-
-            if ( propertyMapping != null )
-            {
-               Class<?> fieldClass = field.getType();
-               String beanName = propertyMapping.value();
-
-               if ( StringUtils.isEmpty( beanName ) )
+      AnnotationScanner.forEachField( theClassOfObject, KartaAutoWired.class, AnnotationScanner.IS_STATIC
+               .and( AnnotationScanner.IS_NON_FINAL ), AnnotationScanner.IS_NON_VOID_TYPE, new AnnotatedFieldConsumer()
                {
-                  beanName = fieldClass.getName();
-               }
-
-               Object valueToSet = beans.get( beanName );
-
-               if ( valueToSet != null )
-               {
-                  field.set( null, valueToSet );
-               }
-            }
-         }
-      }
+                  @Override
+                  public void accept( Class<?> type, Field field, Annotation annotationObject )
+                  {
+                     beanRegistry.setFieldValue( null, type, field, (KartaAutoWired) annotationObject );
+                  }
+               } );
 
       Class<?> superClass = theClassOfObject.getSuperclass();
       if ( superClass.getName().equals( Object.class.getName() ) )
@@ -238,7 +335,7 @@ public class BeanRegistry
       }
       else
       {
-         loadStaticBeans( superClass, beans );
+         loadStaticBeans( superClass, beanRegistry );
       }
    }
 }

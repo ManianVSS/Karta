@@ -59,12 +59,14 @@ public class PreparedStepRunner implements Callable<StepResult>
                int numberOfParallelSteps = nestedSteps.size();
                StepResult cumulativeStepResult = new StepResult();
                cumulativeStepResult.setStartTime( new Date() );
-               ExecutorService stepExecutorService = new ThreadPoolExecutor( numberOfParallelSteps, numberOfParallelSteps, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfParallelSteps ) );
+               ExecutorService stepExecutorService = new ThreadPoolExecutor( numberOfParallelSteps, numberOfParallelSteps, 0L, TimeUnit.MILLISECONDS,
+                                                                             new BlockingRunnableQueue( numberOfParallelSteps ) );
 
                for ( PreparedStep nestedStep : nestedSteps )
                {
-                  PreparedStepRunner preparedStepRunner = PreparedStepRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).step( nestedStep ).resultConsumer( ( threadStepResult ) -> cumulativeStepResult.mergeResults( threadStepResult ) )
-                           .build();
+                  PreparedStepRunner preparedStepRunner =
+                           PreparedStepRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).step( nestedStep )
+                                    .resultConsumer( ( threadStepResult ) -> cumulativeStepResult.mergeResults( threadStepResult ) ).build();
                   stepExecutorService.submit( preparedStepRunner );
                }
 
@@ -89,8 +91,14 @@ public class PreparedStepRunner implements Callable<StepResult>
                stepResult = new StepResult();
                for ( PreparedStep nestedStep : nestedSteps )
                {
-                  PreparedStepRunner preparedStepRunner = PreparedStepRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).step( nestedStep ).build();
+                  PreparedStepRunner preparedStepRunner =
+                           PreparedStepRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).step( nestedStep ).build();
                   stepResult.mergeResults( preparedStepRunner.call() );
+
+                  if ( !stepResult.isPassed() )
+                  {
+                     return stepResult;
+                  }
                }
             }
          }

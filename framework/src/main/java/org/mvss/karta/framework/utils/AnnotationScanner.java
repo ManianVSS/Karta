@@ -85,7 +85,7 @@ public class AnnotationScanner
 
    public static final Predicate<Integer>     IS_PUBLIC_AND_STATIC     = IS_PUBLIC.and( IS_STATIC );
 
-   public static final Predicate<Class<?>>    IS_VOID_RETURN_TYPE      = new Predicate<Class<?>>()
+   public static final Predicate<Class<?>>    IS_VOID_TYPE             = new Predicate<Class<?>>()
                                                                        {
 
                                                                           @Override
@@ -95,7 +95,7 @@ public class AnnotationScanner
                                                                           }
                                                                        };
 
-   public static final Predicate<Class<?>>    IS_NON_VOID_RETURN_TYPE  = IS_VOID_RETURN_TYPE.negate();
+   public static final Predicate<Class<?>>    IS_NON_VOID_TYPE         = IS_VOID_TYPE.negate();
 
    public static final Predicate<Parameter[]> HAS_PARAMS               = new Predicate<Parameter[]>()
                                                                        {
@@ -118,18 +118,21 @@ public class AnnotationScanner
     * @param paramsChecks
     * @param action
     */
-   public static void forEachMethod( Collection<String> annotationScanPackageNames, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks,
+   public static void forEachMethod( Collection<String> annotationScanPackageNames, Class<? extends Annotation> annotation,
+                                     Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks,
                                      Consumer<Method> action )
    {
       for ( String annotationScanPackageName : annotationScanPackageNames )
       {
          try
          {
-            Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( annotationScanPackageName ) ).setScanners( new MethodAnnotationsScanner() ) );
+            Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( annotationScanPackageName ) )
+                     .setScanners( new MethodAnnotationsScanner() ) );
             Set<Method> candidateMethods = reflections.getMethodsAnnotatedWith( annotation );
             for ( Method candidateMethod : candidateMethods )
             {
-               if ( ( ( modifierChecks == null ) || modifierChecks.test( candidateMethod.getModifiers() ) ) && ( ( returnTypeCheck == null ) || returnTypeCheck.test( candidateMethod.getReturnType() ) )
+               if ( ( ( modifierChecks == null ) || modifierChecks.test( candidateMethod.getModifiers() ) )
+                    && ( ( returnTypeCheck == null ) || returnTypeCheck.test( candidateMethod.getReturnType() ) )
                     && ( ( paramsChecks == null ) || paramsChecks.test( candidateMethod.getParameters() ) ) )
                {
                   action.accept( candidateMethod );
@@ -153,7 +156,8 @@ public class AnnotationScanner
     * @param paramsChecks
     * @param action
     */
-   public static void forEachMethod( Class<?> classToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks, ClassMethodConsumer action )
+   public static void forEachMethod( Class<?> classToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks,
+                                     Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks, ClassMethodConsumer action )
    {
       for ( Method candidateMethod : classToWorkWith.getMethods() )
       {
@@ -161,7 +165,8 @@ public class AnnotationScanner
          {
             if ( candidateMethod.isAnnotationPresent( annotation ) )
             {
-               if ( ( ( modifierChecks == null ) || modifierChecks.test( candidateMethod.getModifiers() ) ) && ( ( returnTypeCheck == null ) || returnTypeCheck.test( candidateMethod.getReturnType() ) )
+               if ( ( ( modifierChecks == null ) || modifierChecks.test( candidateMethod.getModifiers() ) )
+                    && ( ( returnTypeCheck == null ) || returnTypeCheck.test( candidateMethod.getReturnType() ) )
                     && ( ( paramsChecks == null ) || paramsChecks.test( candidateMethod.getParameters() ) ) )
                {
                   action.accept( classToWorkWith, candidateMethod );
@@ -185,7 +190,8 @@ public class AnnotationScanner
     * @param paramsChecks
     * @param action
     */
-   public static void forEachMethod( Object objectToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks, ObjectMethodConsumer action )
+   public static void forEachMethod( Object objectToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks,
+                                     Predicate<Class<?>> returnTypeCheck, Predicate<Parameter[]> paramsChecks, ObjectMethodConsumer action )
    {
       Class<?> classToWorkWith = objectToWorkWith.getClass();
 
@@ -195,7 +201,8 @@ public class AnnotationScanner
          {
             if ( candidateMethod.isAnnotationPresent( annotation ) )
             {
-               if ( ( ( modifierChecks == null ) || modifierChecks.test( candidateMethod.getModifiers() ) ) && ( ( returnTypeCheck == null ) || returnTypeCheck.test( candidateMethod.getReturnType() ) )
+               if ( ( ( modifierChecks == null ) || modifierChecks.test( candidateMethod.getModifiers() ) )
+                    && ( ( returnTypeCheck == null ) || returnTypeCheck.test( candidateMethod.getReturnType() ) )
                     && ( ( paramsChecks == null ) || paramsChecks.test( candidateMethod.getParameters() ) ) )
                {
                   action.accept( objectToWorkWith, candidateMethod );
@@ -217,13 +224,15 @@ public class AnnotationScanner
     * @param modifierChecks
     * @param action
     */
-   public static void forEachClass( Collection<String> annotationScanPackageNames, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Consumer<Class<?>> action )
+   public static void forEachClass( Collection<String> annotationScanPackageNames, Class<? extends Annotation> annotation,
+                                    Predicate<Integer> modifierChecks, Consumer<Class<?>> action )
    {
       for ( String annotationScanPackageName : annotationScanPackageNames )
       {
          try
          {
-            Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( annotationScanPackageName ) ).setScanners( new TypeAnnotationsScanner(), new SubTypesScanner() ) );
+            Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( annotationScanPackageName ) )
+                     .setScanners( new TypeAnnotationsScanner(), new SubTypesScanner() ) );
             Set<Class<?>> candidateClasses = reflections.getTypesAnnotatedWith( annotation );
 
             for ( Class<?> candidateMethod : candidateClasses )
@@ -250,7 +259,8 @@ public class AnnotationScanner
     * @param typeCheck
     * @param action
     */
-   public static void forEachField( Class<?> classToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks, Predicate<Class<?>> typeCheck, AnnotatedFieldConsumer action )
+   public static void forEachField( Class<?> classToWorkWith, Class<? extends Annotation> annotation, Predicate<Integer> modifierChecks,
+                                    Predicate<Class<?>> typeCheck, AnnotatedFieldConsumer action )
    {
       if ( ( classToWorkWith == null ) || classToWorkWith.getName().equals( Object.class.getName() ) )
       {
@@ -266,7 +276,8 @@ public class AnnotationScanner
             annotationObject = fieldOfClass.getAnnotation( annotation );
          }
 
-         if ( ( ( annotation == null ) || ( annotationObject != null ) ) && ( ( modifierChecks == null ) || modifierChecks.test( fieldOfClass.getModifiers() ) ) )
+         if ( ( ( annotation == null ) || ( annotationObject != null ) )
+              && ( ( modifierChecks == null ) || modifierChecks.test( fieldOfClass.getModifiers() ) ) )
          {
             action.accept( classToWorkWith, fieldOfClass, annotationObject );
          }

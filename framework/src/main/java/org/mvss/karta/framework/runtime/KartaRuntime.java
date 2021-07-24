@@ -433,7 +433,7 @@ public class KartaRuntime implements AutoCloseable
    public void processConfigBeans( Collection<String> configurationScanPackageNames )
    {
       AnnotationScanner
-               .forEachMethod( configurationScanPackageNames, KartaBean.class, AnnotationScanner.IS_PUBLIC_AND_STATIC, AnnotationScanner.IS_NON_VOID_RETURN_TYPE, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, processBeanDefinition );
+               .forEachMethod( configurationScanPackageNames, KartaBean.class, AnnotationScanner.IS_PUBLIC_AND_STATIC, AnnotationScanner.IS_NON_VOID_TYPE, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, processBeanDefinition );
       AnnotationScanner
                .forEachClass( configurationScanPackageNames, LoadConfiguration.class, AnnotationScanner.IS_PUBLIC, processLoadPropertiesDefinition );
    }

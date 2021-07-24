@@ -36,14 +36,16 @@ import lombok.Getter;
  */
 public class Configurator
 {
-   public static final TypeReference<HashMap<String, HashMap<String, Serializable>>> propertiesType  = new TypeReference<HashMap<String, HashMap<String, Serializable>>>()
-                                                                                                     {
-                                                                                                     };
+   public static final TypeReference<HashMap<String, HashMap<String, Serializable>>> propertiesType  =
+            new TypeReference<HashMap<String, HashMap<String, Serializable>>>()
+                                                                                                              {
+                                                                                                              };
    /**
     * Property store is a mapping of group name to the map of property names to Serializable property values.
     */
    @Getter
-   private HashMap<String, HashMap<String, Serializable>>                            propertiesStore = new HashMap<String, HashMap<String, Serializable>>();
+   private HashMap<String, HashMap<String, Serializable>>                            propertiesStore =
+            new HashMap<String, HashMap<String, Serializable>>();
 
    /**
     * Merges a property store into the configurator's property store.

@@ -6,6 +6,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import org.mvss.karta.framework.enums.ContextType;
 import org.mvss.karta.framework.runtime.Constants;
 
 /**
@@ -22,4 +23,11 @@ import org.mvss.karta.framework.runtime.Constants;
 public @interface KartaAutoWired
 {
    public String value() default Constants.EMPTY_STRING;
+
+   // Alias for value
+   public String name() default Constants.EMPTY_STRING;
+
+   public ContextType contextType() default ContextType.GLOBAL;
+
+   public String contextName() default Constants.EMPTY_STRING;
 }
