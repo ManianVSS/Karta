@@ -23,7 +23,7 @@ public class DataUtils
     * @param source
     * @return
     */
-   public static <K, V> HashMap<K, V> cloneMap( HashMap<K, V> source )
+   public static <K, V> HashMap<K, V> cloneMap( Map<K, V> source )
    {
       HashMap<K, V> clone = new HashMap<K, V>();
 
