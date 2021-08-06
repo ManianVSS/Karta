@@ -2,11 +2,16 @@ package org.mvss.karta.framework.utils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Predicate;
+
+import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.runtime.Constants;
 
 /**
  * Utility class to work with generic maps, lists and other vectors
@@ -495,5 +500,32 @@ public class DataUtils
    public static String pickNonNull( String... strings )
    {
       return pick( ( str ) -> ( str != null ), strings );
+   }
+
+   public Object[] getMergedNonNullValues( Object... values )
+   {
+      List<Object> returnValue = Arrays.asList( values );
+      returnValue.removeIf( ( value ) -> ( value == null ) );
+      return returnValue.toArray();
+   }
+
+   public static String constructURL( String... urlPieces )
+   {
+      String fullURL = Constants.EMPTY_STRING;
+
+      if ( urlPieces == null )
+      {
+         return null;
+      }
+
+      for ( int i = 0; i < urlPieces.length; i++ )
+      {
+         if ( StringUtils.isNotBlank( urlPieces[i] ) )
+         {
+            fullURL = StringUtils.strip( fullURL + Constants.SLASH + StringUtils.strip( urlPieces[i], Constants.SLASH ), Constants.SLASH );
+         }
+      }
+
+      return fullURL;
    }
 }

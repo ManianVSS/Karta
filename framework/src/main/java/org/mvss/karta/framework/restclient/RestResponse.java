@@ -1,11 +1,13 @@
 package org.mvss.karta.framework.restclient;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-public interface RestResponse extends Serializable
+public interface RestResponse extends Serializable, AutoCloseable
 {
    String getProtocolVersion();
 
@@ -17,9 +19,11 @@ public interface RestResponse extends Serializable
 
    ContentType getContentType();
 
-   byte[] getBody();
+   String getBody() throws IOException;
 
-   <T> T getBodyAs( Class<T> type );
+   <T> T getBodyAs( Class<T> type ) throws IOException;
 
-   <T> T getBodyAs( TypeReference<T> type );
+   <T> T getBodyAs( TypeReference<T> type ) throws IOException;
+
+   InputStream getStream() throws IOException;
 }

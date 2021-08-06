@@ -5,11 +5,11 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.SerializationUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.SerializableEntity;
 import org.apache.http.entity.StringEntity;
 import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
 
 import lombok.Getter;
@@ -173,29 +173,7 @@ public class ApacheRestRequest implements RestRequest
 
    protected String getFullURL( String baseUrl, String path )
    {
-      String fullUrl = baseUrl;
-
-      if ( StringUtils.isNotEmpty( fullUrl ) && !fullUrl.endsWith( "/" ) )
-      {
-         fullUrl = fullUrl + "/";
-      }
-
-      if ( StringUtils.isNotEmpty( url ) && url.startsWith( "/" ) && url.length() > 1 )
-      {
-         fullUrl = fullUrl + url.substring( 1 );
-      }
-
-      if ( StringUtils.isNotEmpty( fullUrl ) && !fullUrl.endsWith( "/" ) )
-      {
-         fullUrl = fullUrl + "/";
-      }
-
-      if ( StringUtils.isNotEmpty( path ) && path.startsWith( "/" ) && path.length() > 1 )
-      {
-         fullUrl = fullUrl + path.substring( 1 );
-      }
-
-      return fullUrl;
+      return DataUtils.constructURL( baseUrl, url, path );
    }
 
    protected RequestBuilder prepareRequest( RequestBuilder requestBuilder )

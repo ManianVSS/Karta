@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.restclient;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 
 import org.apache.http.Header;
@@ -28,7 +29,8 @@ public class ApacheRestResponse implements RestResponse
    private String                  reasonPhrase;
    private HashMap<String, String> headers;
    private ContentType             contentType;
-   private byte[]                  body;
+
+   private InputStream             contentStream;
 
    public ApacheRestResponse( CloseableHttpResponse response ) throws UnsupportedOperationException, IOException
    {
@@ -60,18 +62,25 @@ public class ApacheRestResponse implements RestResponse
 
       if ( entity != null )
       {
-         this.body = entity.getContent().readAllBytes();
+         this.contentStream = entity.getContent();
       }
    }
 
    @Override
    @SuppressWarnings( "unchecked" )
-   public <T> T getBodyAs( Class<T> type )
+   public <T> T getBodyAs( Class<T> type ) throws IOException
    {
-      if ( body == null )
+      if ( contentStream == null )
       {
          return null;
       }
+
+      if ( type == InputStream.class )
+      {
+         return (T) contentStream;
+      }
+
+      byte[] body = contentStream.readAllBytes();
 
       if ( type == byte[].class )
       {
@@ -128,8 +137,30 @@ public class ApacheRestResponse implements RestResponse
 
    @Override
    @SuppressWarnings( "unchecked" )
-   public <T> T getBodyAs( TypeReference<T> type )
+   public <T> T getBodyAs( TypeReference<T> type ) throws IOException
    {
       return (T) getBodyAs( TypeFactory.rawClass( type.getType() ) );
+   }
+
+   @Override
+   public void close() throws Exception
+   {
+      if ( contentStream != null )
+      {
+         contentStream.close();
+         contentStream = null;
+      }
+   }
+
+   @Override
+   public String getBody() throws IOException
+   {
+      return getBodyAs( String.class );
+   }
+
+   @Override
+   public InputStream getStream() throws IOException
+   {
+      return contentStream;
    }
 }

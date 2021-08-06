@@ -116,10 +116,8 @@ public class ApacheRestClient implements RestClient
       RequestBuilder requestBuilder = method.httpMethod( ahRequest.getFullURL( baseUrl, suffixPath ) );
       HttpUriRequest httpUriRequest = ahRequest.prepareRequest( requestBuilder ).build();
 
-      try (CloseableHttpResponse closeableHttpResponse = execute( httpUriRequest ))
-      {
-         return new ApacheRestResponse( closeableHttpResponse );
-      }
+      CloseableHttpResponse closeableHttpResponse = execute( httpUriRequest );
+      return new ApacheRestResponse( closeableHttpResponse );
    }
 
    @Override
