@@ -2,6 +2,7 @@ package org.mvss.karta.framework.restclient;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 import org.apache.http.Header;
@@ -85,17 +86,34 @@ public class ApacheRestResponse implements RestResponse
          return (T) body;
       }
 
+      if ( type == String.class )
+      {
+         return (T) new String( body, StandardCharsets.UTF_8 );
+      }
+
       try
       {
          switch ( contentType )
          {
+            case APPLICATION_FORM_URLENCODED:
+            case APPLICATION_OCTET_STREAM:
+            case IMAGE_BMP:
+            case IMAGE_GIF:
+            case IMAGE_JPEG:
+            case IMAGE_PNG:
+            case IMAGE_SVG:
+            case IMAGE_TIFF:
+            case IMAGE_WEBP:
+            case MULTIPART_FORM_DATA:
+               return ParserUtils.convertValue( DataFormat.JSON, body, type );
+
             case APPLICATION_XML:
             case APPLICATION_ATOM_XML:
             case APPLICATION_XHTML_XML:
             case APPLICATION_SOAP_XML:
             case APPLICATION_SVG_XML:
                String bytesStr = new String( body );
-               return ParserUtils.convertValue( DataFormat.XML, body, type );
+               return ParserUtils.readValue( DataFormat.XML, bytesStr, type );
 
             case APPLICATION_YML:
             case APPLICATION_YAML:
@@ -111,19 +129,6 @@ public class ApacheRestResponse implements RestResponse
             default:
                bytesStr = new String( body );
                return ParserUtils.readValue( DataFormat.JSON, bytesStr, type );
-
-            case APPLICATION_FORM_URLENCODED:
-            case APPLICATION_OCTET_STREAM:
-            case IMAGE_BMP:
-            case IMAGE_GIF:
-            case IMAGE_JPEG:
-            case IMAGE_PNG:
-            case IMAGE_SVG:
-            case IMAGE_TIFF:
-            case IMAGE_WEBP:
-            case MULTIPART_FORM_DATA:
-               return ParserUtils.convertValue( DataFormat.JSON, body, type );
-
          }
       }
       catch ( Exception exception )
