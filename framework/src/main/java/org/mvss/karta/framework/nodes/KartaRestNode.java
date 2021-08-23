@@ -33,7 +33,7 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 @Getter
-public class KartaRestNode implements KartaNode, AutoCloseable
+public class KartaRestNode implements KartaNode
 {
    private ApacheRestClient restClient;
 
@@ -70,12 +70,14 @@ public class KartaRestNode implements KartaNode, AutoCloseable
       {
          RestRequest restRequest = ApacheRestRequest.requestBuilder().header( Constants.ACCEPT, Constants.APPLICATION_JSON )
                   .contentType( ContentType.APPLICATION_JSON ).body( parameters ).build();
-         RestResponse response = restClient.post( restRequest, Constants.PATH_RUN_FEATURE );
-
-         int statusCode = response.getStatusCode();
-         if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+         try (RestResponse response = restClient.post( restRequest, Constants.PATH_RUN_FEATURE ))
          {
-            result = response.getBodyAs( FeatureResult.class );
+
+            int statusCode = response.getStatusCode();
+            if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+            {
+               result = response.getBodyAs( FeatureResult.class );
+            }
          }
       }
       catch ( Exception e )
@@ -103,12 +105,14 @@ public class KartaRestNode implements KartaNode, AutoCloseable
 
          RestRequest restRequest = ApacheRestRequest.requestBuilder().header( Constants.ACCEPT, Constants.APPLICATION_JSON )
                   .contentType( ContentType.APPLICATION_JSON ).body( parameters ).build();
-         RestResponse response = restClient.post( restRequest, Constants.PATH_RUN_JOB_ITERATION );
-
-         int statusCode = response.getStatusCode();
-         if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+         try (RestResponse response = restClient.post( restRequest, Constants.PATH_RUN_JOB_ITERATION ))
          {
-            result = response.getBodyAs( TestJobResult.class );
+
+            int statusCode = response.getStatusCode();
+            if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+            {
+               result = response.getBodyAs( TestJobResult.class );
+            }
          }
       }
       catch ( Exception e )
@@ -139,12 +143,14 @@ public class KartaRestNode implements KartaNode, AutoCloseable
 
          RestRequest restRequest = ApacheRestRequest.requestBuilder().header( Constants.ACCEPT, Constants.APPLICATION_JSON )
                   .contentType( ContentType.APPLICATION_JSON ).body( parameters ).build();
-         RestResponse response = restClient.post( restRequest, Constants.PATH_RUN_SCENARIO );
-
-         int statusCode = response.getStatusCode();
-         if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+         try (RestResponse response = restClient.post( restRequest, Constants.PATH_RUN_SCENARIO ))
          {
-            result = response.getBodyAs( ScenarioResult.class );
+
+            int statusCode = response.getStatusCode();
+            if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+            {
+               result = response.getBodyAs( ScenarioResult.class );
+            }
          }
       }
       catch ( Exception e )
@@ -169,12 +175,14 @@ public class KartaRestNode implements KartaNode, AutoCloseable
       {
          RestRequest restRequest = ApacheRestRequest.requestBuilder().header( Constants.ACCEPT, Constants.APPLICATION_JSON )
                   .contentType( ContentType.APPLICATION_JSON ).body( parameters ).build();
-         RestResponse response = restClient.post( restRequest, Constants.PATH_RUN_STEP );
-
-         int statusCode = response.getStatusCode();
-         if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+         try (RestResponse response = restClient.post( restRequest, Constants.PATH_RUN_STEP ))
          {
-            result = response.getBodyAs( StepResult.class );
+
+            int statusCode = response.getStatusCode();
+            if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+            {
+               result = response.getBodyAs( StepResult.class );
+            }
          }
       }
       catch ( Exception e )
@@ -198,12 +206,14 @@ public class KartaRestNode implements KartaNode, AutoCloseable
       {
          RestRequest restRequest = ApacheRestRequest.requestBuilder().header( Constants.ACCEPT, Constants.APPLICATION_JSON )
                   .contentType( ContentType.APPLICATION_JSON ).body( parameters ).build();
-         RestResponse response = restClient.post( restRequest, Constants.PATH_RUN_CHAOS_ACTION );
-
-         int statusCode = response.getStatusCode();
-         if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+         try (RestResponse response = restClient.post( restRequest, Constants.PATH_RUN_CHAOS_ACTION ))
          {
-            result = response.getBodyAs( StepResult.class );
+
+            int statusCode = response.getStatusCode();
+            if ( ( statusCode == 200 ) || ( statusCode == 201 ) )
+            {
+               result = response.getBodyAs( StepResult.class );
+            }
          }
       }
       catch ( Exception e )
@@ -222,9 +232,11 @@ public class KartaRestNode implements KartaNode, AutoCloseable
          RestRequest restRequest = ApacheRestRequest.requestBuilder().header( Constants.ACCEPT, Constants.APPLICATION_JSON )
                   .contentType( ContentType.APPLICATION_JSON ).build();
 
-         RestResponse response = restClient.get( restRequest, Constants.PATH_HEALTH );
-         int statusCode = response.getStatusCode();
-         return ( statusCode == 200 ) ? response.getBodyAs( Boolean.class ) : false;
+         try (RestResponse response = restClient.get( restRequest, Constants.PATH_HEALTH ))
+         {
+            int statusCode = response.getStatusCode();
+            return ( statusCode == 200 ) ? response.getBodyAs( Boolean.class ) : false;
+         }
       }
       catch ( Exception e )
       {
