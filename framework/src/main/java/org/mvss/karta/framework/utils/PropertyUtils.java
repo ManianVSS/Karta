@@ -1,5 +1,12 @@
 package org.mvss.karta.framework.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
+
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -10,18 +17,9 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
-import org.mvss.karta.framework.runtime.Constants;
-import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.extern.log4j.Log4j2;
-
 /**
  * Utility class to load bean properties from property files (YAML, JSON or XML)
- * 
+ *
  * @author Manian
  */
 @Log4j2
@@ -29,17 +27,15 @@ public class PropertyUtils
 {
 
    /**
-    * The compiled regex patter for matching property references in format ${propertyName}
-    */
-   public static Pattern                       propertyPattern   = Pattern.compile( "\\$\\{([_A-Za-z0-9]+)\\}" );
-
-   /**
     * Cached environment and system properties with system properties having higher precedence
     */
    public final static HashMap<String, String> systemPropertyMap = new HashMap<String, String>();
-
-   private static ObjectMapper                 objectMapper      = ParserUtils.getObjectMapper();
-   private static ObjectMapper                 yamlObjectMapper  = ParserUtils.getYamlObjectMapper();
+   /**
+    * The compiled regex patter for matching property references in format ${propertyName}
+    */
+   public static       Pattern                 propertyPattern   = Pattern.compile( "\\$\\{([_A-Za-z0-9]+)\\}" );
+   private static      ObjectMapper            objectMapper      = ParserUtils.getObjectMapper();
+   private static      ObjectMapper            yamlObjectMapper  = ParserUtils.getYamlObjectMapper();
 
    static
    {
@@ -49,7 +45,7 @@ public class PropertyUtils
 
    /**
     * Expands system properties in format ${propertyName} in keys of the map
-    * 
+    *
     * @param <V>
     * @param valueMap
     */
@@ -63,7 +59,7 @@ public class PropertyUtils
 
    /**
     * Expands system properties in format ${propertyName} in keys and values of the map
-    * 
+    *
     * @param valueMap
     */
    public static void expandEnvVars( Map<String, String> valueMap )
@@ -76,7 +72,7 @@ public class PropertyUtils
 
    /**
     * Expands system properties in format ${propertyName} in the collection values
-    * 
+    *
     * @param valueList
     */
    public static void expandEnvVars( Collection<String> valueList )
@@ -89,7 +85,7 @@ public class PropertyUtils
 
    /**
     * Expands system properties in format ${propertyName} in the string text.
-    * 
+    *
     * @param text
     * @return
     */
@@ -104,7 +100,7 @@ public class PropertyUtils
 
    /**
     * Merge system properties into the property map
-    * 
+    *
     * @param propertyMap
     */
    public static void mergeEnvValuesIntoMap( HashMap<String, String> propertyMap )
@@ -117,7 +113,7 @@ public class PropertyUtils
 
    /**
     * Expand system properties in a string with a given properties map
-    * 
+    *
     * @param propertyMap
     * @param text
     * @return
@@ -142,7 +138,7 @@ public class PropertyUtils
             String propValue = propertyMap.get( matcher.group( 1 ).toUpperCase() );
             if ( propValue != null )
             {
-               found = true;
+               found     = true;
                propValue = propValue.replace( Constants.BACKSLASH, Constants.DOUBLE_BACKSLASH );
                Pattern subexpr = Pattern.compile( Pattern.quote( matcher.group( 0 ) ) );
                text = subexpr.matcher( text ).replaceAll( propValue );
@@ -156,7 +152,7 @@ public class PropertyUtils
 
    /**
     * Converts a property store into a properties map which can be used to substitute values
-    * 
+    *
     * @param propertiesStore
     * @return
     */
@@ -170,8 +166,8 @@ public class PropertyUtils
          {
             try
             {
-               propertyMap.put( propertyStoreEntry.getKey() + Constants.DOT + properties.getKey(), objectMapper
-                        .writeValueAsString( properties.getValue() ) );
+               propertyMap.put( propertyStoreEntry.getKey() + Constants.DOT + properties.getKey(),
+                        objectMapper.writeValueAsString( properties.getValue() ) );
             }
             catch ( JsonProcessingException e )
             {
@@ -192,7 +188,7 @@ public class PropertyUtils
 
    /**
     * Returns environmental variable returning default value for undefined keys
-    * 
+    *
     * @param key
     * @param defaultValue
     * @return
@@ -205,7 +201,7 @@ public class PropertyUtils
 
    /**
     * Returns system/env property returning default value for undefined keys
-    * 
+    *
     * @param key
     * @param defaultValue
     * @return
@@ -217,7 +213,7 @@ public class PropertyUtils
 
    /**
     * Sets the value of a object's field based on the field type converting from the serializable value (property matched)
-    * 
+    *
     * @param object
     * @param field
     * @param propertyValue
@@ -240,6 +236,10 @@ public class PropertyUtils
             {
                field.set( object, propertyValue );
             }
+            else if ( ( castAsType == Pattern.class ) && ( propertyValue.getClass() == String.class ) )
+            {
+               field.set( object, Pattern.compile( (String) propertyValue ) );
+            }
             else
             {
                field.set( object, objectMapper.convertValue( propertyValue, castAsType ) );
@@ -255,7 +255,7 @@ public class PropertyUtils
    /**
     * Get property value from a property store giving precedence to system/environment property.
     * Useful in Kubernetes/Docker environment with environment variable acting as container parameters.
-    * 
+    *
     * @param propertiesStore
     * @param group
     * @param name
@@ -263,7 +263,7 @@ public class PropertyUtils
     */
    public static Serializable getPropertyValue( HashMap<String, HashMap<String, Serializable>> propertiesStore, String group, String name )
    {
-      String keyForEnvOrSys = group + Constants.UNDERSCORE + name;
+      String keyForEnvOrSys       = group + Constants.UNDERSCORE + name;
       String propertyFromEnvOrSys = systemPropertyMap.get( keyForEnvOrSys.toUpperCase() );
 
       if ( propertyFromEnvOrSys != null )
@@ -278,7 +278,7 @@ public class PropertyUtils
    /**
     * Sets the value of an object's field by matching property from a property store based on PropertyMapping annotation
     * Note: A property store is a HashMap of property group name to HashMap of property names and values for the group.
-    * 
+    *
     * @param propertiesStore
     * @param object
     * @param field
@@ -290,15 +290,15 @@ public class PropertyUtils
       try
       {
          String propertyGroup = propertyMapping.group();
-         String propertyName = propertyMapping.value();
+         String propertyName  = propertyMapping.value();
 
          if ( StringUtils.isEmpty( propertyName ) )
          {
             propertyName = field.getName();
          }
 
-         Serializable propertyValue = getPropertyValue( propertiesStore, propertyGroup, propertyName );
-         Class<?> covertToTypeTo = ( Object.class == propertyMapping.type() ) ? field.getType() : propertyMapping.type();
+         Serializable propertyValue  = getPropertyValue( propertiesStore, propertyGroup, propertyName );
+         Class<?>     covertToTypeTo = ( Object.class == propertyMapping.type() ) ? field.getType() : propertyMapping.type();
          PropertyUtils.setFieldValue( object, field, propertyValue, covertToTypeTo );
       }
       catch ( Throwable t )
