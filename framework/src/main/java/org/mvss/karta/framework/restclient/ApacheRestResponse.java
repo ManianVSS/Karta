@@ -40,16 +40,14 @@ public class ApacheRestResponse implements RestResponse
       this.reasonPhrase = statusLine.getReasonPhrase();
 
       this.headers = new HashMap<String, String>();
-      if ( headers != null )
-      {
-         for ( Header header : response.getAllHeaders() )
-         {
-            this.headers.put( header.getName(), header.getValue() );
 
-            if ( header.getName().equals( Constants.CONTENT_TYPE ) )
-            {
-               this.contentType = ContentType.getByMimeType( header.getValue() );
-            }
+      for ( Header header : response.getAllHeaders() )
+      {
+         this.headers.put( header.getName(), header.getValue() );
+
+         if ( header.getName().equals( Constants.CONTENT_TYPE ) )
+         {
+            this.contentType = ContentType.getByMimeType( header.getValue() );
          }
       }
 
@@ -143,7 +141,7 @@ public class ApacheRestResponse implements RestResponse
    }
 
    @Override
-   public void close() throws Exception
+   public void close() throws IOException
    {
       if ( contentStream != null )
       {
@@ -158,6 +156,13 @@ public class ApacheRestResponse implements RestResponse
       return getBodyAs( String.class );
    }
 
+   /**
+    * Get the response stream typically to save as file.
+    * The stream must be closed by consumers after use.
+    *
+    * @return
+    * @throws IOException
+    */
    @Override
    public InputStream getStream() throws IOException
    {

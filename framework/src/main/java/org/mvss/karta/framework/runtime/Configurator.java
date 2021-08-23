@@ -25,6 +25,7 @@ import org.mvss.karta.framework.utils.PropertyUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * This class is used to load properties (Serializable fields) of an object or class.
@@ -34,6 +35,7 @@ import lombok.Getter;
  * 
  * @author Manian
  */
+@Log4j2
 public class Configurator
 {
    public static final TypeReference<HashMap<String, HashMap<String, Serializable>>> propertiesType  =
@@ -159,10 +161,20 @@ public class Configurator
     * @throws IOException
     * @throws URISyntaxException
     */
-   public void mergePropertiesString( DataFormat dataFormat, String propertiesDataString ) throws IOException, URISyntaxException
+   public boolean mergePropertiesString( DataFormat dataFormat, String propertiesDataString )
    {
-      HashMap<String, HashMap<String, Serializable>> propertiesToMerge = readPropertiesFromString( dataFormat, propertiesDataString );
-      mergeProperties( propertiesToMerge );
+      try
+      {
+         HashMap<String, HashMap<String, Serializable>> propertiesToMerge = readPropertiesFromString( dataFormat, propertiesDataString );
+         mergeProperties( propertiesToMerge );
+         return true;
+      }
+      catch ( IOException e )
+      {
+         log.error( "Error while parsing property file", e );
+         return false;
+      }
+
    }
 
    /**
@@ -172,35 +184,59 @@ public class Configurator
     * @throws IOException
     * @throws URISyntaxException
     */
-   public void mergePropertiesFiles( String... propertyFiles ) throws IOException, URISyntaxException
+   public boolean mergePropertiesFiles( String... propertyFiles )
    {
+      if ( propertyFiles == null )
+      {
+         return true;
+      }
+
       for ( String propertyFile : propertyFiles )
       {
-         // TODO: Load from class-path folders and files for properties
-
-         Path propertyFilePath = Paths.get( propertyFile );
-
-         if ( Files.isDirectory( propertyFilePath ) )
+         try
          {
-            for ( File propFileInDirectory : FileUtils.listFiles( propertyFilePath.toFile(), Constants.propertyFileExtentions, true ) )
-            {
-               String propertyFileContents = FileUtils.readFileToString( propFileInDirectory, Charset.defaultCharset() );
+            // TODO: Load from class-path folders and files for properties
 
-               if ( propertyFileContents != null )
+            Path propertyFilePath = Paths.get( propertyFile );
+
+            if ( Files.isDirectory( propertyFilePath ) )
+            {
+               for ( File propFileInDirectory : FileUtils.listFiles( propertyFilePath.toFile(), Constants.propertyFileExtentions, true ) )
                {
-                  mergePropertiesString( ParserUtils.getFileDataFormat( propFileInDirectory.getName() ), propertyFileContents );
+                  String propertyFileContents = FileUtils.readFileToString( propFileInDirectory, Charset.defaultCharset() );
+
+                  if ( propertyFileContents != null )
+                  {
+                     if ( !mergePropertiesString( ParserUtils.getFileDataFormat( propFileInDirectory.getName() ), propertyFileContents ) )
+                     {
+                        log.error( "Error while parsing properties from file " + propertyFile );
+                        return false;
+                     }
+                  }
+               }
+               continue;
+            }
+
+            String propertyFileContents = ClassPathLoaderUtils.readAllText( propertyFile );
+
+            if ( propertyFileContents != null )
+            {
+               if ( !mergePropertiesString( ParserUtils.getFileDataFormat( propertyFile ), propertyFileContents ) )
+               {
+                  log.error( "Error while parsing properties from file " + propertyFile );
+                  return false;
                }
             }
-            continue;
+
          }
-
-         String propertyFileContents = ClassPathLoaderUtils.readAllText( propertyFile );
-
-         if ( propertyFileContents != null )
+         catch ( IOException | URISyntaxException e )
          {
-            mergePropertiesString( ParserUtils.getFileDataFormat( propertyFile ), propertyFileContents );
+            log.error( "Error while parsing properties from file " + propertyFile, e );
+            return false;
          }
       }
+      return true;
+
    }
 
    /**

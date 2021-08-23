@@ -200,15 +200,6 @@ public class KartaRuntime implements AutoCloseable
             if ( kartaHomeConfigFile.exists() )
             {
                configString = FileUtils.readFileToString( kartaHomeConfigFile, Charset.defaultCharset() );
-
-               if ( configString == null )
-               {
-                  return false;
-               }
-            }
-            else
-            {
-               return false;
             }
          }
       }
@@ -260,7 +251,11 @@ public class KartaRuntime implements AutoCloseable
 
       String[] propertyFilesToLoad = new String[propertiesFileList.size()];
       propertiesFileList.toArray( propertyFilesToLoad );
-      configurator.mergePropertiesFiles( propertyFilesToLoad );
+      if ( !configurator.mergePropertiesFiles( propertyFilesToLoad ) )
+      {
+         log.error( "Error while merging property files to configurator store." );
+         return false;
+      }
 
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Load and enable plug-ins

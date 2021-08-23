@@ -121,6 +121,7 @@ public class Constants
    public static final String   __ALL__                             = "__All__";
 
    public static final String   REGEX_WHITESPACE                    = "\\s";
+   public static final String   REGEX_WHITESPACE_MULTIPLE           = "\\s+";
    public static final String   REGEX_NON_ALPHANUMERIC              = "[^a-zA-Z0-9]+";
    public static final String   REGEX_ALL_STRING                    = ".*";
 
