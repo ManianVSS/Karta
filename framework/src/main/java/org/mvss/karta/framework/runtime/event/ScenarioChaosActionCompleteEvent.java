@@ -1,18 +1,12 @@
 package org.mvss.karta.framework.runtime.event;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.mvss.karta.framework.core.PreparedChaosAction;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.ParserUtils;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 @Getter
 @Setter
@@ -26,11 +20,13 @@ public class ScenarioChaosActionCompleteEvent extends ScenarioEvent
    public ScenarioChaosActionCompleteEvent( Event event )
    {
       super( event );
-      parameters.put( Constants.CHAOS_ACTION, ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.CHAOS_ACTION ), PreparedChaosAction.class ) );
+      parameters.put( Constants.CHAOS_ACTION,
+               ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.CHAOS_ACTION ), PreparedChaosAction.class ) );
       parameters.put( Constants.RESULT, ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.RESULT ), StepResult.class ) );
    }
 
-   public ScenarioChaosActionCompleteEvent( String runName, String featureName, long iterationNumber, String scenarioName, PreparedChaosAction chaosAction, StepResult result )
+   public ScenarioChaosActionCompleteEvent( String runName, String featureName, long iterationNumber, String scenarioName,
+                                            PreparedChaosAction chaosAction, StepResult result )
    {
       super( StandardEventsTypes.SCENARIO_CHAOS_ACTION_COMPLETE_EVENT, runName, featureName, iterationNumber, scenarioName );
       this.parameters.put( Constants.CHAOS_ACTION, chaosAction );

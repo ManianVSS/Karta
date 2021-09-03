@@ -1,5 +1,17 @@
 package org.mvss.karta.framework.runtime.testcatalog;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
+import org.mvss.karta.framework.utils.DynamicClassLoader;
+import org.mvss.karta.framework.utils.ParserUtils;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -8,39 +20,25 @@ import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.mvss.karta.framework.runtime.Constants;
-import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
-import org.mvss.karta.framework.utils.DynamicClassLoader;
-import org.mvss.karta.framework.utils.ParserUtils;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.extern.log4j.Log4j2;
-
 @Log4j2
 @Getter
 @NoArgsConstructor
 public class TestCatalogManager
 {
-   private static ObjectMapper yamlObjectMapper = ParserUtils.getYamlObjectMapper();
+   private static final ObjectMapper yamlObjectMapper = ParserUtils.getYamlObjectMapper();
 
-   private TestCategory        testCatalog      = new TestCategory();
+   private final TestCategory testCatalog = new TestCategory();
 
    public void mergeWithCatalog( TestCategory updatesToRootCategory )
    {
-      updatesToRootCategory.propogateAttributes( null, updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getTestDataSources(), updatesToRootCategory.getThreadGroup(), updatesToRootCategory
-               .getTags() );
+      updatesToRootCategory.propagateAttributes( null, updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getFeatureSourceParser(),
+               updatesToRootCategory.getTestDataSources(), updatesToRootCategory.getThreadGroup(), updatesToRootCategory.getTags() );
       testCatalog.mergeWithTestCategory( updatesToRootCategory );
    }
 
    public void mergeWithCatalog( String sourceArchive ) throws Throwable
    {
-      InputStream fileStream = null;
+      InputStream fileStream;
 
       if ( StringUtils.isNotBlank( sourceArchive ) )
       {
@@ -63,8 +61,9 @@ public class TestCatalogManager
       }
 
       TestCategory updatesToRootCategory = yamlObjectMapper.readValue( IOUtils.toString( fileStream, Charset.defaultCharset() ), TestCategory.class );
-      updatesToRootCategory.propogateAttributes( sourceArchive, updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getTestDataSources(), updatesToRootCategory
-               .getThreadGroup(), updatesToRootCategory.getTags() );
+      updatesToRootCategory.propagateAttributes( sourceArchive, updatesToRootCategory.getFeatureSourceParser(),
+               updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getTestDataSources(), updatesToRootCategory.getThreadGroup(),
+               updatesToRootCategory.getTags() );
       testCatalog.mergeWithTestCategory( updatesToRootCategory );
    }
 
@@ -79,7 +78,7 @@ public class TestCatalogManager
          log.error( "Failed to load test catalog from classpath", t );
       }
 
-      for ( File jarFile : FileUtils.listFiles( repositoryDirectory, Constants.jarExtention, true ) )
+      for ( File jarFile : FileUtils.listFiles( repositoryDirectory, Constants.jarExtension, true ) )
       {
          try
          {
@@ -107,16 +106,16 @@ public class TestCatalogManager
       testCatalog.mergeTest( testToMerge );
    }
 
-   private static ConcurrentHashMap<String, Pattern> patternsMap = new ConcurrentHashMap<String, Pattern>();
+   private static final ConcurrentHashMap<String, Pattern> patternsMap = new ConcurrentHashMap<>();
 
    public synchronized ArrayList<Test> filterTestsByTag( HashSet<String> tags )
    {
-      ArrayList<Test> outputFilteredTests = new ArrayList<Test>();
-      HashSet<Pattern> tagPatterns = new HashSet<Pattern>();
+      ArrayList<Test>  outputFilteredTests = new ArrayList<>();
+      HashSet<Pattern> tagPatterns         = new HashSet<>();
 
       for ( String tag : tags )
       {
-         if ( !patternsMap.contains( tag ) )
+         if ( !patternsMap.containsKey( tag ) )
          {
             patternsMap.put( tag, Pattern.compile( tag ) );
          }

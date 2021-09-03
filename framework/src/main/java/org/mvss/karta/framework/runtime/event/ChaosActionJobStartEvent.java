@@ -1,18 +1,12 @@
 package org.mvss.karta.framework.runtime.event;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.core.TestJob;
 import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.ParserUtils;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 @Getter
 @Setter
@@ -26,7 +20,8 @@ public class ChaosActionJobStartEvent extends JobEvent
    public ChaosActionJobStartEvent( Event event )
    {
       super( event );
-      parameters.put( Constants.CHAOS_ACTION, ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.CHAOS_ACTION ), ChaosAction.class ) );
+      parameters.put( Constants.CHAOS_ACTION,
+               ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.CHAOS_ACTION ), ChaosAction.class ) );
    }
 
    public ChaosActionJobStartEvent( String runName, String featureName, TestJob job, long iterationNumber, ChaosAction chaosAction )

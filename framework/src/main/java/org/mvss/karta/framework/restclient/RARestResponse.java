@@ -1,17 +1,15 @@
 package org.mvss.karta.framework.restclient;
 
-import java.io.InputStream;
-import java.util.HashMap;
-
-import org.mvss.karta.framework.runtime.Constants;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-
+import org.mvss.karta.framework.runtime.Constants;
 import io.restassured.http.Header;
 import io.restassured.response.Response;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.io.InputStream;
+import java.util.HashMap;
 
 @Getter
 @AllArgsConstructor
@@ -19,7 +17,7 @@ public class RARestResponse implements RestResponse
 {
    private static final long serialVersionUID = 1L;
 
-   private Response          response;
+   private Response response;
 
    @Override
    public String getProtocolVersion()

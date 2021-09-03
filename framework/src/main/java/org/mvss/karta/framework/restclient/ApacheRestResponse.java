@@ -1,29 +1,30 @@
 package org.mvss.karta.framework.restclient;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+import org.mvss.karta.framework.enums.DataFormat;
+import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.utils.ParserUtils;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.CloseableHttpResponse;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.mvss.karta.framework.enums.DataFormat;
-import org.mvss.karta.framework.runtime.Constants;
-import org.mvss.karta.framework.utils.ParserUtils;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-
-import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
-
+/**
+ * Response must be closed manually by consumers.
+ */
 @Getter
 @Log4j2
 public class ApacheRestResponse implements RestResponse
 {
-   private static final long       serialVersionUID = 1L;
+   private static final long serialVersionUID = 1L;
 
    private String                  protocolVersion;
    private int                     statusCode;
@@ -31,16 +32,16 @@ public class ApacheRestResponse implements RestResponse
    private HashMap<String, String> headers;
    private ContentType             contentType;
 
-   private InputStream             contentStream;
+   private InputStream contentStream;
 
    public ApacheRestResponse( CloseableHttpResponse response ) throws UnsupportedOperationException, IOException
    {
       StatusLine statusLine = response.getStatusLine();
       this.protocolVersion = statusLine.getProtocolVersion().toString();
-      this.statusCode = statusLine.getStatusCode();
-      this.reasonPhrase = statusLine.getReasonPhrase();
+      this.statusCode      = statusLine.getStatusCode();
+      this.reasonPhrase    = statusLine.getReasonPhrase();
 
-      this.headers = new HashMap<String, String>();
+      this.headers = new HashMap<>();
 
       for ( Header header : response.getAllHeaders() )
       {
@@ -164,12 +165,9 @@ public class ApacheRestResponse implements RestResponse
    /**
     * Get the response stream typically to save as file.
     * The stream must be closed by consumers after use.
-    *
-    * @return
-    * @throws IOException
     */
    @Override
-   public InputStream getStream() throws IOException
+   public InputStream getStream()
    {
       return contentStream;
    }

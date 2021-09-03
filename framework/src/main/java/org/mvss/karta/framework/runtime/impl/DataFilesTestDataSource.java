@@ -1,13 +1,6 @@
 package org.mvss.karta.framework.runtime.impl;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import org.apache.commons.io.FileUtils;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
@@ -15,28 +8,31 @@ import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.utils.ParserUtils;
 import org.mvss.karta.framework.utils.PropertyUtils;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
-
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.FileUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 @Log4j2
 public class DataFilesTestDataSource implements TestDataSource
 {
-   public static final String                                                                                                     PLUGIN_NAME       = "DataFilesTestDataSource";
+   public static final String PLUGIN_NAME = "DataFilesTestDataSource";
 
-   public static final TypeReference<HashMap<String, HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>>>> testDataStoreType = new TypeReference<HashMap<String, HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>>>>()
-                                                                                                                                                    {
-                                                                                                                                                    };
+   public static final TypeReference<HashMap<String, HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>>>> testDataStoreType = new TypeReference<>()
+   {
+   };
 
-   private HashMap<String, HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>>>                            dataStore         = new HashMap<String, HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>>>();
+   private final HashMap<String, HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>>> dataStore = new HashMap<>();
 
    @PropertyMapping( group = PLUGIN_NAME, value = "dataPath" )
-   private ArrayList<String>                                                                                                      dataPath          = new ArrayList<String>();
+   private ArrayList<String> dataPath = new ArrayList<>();
 
-   private boolean                                                                                                                initialized       = false;
+   private boolean initialized = false;
 
    @Override
    public String getPluginName()
@@ -52,30 +48,30 @@ public class DataFilesTestDataSource implements TestDataSource
       {
          if ( !dataStore.containsKey( featureDataKey ) )
          {
-            dataStore.put( featureDataKey, new HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>>() );
+            dataStore.put( featureDataKey, new HashMap<>() );
          }
 
-         HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>> featureData = dataStore.get( featureDataKey );
+         HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>> featureData        = dataStore.get( featureDataKey );
          HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>> featureDataToMerge = dataStoreToMerge.get( featureDataKey );
 
          for ( String scenarioDataKey : featureDataToMerge.keySet() )
          {
             if ( !featureData.containsKey( scenarioDataKey ) )
             {
-               featureData.put( scenarioDataKey, new HashMap<String, HashMap<String, ArrayList<Serializable>>>() );
+               featureData.put( scenarioDataKey, new HashMap<>() );
             }
 
-            HashMap<String, HashMap<String, ArrayList<Serializable>>> scenarioData = featureData.get( scenarioDataKey );
+            HashMap<String, HashMap<String, ArrayList<Serializable>>> scenarioData        = featureData.get( scenarioDataKey );
             HashMap<String, HashMap<String, ArrayList<Serializable>>> scenarioDataToMerge = featureDataToMerge.get( scenarioDataKey );
 
             for ( String stepDataKey : scenarioDataToMerge.keySet() )
             {
                if ( !scenarioData.containsKey( stepDataKey ) )
                {
-                  scenarioData.put( stepDataKey, new HashMap<String, ArrayList<Serializable>>() );
+                  scenarioData.put( stepDataKey, new HashMap<>() );
                }
 
-               HashMap<String, ArrayList<Serializable>> stepData = scenarioData.get( stepDataKey );
+               HashMap<String, ArrayList<Serializable>> stepData        = scenarioData.get( stepDataKey );
                HashMap<String, ArrayList<Serializable>> stepDataToMerge = scenarioDataToMerge.get( stepDataKey );
 
                for ( String testDataKey : stepDataToMerge.keySet() )
@@ -88,14 +84,15 @@ public class DataFilesTestDataSource implements TestDataSource
       }
    }
 
-   public void mergeDataStore( File dataFileToMerge ) throws JsonMappingException, JsonProcessingException, IOException
+   public void mergeDataStore( File dataFileToMerge ) throws IOException
    {
-      mergeDataStore( ParserUtils.readValue( ParserUtils.getFileDataFormat( dataFileToMerge.getName() ), FileUtils.readFileToString( dataFileToMerge, Charset.defaultCharset() ), testDataStoreType ) );
+      mergeDataStore( ParserUtils.readValue( ParserUtils.getFileDataFormat( dataFileToMerge.getName() ),
+               FileUtils.readFileToString( dataFileToMerge, Charset.defaultCharset() ), testDataStoreType ) );
    }
 
-   public void mergeDataDirectory( File pathFile ) throws JsonMappingException, JsonProcessingException, IOException
+   public void mergeDataDirectory( File pathFile ) throws IOException
    {
-      for ( File dataFile : FileUtils.listFiles( pathFile, Constants.dataFileExtentions, true ) )
+      for ( File dataFile : FileUtils.listFiles( pathFile, Constants.dataFileExtensions, true ) )
       {
          mergeDataStore( dataFile );
       }
@@ -134,26 +131,30 @@ public class DataFilesTestDataSource implements TestDataSource
    }
 
    @Override
-   public HashMap<String, Serializable> getData( TestExecutionContext testExecutionContext ) throws Throwable
+   public HashMap<String, Serializable> getData( TestExecutionContext testExecutionContext )
    {
-      HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
+      HashMap<String, Serializable> testData = new HashMap<>();
 
       if ( testExecutionContext != null )
       {
          try
          {
             String featureName = testExecutionContext.getFeatureName();
-            HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>> featureData = ( featureName != null ) && dataStore.containsKey( featureName ) ? dataStore.get( featureName ) : dataStore.get( Constants.__GENERIC_FEATURE__ );
+            HashMap<String, HashMap<String, HashMap<String, ArrayList<Serializable>>>> featureData = ( featureName != null ) && dataStore.containsKey(
+                     featureName ) ? dataStore.get( featureName ) : dataStore.get( Constants.__GENERIC_FEATURE__ );
 
             if ( featureData != null )
             {
                String scenarioName = testExecutionContext.getScenarioName();
-               HashMap<String, HashMap<String, ArrayList<Serializable>>> scenarioData = ( scenarioName != null ) && featureData.containsKey( scenarioName ) ? featureData.get( scenarioName ) : featureData.get( Constants.__GENERIC_SCENARIO__ );
+               HashMap<String, HashMap<String, ArrayList<Serializable>>> scenarioData = ( scenarioName != null ) && featureData.containsKey(
+                        scenarioName ) ? featureData.get( scenarioName ) : featureData.get( Constants.__GENERIC_SCENARIO__ );
 
                if ( scenarioData != null )
                {
                   String stepName = testExecutionContext.getStepIdentifier();
-                  HashMap<String, ArrayList<Serializable>> stepData = ( stepName != null ) && scenarioData.containsKey( stepName ) ? scenarioData.get( stepName ) : scenarioData.get( Constants.__GENERIC_STEP__ );
+                  HashMap<String, ArrayList<Serializable>> stepData = ( stepName != null ) && scenarioData.containsKey( stepName ) ?
+                           scenarioData.get( stepName ) :
+                           scenarioData.get( Constants.__GENERIC_STEP__ );
 
                   if ( stepData != null )
                   {
@@ -189,7 +190,5 @@ public class DataFilesTestDataSource implements TestDataSource
    public void close()
    {
       log.info( "Closing " + PLUGIN_NAME + " ..." );
-
    }
-
 }

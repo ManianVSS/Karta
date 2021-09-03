@@ -4,7 +4,7 @@ import java.util.Date;
 
 /**
  * Utility class for feature results
- * 
+ *
  * @author Manian
  */
 public class StandardFeatureResults

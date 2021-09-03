@@ -7,12 +7,12 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation is used to map the step definition method parameters to a test data.
- * 
+ *
  * @author Manian
  */
 @Target( ElementType.PARAMETER )
 @Retention( RetentionPolicy.RUNTIME )
 public @interface TestData
 {
-   public String value();
+   String value();
 }

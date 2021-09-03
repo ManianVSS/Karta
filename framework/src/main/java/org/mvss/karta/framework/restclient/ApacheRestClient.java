@@ -1,9 +1,7 @@
 package org.mvss.karta.framework.restclient;
 
-import java.io.IOException;
-import java.util.HashMap;
-
-import org.apache.http.client.ClientProtocolException;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
@@ -14,8 +12,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.cookie.BasicClientCookie;
 
-import lombok.Getter;
-import lombok.Setter;
+import java.io.IOException;
+import java.util.HashMap;
 
 @Getter
 @Setter
@@ -83,7 +81,7 @@ public class ApacheRestClient implements RestClient
    @Override
    public HashMap<String, String> getCookies()
    {
-      HashMap<String, String> cookies = new HashMap<String, String>();
+      HashMap<String, String> cookies = new HashMap<>();
       cookieStore.getCookies().forEach( cookie -> cookies.put( cookie.getName(), cookie.getValue() ) );
       return cookies;
    }
@@ -95,12 +93,12 @@ public class ApacheRestClient implements RestClient
    }
 
    @FunctionalInterface
-   private static interface RequestBuilderMethod
+   private interface RequestBuilderMethod
    {
       RequestBuilder httpMethod( String path );
    }
 
-   public CloseableHttpResponse execute( HttpUriRequest httpUriRequest ) throws ClientProtocolException, IOException
+   public CloseableHttpResponse execute( HttpUriRequest httpUriRequest ) throws IOException
    {
       if ( httpClient == null )
       {
@@ -109,8 +107,7 @@ public class ApacheRestClient implements RestClient
       return httpClient.execute( httpUriRequest, context );
    }
 
-   public RestResponse runMethod( RequestBuilderMethod method, ApacheRestRequest ahRequest, String suffixPath )
-            throws ClientProtocolException, IOException
+   public RestResponse runMethod( RequestBuilderMethod method, ApacheRestRequest ahRequest, String suffixPath ) throws IOException
    {
       setCookies( ahRequest.getCookies() );
       RequestBuilder requestBuilder = method.httpMethod( ahRequest.getFullURL( baseUrl, suffixPath ) );

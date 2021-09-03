@@ -1,13 +1,22 @@
 package org.mvss.karta.framework.runtime;
 
+import org.mvss.karta.framework.core.*;
+import org.mvss.karta.framework.nodes.KartaNode;
+import org.mvss.karta.framework.nodes.KartaNodeRegistry;
+import org.mvss.karta.framework.randomization.RandomizationUtils;
+import org.mvss.karta.framework.runtime.event.*;
+import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
+import org.mvss.karta.framework.threading.BlockingRunnableQueue;
+import org.mvss.karta.framework.utils.DataUtils;
+import org.mvss.karta.framework.utils.WaitUtil;
+import lombok.*;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -15,42 +24,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.mvss.karta.framework.core.FeatureResult;
-import org.mvss.karta.framework.core.PreparedStep;
-import org.mvss.karta.framework.core.ScenarioResult;
-import org.mvss.karta.framework.core.SerializableKVP;
-import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.core.TestIncident;
-import org.mvss.karta.framework.core.TestJob;
-import org.mvss.karta.framework.core.TestScenario;
-import org.mvss.karta.framework.core.TestStep;
-import org.mvss.karta.framework.nodes.KartaNode;
-import org.mvss.karta.framework.nodes.KartaNodeRegistry;
-import org.mvss.karta.framework.randomization.RandomizationUtils;
-import org.mvss.karta.framework.runtime.event.EventProcessor;
-import org.mvss.karta.framework.runtime.event.FeatureCompleteEvent;
-import org.mvss.karta.framework.runtime.event.FeatureSetupStepCompleteEvent;
-import org.mvss.karta.framework.runtime.event.FeatureSetupStepStartEvent;
-import org.mvss.karta.framework.runtime.event.FeatureStartEvent;
-import org.mvss.karta.framework.runtime.event.FeatureTearDownStepCompleteEvent;
-import org.mvss.karta.framework.runtime.event.FeatureTearDownStepStartEvent;
-import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
-import org.mvss.karta.framework.threading.BlockingRunnableQueue;
-import org.mvss.karta.framework.utils.DataUtils;
-import org.mvss.karta.framework.utils.WaitUtil;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
-
 /**
  * Runner class to run TestFeatures for Karta
- * 
+ *
  * @author Manian
  */
 @Getter
@@ -61,25 +37,25 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class FeatureRunner implements Callable<FeatureResult>
 {
-   private KartaRuntime            kartaRuntime;
+   private KartaRuntime kartaRuntime;
 
-   private RunInfo                 runInfo;
+   private RunInfo runInfo;
 
-   private TestFeature             testFeature;
+   private TestFeature testFeature;
 
    /**
     * The call back for updating execution result of the TestFeature after run completes.
     */
    private Consumer<FeatureResult> resultConsumer;
 
-   private FeatureResult           result;
+   private FeatureResult result;
 
    @PropertyMapping( value = "detailedResults" )
-   private static boolean          detailedResults = false;
+   private static boolean detailedResults = false;
 
    /**
     * The callback implementation for feature iteration result updates for running Test Feature
-    * 
+    *
     * @param iterationResult
     */
    private void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
@@ -119,14 +95,14 @@ public class FeatureRunner implements Callable<FeatureResult>
    {
       try
       {
-         String runName = runInfo.getRunName();
-         HashSet<String> tags = runInfo.getTags();
+         String          runName = runInfo.getRunName();
+         HashSet<String> tags    = runInfo.getTags();
 
          result = new FeatureResult();
          result.setFeatureName( testFeature.getName() );
-         EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-         KartaNodeRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
-         BeanRegistry contextBeanRegistry = new BeanRegistry();
+         EventProcessor    eventProcessor      = kartaRuntime.getEventProcessor();
+         KartaNodeRegistry nodeRegistry        = kartaRuntime.getNodeRegistry();
+         BeanRegistry      contextBeanRegistry = new BeanRegistry();
 
          Random random = kartaRuntime.getRandom();
 
@@ -152,7 +128,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             try
             {
                long jobInterval = job.getInterval();
-               int repeatCount = job.getIterationCount();
+               int  repeatCount = job.getIterationCount();
 
                if ( jobInterval > 0 )
                {
@@ -191,9 +167,10 @@ public class FeatureRunner implements Callable<FeatureResult>
             stepResult.setStepIndex( setupStepIndex );
             stepResult.setSuccessful( true );
 
-            PreparedStep preparedStep = kartaRuntime.getPreparedStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
+            PreparedStep preparedStep = kartaRuntime.getPreparedStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__,
+                     variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
 
-            if ( !kartaRuntime.shouldStepBeRun( runInfo, preparedStep ) )
+            if ( kartaRuntime.shouldStepNeedNotBeRun( runInfo, preparedStep ) )
             {
                continue;
             }
@@ -240,12 +217,12 @@ public class FeatureRunner implements Callable<FeatureResult>
             }
          }
 
-         long numberOfIterations = runInfo.getNumberOfIterations();
-         int numberOfIterationsInParallel = runInfo.getNumberOfIterationsInParallel();
-         boolean chanceBasedScenarioExecution = runInfo.isChanceBasedScenarioExecution();
-         boolean exclusiveScenarioPerIteration = runInfo.isExclusiveScenarioPerIteration();
-         Duration targetRunDuration = runInfo.getRunDuration();
-         Duration coolDownBetweenIterations = runInfo.getCoolDownBetweenIterations();
+         long     numberOfIterations            = runInfo.getNumberOfIterations();
+         int      numberOfIterationsInParallel  = runInfo.getNumberOfIterationsInParallel();
+         boolean  chanceBasedScenarioExecution  = runInfo.isChanceBasedScenarioExecution();
+         boolean  exclusiveScenarioPerIteration = runInfo.isExclusiveScenarioPerIteration();
+         Duration targetRunDuration             = runInfo.getRunDuration();
+         Duration coolDownBetweenIterations     = runInfo.getCoolDownBetweenIterations();
 
          if ( !DataUtils.inRange( numberOfIterations, 0, Integer.MAX_VALUE ) )
          {
@@ -263,7 +240,8 @@ public class FeatureRunner implements Callable<FeatureResult>
 
          if ( numberOfIterationsInParallel > 1 )
          {
-            iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfIterationsInParallel ) );
+            iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS,
+                     new BlockingRunnableQueue( numberOfIterationsInParallel ) );
          }
 
          Instant startTime = Instant.now();
@@ -306,9 +284,12 @@ public class FeatureRunner implements Callable<FeatureResult>
                scenariosToRun = testFeature.getTestScenarios();
             }
 
-            IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).featureName( testFeature.getName() ).commonTestDataSet( testFeature.getTestDataSet() )
-                     .scenarioSetupSteps( testFeature.getScenarioSetupSteps() ).scenariosToRun( scenariosToRun ).scenarioTearDownSteps( testFeature.getScenarioTearDownSteps() ).iterationIndex( iterationIndex )
-                     .scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) ).resultConsumer( ( iterationResult ) -> accumulateIterationResult( iterationResult ) ).build();
+            IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo )
+                     .featureName( testFeature.getName() ).commonTestDataSet( testFeature.getTestDataSet() )
+                     .scenarioSetupSteps( testFeature.getScenarioSetupSteps() ).scenariosToRun( scenariosToRun )
+                     .scenarioTearDownSteps( testFeature.getScenarioTearDownSteps() ).iterationIndex( iterationIndex )
+                     .scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) )
+                     .resultConsumer( ( iterationResult ) -> accumulateIterationResult( iterationResult ) ).build();
 
             if ( useMinions )
             {
@@ -355,9 +336,10 @@ public class FeatureRunner implements Callable<FeatureResult>
             teardownStepIndex++;
             StepResult stepResult = new StepResult();
             stepResult.setStepIndex( teardownStepIndex );
-            PreparedStep preparedStep = kartaRuntime.getPreparedStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
+            PreparedStep preparedStep = kartaRuntime.getPreparedStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__,
+                     variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
 
-            if ( !kartaRuntime.shouldStepBeRun( runInfo, preparedStep ) )
+            if ( kartaRuntime.shouldStepNeedNotBeRun( runInfo, preparedStep ) )
             {
                continue;
             }

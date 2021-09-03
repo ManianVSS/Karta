@@ -1,17 +1,12 @@
 package org.mvss.karta.framework.runtime.event;
 
+import lombok.*;
+
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Setter
@@ -21,7 +16,7 @@ import lombok.ToString;
 @Builder
 public class Event implements Serializable
 {
-   private static final long               serialVersionUID = 1L;
+   private static final long serialVersionUID = 1L;
 
    protected String                        eventType;
    protected String                        runName;
@@ -31,11 +26,11 @@ public class Event implements Serializable
 
    public Event( String eventType, String runName )
    {
-      this.eventType = eventType;
-      this.id = UUID.randomUUID();
-      this.runName = runName;
+      this.eventType        = eventType;
+      this.id               = UUID.randomUUID();
+      this.runName          = runName;
       this.timeOfOccurrence = Date.from( Instant.now() );
-      this.parameters = new HashMap<String, Serializable>();
+      this.parameters       = new HashMap<String, Serializable>();
    }
 
    public Event( String runName )
@@ -46,19 +41,19 @@ public class Event implements Serializable
    public Event( String eventType, String runName, UUID id, Date timeOfOccurrence )
    {
       super();
-      this.eventType = eventType;
-      this.runName = runName;
-      this.id = id;
+      this.eventType        = eventType;
+      this.runName          = runName;
+      this.id               = id;
       this.timeOfOccurrence = timeOfOccurrence;
-      this.parameters = new HashMap<String, Serializable>();
+      this.parameters       = new HashMap<String, Serializable>();
    }
 
    public Event( Event event )
    {
-      this.eventType = event.eventType;
-      this.runName = event.runName;
-      this.id = event.id;
+      this.eventType        = event.eventType;
+      this.runName          = event.runName;
+      this.id               = event.id;
       this.timeOfOccurrence = event.timeOfOccurrence;
-      this.parameters = event.getParameters();
+      this.parameters       = event.getParameters();
    }
 }

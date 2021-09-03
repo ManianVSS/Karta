@@ -1,12 +1,11 @@
 package org.mvss.karta.framework.runtime.event;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.ParserUtils;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

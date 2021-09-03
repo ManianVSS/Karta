@@ -1,36 +1,33 @@
 package org.mvss.karta.framework.runtime;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.util.HashMap;
-
-import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.enums.ContextType;
-import org.mvss.karta.framework.utils.AnnotatedFieldConsumer;
 import org.mvss.karta.framework.utils.AnnotationScanner;
 import org.mvss.karta.framework.utils.DataUtils;
-
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
+
+import java.lang.reflect.Field;
+import java.util.HashMap;
 
 //TODO: Bean and property injection into bean with dependency tree
 //TODO: Reload bean definitions if changed in annotated locations
 
 /**
  * A registry for named objects which are used throughout test life cycle.
- * 
+ *
  * @author Manian
  */
 @Log4j2
 @Getter
 public class BeanRegistry
 {
-   private HashMap<String, Object>                  globalBeans         = new HashMap<String, Object>();
+   private final HashMap<String, Object> globalBeans = new HashMap<>();
 
-   private HashMap<Thread, HashMap<String, Object>> threadContextBeanMap  = new HashMap<Thread, HashMap<String, Object>>();
+   private final HashMap<Thread, HashMap<String, Object>> threadContextBeanMap = new HashMap<>();
 
-   private HashMap<String, HashMap<String, Object>> namedContextBeanMap = new HashMap<String, HashMap<String, Object>>();
+   private final HashMap<String, HashMap<String, Object>> namedContextBeanMap = new HashMap<>();
 
    /**
     * Constructor: Add self to the registry with class name.
@@ -51,14 +48,14 @@ public class BeanRegistry
 
    /**
     * Initialize the thread specific registry for a thread
-    * 
-    * @param thread
+    *
+    * @param thread Thread
     */
    public void initThreadContextRegistry( Thread thread )
    {
       if ( ( thread != null ) && !threadContextBeanMap.containsKey( thread ) )
       {
-         HashMap<String, Object> threadBeanRegistry = new HashMap<String, Object>();
+         HashMap<String, Object> threadBeanRegistry = new HashMap<>();
          threadContextBeanMap.put( thread, threadBeanRegistry );
          threadBeanRegistry.put( BeanRegistry.class.getName(), this );
       }
@@ -66,14 +63,15 @@ public class BeanRegistry
 
    /**
     * Initialize the named context specific registry for context name
-    * 
-    * @param contextName
+    *
+    * @param contextName String
     */
+   @SuppressWarnings( "unused" )
    public void initNamedContextRegistry( String contextName )
    {
       if ( ( contextName != null ) && !namedContextBeanMap.containsKey( contextName ) )
       {
-         HashMap<String, Object> contextBeanRegistry = new HashMap<String, Object>();
+         HashMap<String, Object> contextBeanRegistry = new HashMap<>();
          namedContextBeanMap.put( contextName, contextBeanRegistry );
          contextBeanRegistry.put( BeanRegistry.class.getName(), this );
       }
@@ -82,9 +80,9 @@ public class BeanRegistry
    /**
     * Add a bean to the registry returning the overridden existing bean by same name if any.
     * Mapped to the class name.
-    * 
-    * @param bean
-    * @return
+    *
+    * @param bean Object
+    * @return Previous Object
     */
    public Object put( Object bean )
    {
@@ -93,10 +91,10 @@ public class BeanRegistry
 
    /**
     * Add a bean to bean registry with bean name returning the overridden existing bean by same name if any.
-    * 
-    * @param beanName
-    * @param bean
-    * @return
+    *
+    * @param beanName String
+    * @param bean     Object
+    * @return Previous Object
     */
    public Object put( String beanName, Object bean )
    {
@@ -107,9 +105,9 @@ public class BeanRegistry
     * Add a bean to the registry if not mapped already.
     * Returns false if bean name already registered.
     * Bean name is the class name.
-    * 
-    * @param bean
-    * @return
+    *
+    * @param bean Object
+    * @return boolean
     */
    public boolean add( Object bean )
    {
@@ -119,10 +117,10 @@ public class BeanRegistry
    /**
     * Add a bean to the registry by name if not mapped already.
     * Returns false if bean name already registered.
-    * 
-    * @param beanName
-    * @param bean
-    * @return
+    *
+    * @param beanName String
+    * @param bean     Object
+    * @return boolean
     */
    public boolean add( String beanName, Object bean )
    {
@@ -137,9 +135,9 @@ public class BeanRegistry
    /**
     * Get the bean in the bean registry by name.
     * Returns null for non existent bean names.
-    * 
-    * @param beanName
-    * @return
+    *
+    * @param beanName String
+    * @return Object
     */
    public Object get( String beanName )
    {
@@ -148,10 +146,9 @@ public class BeanRegistry
 
    /**
     * Get the bean by class
-    * 
-    * @param <T>
-    * @param beanClass
-    * @return
+    *
+    * @param beanClass Class<T>
+    * @return <T>
     */
    @SuppressWarnings( "unchecked" )
    public <T> T get( Class<T> beanClass )
@@ -161,9 +158,9 @@ public class BeanRegistry
 
    /**
     * Checks if the bean name key is mapped and return true if it does.
-    * 
-    * @param beanName
-    * @return
+    *
+    * @param beanName String
+    * @return boolean
     */
    public boolean containsKey( String beanName )
    {
@@ -172,10 +169,10 @@ public class BeanRegistry
 
    /**
     * Gets the bean map based on the wiring context type.
-    * 
-    * @param contextType
-    * @param contextName
-    * @return
+    *
+    * @param contextType ContextType
+    * @param contextName String
+    * @return HashMap<String, Object>
     */
    public HashMap<String, Object> getBeanMap( ContextType contextType, String contextName )
    {
@@ -195,9 +192,9 @@ public class BeanRegistry
 
    /**
     * Gets the bean map based on the wiring context type.
-    * 
-    * @param kartaAutoWired
-    * @return
+    *
+    * @param kartaAutoWired KartaAutoWired
+    * @return HashMap<String, Object>
     */
    public HashMap<String, Object> getBeanMap( KartaAutoWired kartaAutoWired )
    {
@@ -206,26 +203,24 @@ public class BeanRegistry
 
    /**
     * Wires the object's mapped in the object using KartaAutoWired annotation to values from the bean registry.
-    * 
+    *
+    * @param object Object
+    * @throws IllegalArgumentException IllegalArgumentException
     * @see KartaAutoWired
-    * @param object
-    * @throws IllegalArgumentException
-    * @throws IllegalAccessException
     */
-   public void loadBeans( Object object ) throws IllegalArgumentException, IllegalAccessException
+   public void loadBeans( Object object ) throws IllegalArgumentException
    {
       loadBeans( object, object.getClass(), this );
    }
 
    /**
     * Sets the value for a field of a object/class based on the registry and auto wiring type.
-    * 
-    * @param object
-    * @param processAsType
-    * @param field
-    * @param kartaAutoWired
+    *
+    * @param object         Object
+    * @param field          Field
+    * @param kartaAutoWired KartaAutoWired
     */
-   public void setFieldValue( Object object, Class<?> processAsType, Field field, KartaAutoWired kartaAutoWired )
+   public void setFieldValue( Object object, Field field, KartaAutoWired kartaAutoWired )
    {
       try
       {
@@ -235,7 +230,8 @@ public class BeanRegistry
          {
             field.setAccessible( true );
             Class<?> fieldClass = field.getType();
-            String beanName = DataUtils.pickString( StringUtils::isNotEmpty, kartaAutoWired.value(), kartaAutoWired.name(), fieldClass.getName() );
+            String   beanName   = DataUtils.pickString( StringUtils::isNotEmpty, kartaAutoWired.value(), kartaAutoWired.name(),
+                     fieldClass.getName() );
             Object valueToSet = beanMap.get( beanName );
 
             if ( valueToSet != null )
@@ -254,38 +250,26 @@ public class BeanRegistry
     * Wires the instance fields mapped in the object using KartaAutoWired annotation to values from the bean map.
     * The superclass to wire is provided by the parameter theClassOfObject
     * Bean map is provided by parameter beans
-    * 
-    * @param object
-    * @param theClassOfObject
-    * @param beanRegistry
-    * @throws IllegalArgumentException
-    * @throws IllegalAccessException
+    *
+    * @param object           Object
+    * @param theClassOfObject Class<?>
+    * @param beanRegistry     BeanRegistry
+    * @throws IllegalArgumentException IllegalArgumentException
     */
-   public static void loadBeans( Object object, Class<?> theClassOfObject, BeanRegistry beanRegistry )
-            throws IllegalArgumentException, IllegalAccessException
+   public static void loadBeans( Object object, Class<?> theClassOfObject, BeanRegistry beanRegistry ) throws IllegalArgumentException
    {
-      if ( ( object == null ) || ( theClassOfObject == null ) || theClassOfObject.getName().equals( Object.class.getName() )
-           || !theClassOfObject.isAssignableFrom( object.getClass() ) )
+      if ( ( object == null ) || ( theClassOfObject == null ) || theClassOfObject.getName()
+               .equals( Object.class.getName() ) || !theClassOfObject.isAssignableFrom( object.getClass() ) )
       {
          return;
       }
 
-      AnnotationScanner.forEachField( theClassOfObject, KartaAutoWired.class, AnnotationScanner.IS_NON_STATIC
-               .and( AnnotationScanner.IS_NON_FINAL ), AnnotationScanner.IS_NON_VOID_TYPE, new AnnotatedFieldConsumer()
-               {
-                  @Override
-                  public void accept( Class<?> type, Field field, Annotation annotationObject )
-                  {
-                     beanRegistry.setFieldValue( object, type, field, (KartaAutoWired) annotationObject );
-                  }
-               } );
+      AnnotationScanner.forEachField( theClassOfObject, KartaAutoWired.class, AnnotationScanner.IS_NON_STATIC.and( AnnotationScanner.IS_NON_FINAL ),
+               AnnotationScanner.IS_NON_VOID_TYPE,
+               ( type, field, annotationObject ) -> beanRegistry.setFieldValue( object, field, (KartaAutoWired) annotationObject ) );
 
       Class<?> superClass = theClassOfObject.getSuperclass();
-      if ( superClass.getName().equals( Object.class.getName() ) )
-      {
-         return;
-      }
-      else
+      if ( !superClass.getName().equals( Object.class.getName() ) )
       {
          loadBeans( object, superClass, beanRegistry );
       }
@@ -293,47 +277,35 @@ public class BeanRegistry
 
    /**
     * Wires the static field mapped in the object using KartaAutoWired annotation to values from the bean registry.
-    * 
-    * @param theClassOfObject
-    * @throws IllegalArgumentException
-    * @throws IllegalAccessException
+    *
+    * @param theClassOfObject Class<?>
+    * @throws IllegalArgumentException IllegalArgumentException
     */
-   public void loadStaticBeans( Class<?> theClassOfObject ) throws IllegalArgumentException, IllegalAccessException
+   public void loadStaticBeans( Class<?> theClassOfObject ) throws IllegalArgumentException
    {
       loadStaticBeans( theClassOfObject, this );
    }
 
    /**
     * Wires the static field mapped in the object using KartaAutoWired annotation to values from the bean map.
-    * 
-    * @param theClassOfObject
-    * @param beanRegistry
-    * @throws IllegalArgumentException
-    * @throws IllegalAccessException
+    *
+    * @param theClassOfObject Class<?>
+    * @param beanRegistry     BeanRegistry
+    * @throws IllegalArgumentException IllegalArgumentException
     */
-   public static void loadStaticBeans( Class<?> theClassOfObject, BeanRegistry beanRegistry ) throws IllegalArgumentException, IllegalAccessException
+   public static void loadStaticBeans( Class<?> theClassOfObject, BeanRegistry beanRegistry ) throws IllegalArgumentException
    {
       if ( ( theClassOfObject == null ) || theClassOfObject.getName().equals( Object.class.getName() ) )
       {
          return;
       }
 
-      AnnotationScanner.forEachField( theClassOfObject, KartaAutoWired.class, AnnotationScanner.IS_STATIC
-               .and( AnnotationScanner.IS_NON_FINAL ), AnnotationScanner.IS_NON_VOID_TYPE, new AnnotatedFieldConsumer()
-               {
-                  @Override
-                  public void accept( Class<?> type, Field field, Annotation annotationObject )
-                  {
-                     beanRegistry.setFieldValue( null, type, field, (KartaAutoWired) annotationObject );
-                  }
-               } );
+      AnnotationScanner.forEachField( theClassOfObject, KartaAutoWired.class, AnnotationScanner.IS_STATIC.and( AnnotationScanner.IS_NON_FINAL ),
+               AnnotationScanner.IS_NON_VOID_TYPE,
+               ( type, field, annotationObject ) -> beanRegistry.setFieldValue( null, field, (KartaAutoWired) annotationObject ) );
 
       Class<?> superClass = theClassOfObject.getSuperclass();
-      if ( superClass.getName().equals( Object.class.getName() ) )
-      {
-         return;
-      }
-      else
+      if ( !superClass.getName().equals( Object.class.getName() ) )
       {
          loadStaticBeans( superClass, beanRegistry );
       }

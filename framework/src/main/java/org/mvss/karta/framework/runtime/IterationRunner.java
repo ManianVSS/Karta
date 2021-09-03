@@ -1,15 +1,5 @@
 package org.mvss.karta.framework.runtime;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.TestScenario;
@@ -20,13 +10,18 @@ import org.mvss.karta.framework.runtime.event.ScenarioCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioStartEvent;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.log4j.Log4j2;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 @Getter
 @Setter
@@ -36,48 +31,47 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class IterationRunner implements Callable<HashMap<String, ScenarioResult>>
 {
-   private KartaRuntime                              kartaRuntime;
-   private RunInfo                                   runInfo;
-   private String                                    featureName;
+   private KartaRuntime kartaRuntime;
+   private RunInfo      runInfo;
+   private String       featureName;
 
-   private int                                       iterationIndex;
+   private int iterationIndex;
 
-   private HashMap<String, ArrayList<Serializable>>  commonTestDataSet;
-   private ArrayList<TestStep>                       scenarioSetupSteps;
-   private ArrayList<TestScenario>                   scenariosToRun;
-   private ArrayList<TestStep>                       scenarioTearDownSteps;
-
-   @Builder.Default
-   private KartaNode                                 minionToUse     = null;
-
-   private HashMap<TestScenario, AtomicInteger>      scenarioIterationIndexMap;
+   private HashMap<String, ArrayList<Serializable>> commonTestDataSet;
+   private ArrayList<TestStep>                      scenarioSetupSteps;
+   private ArrayList<TestScenario>                  scenariosToRun;
+   private ArrayList<TestStep>                      scenarioTearDownSteps;
 
    @Builder.Default
-   private HashMap<String, Serializable>             variables       = new HashMap<String, Serializable>();;
+   private KartaNode minionToUse = null;
 
-   private HashMap<String, ScenarioResult>           result;
+   private HashMap<TestScenario, AtomicInteger> scenarioIterationIndexMap;
+
+   @Builder.Default
+   private HashMap<String, Serializable> variables = new HashMap<>();
+   
+   private HashMap<String, ScenarioResult> result;
 
    private Consumer<HashMap<String, ScenarioResult>> resultConsumer;
 
    @Builder.Default
-   private HashMap<PreparedScenario, TestScenario>   scenarioMapping = new HashMap<PreparedScenario, TestScenario>();
+   private HashMap<PreparedScenario, TestScenario> scenarioMapping = new HashMap<>();
 
    /**
     * The callback implementation for scenario result updates for running test scenarios
-    * 
-    * @param scenario
-    * @param scenarioResult
     */
    private synchronized void accumulateScenarioResult( PreparedScenario scenario, ScenarioResult scenarioResult )
    {
-      result.put( scenario.getName(), scenarioResult.trimForReport() );;
-      kartaRuntime.getEventProcessor().raiseEvent( new ScenarioCompleteEvent( runInfo.getRunName(), featureName, iterationIndex, scenarioMapping.get( scenario ), scenarioResult ) );
+      result.put( scenario.getName(), scenarioResult.trimForReport() );
+
+      kartaRuntime.getEventProcessor().raiseEvent(
+               new ScenarioCompleteEvent( runInfo.getRunName(), featureName, iterationIndex, scenarioMapping.get( scenario ), scenarioResult ) );
    }
 
    @Override
    public HashMap<String, ScenarioResult> call()
    {
-      result = new HashMap<String, ScenarioResult>();
+      result = new HashMap<>();
       try
       {
          String runName = runInfo.getRunName();
@@ -86,36 +80,41 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
          log.debug( "Iteration " + iterationIndex + " with scenarios " + scenariosToRun );
 
          ExecutorService scenarioExecutionService = null;
-         boolean runScenarioParallely = runInfo.isRunAllScenarioParallely();
+         boolean         runScenarioParallely     = runInfo.isRunAllScenarioParallely();
 
          if ( runScenarioParallely )
          {
             int numberOfScenarios = scenariosToRun.size();
-            scenarioExecutionService = new ThreadPoolExecutor( numberOfScenarios, numberOfScenarios, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfScenarios ) );
+            scenarioExecutionService = new ThreadPoolExecutor( numberOfScenarios, numberOfScenarios, 0L, TimeUnit.MILLISECONDS,
+                     new BlockingRunnableQueue( numberOfScenarios ) );
          }
 
          for ( TestScenario testScenario : scenariosToRun )
          {
-            int scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( testScenario ) ) ) ? scenarioIterationIndexMap.get( testScenario ).getAndIncrement() : 0;
+            int scenarioIterationNumber = ( ( scenarioIterationIndexMap != null ) && ( scenarioIterationIndexMap.containsKey( testScenario ) ) ) ?
+                     scenarioIterationIndexMap.get( testScenario ).getAndIncrement() :
+                     0;
             log.debug( "Running Scenario: " + testScenario.getName() + "[" + scenarioIterationNumber + "]:" );
 
-            PreparedScenario preparedScenario = null;
+            PreparedScenario preparedScenario;
 
             try
             {
-               preparedScenario = kartaRuntime.getPreparedScenario( runInfo, featureName, scenarioIterationNumber, DataUtils.cloneMap( variables ), commonTestDataSet, scenarioSetupSteps, testScenario, scenarioTearDownSteps );
+               preparedScenario = kartaRuntime.getPreparedScenario( runInfo, featureName, scenarioIterationNumber, DataUtils.cloneMap( variables ),
+                        commonTestDataSet, scenarioSetupSteps, testScenario, scenarioTearDownSteps );
                scenarioMapping.put( preparedScenario, testScenario );
             }
             catch ( Throwable t )
             {
-               log.error( "Exception occured when preparing scenario " + testScenario + " for running", t );
+               log.error( "Exception occurred when preparing scenario " + testScenario + " for running", t );
                continue;
             }
 
             eventProcessor.raiseEvent( new ScenarioStartEvent( runName, featureName, iterationIndex, testScenario ) );
 
-            ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).featureName( featureName ).iterationIndex( iterationIndex ).testScenario( preparedScenario )
-                     .scenarioIterationNumber( scenarioIterationNumber ).minionToUse( minionToUse ).resultConsumer( ( scenario, sresult ) -> accumulateScenarioResult( scenario, sresult ) ).build();
+            ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).featureName( featureName )
+                     .iterationIndex( iterationIndex ).testScenario( preparedScenario ).scenarioIterationNumber( scenarioIterationNumber )
+                     .minionToUse( minionToUse ).resultConsumer( this::accumulateScenarioResult ).build();
 
             if ( runScenarioParallely )
             {
@@ -131,7 +130,10 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
          if ( runScenarioParallely )
          {
             scenarioExecutionService.shutdown();
-            scenarioExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
+            if ( !scenarioExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS ) )
+            {
+               log.error( "Failed to wait for scenario executor service shutdown" );
+            }
          }
 
       }

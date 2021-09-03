@@ -1,21 +1,11 @@
 package org.mvss.karta.framework.core;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map.Entry;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import java.io.Serializable;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Stores results of a TestFeature execution.
@@ -46,19 +36,19 @@ public class FeatureResult implements Serializable
    private boolean                                        error              = false;
 
    @Builder.Default
-   private HashSet<TestIncident>                          incidents          = new HashSet<TestIncident>();
+   private HashSet<TestIncident> incidents = new HashSet<>();
 
    @Builder.Default
-   private ArrayList<SerializableKVP<String, StepResult>> setupResults       = new ArrayList<SerializableKVP<String, StepResult>>();
+   private ArrayList<SerializableKVP<String, StepResult>> setupResults = new ArrayList<>();
 
    @Builder.Default
-   private HashMap<String, ArrayList<ScenarioResult>>     scenarioResultsMap = new HashMap<String, ArrayList<ScenarioResult>>();
+   private HashMap<String, ArrayList<ScenarioResult>> scenarioResultsMap = new HashMap<>();
 
    @Builder.Default
-   private ArrayList<SerializableKVP<String, StepResult>> tearDownResults    = new ArrayList<SerializableKVP<String, StepResult>>();
+   private ArrayList<SerializableKVP<String, StepResult>> tearDownResults = new ArrayList<>();
 
    @Builder.Default
-   private ArrayList<Integer>                             failedIterations   = new ArrayList<Integer>();
+   private ArrayList<Integer> failedIterations = new ArrayList<>();
 
    @JsonIgnore
    public boolean isPassed()
@@ -80,7 +70,7 @@ public class FeatureResult implements Serializable
       {
          if ( scenarioResultsMap == null )
          {
-            scenarioResultsMap = new HashMap<String, ArrayList<ScenarioResult>>();
+            scenarioResultsMap = new HashMap<>();
          }
 
          boolean scenarioPassed = scenarioResult.isPassed();
@@ -88,19 +78,14 @@ public class FeatureResult implements Serializable
 
          if ( detailedResults )
          {
-            ArrayList<ScenarioResult> scenarioResults = scenarioResultsMap.get( testScenario );
-            if ( scenarioResults == null )
-            {
-               scenarioResults = new ArrayList<ScenarioResult>();
-               scenarioResultsMap.put( testScenario, scenarioResults );
-            }
+            ArrayList<ScenarioResult> scenarioResults = scenarioResultsMap.computeIfAbsent( testScenario, k -> new ArrayList<>() );
             scenarioResults.add( scenarioResult );
          }
          if ( !scenarioPassed )
          {
             if ( failedIterations == null )
             {
-               failedIterations = new ArrayList<Integer>();
+               failedIterations = new ArrayList<>();
             }
 
             int failedIteration = scenarioResult.getIterationIndex();

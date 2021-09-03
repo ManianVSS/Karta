@@ -1,19 +1,14 @@
 package org.mvss.karta.framework.core;
 
+import lombok.*;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-
 /**
  * Stores results of a TestFeature execution.
- * 
+ *
  * @author Manian
  */
 @Getter
@@ -24,21 +19,21 @@ import lombok.ToString;
 @AllArgsConstructor
 public class RunResult implements Serializable
 {
-   private static final long                        serialVersionUID = 1L;
+   private static final long serialVersionUID = 1L;
 
    @Builder.Default
-   private Date                                     startTime        = new Date();
+   private Date startTime = new Date();
 
-   private Date                                     endTime;
-
-   @Builder.Default
-   private volatile boolean                         successful       = true;
+   private Date endTime;
 
    @Builder.Default
-   private volatile boolean                         error            = false;
+   private volatile boolean successful = true;
 
    @Builder.Default
-   private ConcurrentHashMap<String, FeatureResult> testResultMap    = new ConcurrentHashMap<String, FeatureResult>();
+   private volatile boolean error = false;
+
+   @Builder.Default
+   private ConcurrentHashMap<String, FeatureResult> testResultMap = new ConcurrentHashMap<>();
 
    public synchronized void addTestResult( FeatureResult result )
    {

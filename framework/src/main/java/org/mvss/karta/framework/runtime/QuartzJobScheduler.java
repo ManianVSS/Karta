@@ -1,37 +1,25 @@
 package org.mvss.karta.framework.runtime;
 
+import lombok.extern.log4j.Log4j2;
+import org.quartz.*;
+import org.quartz.impl.StdSchedulerFactory;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.quartz.DisallowConcurrentExecution;
-import org.quartz.Job;
-import org.quartz.JobBuilder;
-import org.quartz.JobDataMap;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.SchedulerFactory;
-import org.quartz.SimpleScheduleBuilder;
-import org.quartz.Trigger;
-import org.quartz.TriggerBuilder;
-import org.quartz.impl.StdSchedulerFactory;
-
-import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @DisallowConcurrentExecution
 public class QuartzJobScheduler
 {
-   private static SchedulerFactory schedulerFactory    = new StdSchedulerFactory();
-   private static Scheduler        scheduler           = null;
-   private static AtomicLong       jobCounter          = new AtomicLong();
+   private static final SchedulerFactory schedulerFactory = new StdSchedulerFactory();
+   private static       Scheduler        scheduler        = null;
+   private static final AtomicLong       jobCounter       = new AtomicLong();
 
-   private static final String     JOB_NAME_PREFIX     = "KartaQuartzJob";
-   private static final String     JOB_GROUP           = Constants.__KARTA__;
-   private static final String     TRIGGER_NAME_PREFIX = "KartaQuartzJobTrigger_";
-   private static final String     TRIGGER_GROUP       = Constants.__KARTA__;
+   private static final String JOB_NAME_PREFIX     = "KartaQuartzJob";
+   private static final String JOB_GROUP           = Constants.__KARTA__;
+   private static final String TRIGGER_NAME_PREFIX = "KartaQuartzJobTrigger_";
+   private static final String TRIGGER_GROUP       = Constants.__KARTA__;
 
    static
    {
@@ -52,16 +40,18 @@ public class QuartzJobScheduler
       scheduler.start();
    }
 
-   public static long scheduleJob( Class<? extends Job> jobClass, long scheduleInterval, int repeatCount, HashMap<String, Object> jobParams ) throws SchedulerException
+   public static long scheduleJob( Class<? extends Job> jobClass, long scheduleInterval, int repeatCount, HashMap<String, Object> jobParams )
+            throws SchedulerException
    {
       JobBuilder jobBuilder = JobBuilder.newJob( jobClass );
       JobDataMap jobDataMap = new JobDataMap();
       jobDataMap.putAll( jobParams );
 
-      long jobCount = jobCounter.getAndIncrement();
+      long      jobCount  = jobCounter.getAndIncrement();
       JobDetail jobDetail = jobBuilder.setJobData( jobDataMap ).withIdentity( JOB_NAME_PREFIX + jobCount, JOB_GROUP ).build();
-      Trigger trigger = TriggerBuilder.newTrigger().withIdentity( TRIGGER_NAME_PREFIX + jobCount, TRIGGER_GROUP ).startNow()
-               .withSchedule( SimpleScheduleBuilder.simpleSchedule().withRepeatCount( repeatCount ).withMisfireHandlingInstructionIgnoreMisfires().withIntervalInMilliseconds( scheduleInterval ) ).build();
+      Trigger trigger = TriggerBuilder.newTrigger().withIdentity( TRIGGER_NAME_PREFIX + jobCount, TRIGGER_GROUP ).startNow().withSchedule(
+               SimpleScheduleBuilder.simpleSchedule().withRepeatCount( repeatCount ).withMisfireHandlingInstructionIgnoreMisfires()
+                        .withIntervalInMilliseconds( scheduleInterval ) ).build();
       scheduler.scheduleJob( jobDetail, trigger );
       return jobCount;
    }

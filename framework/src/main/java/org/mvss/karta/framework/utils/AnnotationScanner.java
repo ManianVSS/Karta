@@ -1,5 +1,16 @@
 package org.mvss.karta.framework.utils;
 
+import org.mvss.karta.framework.core.ClassMethodConsumer;
+import org.mvss.karta.framework.core.ObjectMethodConsumer;
+import org.mvss.karta.framework.runtime.Constants;
+import lombok.extern.log4j.Log4j2;
+import org.reflections.Reflections;
+import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -10,107 +21,95 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import org.mvss.karta.framework.core.ClassMethodConsumer;
-import org.mvss.karta.framework.core.ObjectMethodConsumer;
-import org.mvss.karta.framework.runtime.Constants;
-import org.reflections.Reflections;
-import org.reflections.scanners.MethodAnnotationsScanner;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
-
-import lombok.extern.log4j.Log4j2;
-
 /**
  * Utility class based on reflection to search for annotated classes, field and method and perform actions.
- * 
+ *
  * @author Manian
  */
 @Log4j2
 public class AnnotationScanner
 {
-   public static final Predicate<Integer>     IS_FINAL                 = new Predicate<Integer>()
-                                                                       {
+   public static final Predicate<Integer> IS_FINAL = new Predicate<Integer>()
+   {
 
-                                                                          @Override
-                                                                          public boolean test( Integer modifiers )
-                                                                          {
-                                                                             return Modifier.isFinal( modifiers );
-                                                                          }
-                                                                       };
+      @Override
+      public boolean test( Integer modifiers )
+      {
+         return Modifier.isFinal( modifiers );
+      }
+   };
 
-   public static final Predicate<Integer>     IS_NON_FINAL             = IS_FINAL.negate();
+   public static final Predicate<Integer> IS_NON_FINAL = IS_FINAL.negate();
 
-   public static final Predicate<Integer>     IS_STATIC                = new Predicate<Integer>()
-                                                                       {
+   public static final Predicate<Integer> IS_STATIC = new Predicate<Integer>()
+   {
 
-                                                                          @Override
-                                                                          public boolean test( Integer modifiers )
-                                                                          {
-                                                                             return Modifier.isStatic( modifiers );
-                                                                          }
-                                                                       };
+      @Override
+      public boolean test( Integer modifiers )
+      {
+         return Modifier.isStatic( modifiers );
+      }
+   };
 
-   public static final Predicate<Integer>     IS_NON_STATIC            = IS_STATIC.negate();
+   public static final Predicate<Integer> IS_NON_STATIC = IS_STATIC.negate();
 
-   public static final Predicate<Integer>     IS_PUBLIC                = new Predicate<Integer>()
-                                                                       {
+   public static final Predicate<Integer> IS_PUBLIC = new Predicate<Integer>()
+   {
 
-                                                                          @Override
-                                                                          public boolean test( Integer modifiers )
-                                                                          {
-                                                                             return Modifier.isPublic( modifiers );
-                                                                          }
-                                                                       };
+      @Override
+      public boolean test( Integer modifiers )
+      {
+         return Modifier.isPublic( modifiers );
+      }
+   };
 
-   public static final Predicate<Integer>     IS_PRIVATE               = new Predicate<Integer>()
-                                                                       {
+   public static final Predicate<Integer> IS_PRIVATE   = new Predicate<Integer>()
+   {
 
-                                                                          @Override
-                                                                          public boolean test( Integer modifiers )
-                                                                          {
-                                                                             return Modifier.isPrivate( modifiers );
-                                                                          }
-                                                                       };
-   public static final Predicate<Integer>     IS_PROTECTED             = new Predicate<Integer>()
-                                                                       {
+      @Override
+      public boolean test( Integer modifiers )
+      {
+         return Modifier.isPrivate( modifiers );
+      }
+   };
+   public static final Predicate<Integer> IS_PROTECTED = new Predicate<Integer>()
+   {
 
-                                                                          @Override
-                                                                          public boolean test( Integer modifiers )
-                                                                          {
-                                                                             return Modifier.isProtected( modifiers );
-                                                                          }
-                                                                       };
+      @Override
+      public boolean test( Integer modifiers )
+      {
+         return Modifier.isProtected( modifiers );
+      }
+   };
 
-   public static final Predicate<Integer>     IS_PUBLIC_AND_STATIC     = IS_PUBLIC.and( IS_STATIC );
+   public static final Predicate<Integer> IS_PUBLIC_AND_STATIC = IS_PUBLIC.and( IS_STATIC );
 
-   public static final Predicate<Class<?>>    IS_VOID_TYPE             = new Predicate<Class<?>>()
-                                                                       {
+   public static final Predicate<Class<?>> IS_VOID_TYPE = new Predicate<Class<?>>()
+   {
 
-                                                                          @Override
-                                                                          public boolean test( Class<?> returnType )
-                                                                          {
-                                                                             return ( returnType == Void.class );
-                                                                          }
-                                                                       };
+      @Override
+      public boolean test( Class<?> returnType )
+      {
+         return ( returnType == Void.class );
+      }
+   };
 
-   public static final Predicate<Class<?>>    IS_NON_VOID_TYPE         = IS_VOID_TYPE.negate();
+   public static final Predicate<Class<?>> IS_NON_VOID_TYPE = IS_VOID_TYPE.negate();
 
-   public static final Predicate<Parameter[]> HAS_PARAMS               = new Predicate<Parameter[]>()
-                                                                       {
-                                                                          @Override
-                                                                          public boolean test( Parameter[] parameters )
-                                                                          {
-                                                                             return parameters.length != 0;
-                                                                          }
-                                                                       };
+   public static final Predicate<Parameter[]> HAS_PARAMS = new Predicate<Parameter[]>()
+   {
+      @Override
+      public boolean test( Parameter[] parameters )
+      {
+         return parameters.length != 0;
+      }
+   };
 
    public static final Predicate<Parameter[]> DOES_NOT_HAVE_PARAMETERS = HAS_PARAMS.negate();
 
    /**
     * Scans every method in the packages with matching annotations, modifiers and return type and call the consumer action
-    * 
+    *
     * @param annotationScanPackageNames
     * @param annotation
     * @param modifierChecks
@@ -131,9 +130,9 @@ public class AnnotationScanner
             Set<Method> candidateMethods = reflections.getMethodsAnnotatedWith( annotation );
             for ( Method candidateMethod : candidateMethods )
             {
-               if ( ( ( modifierChecks == null ) || modifierChecks.test( candidateMethod.getModifiers() ) )
-                    && ( ( returnTypeCheck == null ) || returnTypeCheck.test( candidateMethod.getReturnType() ) )
-                    && ( ( paramsChecks == null ) || paramsChecks.test( candidateMethod.getParameters() ) ) )
+               if ( ( ( modifierChecks == null ) || modifierChecks.test(
+                        candidateMethod.getModifiers() ) ) && ( ( returnTypeCheck == null ) || returnTypeCheck.test(
+                        candidateMethod.getReturnType() ) ) && ( ( paramsChecks == null ) || paramsChecks.test( candidateMethod.getParameters() ) ) )
                {
                   action.accept( candidateMethod );
                }
@@ -141,14 +140,14 @@ public class AnnotationScanner
          }
          catch ( Throwable t )
          {
-            log.error( Constants.EMPTY_STRING, t );
+            log.error( t.getMessage() );
          }
       }
    }
 
    /**
     * Scans every method in the class with matching annotations, modifiers and return type and calls the consumer action
-    * 
+    *
     * @param classToWorkWith
     * @param annotation
     * @param modifierChecks
@@ -165,9 +164,9 @@ public class AnnotationScanner
          {
             if ( candidateMethod.isAnnotationPresent( annotation ) )
             {
-               if ( ( ( modifierChecks == null ) || modifierChecks.test( candidateMethod.getModifiers() ) )
-                    && ( ( returnTypeCheck == null ) || returnTypeCheck.test( candidateMethod.getReturnType() ) )
-                    && ( ( paramsChecks == null ) || paramsChecks.test( candidateMethod.getParameters() ) ) )
+               if ( ( ( modifierChecks == null ) || modifierChecks.test(
+                        candidateMethod.getModifiers() ) ) && ( ( returnTypeCheck == null ) || returnTypeCheck.test(
+                        candidateMethod.getReturnType() ) ) && ( ( paramsChecks == null ) || paramsChecks.test( candidateMethod.getParameters() ) ) )
                {
                   action.accept( classToWorkWith, candidateMethod );
                }
@@ -182,7 +181,7 @@ public class AnnotationScanner
 
    /**
     * Scans every method in the object's class with matching annotations, modifiers and return type and calls the ObjectMethodConsumer action
-    * 
+    *
     * @param objectToWorkWith
     * @param annotation
     * @param modifierChecks
@@ -201,9 +200,9 @@ public class AnnotationScanner
          {
             if ( candidateMethod.isAnnotationPresent( annotation ) )
             {
-               if ( ( ( modifierChecks == null ) || modifierChecks.test( candidateMethod.getModifiers() ) )
-                    && ( ( returnTypeCheck == null ) || returnTypeCheck.test( candidateMethod.getReturnType() ) )
-                    && ( ( paramsChecks == null ) || paramsChecks.test( candidateMethod.getParameters() ) ) )
+               if ( ( ( modifierChecks == null ) || modifierChecks.test(
+                        candidateMethod.getModifiers() ) ) && ( ( returnTypeCheck == null ) || returnTypeCheck.test(
+                        candidateMethod.getReturnType() ) ) && ( ( paramsChecks == null ) || paramsChecks.test( candidateMethod.getParameters() ) ) )
                {
                   action.accept( objectToWorkWith, candidateMethod );
                }
@@ -218,7 +217,7 @@ public class AnnotationScanner
 
    /**
     * Scans every class in the packages with matching annotations and modifiers and call the consumer action
-    * 
+    *
     * @param annotationScanPackageNames
     * @param annotation
     * @param modifierChecks
@@ -252,7 +251,7 @@ public class AnnotationScanner
 
    /**
     * Scans every field in the class with matching annotations, modifiers and return type and call the consumer action
-    * 
+    *
     * @param classToWorkWith
     * @param annotation
     * @param modifierChecks
@@ -276,8 +275,8 @@ public class AnnotationScanner
             annotationObject = fieldOfClass.getAnnotation( annotation );
          }
 
-         if ( ( ( annotation == null ) || ( annotationObject != null ) )
-              && ( ( modifierChecks == null ) || modifierChecks.test( fieldOfClass.getModifiers() ) ) )
+         if ( ( ( annotation == null ) || ( annotationObject != null ) ) && ( ( modifierChecks == null ) || modifierChecks.test(
+                  fieldOfClass.getModifiers() ) ) )
          {
             action.accept( classToWorkWith, fieldOfClass, annotationObject );
          }

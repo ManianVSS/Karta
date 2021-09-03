@@ -1,21 +1,14 @@
 package org.mvss.karta.framework.runtime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat.Shape;
+import org.mvss.karta.framework.runtime.testcatalog.Test;
+import lombok.*;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.HashSet;
-
-import org.apache.commons.lang3.StringUtils;
-import org.mvss.karta.framework.runtime.testcatalog.Test;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonFormat.Shape;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Setter
@@ -25,49 +18,45 @@ import lombok.ToString;
 @Builder( toBuilder = true )
 public class RunInfo implements Serializable
 {
+   private static final long serialVersionUID = 1L;
 
-   /**
-    * 
-    */
-   private static final long serialVersionUID              = 1L;
+   private String runName;
 
-   private String            runName;
+   private String release;
 
-   private String            release;
+   private String build;
 
-   private String            build;
-
-   private HashSet<String>   tags;
+   private HashSet<String> tags;
 
    @Builder.Default
-   private boolean           remotelyCalled                = false;
+   private boolean remotelyCalled = false;
 
-   private String            featureSourceParserPlugin;
+   private String featureSourceParserPlugin;
 
-   private String            stepRunnerPluginName;
+   private String stepRunnerPluginName;
 
-   private HashSet<String>   testDataSourcePlugins;
-
-   @Builder.Default
-   private boolean           runAllScenarioParallely       = false;
+   private HashSet<String> testDataSourcePlugins;
 
    @Builder.Default
-   private boolean           chanceBasedScenarioExecution  = false;
+   private boolean runAllScenarioParallely = false;
 
    @Builder.Default
-   private boolean           exclusiveScenarioPerIteration = false;
+   private boolean chanceBasedScenarioExecution = false;
 
    @Builder.Default
-   private long              numberOfIterations            = 1;
+   private boolean exclusiveScenarioPerIteration = false;
+
+   @Builder.Default
+   private long numberOfIterations = 1;
 
    @JsonFormat( shape = Shape.STRING )
-   private Duration          runDuration;
+   private Duration runDuration;
 
    @JsonFormat( shape = Shape.STRING )
-   private Duration          coolDownBetweenIterations;
+   private Duration coolDownBetweenIterations;
 
    @Builder.Default
-   private int               numberOfIterationsInParallel  = 1;
+   private int numberOfIterationsInParallel = 1;
 
    public void setDefaultPlugins( String featureSourceParserPlugin, String stepRunnerPluginName, HashSet<String> testDataSourcePlugins )
    {
@@ -113,8 +102,10 @@ public class RunInfo implements Serializable
 
    public RunInfo getRunInfoForTest( Test test )
    {
-      RunInfo runInfo = this.toBuilder().tags( test.getTags() ).runAllScenarioParallely( test.getRunAllScenarioParallely() ).chanceBasedScenarioExecution( test.getChanceBasedScenarioExecution() )
-               .exclusiveScenarioPerIteration( test.getExclusiveScenarioPerIteration() ).numberOfIterations( test.getNumberOfIterations() ).runDuration( test.getRunDuration() ).coolDownBetweenIterations( test.getCoolDownBetweenIterations() )
+      RunInfo runInfo = this.toBuilder().tags( test.getTags() ).runAllScenarioParallely( test.getRunAllScenarioParallely() )
+               .chanceBasedScenarioExecution( test.getChanceBasedScenarioExecution() )
+               .exclusiveScenarioPerIteration( test.getExclusiveScenarioPerIteration() ).numberOfIterations( test.getNumberOfIterations() )
+               .runDuration( test.getRunDuration() ).coolDownBetweenIterations( test.getCoolDownBetweenIterations() )
                .numberOfIterationsInParallel( test.getNumberOfThreads() ).build();
 
       runInfo.setPlugins( test );

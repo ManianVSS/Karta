@@ -1,20 +1,14 @@
 package org.mvss.karta.framework.runtime.testcatalog;
 
+import lombok.*;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.StringUtils;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Setter
@@ -24,27 +18,27 @@ import lombok.ToString;
 @Builder
 public class TestCategory implements Serializable
 {
-   private static final long       serialVersionUID = 1L;
+   private static final long serialVersionUID = 1L;
 
-   private String                  name;
-   private String                  description;
-
-   @Builder.Default
-   private HashSet<String>         tags             = new HashSet<String>();
-
-   private String                  featureSourceParser;
-   private String                  stepRunner;
+   private String name;
+   private String description;
 
    @Builder.Default
-   private HashSet<String>         testDataSources  = new HashSet<String>();
+   private HashSet<String> tags = new HashSet<>();
+
+   private String featureSourceParser;
+   private String stepRunner;
 
    @Builder.Default
-   private ArrayList<TestCategory> subCategories    = new ArrayList<TestCategory>();
+   private HashSet<String> testDataSources = new HashSet<>();
 
    @Builder.Default
-   private ArrayList<Test>         tests            = new ArrayList<Test>();
+   private ArrayList<TestCategory> subCategories = new ArrayList<>();
 
-   private String                  threadGroup;
+   @Builder.Default
+   private ArrayList<Test> tests = new ArrayList<>();
+
+   private String threadGroup;
 
    public Test findTestByName( String name )
    {
@@ -58,8 +52,7 @@ public class TestCategory implements Serializable
       return null;
    }
 
-   private static ConcurrentHashMap<Pattern, ConcurrentHashMap<String, Matcher>> patternMatcherMap =
-            new ConcurrentHashMap<Pattern, ConcurrentHashMap<String, Matcher>>();
+   private static ConcurrentHashMap<Pattern, ConcurrentHashMap<String, Matcher>> patternMatcherMap = new ConcurrentHashMap<>();
 
    public synchronized void filterTestsByTag( ArrayList<Test> outputFilteredTests, HashSet<Pattern> tagPatterns )
    {
@@ -67,7 +60,7 @@ public class TestCategory implements Serializable
       {
          if ( !patternMatcherMap.containsKey( tagPattern ) )
          {
-            patternMatcherMap.put( tagPattern, new ConcurrentHashMap<String, Matcher>() );
+            patternMatcherMap.put( tagPattern, new ConcurrentHashMap<>() );
          }
          ConcurrentHashMap<String, Matcher> matcherMap = patternMatcherMap.get( tagPattern );
          for ( String tag : this.tags )
@@ -130,7 +123,7 @@ public class TestCategory implements Serializable
       return null;
    }
 
-   public void propogateAttributes( String sourceArchive, String fspp, String srp, HashSet<String> tdsp, String tg, HashSet<String> tags )
+   public void propagateAttributes( String sourceArchive, String fspp, String srp, HashSet<String> tdsp, String tg, HashSet<String> tags )
    {
       if ( StringUtils.isEmpty( featureSourceParser ) && StringUtils.isNotEmpty( fspp ) )
       {
@@ -144,13 +137,7 @@ public class TestCategory implements Serializable
 
       if ( tdsp != null )
       {
-         for ( String testDataSource : tdsp )
-         {
-            if ( !testDataSources.contains( testDataSource ) )
-            {
-               testDataSources.add( testDataSource );
-            }
-         }
+         testDataSources.addAll( tdsp );
       }
 
       if ( StringUtils.isEmpty( threadGroup ) && StringUtils.isNotEmpty( tg ) )
@@ -160,23 +147,17 @@ public class TestCategory implements Serializable
 
       if ( tags != null )
       {
-         for ( String tag : tags )
-         {
-            if ( !tags.contains( tag ) )
-            {
-               tags.add( tag );
-            }
-         }
+         this.tags.addAll( tags );
       }
 
       for ( TestCategory testCategory : subCategories )
       {
-         testCategory.propogateAttributes( sourceArchive, featureSourceParser, stepRunner, testDataSources, threadGroup, tags );
+         testCategory.propagateAttributes( sourceArchive, featureSourceParser, stepRunner, testDataSources, threadGroup, tags );
       }
 
       for ( Test test : tests )
       {
-         test.propogateAttributes( sourceArchive, featureSourceParser, stepRunner, testDataSources, threadGroup, tags );
+         test.propagateAttributes( sourceArchive, featureSourceParser, stepRunner, testDataSources, threadGroup, tags );
       }
    }
 
@@ -197,13 +178,7 @@ public class TestCategory implements Serializable
          description = testCategory.description;
       }
 
-      for ( String tag : testCategory.tags )
-      {
-         if ( !tags.contains( tag ) )
-         {
-            tags.add( tag );
-         }
-      }
+      tags.addAll( testCategory.tags );
 
       if ( StringUtils.isEmpty( featureSourceParser ) && StringUtils.isNotEmpty( testCategory.featureSourceParser ) )
       {

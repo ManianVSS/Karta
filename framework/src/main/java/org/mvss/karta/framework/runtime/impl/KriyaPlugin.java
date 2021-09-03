@@ -1,118 +1,69 @@
 package org.mvss.karta.framework.runtime.impl;
 
-import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.StringEscapeUtils;
-import org.mvss.karta.framework.core.AfterFeature;
-import org.mvss.karta.framework.core.AfterRun;
-import org.mvss.karta.framework.core.AfterScenario;
-import org.mvss.karta.framework.core.BeforeFeature;
-import org.mvss.karta.framework.core.BeforeRun;
-import org.mvss.karta.framework.core.BeforeScenario;
-import org.mvss.karta.framework.core.ChaosActionDefinition;
-import org.mvss.karta.framework.core.ConditionDefinition;
-import org.mvss.karta.framework.core.ContextBean;
-import org.mvss.karta.framework.core.ContextVariable;
-import org.mvss.karta.framework.core.Initializer;
-import org.mvss.karta.framework.core.KartaAutoWired;
-import org.mvss.karta.framework.core.Pair;
-import org.mvss.karta.framework.core.PreparedChaosAction;
-import org.mvss.karta.framework.core.PreparedScenario;
-import org.mvss.karta.framework.core.PreparedStep;
-import org.mvss.karta.framework.core.ScenarioFailed;
-import org.mvss.karta.framework.core.ScenarioResult;
-import org.mvss.karta.framework.core.StandardStepResults;
-import org.mvss.karta.framework.core.StepDefinition;
-import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.core.TestData;
-import org.mvss.karta.framework.core.TestFeature;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.mvss.karta.framework.core.*;
 import org.mvss.karta.framework.enums.StepOutputType;
-import org.mvss.karta.framework.nodes.KartaNodeRegistry;
-import org.mvss.karta.framework.runtime.BeanRegistry;
-import org.mvss.karta.framework.runtime.Constants;
-import org.mvss.karta.framework.runtime.KartaRuntime;
-import org.mvss.karta.framework.runtime.TestExecutionContext;
-import org.mvss.karta.framework.runtime.TestFailureException;
-import org.mvss.karta.framework.runtime.event.EventProcessor;
+import org.mvss.karta.framework.runtime.*;
 import org.mvss.karta.framework.runtime.interfaces.FeatureSourceParser;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestLifeCycleHook;
 import org.mvss.karta.framework.utils.AnnotationScanner;
 import org.mvss.karta.framework.utils.ParserUtils;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
+
+import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Log4j2
 public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCycleHook
 {
-   public static final String                                PLUGIN_NAME                            = "Kriya";
+   public static final String PLUGIN_NAME = "Kriya";
 
-   public static final String                                INLINE_STEP_DEF_PARAM_INDICATOR_STRING = "\"\"";
-   public static final String                                WORD_FETCH_REGEX                       = "\\W+";
+   public static final String INLINE_STEP_DEF_PARAM_INDICATOR_STRING = "\"\"";
+   public static final String WORD_FETCH_REGEX                       = "\\W+";
 
-   public static final String                                INLINE_TEST_DATA_PATTERN               = "\"(?:[^\\\\\"]+|\\\\.|\\\\\\\\)*\"";
+   public static final String INLINE_TEST_DATA_PATTERN = "\"(?:[^\\\\\"]+|\\\\.|\\\\\\\\)*\"";
 
-   private HashMap<String, Pattern>                          tagPatternMap                          = new HashMap<String, Pattern>();
-   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedRunStartHooks                    =
-            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedRunStopHooks                     =
-            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedFeatureStartHooks                =
-            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedFeatureStopHooks                 =
-            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStartHooks               =
-            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStopHooks                =
-            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
-   private HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioFailureHooks             =
-            new HashMap<Pattern, ArrayList<Pair<Object, Method>>>();
+   private final HashMap<String, Pattern>                          tagPatternMap              = new HashMap<>();
+   private final HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedRunStartHooks        = new HashMap<>();
+   private final HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedRunStopHooks         = new HashMap<>();
+   private final HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedFeatureStartHooks    = new HashMap<>();
+   private final HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedFeatureStopHooks     = new HashMap<>();
+   private final HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStartHooks   = new HashMap<>();
+   private final HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStopHooks    = new HashMap<>();
+   private final HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioFailureHooks = new HashMap<>();
 
-   private HashMap<String, Pair<Object, Method>>             stepHandlerMap                         = new HashMap<String, Pair<Object, Method>>();
-   private HashMap<String, Pair<Object, Method>>             chaosActionHandlerMap                  = new HashMap<String, Pair<Object, Method>>();
-   private HashMap<String, Pair<Object, Method>>             conditionDefinitionMap                 = new HashMap<String, Pair<Object, Method>>();
+   private final HashMap<String, Pair<Object, Method>> stepHandlerMap         = new HashMap<>();
+   private final HashMap<String, Pair<Object, Method>> chaosActionHandlerMap  = new HashMap<>();
+   private final HashMap<String, Pair<Object, Method>> conditionDefinitionMap = new HashMap<>();
 
-   private static Pattern                                    testDataPattern                        = Pattern.compile( INLINE_TEST_DATA_PATTERN );
+   private final static Pattern testDataPattern = Pattern.compile( INLINE_TEST_DATA_PATTERN );
 
-   public static final List<String>                          conjunctions                           =
-            Arrays.asList( "Given", "When", "Then", "And", "But" );
+   public static final List<String> conjunctions = Arrays.asList( "Given", "When", "Then", "And", "But" );
 
-   private static ObjectMapper                               objectMapper                           = ParserUtils.getObjectMapper();
+   private static final ObjectMapper objectMapper = ParserUtils.getObjectMapper();
 
-   private boolean                                           initialized                            = false;
+   private boolean initialized = false;
 
    @PropertyMapping( group = PLUGIN_NAME, value = "stepDefinitionPackageNames" )
-   private ArrayList<String>                                 stepDefinitionPackageNames             = new ArrayList<String>();
+   private ArrayList<String> stepDefinitionPackageNames = new ArrayList<>();
 
    @KartaAutoWired
-   private KartaRuntime                                      kartaRuntime;
+   private KartaRuntime kartaRuntime;
 
-   private BeanRegistry                                      initializedClassesRegistry             = new BeanRegistry();
-
-   @KartaAutoWired
-   private EventProcessor                                    eventProcessor;
-
-   @KartaAutoWired
-   private KartaNodeRegistry                                 minionRegistry;
+   private final BeanRegistry initializedClassesRegistry = new BeanRegistry();
 
    @Override
    public String getPluginName()
@@ -120,248 +71,184 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       return PLUGIN_NAME;
    }
 
-   private final Consumer<Method> processStepDefinition  = new Consumer<Method>()
-                                                         {
-                                                            @Override
-                                                            public void accept( Method candidateStepDefinitionMethod )
-                                                            {
-                                                               try
-                                                               {
-                                                                  for ( StepDefinition stepDefinition : candidateStepDefinitionMethod
-                                                                           .getAnnotationsByType( StepDefinition.class ) )
-                                                                  {
-                                                                     String methodDescription = candidateStepDefinitionMethod.toString();
-                                                                     String stepDefString = stepDefinition.value();
+   public void processStepDefinitionMethod( Method candidateStepDefinitionMethod )
+   {
+      try
+      {
+         for ( StepDefinition stepDefinition : candidateStepDefinitionMethod.getAnnotationsByType( StepDefinition.class ) )
+         {
+            String methodDescription = candidateStepDefinitionMethod.toString();
+            String stepDefString     = stepDefinition.value();
 
-                                                                     if ( stepHandlerMap.containsKey( stepDefString ) )
-                                                                     {
-                                                                        log.error( "Step definition is duplicate " + methodDescription );
-                                                                        continue;
-                                                                     }
+            if ( stepHandlerMap.containsKey( stepDefString ) )
+            {
+               log.error( "Step definition is duplicate " + methodDescription );
+               continue;
+            }
 
-                                                                     Parameter[] params = candidateStepDefinitionMethod.getParameters();
+            Parameter[] params = candidateStepDefinitionMethod.getParameters();
 
-                                                                     int positionalArgumentsCount = 0;
-                                                                     for ( int i = 0; i < params.length; i++ )
-                                                                     {
-                                                                        if ( ( params[i].getType() != TestExecutionContext.class )
-                                                                             && ( params[i].getAnnotation( TestData.class ) == null )
-                                                                             && ( params[i].getAnnotation( ContextBean.class ) == null )
-                                                                             && ( params[i].getAnnotation( ContextVariable.class ) == null ) )
-                                                                        {
-                                                                           positionalArgumentsCount++;
-                                                                        }
-                                                                     }
+            int positionalArgumentsCount = 0;
+            for ( Parameter param : params )
+            {
+               if ( ( param.getType() != TestExecutionContext.class ) && ( param.getAnnotation( TestData.class ) == null ) && ( param.getAnnotation(
+                        ContextBean.class ) == null ) && ( param.getAnnotation( ContextVariable.class ) == null ) )
+               {
+                  positionalArgumentsCount++;
+               }
+            }
 
-                                                                     if ( positionalArgumentsCount != StringUtils
-                                                                              .countMatches( stepDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) )
-                                                                     {
-                                                                        log.error( "Step definition method " + methodDescription
-                                                                                   + " does not match the argument count as per the identifier" );
-                                                                        continue;
-                                                                     }
+            if ( positionalArgumentsCount != StringUtils.countMatches( stepDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) )
+            {
+               log.error( "Step definition method " + methodDescription + " does not match the argument count as per the identifier" );
+               continue;
+            }
 
-                                                                     log.debug( "Mapping stepdef " + stepDefString + " to " + methodDescription );
+            log.debug( "Mapping stepdef " + stepDefString + " to " + methodDescription );
 
-                                                                     Class<?> stepDefinitionClass = candidateStepDefinitionMethod.getDeclaringClass();
+            Class<?> stepDefinitionClass = candidateStepDefinitionMethod.getDeclaringClass();
 
-                                                                     Object stepDefClassObj =
-                                                                              initializedClassesRegistry.get( stepDefinitionClass.getName() );
-                                                                     if ( stepDefClassObj == null )
-                                                                     {
-                                                                        stepDefClassObj = stepDefinitionClass.getDeclaredConstructor().newInstance();
-                                                                        kartaRuntime.initializeObject( stepDefClassObj );
-                                                                        initializedClassesRegistry.add( stepDefClassObj );
-                                                                     }
+            Object stepDefClassObj = initializedClassesRegistry.get( stepDefinitionClass.getName() );
+            if ( stepDefClassObj == null )
+            {
+               stepDefClassObj = stepDefinitionClass.getDeclaredConstructor().newInstance();
+               kartaRuntime.initializeObject( stepDefClassObj );
+               initializedClassesRegistry.add( stepDefClassObj );
+            }
+            stepHandlerMap.put( stepDefString, new Pair<>( stepDefClassObj, candidateStepDefinitionMethod ) );
+         }
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while parsing step definition from method  " + candidateStepDefinitionMethod.getName(), t );
+      }
+   }
 
-                                                                     if ( stepDefClassObj != null )
-                                                                     {
-                                                                        stepHandlerMap
-                                                                                 .put( stepDefString, new Pair<Object, Method>( stepDefClassObj,
-                                                                                                                                candidateStepDefinitionMethod ) );
-                                                                     }
-                                                                  }
-                                                               }
-                                                               catch ( Throwable t )
-                                                               {
-                                                                  log.error( "Exception while parsing step definition from method  "
-                                                                             + candidateStepDefinitionMethod.getName(), t );
-                                                               }
+   public void processConditionMethod( Method candidateConditionMethod )
+   {
+      try
+      {
+         for ( ConditionDefinition conditionDefinition : candidateConditionMethod.getAnnotationsByType( ConditionDefinition.class ) )
+         {
+            String methodDescription  = candidateConditionMethod.toString();
+            String conditionDefString = conditionDefinition.value();
 
-                                                            }
-                                                         };
+            if ( conditionDefinitionMap.containsKey( conditionDefString ) )
+            {
+               log.error( "Condition definition is duplicate " + methodDescription );
+               continue;
+            }
 
-   private final Consumer<Method> processConditions      = new Consumer<Method>()
-                                                         {
-                                                            @Override
-                                                            public void accept( Method candidateConditionMethod )
-                                                            {
-                                                               try
-                                                               {
-                                                                  for ( ConditionDefinition conditionDefinition : candidateConditionMethod
-                                                                           .getAnnotationsByType( ConditionDefinition.class ) )
-                                                                  {
-                                                                     String methodDescription = candidateConditionMethod.toString();
-                                                                     String conditionDefString = conditionDefinition.value();
+            if ( ( candidateConditionMethod.getReturnType() != boolean.class ) && ( ( candidateConditionMethod.getReturnType() != Boolean.class ) ) )
+            {
+               log.error( "Condition definition method " + methodDescription + " should return boolean" );
+               continue;
+            }
 
-                                                                     if ( conditionDefinitionMap.containsKey( conditionDefString ) )
-                                                                     {
-                                                                        log.error( "Condition definition is duplicate " + methodDescription );
-                                                                        continue;
-                                                                     }
+            Parameter[] params                   = candidateConditionMethod.getParameters();
+            int         positionalArgumentsCount = 0;
+            for ( Parameter param : params )
+            {
+               if ( ( param.getType() != TestExecutionContext.class ) && ( param.getAnnotation( TestData.class ) == null ) && ( param.getAnnotation(
+                        ContextBean.class ) == null ) && ( param.getAnnotation( ContextVariable.class ) == null ) )
+               {
+                  positionalArgumentsCount++;
+               }
+            }
 
-                                                                     if ( ( candidateConditionMethod.getReturnType() != boolean.class )
-                                                                          && ( ( candidateConditionMethod.getReturnType() != Boolean.class ) ) )
-                                                                     {
-                                                                        log.error( "Condition definition method " + methodDescription
-                                                                                   + " should return boolean" );
-                                                                        continue;
-                                                                     }
+            if ( positionalArgumentsCount != StringUtils.countMatches( conditionDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) )
+            {
+               log.error( "Candidate condition definition method " + methodDescription + " does not match the argument count as per the identifier" );
+               continue;
+            }
 
-                                                                     Parameter[] params = candidateConditionMethod.getParameters();
-                                                                     int positionalArgumentsCount = 0;
-                                                                     for ( int i = 0; i < params.length; i++ )
-                                                                     {
-                                                                        if ( ( params[i].getType() != TestExecutionContext.class )
-                                                                             && ( params[i].getAnnotation( TestData.class ) == null )
-                                                                             && ( params[i].getAnnotation( ContextBean.class ) == null )
-                                                                             && ( params[i].getAnnotation( ContextVariable.class ) == null ) )
-                                                                        {
-                                                                           positionalArgumentsCount++;
-                                                                        }
-                                                                     }
+            log.debug( "Mapping condition definition " + conditionDefString + " to " + methodDescription );
 
-                                                                     if ( positionalArgumentsCount != StringUtils
-                                                                              .countMatches( conditionDefString, INLINE_STEP_DEF_PARAM_INDICATOR_STRING ) )
-                                                                     {
-                                                                        log.error( "Candidate condition definition method " + methodDescription
-                                                                                   + " does not match the argument count as per the identifier" );
-                                                                        continue;
-                                                                     }
+            Class<?> conditionDefinitionClass = candidateConditionMethod.getDeclaringClass();
 
-                                                                     log.debug( "Mapping condition definition " + conditionDefString + " to "
-                                                                                + methodDescription );
+            Object conditionDefClassObj = initializedClassesRegistry.get( conditionDefinitionClass.getName() );
+            if ( conditionDefClassObj == null )
+            {
+               conditionDefClassObj = conditionDefinitionClass.getDeclaredConstructor().newInstance();
+               kartaRuntime.initializeObject( conditionDefClassObj );
+               initializedClassesRegistry.add( conditionDefClassObj );
+            }
 
-                                                                     Class<?> conditionDefinitionClass = candidateConditionMethod.getDeclaringClass();
+            conditionDefinitionMap.put( conditionDefString, new Pair<>( conditionDefClassObj, candidateConditionMethod ) );
+         }
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while parsing condition definition from method  " + candidateConditionMethod.getName(), t );
+      }
 
-                                                                     Object conditionDefClassObj =
-                                                                              initializedClassesRegistry.get( conditionDefinitionClass.getName() );
-                                                                     if ( conditionDefClassObj == null )
-                                                                     {
-                                                                        conditionDefClassObj =
-                                                                                 conditionDefinitionClass.getDeclaredConstructor().newInstance();
-                                                                        kartaRuntime.initializeObject( conditionDefClassObj );
-                                                                        initializedClassesRegistry.add( conditionDefClassObj );
-                                                                     }
+   }
 
-                                                                     if ( conditionDefClassObj != null )
-                                                                     {
-                                                                        conditionDefinitionMap
-                                                                                 .put( conditionDefString, new Pair<Object, Method>( conditionDefClassObj,
-                                                                                                                                     candidateConditionMethod ) );
-                                                                     }
-                                                                  }
-                                                               }
-                                                               catch ( Throwable t )
-                                                               {
-                                                                  log.error( "Exception while parsing condition definition from method  "
-                                                                             + candidateConditionMethod.getName(), t );
-                                                               }
+   public void processChaosDefinitionMethod( Method candidateChaosActionMethod )
+   {
+      try
+      {
+         for ( ChaosActionDefinition chaosActionDefinition : candidateChaosActionMethod.getAnnotationsByType( ChaosActionDefinition.class ) )
+         {
+            String methodDescription = candidateChaosActionMethod.toString();
+            String chaosActionName   = chaosActionDefinition.value();
 
-                                                            }
-                                                         };
+            if ( chaosActionHandlerMap.containsKey( chaosActionName ) )
+            {
+               log.error( "Chaos action definition is duplicate " + methodDescription );
+               continue;
+            }
 
-   private final Consumer<Method> processChaosDefinition = new Consumer<Method>()
-                                                         {
-                                                            @Override
-                                                            public void accept( Method candidateChaosActionMethod )
-                                                            {
-                                                               try
-                                                               {
-                                                                  for ( ChaosActionDefinition chaosActionDefinition : candidateChaosActionMethod
-                                                                           .getAnnotationsByType( ChaosActionDefinition.class ) )
-                                                                  {
-                                                                     String methodDescription = candidateChaosActionMethod.toString();
-                                                                     String chaosActionName = chaosActionDefinition.value();
+            Parameter[] params = candidateChaosActionMethod.getParameters();
 
-                                                                     if ( chaosActionHandlerMap.containsKey( chaosActionName ) )
-                                                                     {
-                                                                        log.error( "Chaos action definition is duplicate " + methodDescription );
-                                                                        continue;
-                                                                     }
+            if ( !( ( params.length >= 2 ) && ( TestExecutionContext.class == params[0].getType() ) && ( PreparedChaosAction.class == params[1].getType() ) ) )
+            {
+               log.error(
+                        "Chaos action definition method " + methodDescription + " should have first two parameters of types(" + TestExecutionContext.class.getName() + ", " + PreparedChaosAction.class.getName() + ")" );
+               continue;
+            }
 
-                                                                     Parameter[] params = candidateChaosActionMethod.getParameters();
+            for ( int paramNo = 2; paramNo < params.length; paramNo++ )
+            {
+               TestData        testDataAnnotation        = params[paramNo].getAnnotation( TestData.class );
+               ContextBean     contextBeanAnnotation     = params[paramNo].getAnnotation( ContextBean.class );
+               ContextVariable contextVariableAnnotation = params[paramNo].getAnnotation( ContextVariable.class );
 
-                                                                     if ( !( ( params.length >= 2 )
-                                                                             && ( TestExecutionContext.class == params[0].getType() )
-                                                                             && ( PreparedChaosAction.class == params[1].getType() ) ) )
-                                                                     {
-                                                                        log.error( "Chaos action definition method " + methodDescription
-                                                                                   + " should have first two parameters of types("
-                                                                                   + TestExecutionContext.class.getName() + ", "
-                                                                                   + PreparedChaosAction.class.getName() + ")" );
-                                                                        continue;
-                                                                     }
+               if ( ( testDataAnnotation == null ) && ( contextBeanAnnotation == null ) && ( contextVariableAnnotation == null ) )
+               {
+                  log.error(
+                           "Chaos action definition method " + methodDescription + "'s parameter is not mapped mapped with an appropriate annotation(" + TestData.class.getName() + ", " + ContextBean.class.getName() + ", " + ContextVariable.class.getName() + ")" );
+               }
+            }
 
-                                                                     for ( int paramNo = 2; paramNo < params.length; paramNo++ )
-                                                                     {
-                                                                        TestData testDataAnnotation = params[paramNo].getAnnotation( TestData.class );
-                                                                        ContextBean contextBeanAnnotation =
-                                                                                 params[paramNo].getAnnotation( ContextBean.class );
-                                                                        ContextVariable contextVariableAnnotation =
-                                                                                 params[paramNo].getAnnotation( ContextVariable.class );
+            log.debug( "Mapping chaos action definition " + chaosActionName + " to " + methodDescription );
 
-                                                                        if ( ( testDataAnnotation == null ) && ( contextBeanAnnotation == null )
-                                                                             && ( contextVariableAnnotation == null ) )
-                                                                        {
-                                                                           log.error( "Chaos action definition method " + methodDescription
-                                                                                      + "'s parameter is not mapped mapped with an appropriate annotation("
-                                                                                      + TestData.class.getName() + ", " + ContextBean.class.getName()
-                                                                                      + ", " + ContextVariable.class.getName() + ")" );
-                                                                           continue;
-                                                                        }
-                                                                     }
+            Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
 
-                                                                     log.debug( "Mapping chaos action definition " + chaosActionName + " to "
-                                                                                + methodDescription );
+            Object chaosActionDefClassObj = initializedClassesRegistry.get( chaosActionDefinitionClass.getName() );
+            if ( chaosActionDefClassObj == null )
+            {
+               chaosActionDefClassObj = chaosActionDefinitionClass.getDeclaredConstructor().newInstance();
+               kartaRuntime.initializeObject( chaosActionDefClassObj );
+               initializedClassesRegistry.add( chaosActionDefClassObj );
+            }
 
-                                                                     Class<?> chaosActionDefinitionClass =
-                                                                              candidateChaosActionMethod.getDeclaringClass();
-
-                                                                     Object chaosActionDefClassObj =
-                                                                              initializedClassesRegistry.get( chaosActionDefinitionClass.getName() );
-                                                                     if ( chaosActionDefClassObj == null )
-                                                                     {
-                                                                        chaosActionDefClassObj =
-                                                                                 chaosActionDefinitionClass.getDeclaredConstructor().newInstance();
-                                                                        kartaRuntime.initializeObject( chaosActionDefClassObj );
-                                                                        initializedClassesRegistry.add( chaosActionDefClassObj );
-                                                                     }
-
-                                                                     if ( chaosActionDefClassObj != null )
-                                                                     {
-                                                                        chaosActionHandlerMap
-                                                                                 .put( chaosActionName, new Pair<Object, Method>( chaosActionDefClassObj,
-                                                                                                                                  candidateChaosActionMethod ) );
-                                                                     }
-                                                                  }
-                                                               }
-                                                               catch ( Throwable t )
-                                                               {
-                                                                  log.error( "Exception while parsing chaos action definition from method  "
-                                                                             + candidateChaosActionMethod.getName(), t );
-                                                               }
-                                                            }
-
-                                                         };
+            chaosActionHandlerMap.put( chaosActionName, new Pair<>( chaosActionDefClassObj, candidateChaosActionMethod ) );
+         }
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while parsing chaos action definition from method  " + candidateChaosActionMethod.getName(), t );
+      }
+   }
 
    private void processTaggedHook( HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooks, String[] tags, Method hookMethod,
                                    Class<?>... parameters )
             throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
             SecurityException
    {
-      String methodDescription = hookMethod.toString();
-      Class<?>[] params = hookMethod.getParameterTypes();
+      String     methodDescription = hookMethod.toString();
+      Class<?>[] params            = hookMethod.getParameterTypes();
 
       if ( parameters != null )
       {
@@ -371,21 +258,16 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          {
             if ( params[i] != parameters[i] )
             {
-               error = true;
+               log.error( "Hook method " + methodDescription + " does not match required parameters " + Arrays.asList( parameters ) );
+               return;
             }
-         }
-
-         if ( error )
-         {
-            log.error( "Hook method " + methodDescription + " does not match requried parameters " + Arrays.asList( parameters ) );
-            return;
          }
       }
 
-      log.debug( "Mapping hook for " + tags + " to " + methodDescription );
+      log.debug( "Mapping hook for " + Arrays.toString( tags ) + " to " + methodDescription );
 
       Class<?> hookClass = hookMethod.getDeclaringClass();
-      Object hookObj = initializedClassesRegistry.get( hookClass.getName() );
+      Object   hookObj   = initializedClassesRegistry.get( hookClass.getName() );
 
       if ( hookObj == null )
       {
@@ -405,171 +287,123 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
          if ( !taggedHooks.containsKey( tagPattern ) )
          {
-            taggedHooks.put( tagPattern, new ArrayList<Pair<Object, Method>>() );
+            taggedHooks.put( tagPattern, new ArrayList<>() );
          }
 
          ArrayList<Pair<Object, Method>> hooksDef = taggedHooks.get( tagPattern );
 
-         Pair<Object, Method> hookdef = new Pair<Object, Method>( hookObj, hookMethod );
+         Pair<Object, Method> hookDefinition = new Pair<>( hookObj, hookMethod );
 
-         hooksDef.add( hookdef );
+         hooksDef.add( hookDefinition );
       }
 
    }
 
-   private final Consumer<Method> processTaggedRunStartHook       = new Consumer<Method>()
-                                                                  {
-                                                                     @Override
-                                                                     public void accept( Method runStartHookMethod )
-                                                                     {
-                                                                        try
-                                                                        {
-                                                                           for ( BeforeRun beforeRun : runStartHookMethod
-                                                                                    .getAnnotationsByType( BeforeRun.class ) )
-                                                                           {
-                                                                              String[] tags = beforeRun.value();
-                                                                              processTaggedHook( taggedRunStartHooks, tags, runStartHookMethod, String.class );
-                                                                           }
-                                                                        }
-                                                                        catch ( Throwable t )
-                                                                        {
-                                                                           log.error( "Exception while parsing run start hook from method  "
-                                                                                      + runStartHookMethod.getName(), t );
-                                                                        }
-                                                                     }
-                                                                  };
+   private final Consumer<Method> processTaggedRunStartHook = runStartHookMethod -> {
+      try
+      {
+         for ( BeforeRun beforeRun : runStartHookMethod.getAnnotationsByType( BeforeRun.class ) )
+         {
+            String[] tags = beforeRun.value();
+            processTaggedHook( taggedRunStartHooks, tags, runStartHookMethod, String.class );
+         }
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while parsing run start hook from method  " + runStartHookMethod.getName(), t );
+      }
+   };
 
-   private final Consumer<Method> processTaggedRunStopHook        = new Consumer<Method>()
-                                                                  {
-                                                                     @Override
-                                                                     public void accept( Method runStopHookMethod )
-                                                                     {
-                                                                        try
-                                                                        {
-                                                                           for ( AfterRun afterRun : runStopHookMethod
-                                                                                    .getAnnotationsByType( AfterRun.class ) )
-                                                                           {
-                                                                              String[] tags = afterRun.value();
-                                                                              processTaggedHook( taggedRunStopHooks, tags, runStopHookMethod, String.class );
-                                                                           }
-                                                                        }
-                                                                        catch ( Throwable t )
-                                                                        {
-                                                                           log.error( "Exception while parsing run stop hook from method  "
-                                                                                      + runStopHookMethod.getName(), t );
-                                                                        }
-                                                                     }
-                                                                  };
+   private final Consumer<Method> processTaggedRunStopHook = runStopHookMethod -> {
+      try
+      {
+         for ( AfterRun afterRun : runStopHookMethod.getAnnotationsByType( AfterRun.class ) )
+         {
+            String[] tags = afterRun.value();
+            processTaggedHook( taggedRunStopHooks, tags, runStopHookMethod, String.class );
+         }
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while parsing run stop hook from method  " + runStopHookMethod.getName(), t );
+      }
+   };
 
-   private final Consumer<Method> processTaggedFeatureStartHook   = new Consumer<Method>()
-                                                                  {
-                                                                     @Override
-                                                                     public void accept( Method featureStartHookMethod )
-                                                                     {
-                                                                        try
-                                                                        {
-                                                                           for ( BeforeFeature beforeFeature : featureStartHookMethod
-                                                                                    .getAnnotationsByType( BeforeFeature.class ) )
-                                                                           {
-                                                                              String[] tags = beforeFeature.value();
-                                                                              processTaggedHook( taggedFeatureStartHooks, tags, featureStartHookMethod, String.class, TestFeature.class );
-                                                                           }
-                                                                        }
-                                                                        catch ( Throwable t )
-                                                                        {
-                                                                           log.error( "Exception while parsing feature start hook from method  "
-                                                                                      + featureStartHookMethod.getName(), t );
-                                                                        }
-                                                                     }
-                                                                  };
+   private final Consumer<Method> processTaggedFeatureStartHook = featureStartHookMethod -> {
+      try
+      {
+         for ( BeforeFeature beforeFeature : featureStartHookMethod.getAnnotationsByType( BeforeFeature.class ) )
+         {
+            String[] tags = beforeFeature.value();
+            processTaggedHook( taggedFeatureStartHooks, tags, featureStartHookMethod, String.class, TestFeature.class );
+         }
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while parsing feature start hook from method  " + featureStartHookMethod.getName(), t );
+      }
+   };
 
-   private final Consumer<Method> processTaggedFeatureStopHook    = new Consumer<Method>()
-                                                                  {
-                                                                     @Override
-                                                                     public void accept( Method featureStopHookMethod )
-                                                                     {
-                                                                        try
-                                                                        {
-                                                                           for ( AfterFeature afterFeature : featureStopHookMethod
-                                                                                    .getAnnotationsByType( AfterFeature.class ) )
-                                                                           {
-                                                                              String[] tags = afterFeature.value();
-                                                                              processTaggedHook( taggedFeatureStopHooks, tags, featureStopHookMethod, String.class, TestFeature.class );
-                                                                           }
-                                                                        }
-                                                                        catch ( Throwable t )
-                                                                        {
-                                                                           log.error( "Exception while parsing feature stop hook from method  "
-                                                                                      + featureStopHookMethod.getName(), t );
-                                                                        }
-                                                                     }
-                                                                  };
+   private final Consumer<Method> processTaggedFeatureStopHook = featureStopHookMethod -> {
+      try
+      {
+         for ( AfterFeature afterFeature : featureStopHookMethod.getAnnotationsByType( AfterFeature.class ) )
+         {
+            String[] tags = afterFeature.value();
+            processTaggedHook( taggedFeatureStopHooks, tags, featureStopHookMethod, String.class, TestFeature.class );
+         }
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while parsing feature stop hook from method  " + featureStopHookMethod.getName(), t );
+      }
+   };
 
-   private final Consumer<Method> processTaggedScenarioStartHook  = new Consumer<Method>()
-                                                                  {
-                                                                     @Override
-                                                                     public void accept( Method scenarioStartHookMethod )
-                                                                     {
-                                                                        try
-                                                                        {
-                                                                           for ( BeforeScenario beforeScenario : scenarioStartHookMethod
-                                                                                    .getAnnotationsByType( BeforeScenario.class ) )
-                                                                           {
-                                                                              String[] tags = beforeScenario.value();
-                                                                              processTaggedHook( taggedScenarioStartHooks, tags, scenarioStartHookMethod, String.class, String.class, PreparedScenario.class );
-                                                                           }
-                                                                        }
-                                                                        catch ( Throwable t )
-                                                                        {
-                                                                           log.error( "Exception while parsing scenario start hook from method  "
-                                                                                      + scenarioStartHookMethod.getName(), t );
-                                                                        }
-                                                                     }
-                                                                  };
+   private final Consumer<Method> processTaggedScenarioStartHook = scenarioStartHookMethod -> {
+      try
+      {
+         for ( BeforeScenario beforeScenario : scenarioStartHookMethod.getAnnotationsByType( BeforeScenario.class ) )
+         {
+            String[] tags = beforeScenario.value();
+            processTaggedHook( taggedScenarioStartHooks, tags, scenarioStartHookMethod, String.class, String.class, PreparedScenario.class );
+         }
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while parsing scenario start hook from method  " + scenarioStartHookMethod.getName(), t );
+      }
+   };
 
-   private final Consumer<Method> processTaggedScenarioStopHook   = new Consumer<Method>()
-                                                                  {
-                                                                     @Override
-                                                                     public void accept( Method scenarioStopHookMethod )
-                                                                     {
-                                                                        try
-                                                                        {
-                                                                           for ( AfterScenario afterScenario : scenarioStopHookMethod
-                                                                                    .getAnnotationsByType( AfterScenario.class ) )
-                                                                           {
-                                                                              String[] tags = afterScenario.value();
-                                                                              processTaggedHook( taggedScenarioStopHooks, tags, scenarioStopHookMethod, String.class, String.class, PreparedScenario.class );
-                                                                           }
-                                                                        }
-                                                                        catch ( Throwable t )
-                                                                        {
-                                                                           log.error( "Exception while parsing scenario stop hook from method  "
-                                                                                      + scenarioStopHookMethod.getName(), t );
-                                                                        }
-                                                                     }
-                                                                  };
+   private final Consumer<Method> processTaggedScenarioStopHook = scenarioStopHookMethod -> {
+      try
+      {
+         for ( AfterScenario afterScenario : scenarioStopHookMethod.getAnnotationsByType( AfterScenario.class ) )
+         {
+            String[] tags = afterScenario.value();
+            processTaggedHook( taggedScenarioStopHooks, tags, scenarioStopHookMethod, String.class, String.class, PreparedScenario.class );
+         }
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while parsing scenario stop hook from method  " + scenarioStopHookMethod.getName(), t );
+      }
+   };
 
-   private final Consumer<Method> processTaggedScenarioFailedHook = new Consumer<Method>()
-                                                                  {
-                                                                     @Override
-                                                                     public void accept( Method scenarioFailureHookMethod )
-                                                                     {
-                                                                        try
-                                                                        {
-                                                                           for ( ScenarioFailed afterScenario : scenarioFailureHookMethod
-                                                                                    .getAnnotationsByType( ScenarioFailed.class ) )
-                                                                           {
-                                                                              String[] tags = afterScenario.value();
-                                                                              processTaggedHook( taggedScenarioFailureHooks, tags, scenarioFailureHookMethod, String.class, String.class, PreparedScenario.class, ScenarioResult.class );
-                                                                           }
-                                                                        }
-                                                                        catch ( Throwable t )
-                                                                        {
-                                                                           log.error( "Exception while parsing scenario failure hook from method  "
-                                                                                      + scenarioFailureHookMethod.getName(), t );
-                                                                        }
-                                                                     }
-                                                                  };
+   private final Consumer<Method> processTaggedScenarioFailedHook = scenarioFailureHookMethod -> {
+      try
+      {
+         for ( ScenarioFailed afterScenario : scenarioFailureHookMethod.getAnnotationsByType( ScenarioFailed.class ) )
+         {
+            String[] tags = afterScenario.value();
+            processTaggedHook( taggedScenarioFailureHooks, tags, scenarioFailureHookMethod, String.class, String.class, PreparedScenario.class,
+                     ScenarioResult.class );
+         }
+      }
+      catch ( Throwable t )
+      {
+         log.error( "Exception while parsing scenario failure hook from method  " + scenarioFailureHookMethod.getName(), t );
+      }
+   };
 
    @Initializer
    public boolean initialize() throws Throwable
@@ -580,27 +414,27 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       }
       log.info( "Initializing " + PLUGIN_NAME + " plugin" );
 
-      AnnotationScanner
-               .forEachMethod( stepDefinitionPackageNames, StepDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processStepDefinition );
-      AnnotationScanner
-               .forEachMethod( stepDefinitionPackageNames, ChaosActionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processChaosDefinition );
-      AnnotationScanner
-               .forEachMethod( stepDefinitionPackageNames, ConditionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null, processConditions );
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, StepDefinition.class, AnnotationScanner.IS_PUBLIC, null, null,
+               this::processStepDefinitionMethod );
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, ChaosActionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null,
+               this::processChaosDefinitionMethod );
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, ConditionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null,
+               this::processConditionMethod );
 
-      AnnotationScanner
-               .forEachMethod( stepDefinitionPackageNames, BeforeRun.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedRunStartHook );
-      AnnotationScanner
-               .forEachMethod( stepDefinitionPackageNames, AfterRun.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedRunStopHook );
-      AnnotationScanner
-               .forEachMethod( stepDefinitionPackageNames, BeforeFeature.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedFeatureStartHook );
-      AnnotationScanner
-               .forEachMethod( stepDefinitionPackageNames, AfterFeature.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedFeatureStopHook );
-      AnnotationScanner
-               .forEachMethod( stepDefinitionPackageNames, BeforeScenario.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedScenarioStartHook );
-      AnnotationScanner
-               .forEachMethod( stepDefinitionPackageNames, AfterScenario.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedScenarioStopHook );
-      AnnotationScanner
-               .forEachMethod( stepDefinitionPackageNames, ScenarioFailed.class, AnnotationScanner.IS_PUBLIC, null, null, processTaggedScenarioFailedHook );
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeRun.class, AnnotationScanner.IS_PUBLIC, null, null,
+               processTaggedRunStartHook );
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterRun.class, AnnotationScanner.IS_PUBLIC, null, null,
+               processTaggedRunStopHook );
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeFeature.class, AnnotationScanner.IS_PUBLIC, null, null,
+               processTaggedFeatureStartHook );
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterFeature.class, AnnotationScanner.IS_PUBLIC, null, null,
+               processTaggedFeatureStopHook );
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeScenario.class, AnnotationScanner.IS_PUBLIC, null, null,
+               processTaggedScenarioStartHook );
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterScenario.class, AnnotationScanner.IS_PUBLIC, null, null,
+               processTaggedScenarioStopHook );
+      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, ScenarioFailed.class, AnnotationScanner.IS_PUBLIC, null, null,
+               processTaggedScenarioFailedHook );
 
       initialized = true;
       return true;
@@ -622,12 +456,12 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       }
 
       stepIdentifier = stepIdentifier.trim();
-      String words[] = stepIdentifier.split( WORD_FETCH_REGEX );
-      String conjuctionUsed = null;
+      String[] words = stepIdentifier.split( WORD_FETCH_REGEX );
+      String   conjunctionUsed;
       if ( conjunctions.contains( words[0] ) )
       {
-         conjuctionUsed = words[0];
-         stepIdentifier = stepIdentifier.substring( conjuctionUsed.length() ).trim();
+         conjunctionUsed = words[0];
+         stepIdentifier  = stepIdentifier.substring( conjunctionUsed.length() ).trim();
       }
       stepIdentifier = stepIdentifier.replaceAll( INLINE_TEST_DATA_PATTERN, INLINE_STEP_DEF_PARAM_INDICATOR_STRING );
 
@@ -637,7 +471,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    @Override
    public StepResult runStep( PreparedStep testStep ) throws TestFailureException
    {
-      StepResult result = new StepResult();
+      StepResult           result               = new StepResult();
       TestExecutionContext testExecutionContext = testStep.getTestExecutionContext();
 
       log.debug( "Step run" + testStep );
@@ -651,8 +485,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       String stepIdentifier = testStep.getIdentifier();
 
       // Fetch the positional argument names
-      ArrayList<String> inlineStepDefinitionParameterNames = new ArrayList<String>();
-      Matcher matcher = testDataPattern.matcher( testStep.getIdentifier().trim() );
+      ArrayList<String> inlineStepDefinitionParameterNames = new ArrayList<>();
+      Matcher           matcher                            = testDataPattern.matcher( testStep.getIdentifier().trim() );
       while ( matcher.find() )
       {
          inlineStepDefinitionParameterNames.add( matcher.group() );
@@ -664,46 +498,47 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          // TODO: Handling undefined step to ask manual action(other configured handlers) if possible
          String errorMessage = "Missing step definition: " + stepIdentifier;
          log.error( errorMessage );
-         String positionalParameters = "";
+         StringBuilder positionalParameters = new StringBuilder();
 
          int i = 0;
          for ( String inlineStepDefinitionParameterName : inlineStepDefinitionParameterNames )
          {
-            positionalParameters = positionalParameters + ", Serializable posArg" + ( i++ ) + " /*= " + inlineStepDefinitionParameterName + "*/";
+            positionalParameters.append( ", Serializable posArg" ).append( i++ ).append( " /*= " ).append( inlineStepDefinitionParameterName )
+                     .append( "*/" );
          }
-         log.error( "Suggestion:\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava( stepIdentifier ) + "\" )\r\n" + "   public StepResult "
-                    + stepIdentifier.replaceAll( Constants.REGEX_WHITESPACE, Constants.UNDERSCORE ) + "( TestExecutionContext context "
-                    + positionalParameters + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
+         log.error( "Suggestion:\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava(
+                  stepIdentifier ) + "\" )\r\n" + "   public StepResult " + stepIdentifier.replaceAll( Constants.REGEX_WHITESPACE,
+                  Constants.UNDERSCORE ) + "( TestExecutionContext context " + positionalParameters + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
          return StandardStepResults.error( errorMessage );
       }
 
       try
       {
          Pair<Object, Method> stepDefHandlerObjectMethodPair = stepHandlerMap.get( stepIdentifier );
-         Object stepDefObject = stepDefHandlerObjectMethodPair.getLeft();
-         Method stepDefMethodToInvoke = stepDefHandlerObjectMethodPair.getRight();
-         BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
+         Object               stepDefObject                  = stepDefHandlerObjectMethodPair.getLeft();
+         Method               stepDefMethodToInvoke          = stepDefHandlerObjectMethodPair.getRight();
+         BeanRegistry         beanRegistry                   = testExecutionContext.getContextBeanRegistry();
 
-         Object returnValue =
-                  runStepDefMethodWithParameters( testExecutionContext, inlineStepDefinitionParameterNames, stepDefMethodToInvoke, stepDefObject );
+         Object returnValue = runStepDefMethodWithParameters( testExecutionContext, inlineStepDefinitionParameterNames, stepDefMethodToInvoke,
+                  stepDefObject );
 
          Class<?> returnType = stepDefMethodToInvoke.getReturnType();
 
          StepDefinition stepDefinition = stepDefMethodToInvoke.getAnnotation( StepDefinition.class );
          StepOutputType stepOutputType = StepOutputType.AUTO_RESOLVE;
-         String outputName = null;
+         String         outputName     = null;
 
          if ( stepDefinition != null )
          {
             stepOutputType = stepDefinition.outputType();
-            outputName = stepDefinition.outputName();
+            outputName     = stepDefinition.outputName();
          }
 
          result = extractAndProcessStepResult( result, beanRegistry, returnType, returnValue, stepOutputType, outputName );
       }
       catch ( Throwable t )
       {
-         String errorMessage = "Exception occured while running step definition " + testStep;
+         String errorMessage = "Exception occurred while running step definition " + testStep;
          log.error( errorMessage, t );
          result = StandardStepResults.error( errorMessage, t );
       }
@@ -714,21 +549,19 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
    public Object runStepDefMethodWithParameters( TestExecutionContext testExecutionContext, ArrayList<String> inlineParameterNames,
                                                  Method methodToInvoke, Object methodDefiningClassObject )
-            throws JsonProcessingException, JsonMappingException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+            throws JsonProcessingException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
    {
-      HashMap<String, Serializable> testData = testExecutionContext.getData();
+      HashMap<String, Serializable> testData  = testExecutionContext.getData();
       HashMap<String, Serializable> variables = testExecutionContext.getVariables();
 
       Parameter[] parametersObj = methodToInvoke.getParameters();
 
       BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
 
-      ArrayList<Object> values = new ArrayList<Object>();
+      ArrayList<Object> values = new ArrayList<>();
 
       for ( int i = 0, positionalArg = 0; i < parametersObj.length; i++ )
       {
-         String name = parametersObj[i].getName();
-
          Class<?> paramType = parametersObj[i].getType();
          if ( paramType == TestExecutionContext.class )
          {
@@ -736,22 +569,21 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             continue;
          }
 
-         TestData testDataAnnotation = parametersObj[i].getAnnotation( TestData.class );
-         ContextBean contextBeanAnnotation = parametersObj[i].getAnnotation( ContextBean.class );
+         TestData        testDataAnnotation        = parametersObj[i].getAnnotation( TestData.class );
+         ContextBean     contextBeanAnnotation     = parametersObj[i].getAnnotation( ContextBean.class );
          ContextVariable contextVariableAnnotation = parametersObj[i].getAnnotation( ContextVariable.class );
+
+         JavaType typeToConvertTo = objectMapper.getTypeFactory().constructType( parametersObj[i].getParameterizedType() );
 
          if ( testDataAnnotation != null )
          {
-            name = testDataAnnotation.value();
-            values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
+            values.add( objectMapper.convertValue( testData.get( testDataAnnotation.value() ), typeToConvertTo ) );
          }
          else if ( contextBeanAnnotation != null )
          {
-            name = contextBeanAnnotation.value();
-
             if ( beanRegistry != null )
             {
-               values.add( beanRegistry.get( name ) );
+               values.add( beanRegistry.get( contextBeanAnnotation.value() ) );
             }
             else
             {
@@ -760,17 +592,17 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          }
          else if ( contextVariableAnnotation != null )
          {
-            name = contextVariableAnnotation.value();
-            values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
+            values.add( objectMapper.convertValue( variables.get( contextVariableAnnotation.value() ), typeToConvertTo ) );
          }
          else
          {
-            values.add( ParserUtils.getObjectMapper().readValue( inlineParameterNames.get( positionalArg++ ), paramType ) );
+            values.add( objectMapper.readValue( inlineParameterNames.get( positionalArg++ ), typeToConvertTo ) );
          }
       }
 
-      return values.isEmpty() ? methodToInvoke.invoke( methodDefiningClassObject )
-               : methodToInvoke.invoke( methodDefiningClassObject, values.toArray() );
+      return values.isEmpty() ?
+               methodToInvoke.invoke( methodDefiningClassObject ) :
+               methodToInvoke.invoke( methodDefiningClassObject, values.toArray() );
    }
 
    private StepResult extractAndProcessStepResult( StepResult result, BeanRegistry beanRegistry, Class<?> returnType, Object returnValue,
@@ -855,13 +687,13 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    }
 
    @Override
-   public StepResult performChaosAction( PreparedChaosAction preparedChaosAction ) throws TestFailureException
+   public StepResult performChaosAction( PreparedChaosAction preparedChaosAction )
    {
       StepResult result = new StepResult();
 
-      TestExecutionContext testExecutionContext = preparedChaosAction.getTestExecutionContext();
-      HashMap<String, Serializable> testData = testExecutionContext.getData();
-      HashMap<String, Serializable> variables = testExecutionContext.getVariables();
+      TestExecutionContext          testExecutionContext = preparedChaosAction.getTestExecutionContext();
+      HashMap<String, Serializable> testData             = testExecutionContext.getData();
+      HashMap<String, Serializable> variables            = testExecutionContext.getVariables();
 
       log.debug( "Chaos actions run" + preparedChaosAction );
 
@@ -880,9 +712,9 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             // TODO: Handling undefined chaos action to ask manual action(other configured handlers) if possible
             String errorMessage = "Missing chaos action handler definition: " + chaosActionName;
             log.error( errorMessage );
-            log.error( "Suggestion:\r\n   @ChaosActionDefinition( \"" + StringEscapeUtils.escapeJava( chaosActionName ) + "\" )\r\n"
-                       + "   public StepResult " + chaosActionName.replaceAll( Constants.REGEX_NON_ALPHANUMERIC, Constants.UNDERSCORE )
-                       + "( TestExecutionContext context, PreparedChaosAction actionToPerform) throws Throwable\r\n" + "   {\r\n...\r\n   }" );
+            log.error( "Suggestion:\r\n   @ChaosActionDefinition( \"" + StringEscapeUtils.escapeJava(
+                     chaosActionName ) + "\" )\r\n" + "   public StepResult " + chaosActionName.replaceAll( Constants.REGEX_NON_ALPHANUMERIC,
+                     Constants.UNDERSCORE ) + "( TestExecutionContext context, PreparedChaosAction actionToPerform) throws Throwable\r\n" + "   {\r\n...\r\n   }" );
             return StandardStepResults.error( errorMessage );
          }
 
@@ -890,11 +722,11 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          {
             Pair<Object, Method> chaosActionHandlerObjectMethodPair = chaosActionHandlerMap.get( chaosActionName );
 
-            Object chaosActionHandlerObject = chaosActionHandlerObjectMethodPair.getLeft();
+            Object chaosActionHandlerObject         = chaosActionHandlerObjectMethodPair.getLeft();
             Method chaosActionHandlerMethodToInvoke = chaosActionHandlerObjectMethodPair.getRight();
 
-            Parameter[] parametersObj = chaosActionHandlerMethodToInvoke.getParameters();
-            ArrayList<Object> values = new ArrayList<Object>();
+            Parameter[]       parametersObj = chaosActionHandlerMethodToInvoke.getParameters();
+            ArrayList<Object> values        = new ArrayList<>();
             values.add( testExecutionContext );
             values.add( preparedChaosAction );
 
@@ -904,25 +736,21 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             {
                for ( int i = 2; i < parametersObj.length; i++ )
                {
-                  String name = parametersObj[i].getName();
-                  // TestData paramaterNameInfo = parametersObj[i].getAnnotation( TestData.class );
-
-                  TestData testDataAnnotation = parametersObj[i].getAnnotation( TestData.class );
-                  ContextBean contextBeanAnnotation = parametersObj[i].getAnnotation( ContextBean.class );
+                  TestData        testDataAnnotation        = parametersObj[i].getAnnotation( TestData.class );
+                  ContextBean     contextBeanAnnotation     = parametersObj[i].getAnnotation( ContextBean.class );
                   ContextVariable contextVariableAnnotation = parametersObj[i].getAnnotation( ContextVariable.class );
+
+                  JavaType typeToConvertTo = objectMapper.getTypeFactory().constructType( parametersObj[i].getParameterizedType() );
 
                   if ( testDataAnnotation != null )
                   {
-                     name = testDataAnnotation.value();
-                     values.add( objectMapper.convertValue( testData.get( name ), parametersObj[i].getType() ) );
+                     values.add( objectMapper.convertValue( testData.get( testDataAnnotation.value() ), typeToConvertTo ) );
                   }
                   else if ( contextBeanAnnotation != null )
                   {
-                     name = contextBeanAnnotation.value();
-
                      if ( beanRegistry != null )
                      {
-                        values.add( beanRegistry.get( name ) );
+                        values.add( beanRegistry.get( contextBeanAnnotation.value() ) );
                      }
                      else
                      {
@@ -931,23 +759,22 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                   }
                   else if ( contextVariableAnnotation != null )
                   {
-                     name = contextVariableAnnotation.value();
-                     values.add( objectMapper.convertValue( variables.get( name ), parametersObj[i].getType() ) );
+                     values.add( objectMapper.convertValue( variables.get( contextVariableAnnotation.value() ), typeToConvertTo ) );
                   }
                }
             }
 
-            Class<?> returnType = chaosActionHandlerMethodToInvoke.getReturnType();
-            Object returnValue = chaosActionHandlerMethodToInvoke.invoke( chaosActionHandlerObject, values.toArray() );
+            Class<?> returnType  = chaosActionHandlerMethodToInvoke.getReturnType();
+            Object   returnValue = chaosActionHandlerMethodToInvoke.invoke( chaosActionHandlerObject, values.toArray() );
 
             ChaosActionDefinition chaosActionDefinition = chaosActionHandlerMethodToInvoke.getAnnotation( ChaosActionDefinition.class );
-            StepOutputType stepOutputType = StepOutputType.AUTO_RESOLVE;
-            String outputName = null;
+            StepOutputType        stepOutputType        = StepOutputType.AUTO_RESOLVE;
+            String                outputName            = null;
 
             if ( chaosActionDefinition != null )
             {
                stepOutputType = chaosActionDefinition.outputType();
-               outputName = chaosActionDefinition.outputName();
+               outputName     = chaosActionDefinition.outputName();
             }
 
             result = extractAndProcessStepResult( result, beanRegistry, returnType, returnValue, stepOutputType, outputName );
@@ -978,8 +805,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       }
 
       // Fetch the positional argument names
-      ArrayList<String> inlineStepDefinitionParameterNames = new ArrayList<String>();
-      Matcher matcher = testDataPattern.matcher( conditionIdentifier.trim() );
+      ArrayList<String> inlineStepDefinitionParameterNames = new ArrayList<>();
+      Matcher           matcher                            = testDataPattern.matcher( conditionIdentifier.trim() );
       while ( matcher.find() )
       {
          inlineStepDefinitionParameterNames.add( matcher.group() );
@@ -991,34 +818,34 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
          // TODO: Handling undefined step to ask manual action(other configured handlers) if possible
          String errorMessage = "Missing condition definition: " + conditionIdentifier;
          log.error( errorMessage );
-         String positionalParameters = "";
+         StringBuilder positionalParameters = new StringBuilder();
 
          int i = 0;
          for ( String inlineConditionDefinitionParameterName : inlineStepDefinitionParameterNames )
          {
-            positionalParameters = positionalParameters + ", Serializable posArg" + ( i++ ) + " /*= " + inlineConditionDefinitionParameterName + "*/";
+            positionalParameters.append( ", Serializable posArg" ).append( i++ ).append( " /*= " ).append( inlineConditionDefinitionParameterName )
+                     .append( "*/" );
          }
-         log.error( "Suggestion:\r\n   @ConditionDefinition( \"" + StringEscapeUtils.escapeJava( conditionIdentifier ) + "\" )\r\n"
-                    + "   public boolean " + conditionIdentifier.replaceAll( Constants.REGEX_WHITESPACE, Constants.UNDERSCORE ) + "(  "
-                    + positionalParameters + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
+         log.error( "Suggestion:\r\n   @ConditionDefinition( \"" + StringEscapeUtils.escapeJava(
+                  conditionIdentifier ) + "\" )\r\n" + "   public boolean " + conditionIdentifier.replaceAll( Constants.REGEX_WHITESPACE,
+                  Constants.UNDERSCORE ) + "(  " + positionalParameters + ") throws Throwable\r\n" + "   {\r\n...\r\n   }" );
          return false;
       }
 
       try
       {
          Pair<Object, Method> conditionHandlerObjectMethodPair = conditionDefinitionMap.get( conditionIdentifier );
-         Object conditionDefObject = conditionHandlerObjectMethodPair.getLeft();
-         Method conditionDefMethodToInvoke = conditionHandlerObjectMethodPair.getRight();
-         Class<?> returnType = conditionDefMethodToInvoke.getReturnType();
+         Object               conditionDefObject               = conditionHandlerObjectMethodPair.getLeft();
+         Method               conditionDefMethodToInvoke       = conditionHandlerObjectMethodPair.getRight();
+         Class<?>             returnType                       = conditionDefMethodToInvoke.getReturnType();
 
          if ( ( returnType != boolean.class ) && ( returnType != Boolean.class ) )
          {
             return false;
          }
 
-         boolean returnValue =
-                  (Boolean) runStepDefMethodWithParameters( testExecutionContext, inlineStepDefinitionParameterNames, conditionDefMethodToInvoke, conditionDefObject );
-         return returnValue;
+         return (boolean) (Boolean) runStepDefMethodWithParameters( testExecutionContext, inlineStepDefinitionParameterNames,
+                  conditionDefMethodToInvoke, conditionDefObject );
       }
       catch ( Throwable t )
       {
@@ -1030,7 +857,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
    public boolean invokeTaggedMethods( HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooksList, HashSet<String> tags, Object... parameters )
    {
-      HashSet<Method> alreadyInvokedMethods = new HashSet<Method>();
+      HashSet<Method> alreadyInvokedMethods = new HashSet<>();
 
       for ( String tag : tags )
       {
@@ -1042,7 +869,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             {
                for ( Pair<Object, Method> objectMethodPair : patternHooksEntrySet.getValue() )
                {
-                  Object hookObject = objectMethodPair.getLeft();
+                  Object hookObject         = objectMethodPair.getLeft();
                   Method hookMethodToInvoke = objectMethodPair.getRight();
 
                   if ( alreadyInvokedMethods.contains( hookMethodToInvoke ) )

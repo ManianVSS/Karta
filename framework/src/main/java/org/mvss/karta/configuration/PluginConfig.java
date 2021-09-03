@@ -1,18 +1,13 @@
 package org.mvss.karta.configuration;
 
-import java.io.Serializable;
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import java.io.Serializable;
 
 /**
  * Defines configuration of a plug-in.</br>
  * This configuration schema should be saved as /KartaPluginsConfiguration.yaml in the plug-in jar.</br>
- * 
+ *
  * @author Manian
  */
 @Getter
@@ -29,26 +24,26 @@ public class PluginConfig implements Serializable
     * The name of the plug-in.
     */
    @Builder.Default
-   private String            pluginName       = null;
+   private String pluginName = null;
 
    /**
     * The fully qualified java class name of the plug-in.
     */
    @Builder.Default
-   private String            className        = null;
+   private String className = null;
 
    /**
     * The jar file name for the plug-in.</br>
     * This attribute is relevant if defining plug-in configuration outside a jar file.
     */
    @Builder.Default
-   private String            jarFile          = null;
+   private String jarFile = null;
 
    @Override
    public int hashCode()
    {
-      final int prime = 31;
-      int result = 1;
+      final int prime  = 31;
+      int       result = 1;
       result = prime * result + ( ( pluginName == null ) ? 0 : pluginName.hashCode() );
       return result;
    }
@@ -63,14 +58,14 @@ public class PluginConfig implements Serializable
       if ( getClass() != obj.getClass() )
          return false;
       PluginConfig other = (PluginConfig) obj;
+      
       if ( pluginName == null )
       {
-         if ( other.pluginName != null )
-            return false;
+         return other.pluginName == null;
       }
-      else if ( !pluginName.equals( other.pluginName ) )
-         return false;
-      return true;
+      else
+      {
+         return pluginName.equals( other.pluginName );
+      }
    }
-
 }

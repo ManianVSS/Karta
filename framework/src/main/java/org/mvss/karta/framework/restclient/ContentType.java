@@ -1,10 +1,10 @@
 package org.mvss.karta.framework.restclient;
 
+import lombok.Getter;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import lombok.Getter;
 
 public enum ContentType
 {
@@ -37,7 +37,7 @@ public enum ContentType
 
    public final String mimeType;
 
-   private ContentType( String mimeType )
+   ContentType( String mimeType )
    {
       this.mimeType = mimeType;
    }
@@ -53,34 +53,19 @@ public enum ContentType
 
    @Getter
    private static final Map<String, ContentType> CONTENT_TYPE_MAP;
+
    static
    {
 
-      final ContentType[] contentTypes = {APPLICATION_ATOM_XML,
-                                          APPLICATION_FORM_URLENCODED,
-                                          APPLICATION_JSON,
-                                          APPLICATION_SVG_XML,
-                                          APPLICATION_XHTML_XML,
-                                          APPLICATION_XML,
-                                          APPLICATION_YML,
-                                          APPLICATION_YAML,
-                                          APPLICATION_X_YAML,
+      final ContentType[] contentTypes = {APPLICATION_ATOM_XML, APPLICATION_FORM_URLENCODED, APPLICATION_JSON, APPLICATION_SVG_XML,
+                                          APPLICATION_XHTML_XML, APPLICATION_XML, APPLICATION_YML, APPLICATION_YAML, APPLICATION_X_YAML,
 
-                                          IMAGE_BMP,
-                                          IMAGE_GIF,
-                                          IMAGE_JPEG,
-                                          IMAGE_PNG,
-                                          IMAGE_SVG,
-                                          IMAGE_TIFF,
-                                          IMAGE_WEBP,
+                                          IMAGE_BMP, IMAGE_GIF, IMAGE_JPEG, IMAGE_PNG, IMAGE_SVG, IMAGE_TIFF, IMAGE_WEBP,
 
                                           MULTIPART_FORM_DATA,
 
-                                          TEXT_HTML,
-                                          TEXT_PLAIN,
-                                          TEXT_XML,
-                                          TEXT_YAML};
-      final HashMap<String, ContentType> map = new HashMap<String, ContentType>();
+                                          TEXT_HTML, TEXT_PLAIN, TEXT_XML, TEXT_YAML};
+      final HashMap<String, ContentType> map = new HashMap<>();
       for ( final ContentType contentType : contentTypes )
       {
          map.put( contentType.mimeType, contentType );
@@ -102,19 +87,19 @@ public enum ContentType
       public static String APPLICATION_YAML            = "application/yaml";
       public static String APPLICATION_X_YAML          = "application/x-yaml";
 
-      public static String IMAGE_BMP                   = "image/bmp";
-      public static String IMAGE_GIF                   = "image/gif";
-      public static String IMAGE_JPEG                  = "image/bmp";
-      public static String IMAGE_PNG                   = "image/png";
-      public static String IMAGE_SVG                   = "image/svg+xml";
-      public static String IMAGE_TIFF                  = "image/tiff";
-      public static String IMAGE_WEBP                  = "image/webp";
+      public static String IMAGE_BMP  = "image/bmp";
+      public static String IMAGE_GIF  = "image/gif";
+      public static String IMAGE_JPEG = "image/bmp";
+      public static String IMAGE_PNG  = "image/png";
+      public static String IMAGE_SVG  = "image/svg+xml";
+      public static String IMAGE_TIFF = "image/tiff";
+      public static String IMAGE_WEBP = "image/webp";
 
-      public static String MULTIPART_FORM_DATA         = "multipart/form-data";
-      public static String TEXT_HTML                   = "text/html";
-      public static String TEXT_PLAIN                  = "text/plain";
-      public static String TEXT_XML                    = "text/xml";
-      public static String TEXT_YAML                   = "text/yaml";
+      public static String MULTIPART_FORM_DATA = "multipart/form-data";
+      public static String TEXT_HTML           = "text/html";
+      public static String TEXT_PLAIN          = "text/plain";
+      public static String TEXT_XML            = "text/xml";
+      public static String TEXT_YAML           = "text/yaml";
 
    }
 

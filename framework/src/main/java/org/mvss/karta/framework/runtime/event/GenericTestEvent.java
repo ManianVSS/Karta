@@ -1,14 +1,9 @@
 package org.mvss.karta.framework.runtime.event;
 
-import java.io.Serializable;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.*;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import java.io.Serializable;
 
 @Getter
 @Setter
@@ -17,10 +12,6 @@ import lombok.ToString;
 @NoArgsConstructor
 public class GenericTestEvent extends Event
 {
-
-   /**
-    * 
-    */
    private static final long serialVersionUID = 1L;
 
    public GenericTestEvent( Event event )

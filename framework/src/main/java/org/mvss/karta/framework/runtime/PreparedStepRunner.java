@@ -1,5 +1,13 @@
 package org.mvss.karta.framework.runtime;
 
+import org.mvss.karta.framework.core.PreparedStep;
+import org.mvss.karta.framework.core.StandardStepResults;
+import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.runtime.interfaces.StepRunner;
+import org.mvss.karta.framework.threading.BlockingRunnableQueue;
+import lombok.*;
+import lombok.extern.log4j.Log4j2;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.Callable;
@@ -7,19 +15,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import org.mvss.karta.framework.core.PreparedStep;
-import org.mvss.karta.framework.core.StandardStepResults;
-import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.runtime.interfaces.StepRunner;
-import org.mvss.karta.framework.threading.BlockingRunnableQueue;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
 
 @Getter
 @Setter
@@ -56,17 +51,16 @@ public class PreparedStepRunner implements Callable<StepResult>
 
             if ( ( runInParallel != null ) && runInParallel )
             {
-               int numberOfParallelSteps = nestedSteps.size();
-               StepResult cumulativeStepResult = new StepResult();
+               int        numberOfParallelSteps = nestedSteps.size();
+               StepResult cumulativeStepResult  = new StepResult();
                cumulativeStepResult.setStartTime( new Date() );
                ExecutorService stepExecutorService = new ThreadPoolExecutor( numberOfParallelSteps, numberOfParallelSteps, 0L, TimeUnit.MILLISECONDS,
-                                                                             new BlockingRunnableQueue( numberOfParallelSteps ) );
+                        new BlockingRunnableQueue( numberOfParallelSteps ) );
 
                for ( PreparedStep nestedStep : nestedSteps )
                {
-                  PreparedStepRunner preparedStepRunner =
-                           PreparedStepRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).step( nestedStep )
-                                    .resultConsumer( ( threadStepResult ) -> cumulativeStepResult.mergeResults( threadStepResult ) ).build();
+                  PreparedStepRunner preparedStepRunner = PreparedStepRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo )
+                           .step( nestedStep ).resultConsumer( cumulativeStepResult::mergeResults ).build();
                   stepExecutorService.submit( preparedStepRunner );
                }
 
@@ -74,7 +68,10 @@ public class PreparedStepRunner implements Callable<StepResult>
                try
                {
                   // TODO: Change to WaitUtil impl with max timeout
-                  stepExecutorService.awaitTermination( Long.MAX_VALUE, TimeUnit.SECONDS );
+                  if ( !stepExecutorService.awaitTermination( Long.MAX_VALUE, TimeUnit.SECONDS ) )
+                  {
+                     log.error( "Failed awaiting termination of step executor service" );
+                  }
                }
                catch ( InterruptedException ie )
                {
@@ -91,8 +88,8 @@ public class PreparedStepRunner implements Callable<StepResult>
                stepResult = new StepResult();
                for ( PreparedStep nestedStep : nestedSteps )
                {
-                  PreparedStepRunner preparedStepRunner =
-                           PreparedStepRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).step( nestedStep ).build();
+                  PreparedStepRunner preparedStepRunner = PreparedStepRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo )
+                           .step( nestedStep ).build();
                   stepResult.mergeResults( preparedStepRunner.call() );
 
                   if ( !stepResult.isPassed() )
@@ -114,8 +111,8 @@ public class PreparedStepRunner implements Callable<StepResult>
    @Override
    public StepResult call()
    {
-      Date startTime = new Date();
-      StepResult stepResult = new StepResult();
+      Date       startTime = new Date();
+      StepResult stepResult;//= new StepResult();
 
       try
       {
@@ -149,5 +146,4 @@ public class PreparedStepRunner implements Callable<StepResult>
 
       return stepResult;
    }
-
 }

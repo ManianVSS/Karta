@@ -14,5 +14,5 @@ import java.lang.annotation.Target;
 @Retention( RetentionPolicy.RUNTIME )
 public @interface ContextBean
 {
-   public String value();
+   String value();
 }

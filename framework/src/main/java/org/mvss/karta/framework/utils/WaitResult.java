@@ -1,13 +1,18 @@
 package org.mvss.karta.framework.utils;
 
-import lombok.*;
-
 import java.time.Duration;
 import java.time.Instant;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 /**
  * This class groups the results for a wait activity
- *
+ * 
  * @author Manian
  */
 @Getter
@@ -24,11 +29,6 @@ public class WaitResult
    private Instant   endTime;
    private Throwable thrown;
 
-   public static WaitResult failed( Throwable t )
-   {
-      return new WaitResult( false, Instant.now(), Instant.now(), t );
-   }
-
    public long getWaitTime()
    {
       return endTime.toEpochMilli() - startTime.toEpochMilli();
@@ -37,6 +37,11 @@ public class WaitResult
    public Duration getWaitDuration()
    {
       return Duration.between( startTime, endTime );
+   }
+
+   public static WaitResult failed( Throwable t )
+   {
+      return new WaitResult( false, Instant.now(), Instant.now(), t );
    }
 
    public boolean accumulate( WaitResult waitResult )
@@ -50,7 +55,7 @@ public class WaitResult
          this.endTime = waitResult.endTime;
       }
       this.successful = this.successful && waitResult.successful;
-      this.thrown     = waitResult.thrown;
+      this.thrown = waitResult.thrown;
       return this.successful;
    }
 }

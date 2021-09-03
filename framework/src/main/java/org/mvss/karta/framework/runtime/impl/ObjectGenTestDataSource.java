@@ -1,39 +1,37 @@
 package org.mvss.karta.framework.runtime.impl;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Random;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.randomization.ObjectGenerationRule;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.utils.ParserUtils;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.extern.log4j.Log4j2;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Random;
 
 @Log4j2
 public class ObjectGenTestDataSource implements TestDataSource
 {
-   public static final String                             PLUGIN_NAME          = "ObjectGenTestDataSource";
+   public static final String PLUGIN_NAME = "ObjectGenTestDataSource";
 
    @PropertyMapping( group = PLUGIN_NAME, value = "enableRuleValidation" )
-   private boolean                                        enableRuleValidation = true;
+   private boolean enableRuleValidation = true;
 
    @PropertyMapping( group = PLUGIN_NAME, value = "seed" )
-   private Long                                           seed                 = null;
+   private Long seed = null;
 
    @PropertyMapping( group = PLUGIN_NAME, value = "objectRuleMap" )
-   private HashMap<String, HashMap<String, Serializable>> objectRuleMapRaw     = new HashMap<String, HashMap<String, Serializable>>();
+   private HashMap<String, HashMap<String, Serializable>> objectRuleMapRaw = new HashMap<>();
 
-   private HashMap<String, ObjectGenerationRule>          objectRuleMap        = new HashMap<String, ObjectGenerationRule>();
+   private final HashMap<String, ObjectGenerationRule> objectRuleMap = new HashMap<>();
 
-   private Random                                         random;
+   private Random random;
 
-   private boolean                                        initialized          = false;
+   private boolean initialized = false;
 
    @Override
    public String getPluginName()
@@ -55,7 +53,8 @@ public class ObjectGenTestDataSource implements TestDataSource
 
       for ( String objectKey : objectRuleMapRaw.keySet() )
       {
-         ObjectGenerationRule ruleToAdd = objectMapper.readValue( objectMapper.writeValueAsString( objectRuleMapRaw.get( objectKey ) ), ObjectGenerationRule.class );
+         ObjectGenerationRule ruleToAdd = objectMapper.readValue( objectMapper.writeValueAsString( objectRuleMapRaw.get( objectKey ) ),
+                  ObjectGenerationRule.class );
 
          if ( enableRuleValidation && !ruleToAdd.validateConfiguration() )
          {
@@ -71,9 +70,9 @@ public class ObjectGenTestDataSource implements TestDataSource
    }
 
    @Override
-   public HashMap<String, Serializable> getData( TestExecutionContext testExecutionContext ) throws Throwable
+   public HashMap<String, Serializable> getData( TestExecutionContext testExecutionContext )
    {
-      HashMap<String, Serializable> testData = new HashMap<String, Serializable>();
+      HashMap<String, Serializable> testData = new HashMap<>();
 
       for ( String objectRuleName : objectRuleMap.keySet() )
       {
@@ -82,5 +81,4 @@ public class ObjectGenTestDataSource implements TestDataSource
       }
       return testData;
    }
-
 }

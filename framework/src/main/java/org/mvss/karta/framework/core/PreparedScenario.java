@@ -1,21 +1,14 @@
 package org.mvss.karta.framework.core;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.mvss.karta.framework.runtime.BeanRegistry;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 import org.mvss.karta.framework.utils.DataUtils;
+import lombok.*;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Describes a prepared scenario iteration ready for execution.
@@ -23,7 +16,7 @@ import lombok.ToString;
  * Contains only prepared items like PreparedSteps and PreparedChaosActions.
  * Prepared items contain test execution context packing test data and variables and don't contain fields which aren't necessary for execution.
  * TestScenario is like a template and PreparedScenario is an iteration instance ready for execution built using the test scenario.
- * 
+ *
  * @author Manian
  */
 @Getter
@@ -34,43 +27,43 @@ import lombok.ToString;
 @NoArgsConstructor
 public class PreparedScenario implements Serializable
 {
-   private static final long              serialVersionUID    = 1L;
+   private static final long serialVersionUID = 1L;
 
    /**
     * The name of the scenario
     */
    @Builder.Default
-   private String                         name                = null;
+   private String name = null;
 
    /**
     * The scenario description
     */
    @Builder.Default
-   private String                         description         = null;
+   private String description = null;
 
    /**
     * The list of scenario specific prepared setup steps.
     */
    @Builder.Default
-   private ArrayList<PreparedStep>        setupSteps          = new ArrayList<PreparedStep>();
+   private ArrayList<PreparedStep> setupSteps = new ArrayList<>();
 
    /**
     * The list of prepared chaos actions to run.
     */
    @Builder.Default
-   private ArrayList<PreparedChaosAction> chaosActions        = new ArrayList<PreparedChaosAction>();
+   private ArrayList<PreparedChaosAction> chaosActions = new ArrayList<>();
 
    /**
     * The list of prepared execution steps.
     */
    @Builder.Default
-   private ArrayList<PreparedStep>        executionSteps      = new ArrayList<PreparedStep>();
+   private ArrayList<PreparedStep> executionSteps = new ArrayList<>();
 
    /**
     * The list of prepared tear-down steps.
     */
    @Builder.Default
-   private ArrayList<PreparedStep>        tearDownSteps       = new ArrayList<PreparedStep>();
+   private ArrayList<PreparedStep> tearDownSteps = new ArrayList<>();
 
    /**
     * The bean registry for the scenario execution context.
@@ -81,7 +74,7 @@ public class PreparedScenario implements Serializable
     */
    @JsonIgnore
    @Builder.Default
-   private transient BeanRegistry         contextBeanRegistry = null;
+   private transient BeanRegistry contextBeanRegistry = null;
 
    /**
     * Creates a context bean registry with the Configurator provided and propagates
@@ -89,10 +82,8 @@ public class PreparedScenario implements Serializable
     * actions. This method is to be called before running a scenario iteration at the
     * possibly remote node (after before scenario hooks are called) to initialize
     * resources for the scenario execution.
-    * 
-    * @param configurator
     */
-   public void propogateContextBeanRegistry()
+   public void propagateContextBeanRegistry()
    {
       if ( contextBeanRegistry == null )
       {
@@ -122,7 +113,7 @@ public class PreparedScenario implements Serializable
 
    public void normalizeVariables()
    {
-      HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
+      HashMap<String, Serializable> variables = new HashMap<>();
 
       for ( PreparedStep step : tearDownSteps )
       {

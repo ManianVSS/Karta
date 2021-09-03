@@ -1,19 +1,5 @@
 package org.mvss.karta.cli;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.MissingArgumentException;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.UnrecognizedOptionException;
-import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.RunResult;
 import org.mvss.karta.framework.nodes.KartaNodeServer;
@@ -21,37 +7,42 @@ import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunInfo;
 import org.mvss.karta.framework.runtime.RunTarget;
-
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.cli.*;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The entry point for Karta command line interface.</br>
- * 
+ *
  * @author Manian
  */
 @Log4j2
 public class KartaMain
 {
-
-   public static List<Runnable> exitHooks = Collections.synchronizedList( new ArrayList<Runnable>() );
+   public static List<Runnable> exitHooks = Collections.synchronizedList( new ArrayList<>() );
 
    private static void jvmExitHook()
    {
       log.info( "******************** Stopping Karta  *********************" );
-      List<Runnable> exitHooks = new ArrayList<Runnable>( KartaMain.exitHooks );
-
       log.info( "Triggering registered exit hooks" );
-      for ( Runnable exitHook : exitHooks )
+      for ( Runnable exitHook : KartaMain.exitHooks )
       {
-         new Thread( exitHook ).run();
+         new Thread( exitHook ).start();
       }
    }
 
    public static void main( String[] args )
    {
-      Options options = new Options();
+      Options       options   = new Options();
       HelpFormatter formatter = new HelpFormatter();
-      DefaultParser parser = new DefaultParser();
+      DefaultParser parser    = new DefaultParser();
 
       options.addOption( "t", Constants.TAGS, true, "tags to run" );
 
@@ -66,7 +57,8 @@ public class KartaMain
       options.addOption( Constants.BUILD, true, "the build of the application under test" );
 
       options.addOption( Constants.NUMBER_OF_ITERATIONS, true, "number of iterations. Applicable only  for feature file/java test" );
-      options.addOption( Constants.ITERATION_THREAD_COUNT, true, "number of threads to run iterations in parallel with. Applicable only for feature file/java test" );
+      options.addOption( Constants.ITERATION_THREAD_COUNT, true,
+               "number of threads to run iterations in parallel with. Applicable only for feature file/java test" );
 
       options.addOption( Constants.START_NODE, false, "starts Karta RMI node server" );
 
@@ -94,7 +86,10 @@ public class KartaMain
                try (KartaNodeServer kartaRMIServer = new KartaNodeServer( kartaRuntime ))
                {
                   kartaRMIServer.startServer();
-                  kartaRuntime.addNodes();
+                  if ( !kartaRuntime.addNodes() )
+                  {
+                     log.error( "Failure in adding nodes" );
+                  }
                   log.info( "Karta node server started " + kartaRMIServer.getNodeConfig() );
                   Thread.currentThread().join();
                }
@@ -103,9 +98,9 @@ public class KartaMain
          else
          {
             boolean optionMissing = true;
-            boolean runTargetAvailable = false;
+            boolean runTargetAvailable;
 
-            RunInfo runInfo = new RunInfo();
+            RunInfo   runInfo   = new RunInfo();
             RunTarget runTarget = new RunTarget();
 
             if ( cmd.hasOption( Constants.JAVA_TEST ) )
@@ -129,11 +124,8 @@ public class KartaMain
             if ( cmd.hasOption( Constants.TAGS ) )
             {
                optionMissing = false;
-               HashSet<String> tags = new HashSet<String>();
-               for ( String tag : cmd.getOptionValue( Constants.TAGS ).split( Constants.COMMA ) )
-               {
-                  tags.add( tag );
-               }
+               HashSet<String> tags = new HashSet<>();
+               Collections.addAll( tags, cmd.getOptionValue( Constants.TAGS ).split( Constants.COMMA ) );
                runTarget.setRunTags( tags );
             }
 
@@ -176,9 +168,9 @@ public class KartaMain
                }
             }
 
-            Runtime.getRuntime().addShutdownHook( new Thread( () -> jvmExitHook() ) );
+            Runtime.getRuntime().addShutdownHook( new Thread( KartaMain::jvmExitHook ) );
 
-            runTargetAvailable = runTargetAvailable || StringUtils.isNotBlank( runTarget.getFeatureFile() );
+            runTargetAvailable = StringUtils.isNotBlank( runTarget.getFeatureFile() );
             runTargetAvailable = runTargetAvailable || StringUtils.isNotBlank( runTarget.getJavaTest() );
             runTargetAvailable = runTargetAvailable || ( runTarget.getRunTags() != null && !runTarget.getRunTags().isEmpty() );
 
@@ -196,8 +188,9 @@ public class KartaMain
                   ConcurrentHashMap<String, FeatureResult> resultMap = runResult.getTestResultMap();
                   for ( Entry<String, FeatureResult> entry : resultMap.entrySet() )
                   {
-                     System.out.println( entry.getKey() + Constants.COLON + Constants.SPACE
-                                         + ( entry.getValue().isPassed() ? Constants.PASS : Constants.FAIL ) );
+                     System.out.println( entry.getKey() + Constants.COLON + Constants.SPACE + ( entry.getValue().isPassed() ?
+                              Constants.PASS :
+                              Constants.FAIL ) );
                   }
 
                   if ( !runResult.isSuccessful() )
@@ -205,6 +198,7 @@ public class KartaMain
                      System.exit( 1 );
                   }
                }
+               log.info( "Karta runtime has been closed." );
             }
             else
             {

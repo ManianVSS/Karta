@@ -1,53 +1,45 @@
 package org.mvss.karta.framework.nodes;
 
+import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.utils.RMIUtils;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.mvss.karta.framework.runtime.Constants;
-import org.mvss.karta.framework.utils.RMIUtils;
-
-import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
-
 /**
  * This registry class can help register Karta nodes and minions and cycle between minions for load sharing.
- * 
+ *
  * @author Manian
  */
 @Log4j2
 public class KartaNodeRegistry implements AutoCloseable
 {
    @Getter
-   private ArrayList<KartaNode>       minions            = new ArrayList<KartaNode>();
+   private final ArrayList<KartaNode> minions = new ArrayList<>();
 
    @Getter
-   private HashMap<String, KartaNode> nodes              = new HashMap<String, KartaNode>();
+   private final HashMap<String, KartaNode> nodes = new HashMap<>();
 
-   private volatile int               lastMinonIndexUsed = -1;
+   private volatile int lastMinionIndexUsed = -1;
 
-   private Object                     lock               = new Object();
+   private final Object lock = new Object();
 
    @Override
    public void close() throws Exception
    {
-      if ( this.nodes != null )
+      for ( KartaNode node : nodes.values() )
       {
-         for ( KartaNode node : nodes.values() )
-         {
-            node.close();
-         }
-         this.nodes.clear();
+         node.close();
       }
-
+      this.nodes.clear();
    }
 
    /**
     * Add a karta node/minion by configuration
-    * 
-    * @param nodeConfiguration
-    * @return
     */
    public boolean addNode( KartaNodeConfiguration nodeConfiguration )
    {
@@ -64,14 +56,15 @@ public class KartaNodeRegistry implements AutoCloseable
                {
                   // TODO: Handle local node
                   case RMI:
-                     Registry nodeRegistry = RMIUtils
-                              .getRemoteRegistry( nodeConfiguration.getHost(), nodeConfiguration.getPort(), nodeConfiguration.isEnableSSL() );
+                     Registry nodeRegistry = RMIUtils.getRemoteRegistry( nodeConfiguration.getHost(), nodeConfiguration.getPort(),
+                              nodeConfiguration.isEnableSSL() );
                      kartaNode = (KartaNode) nodeRegistry.lookup( KartaNode.class.getName() );
                      break;
 
                   case REST:
-                     String url = ( nodeConfiguration.isEnableSSL() ? Constants.HTTPS : Constants.HTTP ) + nodeConfiguration.getHost()
-                                  + Constants.COLON + nodeConfiguration.getPort();
+                     String url = ( nodeConfiguration.isEnableSSL() ?
+                              Constants.HTTPS :
+                              Constants.HTTP ) + nodeConfiguration.getHost() + Constants.COLON + nodeConfiguration.getPort();
                      kartaNode = new KartaRestNode( url, true );
                      break;
 
@@ -114,13 +107,10 @@ public class KartaNodeRegistry implements AutoCloseable
 
    /**
     * Remove a karta name from registry by name.
-    * 
-    * @param name
-    * @return
     */
    public boolean removeNode( String name )
    {
-      boolean nodeRemoved = false;
+      boolean nodeRemoved;
 
       synchronized ( lock )
       {
@@ -138,9 +128,6 @@ public class KartaNodeRegistry implements AutoCloseable
 
    /**
     * Get a karta node in registry by name.
-    * 
-    * @param name
-    * @return
     */
    public KartaNode getNode( String name )
    {
@@ -152,8 +139,6 @@ public class KartaNodeRegistry implements AutoCloseable
 
    /**
     * Gets the next minion to use by cycling through the list of minions.
-    * 
-    * @return
     */
    public KartaNode getNextMinion()
    {
@@ -167,13 +152,13 @@ public class KartaNodeRegistry implements AutoCloseable
          }
          else if ( numberOfMinions == 1 )
          {
-            lastMinonIndexUsed = 0;
+            lastMinionIndexUsed = 0;
             return minions.get( 0 );
          }
          else
          {
-            lastMinonIndexUsed = ( lastMinonIndexUsed + 1 ) % numberOfMinions;
-            return minions.get( lastMinonIndexUsed );
+            lastMinionIndexUsed = ( lastMinionIndexUsed + 1 ) % numberOfMinions;
+            return minions.get( lastMinionIndexUsed );
          }
       }
    }

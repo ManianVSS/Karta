@@ -1,17 +1,11 @@
 package org.mvss.karta.framework.runtime.event;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.ParserUtils;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 @Getter
 @Setter
@@ -25,7 +19,8 @@ public class JavaFeatureSetupCompleteEvent extends FeatureEvent
    public JavaFeatureSetupCompleteEvent( Event event )
    {
       super( event );
-      parameters.put( Constants.STEP_IDENTIFIER, ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.STEP_IDENTIFIER ), String.class ) );
+      parameters.put( Constants.STEP_IDENTIFIER,
+               ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.STEP_IDENTIFIER ), String.class ) );
       parameters.put( Constants.RESULT, ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.RESULT ), StepResult.class ) );
    }
 

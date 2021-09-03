@@ -1,20 +1,15 @@
 package org.mvss.karta.framework.core;
 
-import java.io.Serializable;
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import java.io.Serializable;
 
 /**
  * Serializable key value pair
- * 
- * @author Manian
+ *
  * @param <K>
  * @param <V>
+ * @author Manian
  */
 @Getter
 @Setter
@@ -26,6 +21,6 @@ public class SerializableKVP<K extends Serializable, V extends Serializable> imp
 {
    private static final long serialVersionUID = 1L;
 
-   private K                 key;
-   private V                 value;
+   private K key;
+   private V value;
 }

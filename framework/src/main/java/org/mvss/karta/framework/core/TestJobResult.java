@@ -1,21 +1,15 @@
 package org.mvss.karta.framework.core;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.*;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-
 /**
  * The result of a test-job iteration
- * 
+ *
  * @author Manian
  */
 @Getter
@@ -26,29 +20,29 @@ import lombok.ToString;
 @AllArgsConstructor
 public class TestJobResult implements Serializable, Comparable<TestJobResult>
 {
-   private static final long                              serialVersionUID = 1L;
+   private static final long serialVersionUID = 1L;
 
    @Builder.Default
-   private long                                           iterationIndex   = 0;
+   private long iterationIndex = 0;
 
    @Builder.Default
-   private Date                                           startTime        = new Date();
+   private Date startTime = new Date();
 
-   private Date                                           endTime;
-
-   @Builder.Default
-   private boolean                                        successful       = true;
+   private Date endTime;
 
    @Builder.Default
-   private boolean                                        error            = false;
+   private boolean successful = true;
 
    @Builder.Default
-   private ArrayList<SerializableKVP<String, StepResult>> stepResults      = new ArrayList<SerializableKVP<String, StepResult>>();
+   private boolean error = false;
+
+   @Builder.Default
+   private ArrayList<SerializableKVP<String, StepResult>> stepResults = new ArrayList<>();
 
    @Override
    public int compareTo( TestJobResult other )
    {
-      return ( iterationIndex < other.iterationIndex ) ? -1 : ( ( iterationIndex == other.iterationIndex ) ? 0 : 1 );
+      return Long.compare( iterationIndex, other.iterationIndex );
    }
 
    @JsonIgnore

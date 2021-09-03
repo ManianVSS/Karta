@@ -1,12 +1,7 @@
 package org.mvss.karta.framework.runtime.event;
 
 import org.mvss.karta.framework.core.TestFeature;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 @Getter
 @Setter
@@ -15,10 +10,6 @@ import lombok.ToString;
 @NoArgsConstructor
 public class FeatureStartEvent extends FeatureEvent
 {
-
-   /**
-    * 
-    */
    private static final long serialVersionUID = 1L;
 
    public FeatureStartEvent( Event event )

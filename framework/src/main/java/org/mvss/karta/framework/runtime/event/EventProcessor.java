@@ -1,10 +1,5 @@
 package org.mvss.karta.framework.runtime.event;
 
-import java.util.HashSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.TestFeature;
@@ -15,33 +10,37 @@ import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
 import org.mvss.karta.framework.runtime.interfaces.TestLifeCycleHook;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.WaitUtil;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
+import java.util.HashSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 @Log4j2
 public class EventProcessor implements AutoCloseable
 {
-   private static final long          POLL_TIME_FOR_EVENT_QUEUE_CLEARING = 1000;
+   private static final long POLL_TIME_FOR_EVENT_QUEUE_CLEARING = 1000;
 
    @Getter
    @Setter
    @PropertyMapping( "EventProcessor.numberOfThread" )
-   private int                        numberOfThread                     = 1;
+   private int numberOfThread = 1;
 
    @Getter
    @Setter
    @PropertyMapping( "EventProcessor.maxEventQueueSize" )
-   private int                        maxEventQueueSize                  = 100;
+   private int maxEventQueueSize = 100;
 
-   private ExecutorService            eventListenerExecutorService       = null;
+   private ExecutorService eventListenerExecutorService = null;
 
-   private HashSet<TestLifeCycleHook> lifeCycleHooks                     = new HashSet<TestLifeCycleHook>();
+   private final HashSet<TestLifeCycleHook> lifeCycleHooks = new HashSet<>();
 
-   private HashSet<TestEventListener> testEventListeners                 = new HashSet<TestEventListener>();
+   private final HashSet<TestEventListener> testEventListeners = new HashSet<>();
 
-   private BlockingRunnableQueue      eventProcessingQueue;
+   private BlockingRunnableQueue eventProcessingQueue;
 
    public boolean addEventListener( TestEventListener testEventListener )
    {
@@ -66,7 +65,7 @@ public class EventProcessor implements AutoCloseable
    public void start()
    {
       // TODO: Change to thread factory to be able to manage threads.
-      eventProcessingQueue = new BlockingRunnableQueue( maxEventQueueSize );
+      eventProcessingQueue         = new BlockingRunnableQueue( maxEventQueueSize );
       eventListenerExecutorService = new ThreadPoolExecutor( numberOfThread, numberOfThread, 0L, TimeUnit.MILLISECONDS, eventProcessingQueue );
    }
 
@@ -80,11 +79,14 @@ public class EventProcessor implements AutoCloseable
             WaitUtil.sleep( POLL_TIME_FOR_EVENT_QUEUE_CLEARING );
          }
          eventListenerExecutorService.shutdown();
-         eventListenerExecutorService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
+         if ( !eventListenerExecutorService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS ) )
+         {
+            log.error( "Failed to wait for event listeners execution service" );
+         }
       }
       catch ( Throwable t )
       {
-         log.error( "Exception occured while stopping event processor ", t );
+         log.error( "Exception occurred while stopping event processor ", t );
       }
    }
 
@@ -99,7 +101,6 @@ public class EventProcessor implements AutoCloseable
          catch ( Throwable t )
          {
             log.error( "Exception occured during event processing ", t );
-            continue;
          }
       }
    }

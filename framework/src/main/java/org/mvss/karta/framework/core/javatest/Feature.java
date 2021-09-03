@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation is to be used in Java feature files to denote a feature class.
- * 
+ *
  * @author Manian
  */
 @Target( ElementType.TYPE )
@@ -16,15 +16,11 @@ public @interface Feature
 {
    /**
     * The name of the feature
-    * 
-    * @return
     */
-   public String value();
+   String value();
 
    /**
     * The description of the feature
-    * 
-    * @return
     */
-   public String description() default "";
+   String description() default "";
 }

@@ -1,10 +1,6 @@
 package org.mvss.karta.framework.runtime.event;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 @Getter
 @Setter
@@ -24,5 +20,4 @@ public class JavaScenarioStartEvent extends ScenarioEvent
    {
       super( StandardEventsTypes.JAVA_SCENARIO_START_EVENT, runName, featureName, iterationNumber, scenarioName );
    }
-
 }

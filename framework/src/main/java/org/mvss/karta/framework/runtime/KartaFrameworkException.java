@@ -2,14 +2,14 @@ package org.mvss.karta.framework.runtime;
 
 /**
  * Used to denote unexpected exceptions occurring in Karta Runtime.</br>
- * 
+ *
  * @author Manian
  */
 public class KartaFrameworkException extends Exception
 {
 
    /**
-    * 
+    *
     */
    private static final long serialVersionUID = 1L;
 

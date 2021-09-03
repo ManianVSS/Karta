@@ -1,39 +1,37 @@
 package org.mvss.karta.framework.runtime;
 
+import org.mvss.karta.framework.threading.BlockingRunnableQueue;
+import lombok.NoArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.StringUtils;
-import org.mvss.karta.framework.threading.BlockingRunnableQueue;
-
-import lombok.NoArgsConstructor;
-
 /**
  * Class to store and manage ExecutorService for various thread groups.
- * 
+ *
  * @author Manian
  */
 @NoArgsConstructor
+@Log4j2
 public class ExecutorServiceManager implements AutoCloseable
 {
    /**
     * The thread group name to ExecutorService mapping
     */
-   private HashMap<String, ExecutorService> executorServicesMap = new HashMap<String, ExecutorService>();
+   private final HashMap<String, ExecutorService> executorServicesMap = new HashMap<>();
 
    /**
     * Synchronization object
     */
-   private Object                           executorSyncObject  = new Object();
+   private final Object executorSyncObject = new Object();
 
    /**
     * Get the ExecutorService for the thread group by group name.
-    * 
-    * @param group
-    * @return
     */
    public ExecutorService getExecutorServiceForGroup( String group )
    {
@@ -42,10 +40,6 @@ public class ExecutorServiceManager implements AutoCloseable
 
    /**
     * Get the ExecutorService for the thread group by name or add a new one with the thread count
-    * 
-    * @param group
-    * @param threadCount
-    * @return
     */
    public ExecutorService getOrAddExecutorServiceForGroup( String group, int threadCount )
    {
@@ -58,7 +52,8 @@ public class ExecutorServiceManager implements AutoCloseable
       {
          if ( !executorServicesMap.containsKey( group ) )
          {
-            executorServicesMap.put( group, new ThreadPoolExecutor( threadCount, threadCount, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( threadCount ) ) );
+            executorServicesMap.put( group,
+                     new ThreadPoolExecutor( threadCount, threadCount, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue( threadCount ) ) );
          }
       }
 
@@ -67,8 +62,6 @@ public class ExecutorServiceManager implements AutoCloseable
 
    /**
     * Add thread groups from the HashMap with the mapped thread counts.
-    * 
-    * @param threadGroupMap
     */
    public void addExecutorServiceForGroups( HashMap<String, Integer> threadGroupMap )
    {
@@ -79,7 +72,7 @@ public class ExecutorServiceManager implements AutoCloseable
    }
 
    /**
-    * AutoCloseable implementation to shutdown all executors before closing
+    * AutoCloseable implementation to shut down all executors before closing
     */
    @Override
    public void close()
@@ -95,7 +88,7 @@ public class ExecutorServiceManager implements AutoCloseable
             }
          }
 
-         // Wait for all thread groups to shutdown.
+         // Wait for all thread groups to shut down.
          for ( ExecutorService executorService : executorServicesMap.values() )
          {
             try
@@ -105,11 +98,14 @@ public class ExecutorServiceManager implements AutoCloseable
                   executorService.shutdown();
                }
 
-               executorService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
+               if ( !executorService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS ) )
+               {
+                  log.error( "" );
+               }
             }
             catch ( InterruptedException e )
             {
-               continue;
+               log.error( "Was interrupted during a shut down" );
             }
          }
       }

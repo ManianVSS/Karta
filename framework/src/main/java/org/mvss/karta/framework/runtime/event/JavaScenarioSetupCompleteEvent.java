@@ -1,17 +1,11 @@
 package org.mvss.karta.framework.runtime.event;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.ParserUtils;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 @Getter
 @Setter
@@ -25,11 +19,13 @@ public class JavaScenarioSetupCompleteEvent extends ScenarioEvent
    public JavaScenarioSetupCompleteEvent( Event event )
    {
       super( event );
-      parameters.put( Constants.STEP_IDENTIFIER, ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.STEP_IDENTIFIER ), String.class ) );
+      parameters.put( Constants.STEP_IDENTIFIER,
+               ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.STEP_IDENTIFIER ), String.class ) );
       parameters.put( Constants.RESULT, ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.RESULT ), StepResult.class ) );
    }
 
-   public JavaScenarioSetupCompleteEvent( String runName, String featureName, long iterationNumber, String scenarioName, String stepIdentifier, StepResult result )
+   public JavaScenarioSetupCompleteEvent( String runName, String featureName, long iterationNumber, String scenarioName, String stepIdentifier,
+                                          StepResult result )
    {
       super( StandardEventsTypes.JAVA_SCENARIO_SETUP_COMPLETE_EVENT, runName, featureName, iterationNumber, scenarioName );
       this.parameters.put( Constants.STEP_IDENTIFIER, stepIdentifier );

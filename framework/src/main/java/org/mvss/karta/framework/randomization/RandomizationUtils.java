@@ -1,26 +1,26 @@
 package org.mvss.karta.framework.randomization;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Random;
-
 import org.mvss.karta.framework.chaos.Chaos;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.DataUtils;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Random;
+
 /**
  * Utility class for chance/probability based selection of objects
- * 
+ *
  * @author Manian
  */
 public class RandomizationUtils
 {
    /**
     * Check if the collection of objects with chance cover all possibilities (1.0f)
-    * 
-    * @param <E>
-    * @param chanceObjects
-    * @return
     */
    public static <E extends ObjectWithChance> boolean checkForProbabilityCoverage( Collection<E> chanceObjects )
    {
@@ -29,11 +29,6 @@ public class RandomizationUtils
 
    /**
     * Check if the collection of objects with chance cover specified probability value.
-    * 
-    * @param <E>
-    * @param chanceObjects
-    * @param probabilityToCover
-    * @return
     */
    public static <E extends ObjectWithChance> boolean checkForProbabilityCoverage( Collection<E> chanceObjects, float probabilityToCover )
    {
@@ -42,10 +37,6 @@ public class RandomizationUtils
 
    /**
     * Evaluates the missing probability(assuming total to be 1.0f) from a collection of objects with chance.
-    * 
-    * @param <E>
-    * @param chanceObjects
-    * @return
     */
    public static <E extends ObjectWithChance> Float getMissingProbabilityCoverage( Collection<E> chanceObjects )
    {
@@ -55,11 +46,6 @@ public class RandomizationUtils
    /**
     * Evaluates the missing probability from a collection of objects with chance for the probability to cover.
     * Returns null for over shooting
-    * 
-    * @param <E>
-    * @param chanceObjects
-    * @param probabilityToCover
-    * @return
     */
    public static <E extends ObjectWithChance> Float getMissingProbabilityCoverage( Collection<E> chanceObjects, float probabilityToCover )
    {
@@ -69,14 +55,9 @@ public class RandomizationUtils
    /**
     * Evaluates the missing probability from a collection of objects with chance for the probability to cover.
     * ignoreOverflow if set to true won't return null on over shooting probability to cover.
-    * 
-    * @param <E>
-    * @param chanceObjects
-    * @param probabilityToCover
-    * @param ignoreOverflow
-    * @return
     */
-   public static <E extends ObjectWithChance> Float getMissingProbabilityCoverage( Collection<E> chanceObjects, float probabilityToCover, boolean ignoreOverflow )
+   public static <E extends ObjectWithChance> Float getMissingProbabilityCoverage( Collection<E> chanceObjects, float probabilityToCover,
+                                                                                   boolean ignoreOverflow )
    {
       float probabilityNotCovered = probabilityToCover;
       for ( ObjectWithChance chanceObject : chanceObjects )
@@ -96,20 +77,15 @@ public class RandomizationUtils
          }
       }
 
-      return (float) ( ( (long) ( probabilityNotCovered * 1000000.f ) ) / 1000000l );
+      return (float) ( ( (long) ( probabilityNotCovered * 1000000.f ) ) / 1000000L );
    }
 
    /**
     * Compose a ArrayList of objects selected from a collection of objects with individual probability of occurrences.
-    * 
-    * @param <E>
-    * @param random
-    * @param objectsToChooseFrom
-    * @return
     */
    public static <E extends ObjectWithChance> ArrayList<E> generateNextComposition( Random random, Collection<E> objectsToChooseFrom )
    {
-      ArrayList<E> chosenObjects = new ArrayList<E>();
+      ArrayList<E> chosenObjects = new ArrayList<>();
 
       if ( ( objectsToChooseFrom == null ) || ( objectsToChooseFrom.isEmpty() ) )
       {
@@ -139,11 +115,6 @@ public class RandomizationUtils
    /**
     * Select one object from a collection of objects with chance taking into consideration their probability of occurrence.
     * The sum of probabilities for the objects with chance should be 1.0f else null is returned.
-    * 
-    * @param <E>
-    * @param random
-    * @param objectsToChooseFrom
-    * @return
     */
    public static <E extends ObjectWithChance> E generateNextMutexComposition( Random random, Collection<E> objectsToChooseFrom )
    {
@@ -154,10 +125,10 @@ public class RandomizationUtils
 
       // TODO: Check for consistency in probability
       float probabilityCovered = 0;
-      float randomChance = ( 1 + random.nextInt( 1000000 ) ) / 1000000.0f;
+      float randomChance       = ( 1 + random.nextInt( 1000000 ) ) / 1000000.0f;
 
       boolean alreadyPicked = false;
-      E returnValue = null;
+      E       returnValue   = null;
 
       for ( E object : objectsToChooseFrom )
       {
@@ -170,7 +141,7 @@ public class RandomizationUtils
 
          if ( !alreadyPicked && DataUtils.inRange( randomChance, probabilityCovered, probabilityCovered + probability ) )
          {
-            returnValue = object;
+            returnValue   = object;
             alreadyPicked = true;
          }
 
@@ -187,12 +158,6 @@ public class RandomizationUtils
 
    /**
     * Randomly discard few items by count from list using the provided randomizer.
-    * 
-    * @param <T>
-    * @param random
-    * @param items
-    * @param count
-    * @return
     */
    public static <T> ArrayList<T> discardListItems( Random random, Collection<T> items, int count )
    {
@@ -202,11 +167,11 @@ public class RandomizationUtils
       {
          if ( count >= items.size() )
          {
-            returnList = new ArrayList<T>();
+            returnList = new ArrayList<>();
          }
          else
          {
-            returnList = new ArrayList<T>( items );
+            returnList = new ArrayList<>( items );
             if ( count > 0 )
             {
                for ( int dicardedItems = 0; dicardedItems < count; dicardedItems++ )
@@ -222,12 +187,6 @@ public class RandomizationUtils
 
    /**
     * Randomly select few items by count from list using the provided randomizer.
-    * 
-    * @param <T>
-    * @param random
-    * @param items
-    * @param count
-    * @return
     */
    public static <T> ArrayList<T> selectListItems( Random random, Collection<T> items, int count )
    {
@@ -237,15 +196,15 @@ public class RandomizationUtils
       {
          if ( count <= 0 )
          {
-            returnList = new ArrayList<T>();
+            returnList = new ArrayList<>();
          }
          else
          {
-            returnList = new ArrayList<T>( items );
+            returnList = new ArrayList<>( items );
 
             if ( count < items.size() )
             {
-               ArrayList<T> selectedList = new ArrayList<T>();
+               ArrayList<T> selectedList = new ArrayList<>();
                for ( int selected = 0; selected < count; selected++ )
                {
                   selectedList.add( returnList.remove( random.nextInt( returnList.size() ) ) );
@@ -260,12 +219,6 @@ public class RandomizationUtils
 
    /**
     * Randomly select few items by percentage from list using the provided randomizer.
-    * 
-    * @param <T>
-    * @param random
-    * @param items
-    * @param percentage
-    * @return
     */
    public static <T> ArrayList<T> selectByPercentage( Random random, Collection<T> items, float percentage )
    {
@@ -280,12 +233,6 @@ public class RandomizationUtils
 
    /**
     * Randomly select few items by max percentage(0-maxPercentage selected randomly) from list using the provided randomizer.
-    * 
-    * @param <T>
-    * @param random
-    * @param items
-    * @param maxPercentage
-    * @return
     */
    public static <T> ArrayList<T> selectByMaxPercentage( Random random, Collection<T> items, float maxPercentage )
    {
@@ -302,12 +249,6 @@ public class RandomizationUtils
 
    /**
     * Randomly select few items by the chaos level and unit using the provided randomizer.
-    * 
-    * @param <T>
-    * @param random
-    * @param items
-    * @param chaos
-    * @return
     */
    public static <T> Collection<T> selectByChaos( Random random, Collection<T> items, Chaos chaos )
    {
@@ -333,10 +274,6 @@ public class RandomizationUtils
 
    /**
     * Randomly generate an alpha numeric string of specified length.
-    * 
-    * @param random
-    * @param length
-    * @return
     */
    public static String randomAlphaNumericString( Random random, int length )
    {
@@ -345,7 +282,7 @@ public class RandomizationUtils
          random = new Random();
       }
 
-      String returnValue = Constants.EMPTY_STRING;
+      StringBuilder returnValue = new StringBuilder( Constants.EMPTY_STRING );
 
       for ( int i = 0; i < length; i++ )
       {
@@ -353,19 +290,41 @@ public class RandomizationUtils
 
          if ( randomDigit < 10 )
          {
-            returnValue = returnValue + (char) ( '0' + randomDigit );
+            returnValue.append( (char) ( '0' + randomDigit ) );
          }
          else if ( randomDigit < 36 )
          {
-            returnValue = returnValue + (char) ( 'A' + ( randomDigit - 10 ) );
+            returnValue.append( (char) ( 'A' + ( randomDigit - 10 ) ) );
          }
          else
          {
-            returnValue = returnValue + (char) ( 'a' + ( randomDigit - 36 ) );
+            returnValue.append( (char) ( 'a' + ( randomDigit - 36 ) ) );
          }
 
       }
-      return returnValue;
+      return returnValue.toString();
    }
 
+   public static void createRandomFile( Random random, String fileName, long fileSize, int BLOCK_SIZE ) throws IOException
+   {
+      try (OutputStream os = Files.newOutputStream( Paths.get( fileName ) ))
+      {
+         long bytesToWrite = fileSize;
+
+         byte[] writeBuffer = new byte[BLOCK_SIZE];
+
+         while ( bytesToWrite >= BLOCK_SIZE )
+         {
+            random.nextBytes( writeBuffer );
+            os.write( writeBuffer );
+            bytesToWrite -= BLOCK_SIZE;
+         }
+         if ( bytesToWrite > 0 )
+         {
+            writeBuffer = new byte[(int) bytesToWrite];
+            random.nextBytes( writeBuffer );
+            os.write( writeBuffer );
+         }
+      }
+   }
 }

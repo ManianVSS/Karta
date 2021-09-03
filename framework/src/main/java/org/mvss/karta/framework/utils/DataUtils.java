@@ -1,36 +1,25 @@
 package org.mvss.karta.framework.utils;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.function.Predicate;
-
-import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.runtime.Constants;
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.Serializable;
+import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Utility class to work with generic maps, lists and other vectors
- * 
+ *
  * @author Manian
  */
 public class DataUtils
 {
    /**
     * Create a clone of a HashMap
-    * 
-    * @param <K>
-    * @param <V>
-    * @param source
-    * @return
     */
    public static <K, V> HashMap<K, V> cloneMap( Map<K, V> source )
    {
-      HashMap<K, V> clone = new HashMap<K, V>();
+      HashMap<K, V> clone = new HashMap<>();
 
       if ( source != null )
       {
@@ -41,15 +30,10 @@ public class DataUtils
 
    /**
     * Merge two lists into a new one
-    * 
-    * @param <K>
-    * @param list1
-    * @param list2
-    * @return
     */
    public static <K> ArrayList<K> mergeLists( Collection<K> list1, Collection<K> list2 )
    {
-      ArrayList<K> mergedList = new ArrayList<K>();
+      ArrayList<K> mergedList = new ArrayList<>();
       if ( list1 != null )
       {
          mergedList.addAll( list1 );
@@ -63,10 +47,6 @@ public class DataUtils
 
    /**
     * Adds items from source list to destination list if missing
-    * 
-    * @param <K>
-    * @param destination
-    * @param source
     */
    public static <K> void addMissing( Collection<K> destination, Collection<K> source )
    {
@@ -87,35 +67,24 @@ public class DataUtils
 
    /**
     * Merges two Maps into a new HashMap
-    * 
-    * @param <K>
-    * @param <V>
-    * @param map1
-    * @param map2
-    * @return
     */
    public static <K, V> HashMap<K, V> mergeMaps( Map<K, V> map1, Map<K, V> map2 )
    {
-      HashMap<K, V> mergedMap = new HashMap<K, V>();
+      HashMap<K, V> mergedMap = new HashMap<>();
       if ( map1 != null )
       {
-         map1.forEach( ( key, value ) -> mergedMap.put( key, value ) );
+         mergedMap.putAll( map1 );
       }
 
       if ( map2 != null )
       {
-         map2.forEach( ( key, value ) -> mergedMap.put( key, value ) );
+         mergedMap.putAll( map2 );
       }
       return mergedMap;
    }
 
    /**
     * Merges entries from source map into destination map with override.
-    * 
-    * @param <K>
-    * @param <V>
-    * @param sourceVars
-    * @param destinationVars
     */
    public static <K, V> void mergeMapInto( Map<K, V> sourceVars, Map<K, V> destinationVars )
    {
@@ -130,11 +99,6 @@ public class DataUtils
 
    /**
     * Adds an item to a tree-map with in sequence with the Integer sequence action as the tree-map key and value being the list of items for the sequence
-    * 
-    * @param <T>
-    * @param item
-    * @param map
-    * @param sequence
     */
    public static <T> void addItemToTreeMapInSequence( T item, TreeMap<Integer, ArrayList<T>> map, Integer sequence )
    {
@@ -150,7 +114,7 @@ public class DataUtils
 
       if ( !map.containsKey( sequence ) )
       {
-         map.put( sequence, new ArrayList<T>() );
+         map.put( sequence, new ArrayList<>() );
       }
 
       map.get( sequence ).add( item );
@@ -158,14 +122,10 @@ public class DataUtils
 
    /**
     * Serialize a tree-map of sequence to list to a single list
-    * 
-    * @param <T>
-    * @param itemSequenceMap
-    * @return
     */
    public static <T> ArrayList<T> generateSequencedList( TreeMap<Integer, ArrayList<T>> itemSequenceMap )
    {
-      ArrayList<T> itemSequence = new ArrayList<T>();
+      ArrayList<T> itemSequence = new ArrayList<>();
 
       if ( itemSequenceMap.containsKey( 0 ) )
       {
@@ -183,13 +143,6 @@ public class DataUtils
    /**
     * Validates if a given value is in range of min to max.
     * Inclusion of min and max values are configured by parameters.
-    * 
-    * @param value
-    * @param min
-    * @param max
-    * @param includeMin
-    * @param includeMax
-    * @return
     */
    public static boolean inRange( byte value, byte min, byte max, boolean includeMin, boolean includeMax )
    {
@@ -199,13 +152,6 @@ public class DataUtils
    /**
     * Validates if a given value is in range of min to max.
     * Inclusion of min and max values are configured by parameters.
-    * 
-    * @param value
-    * @param min
-    * @param max
-    * @param includeMin
-    * @param includeMax
-    * @return
     */
    public static boolean inRange( int value, int min, int max, boolean includeMin, boolean includeMax )
    {
@@ -215,13 +161,6 @@ public class DataUtils
    /**
     * Validates if a given value is in range of min to max.
     * Inclusion of min and max values are configured by parameters.
-    * 
-    * @param value
-    * @param min
-    * @param max
-    * @param includeMin
-    * @param includeMax
-    * @return
     */
 
    public static boolean inRange( long value, long min, long max, boolean includeMin, boolean includeMax )
@@ -232,13 +171,6 @@ public class DataUtils
    /**
     * Validates if a given value is in range of min to max.
     * Inclusion of min and max values are configured by parameters.
-    * 
-    * @param value
-    * @param min
-    * @param max
-    * @param includeMin
-    * @param includeMax
-    * @return
     */
    public static boolean inRange( float value, float min, float max, boolean includeMin, boolean includeMax )
    {
@@ -248,13 +180,6 @@ public class DataUtils
    /**
     * Validates if a given value is in range of min to max.
     * Inclusion of min and max values are configured by parameters.
-    * 
-    * @param value
-    * @param min
-    * @param max
-    * @param includeMin
-    * @param includeMax
-    * @return
     */
    public static boolean inRange( double value, double min, double max, boolean includeMin, boolean includeMax )
    {
@@ -263,11 +188,6 @@ public class DataUtils
 
    /**
     * Validates if a given value is in range of min to max both included.
-    * 
-    * @param value
-    * @param min
-    * @param max
-    * @return
     */
    public static boolean inRange( byte value, byte min, byte max )
    {
@@ -276,11 +196,6 @@ public class DataUtils
 
    /**
     * Validates if a given value is in range of min to max both included.
-    * 
-    * @param value
-    * @param min
-    * @param max
-    * @return
     */
    public static boolean inRange( int value, int min, int max )
    {
@@ -290,11 +205,6 @@ public class DataUtils
    /**
     * Validates if a given value is in range of min to max.
     * Inclusion of min and max values are configured by parameters.
-    * 
-    * @param value
-    * @param min
-    * @param max
-    * @return
     */
    public static boolean inRange( long value, long min, long max )
    {
@@ -303,11 +213,6 @@ public class DataUtils
 
    /**
     * Validates if a given value is in range of min to max both included.
-    * 
-    * @param value
-    * @param min
-    * @param max
-    * @return
     */
    public static boolean inRange( float value, float min, float max )
    {
@@ -316,11 +221,6 @@ public class DataUtils
 
    /**
     * Validates if a given value is in range of min to max both included.
-    * 
-    * @param value
-    * @param min
-    * @param max
-    * @return
     */
    public static boolean inRange( double value, double min, double max )
    {
@@ -329,75 +229,61 @@ public class DataUtils
 
    /**
     * Converts a Serializable object of types Integer/String to int value
-    * 
-    * @param serializable
-    * @param defaultValue
-    * @return
     */
    public static int serializableToInteger( Serializable serializable, int defaultValue )
    {
-      int returnValue = defaultValue;
-
       try
       {
          if ( serializable != null )
          {
             if ( serializable instanceof Integer )
             {
-               returnValue = Integer.valueOf( (Integer) serializable );
+               return (Integer) serializable;
             }
-
             if ( serializable instanceof String )
             {
-               returnValue = Integer.valueOf( (String) serializable );
+               return Integer.parseInt( (String) serializable );
             }
          }
       }
       catch ( Throwable t )
       {
-
+         return defaultValue;
       }
-
-      return returnValue;
+      return defaultValue;
    }
 
    /**
     * Converts a Serializable object of types Long/Integer/String to long value
-    * 
-    * @param serializable
-    * @param defaultValue
-    * @return
     */
    public static long serializableToLong( Serializable serializable, long defaultValue )
    {
-      long returnValue = defaultValue;
-
       try
       {
          if ( serializable != null )
          {
             if ( serializable instanceof Long )
             {
-               returnValue = Long.valueOf( (Long) serializable );
+               return (Long) serializable;
             }
 
             if ( serializable instanceof Integer )
             {
-               returnValue = Long.valueOf( (Integer) serializable );
+               return Long.valueOf( (Integer) serializable );
             }
 
             if ( serializable instanceof String )
             {
-               returnValue = Long.valueOf( (String) serializable );
+               return Long.parseLong( (String) serializable );
             }
          }
       }
       catch ( Throwable t )
       {
-
+         return defaultValue;
       }
 
-      return returnValue;
+      return defaultValue;
    }
 
    /**
@@ -405,68 +291,62 @@ public class DataUtils
     * Only alphanumeric digits are considered for incrementing and carry forward.
     * Digits are assumed to have most significant digit from left to least significant digit to right (natural ordering).
     * e.g. "aZ9_z$z" is incremented to "bA0_a$a"
-    * 
-    * @param currentString
-    * @return
     */
+   @SuppressWarnings( {"ConstantConditions", "UnusedAssignment"} )
    public static String incrementStringAlphaNumerically( String currentString )
    {
-      char[] chararray = currentString.toCharArray();
+      char[] charArray = currentString.toCharArray();
 
       int carry = 1;
-      for ( int j = chararray.length - 1; j >= 0; j-- )
+      for ( int j = charArray.length - 1; j >= 0; j-- )
       {
          if ( carry > 0 )
          {
-            if ( ( chararray[j] >= 'a' ) && ( chararray[j] <= 'z' ) )
+            if ( ( charArray[j] >= 'a' ) && ( charArray[j] <= 'z' ) )
             {
-               if ( chararray[j] != 'z' )
+               if ( charArray[j] != 'z' )
                {
-                  chararray[j]++;
+                  charArray[j]++;
                   carry = 0;
                   break;
                }
                else
                {
-                  chararray[j] = 'a';
-                  carry = 1;
+                  charArray[j] = 'a';
+                  carry        = 1;
                }
             }
-            else if ( ( chararray[j] >= 'A' ) && ( chararray[j] <= 'Z' ) )
+            else if ( ( charArray[j] >= 'A' ) && ( charArray[j] <= 'Z' ) )
             {
-               if ( chararray[j] != 'Z' )
+               if ( charArray[j] != 'Z' )
                {
-                  chararray[j]++;
+                  charArray[j]++;
                   carry = 0;
                   break;
                }
                else
                {
-                  chararray[j] = 'A';
-                  carry = 1;
+                  charArray[j] = 'A';
+                  carry        = 1;
                }
             }
-            else if ( ( chararray[j] >= '0' ) && ( chararray[j] <= '9' ) )
+            else if ( ( charArray[j] >= '0' ) && ( charArray[j] <= '9' ) )
             {
-               if ( chararray[j] != '9' )
+               if ( charArray[j] != '9' )
                {
-                  chararray[j]++;
+                  charArray[j]++;
                   carry = 0;
                   break;
                }
                else
                {
-                  chararray[j] = '0';
-                  carry = 1;
+                  charArray[j] = '0';
+                  carry        = 1;
                }
-            }
-            else
-            {
-               continue;
             }
          }
       }
-      return String.valueOf( chararray );
+      return String.valueOf( charArray );
    }
 
    public static double round2( double value )
@@ -499,13 +379,13 @@ public class DataUtils
 
    public static String pickNonNull( String... strings )
    {
-      return pick( ( str ) -> ( str != null ), strings );
+      return pick( Objects::nonNull, strings );
    }
 
    public Object[] getMergedNonNullValues( Object... values )
    {
       List<Object> returnValue = Arrays.asList( values );
-      returnValue.removeIf( ( value ) -> ( value == null ) );
+      returnValue.removeIf( Objects::isNull );
       return returnValue.toArray();
    }
 
@@ -518,11 +398,11 @@ public class DataUtils
          return null;
       }
 
-      for ( int i = 0; i < urlPieces.length; i++ )
+      for ( String urlPiece : urlPieces )
       {
-         if ( StringUtils.isNotBlank( urlPieces[i] ) )
+         if ( StringUtils.isNotBlank( urlPiece ) )
          {
-            fullURL = StringUtils.strip( fullURL + Constants.SLASH + StringUtils.strip( urlPieces[i], Constants.SLASH ), Constants.SLASH );
+            fullURL = StringUtils.strip( fullURL + Constants.SLASH + StringUtils.strip( urlPiece, Constants.SLASH ), Constants.SLASH );
          }
       }
 

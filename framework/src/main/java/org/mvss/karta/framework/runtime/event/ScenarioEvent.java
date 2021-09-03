@@ -1,18 +1,12 @@
 package org.mvss.karta.framework.runtime.event;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.mvss.karta.framework.core.TestScenario;
 import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 @Getter
 @Setter
@@ -21,16 +15,13 @@ import lombok.ToString;
 @NoArgsConstructor
 public abstract class ScenarioEvent extends FeatureEvent
 {
-
-   /**
-    * 
-    */
    private static final long serialVersionUID = 1L;
 
    public ScenarioEvent( Event event )
    {
       super( event );
-      parameters.put( Constants.ITERATION_NUMBER, ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.ITERATION_NUMBER ), Long.class ) );
+      parameters.put( Constants.ITERATION_NUMBER,
+               ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.ITERATION_NUMBER ), Long.class ) );
       parameters.put( Constants.SCENARIO, ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.SCENARIO ), TestScenario.class ) );
       parameters.put( Constants.SCENARIO_NAME, ParserUtils.convertValue( DataFormat.JSON, parameters.get( Constants.SCENARIO_NAME ), String.class ) );
    }

@@ -1,20 +1,14 @@
 package org.mvss.karta.framework.core;
 
+import org.mvss.karta.framework.runtime.TestExecutionContext;
+import lombok.*;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
-import org.mvss.karta.framework.runtime.TestExecutionContext;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-
 /**
  * Prepared step for execution
- * 
+ *
  * @author Manian
  */
 @Getter
@@ -25,34 +19,34 @@ import lombok.ToString;
 @AllArgsConstructor
 public class PreparedStep implements Serializable
 {
-   private static final long       serialVersionUID   = 1L;
+   private static final long serialVersionUID = 1L;
 
    /**
     * The step identifier.
     */
-   private String                  identifier;
+   private String identifier;
 
    /**
     * The test execution context object for running the step.
     */
-   private TestExecutionContext    testExecutionContext;
+   private TestExecutionContext testExecutionContext;
 
    /**
     * The remote node on which to run the step on.
     */
-   private String                  node;
+   private String node;
 
    /**
     * Indicates if the same step is to be run in multiple threads in parallel.
     */
    @Builder.Default
-   private Integer                 numberOfThreads    = 1;
+   private Integer numberOfThreads = 1;
 
    /**
     * The number of times this step should be retried if failed
     */
    @Builder.Default
-   private Integer                 maxRetries         = 0;
+   private Integer maxRetries = 0;
 
    /**
     * The group of prepared steps to run.
@@ -63,12 +57,12 @@ public class PreparedStep implements Serializable
     * Indicates if this is a group of steps to be run in parallel or in sequence.
     */
    @Builder.Default
-   private Boolean                 runStepsInParallel = false;
+   private Boolean runStepsInParallel = false;
 
    /**
     * The condition identifier indicates if the step is to be run
     */
    @Builder.Default
-   private String                  condition          = null;
+   private String condition = null;
 
 }

@@ -6,11 +6,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class KartaThreadFactory implements ThreadFactory
 {
-   private AtomicInteger                            threadCounter          = new AtomicInteger();
+   private final AtomicInteger threadCounter = new AtomicInteger();
 
-   private ConcurrentHashMap<KartaRunnable, Thread> kartaRunnableThreadMap = new ConcurrentHashMap<KartaRunnable, Thread>();
+   private final ConcurrentHashMap<KartaRunnable, Thread> kartaRunnableThreadMap = new ConcurrentHashMap<>();
 
-   private Object                                   lock                   = new Object();
+   private final Object lock = new Object();
 
    @Override
    public Thread newThread( Runnable r )

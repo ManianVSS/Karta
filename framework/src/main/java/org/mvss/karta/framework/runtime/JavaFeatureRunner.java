@@ -1,54 +1,34 @@
 package org.mvss.karta.framework.runtime;
 
+import org.mvss.karta.framework.core.FeatureResult;
+import org.mvss.karta.framework.core.ScenarioResult;
+import org.mvss.karta.framework.core.SerializableKVP;
+import org.mvss.karta.framework.core.StepResult;
+import org.mvss.karta.framework.core.javatest.*;
+import org.mvss.karta.framework.randomization.GenericObjectWithChance;
+import org.mvss.karta.framework.randomization.RandomizationUtils;
+import org.mvss.karta.framework.runtime.event.*;
+import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
+import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
+import org.mvss.karta.framework.threading.BlockingRunnableQueue;
+import org.mvss.karta.framework.utils.DataUtils;
+import org.mvss.karta.framework.utils.DynamicClassLoader;
+import lombok.*;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-
-import org.apache.commons.lang3.StringUtils;
-import org.mvss.karta.framework.core.FeatureResult;
-import org.mvss.karta.framework.core.ScenarioResult;
-import org.mvss.karta.framework.core.SerializableKVP;
-import org.mvss.karta.framework.core.StepResult;
-import org.mvss.karta.framework.core.javatest.Feature;
-import org.mvss.karta.framework.core.javatest.FeatureSetup;
-import org.mvss.karta.framework.core.javatest.FeatureTearDown;
-import org.mvss.karta.framework.core.javatest.Scenario;
-import org.mvss.karta.framework.core.javatest.ScenarioSetup;
-import org.mvss.karta.framework.core.javatest.ScenarioTearDown;
-import org.mvss.karta.framework.randomization.GenericObjectWithChance;
-import org.mvss.karta.framework.randomization.RandomizationUtils;
-import org.mvss.karta.framework.runtime.event.EventProcessor;
-import org.mvss.karta.framework.runtime.event.JavaFeatureCompleteEvent;
-import org.mvss.karta.framework.runtime.event.JavaFeatureSetupCompleteEvent;
-import org.mvss.karta.framework.runtime.event.JavaFeatureSetupStartEvent;
-import org.mvss.karta.framework.runtime.event.JavaFeatureStartEvent;
-import org.mvss.karta.framework.runtime.event.JavaFeatureTearDownCompleteEvent;
-import org.mvss.karta.framework.runtime.event.JavaFeatureTearDownStartEvent;
-import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
-import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
-import org.mvss.karta.framework.threading.BlockingRunnableQueue;
-import org.mvss.karta.framework.utils.DataUtils;
-import org.mvss.karta.framework.utils.DynamicClassLoader;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
 
 @Getter
 @Setter
@@ -58,18 +38,18 @@ import lombok.extern.log4j.Log4j2;
 @Builder
 public class JavaFeatureRunner implements Callable<FeatureResult>
 {
-   private KartaRuntime            kartaRuntime;
-   private RunInfo                 runInfo;
+   private KartaRuntime kartaRuntime;
+   private RunInfo      runInfo;
 
-   private String                  javaTest;
-   private String                  javaTestJarFile;
+   private String javaTest;
+   private String javaTestJarFile;
 
    private Consumer<FeatureResult> resultConsumer;
 
-   private FeatureResult           result;
+   private FeatureResult result;
 
    @PropertyMapping( value = "detailedResults" )
-   private static boolean          detailedResults = false;
+   private static boolean detailedResults = false;
 
    private synchronized void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
    {
@@ -81,10 +61,10 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
    {
       try
       {
-         String runName = runInfo.getRunName();
-         long numberOfIterations = runInfo.getNumberOfIterations();
-         int numberOfIterationsInParallel = runInfo.getNumberOfIterationsInParallel();
-         boolean chanceBasedScenarioExecution = runInfo.isChanceBasedScenarioExecution();
+         String  runName                       = runInfo.getRunName();
+         long    numberOfIterations            = runInfo.getNumberOfIterations();
+         int     numberOfIterationsInParallel  = runInfo.getNumberOfIterationsInParallel();
+         boolean chanceBasedScenarioExecution  = runInfo.isChanceBasedScenarioExecution();
          boolean exclusiveScenarioPerIteration = runInfo.isExclusiveScenarioPerIteration();
 
          ArrayList<TestDataSource> testDataSources = kartaRuntime.getTestDataSources( runInfo );
@@ -92,12 +72,11 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          result = new FeatureResult();
 
          EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
-         Random random = kartaRuntime.getRandom();
+         Random         random         = kartaRuntime.getRandom();
 
          boolean loadClassFromJar = StringUtils.isNotBlank( javaTestJarFile ) && Files.exists( Paths.get( javaTestJarFile ) );
 
-         Class<?> testCaseClass = loadClassFromJar ? (Class<?>) DynamicClassLoader.loadClass( javaTestJarFile, javaTest )
-                  : (Class<?>) Class.forName( javaTest );
+         Class<?> testCaseClass = loadClassFromJar ? DynamicClassLoader.loadClass( javaTestJarFile, javaTest ) : Class.forName( javaTest );
 
          Feature featureAnnotation = testCaseClass.getAnnotation( Feature.class );
 
@@ -106,16 +85,16 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
             throw new KartaFrameworkException( "The class " + testCaseClass + " is not annotated as a feature. " );
          }
 
-         String featureName = featureAnnotation.value();
+         String featureName        = featureAnnotation.value();
          String featureDescription = featureAnnotation.description();
          result.setFeatureName( featureName );
 
-         Method[] classMethods = testCaseClass.getMethods();
-         TreeMap<Integer, ArrayList<Method>> featureSetupMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
-         TreeMap<Integer, ArrayList<Method>> scenarioSetupMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
-         TreeMap<Integer, ArrayList<GenericObjectWithChance<Method>>> scenarioMethodsMap = new TreeMap<Integer, ArrayList<GenericObjectWithChance<Method>>>();
-         TreeMap<Integer, ArrayList<Method>> scenarioTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
-         TreeMap<Integer, ArrayList<Method>> featureTearDownMethodsMap = new TreeMap<Integer, ArrayList<Method>>();
+         Method[]                                                     classMethods               = testCaseClass.getMethods();
+         TreeMap<Integer, ArrayList<Method>>                          featureSetupMethodsMap     = new TreeMap<>();
+         TreeMap<Integer, ArrayList<Method>>                          scenarioSetupMethodsMap    = new TreeMap<>();
+         TreeMap<Integer, ArrayList<GenericObjectWithChance<Method>>> scenarioMethodsMap         = new TreeMap<>();
+         TreeMap<Integer, ArrayList<Method>>                          scenarioTearDownMethodsMap = new TreeMap<>();
+         TreeMap<Integer, ArrayList<Method>>                          featureTearDownMethodsMap  = new TreeMap<>();
 
          Object testCaseObject = testCaseClass.getDeclaredConstructor().newInstance();
          kartaRuntime.initializeObject( testCaseObject );
@@ -138,8 +117,8 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
                if ( classMethod.isAnnotationPresent( Scenario.class ) )
                {
                   Scenario annotation = classMethod.getAnnotation( Scenario.class );
-                  DataUtils.addItemToTreeMapInSequence( new GenericObjectWithChance<Method>( classMethod, annotation
-                           .probability() ), scenarioMethodsMap, annotation.sequence() );
+                  DataUtils.addItemToTreeMapInSequence( new GenericObjectWithChance<>( classMethod, annotation.probability() ), scenarioMethodsMap,
+                           annotation.sequence() );
                }
                if ( classMethod.isAnnotationPresent( ScenarioTearDown.class ) )
                {
@@ -154,17 +133,17 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
             }
          }
 
-         ArrayList<Method> featureSetupMethods = DataUtils.generateSequencedList( featureSetupMethodsMap );
-         ArrayList<Method> scenarioSetupMethods = DataUtils.generateSequencedList( scenarioSetupMethodsMap );
-         ArrayList<GenericObjectWithChance<Method>> scenarioMethods = DataUtils.generateSequencedList( scenarioMethodsMap );
-         ArrayList<Method> scenarioTearDownMethods = DataUtils.generateSequencedList( scenarioTearDownMethodsMap );
-         ArrayList<Method> featureTearDownMethods = DataUtils.generateSequencedList( featureTearDownMethodsMap );
+         ArrayList<Method>                          featureSetupMethods     = DataUtils.generateSequencedList( featureSetupMethodsMap );
+         ArrayList<Method>                          scenarioSetupMethods    = DataUtils.generateSequencedList( scenarioSetupMethodsMap );
+         ArrayList<GenericObjectWithChance<Method>> scenarioMethods         = DataUtils.generateSequencedList( scenarioMethodsMap );
+         ArrayList<Method>                          scenarioTearDownMethods = DataUtils.generateSequencedList( scenarioTearDownMethodsMap );
+         ArrayList<Method>                          featureTearDownMethods  = DataUtils.generateSequencedList( featureTearDownMethodsMap );
 
-         HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
+         HashMap<String, Serializable> variables = new HashMap<>();
 
          int iterationIndex = -1;
 
-         HashMap<Method, AtomicInteger> scenarioIterationIndexMap = new HashMap<Method, AtomicInteger>();
+         HashMap<Method, AtomicInteger> scenarioIterationIndexMap = new HashMap<>();
          scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario.getObject(), new AtomicInteger() ) );
 
          eventProcessor.raiseEvent( new JavaFeatureStartEvent( runName, featureName ) );
@@ -173,7 +152,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          for ( Method methodToInvoke : featureSetupMethods )
          {
             FeatureSetup annotation = methodToInvoke.getAnnotation( FeatureSetup.class );
-            String stepName = methodToInvoke.getName();
+            String       stepName   = methodToInvoke.getName();
             if ( annotation != null )
             {
                if ( StringUtils.isNotBlank( annotation.value() ) )
@@ -184,11 +163,11 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
             eventProcessor.raiseEvent( new JavaFeatureSetupStartEvent( runName, featureName, stepName ) );
 
             TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex, Constants.__FEATURE_SETUP__,
-                                                                                  stepName, null, variables );
+                     stepName, null, variables );
             StepResult stepResult = runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
             stepResult.setStepIndex( stepIndex++ );
             eventProcessor.raiseEvent( new JavaFeatureSetupCompleteEvent( runName, featureName, stepName, stepResult ) );
-            result.getSetupResults().add( new SerializableKVP<String, StepResult>( stepName, stepResult ) );
+            result.getSetupResults().add( new SerializableKVP<>( stepName, stepResult ) );
             result.getIncidents().addAll( stepResult.getIncidents() );
 
             if ( !stepResult.isPassed() )
@@ -206,12 +185,11 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          }
 
          ExecutorService iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L,
-                                                                             TimeUnit.MILLISECONDS,
-                                                                             new BlockingRunnableQueue( numberOfIterationsInParallel ) );
+                  TimeUnit.MILLISECONDS, new BlockingRunnableQueue( numberOfIterationsInParallel ) );
 
          for ( iterationIndex = 0; ( numberOfIterations <= 0 ) || ( iterationIndex < numberOfIterations ); iterationIndex++ )
          {
-            ArrayList<Method> scenariosMethodsToRun = new ArrayList<Method>();;
+            ArrayList<Method> scenariosMethodsToRun = new ArrayList<>();
 
             if ( chanceBasedScenarioExecution )
             {
@@ -229,8 +207,8 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
                }
                else
                {
-                  scenariosMethodsToRun
-                           .addAll( GenericObjectWithChance.extractObjects( RandomizationUtils.generateNextComposition( random, scenarioMethods ) ) );
+                  scenariosMethodsToRun.addAll(
+                           GenericObjectWithChance.extractObjects( RandomizationUtils.generateNextComposition( random, scenarioMethods ) ) );
                }
             }
             else
@@ -242,8 +220,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
                      .scenarioSetupMethods( scenarioSetupMethods ).scenariosMethodsToRun( scenariosMethodsToRun )
                      .scenarioTearDownMethods( scenarioTearDownMethods ).runInfo( runInfo ).featureName( featureName )
                      .featureDescription( featureDescription ).iterationIndex( iterationIndex ).scenarioIterationIndexMap( scenarioIterationIndexMap )
-                     .variables( DataUtils.cloneMap( variables ) )
-                     .resultConsumer( ( iterationResult ) -> accumulateIterationResult( iterationResult ) ).build();
+                     .variables( DataUtils.cloneMap( variables ) ).resultConsumer( this::accumulateIterationResult ).build();
 
             if ( numberOfIterationsInParallel == 1 )
             {
@@ -259,11 +236,14 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
          try
          {
-            iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
+            if ( !iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS ) )
+            {
+               log.error( "Failed awaiting termination for iteration execution service." );
+            }
          }
          catch ( InterruptedException ie )
          {
-            // Ignore termination and continue on interruption
+            log.error( "Interruption while awaiting termination for iteration execution service." );
          }
 
          scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario.getObject() ).set( 0 ) );
@@ -274,7 +254,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          for ( Method methodToInvoke : featureTearDownMethods )
          {
             FeatureTearDown annotation = methodToInvoke.getAnnotation( FeatureTearDown.class );
-            String stepName = methodToInvoke.getName();
+            String          stepName   = methodToInvoke.getName();
 
             if ( annotation != null )
             {
@@ -286,12 +266,12 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
             eventProcessor.raiseEvent( new JavaFeatureTearDownStartEvent( runName, featureName, stepName ) );
 
             TestExecutionContext testExecutionContext = new TestExecutionContext( runName, featureName, iterationIndex,
-                                                                                  Constants.__FEATURE_TEARDOWN__, stepName, null, variables );
+                     Constants.__FEATURE_TEARDOWN__, stepName, null, variables );
             StepResult stepResult = runTestMethod( kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke );
             stepResult.setStepIndex( stepIndex++ );
 
             eventProcessor.raiseEvent( new JavaFeatureTearDownCompleteEvent( runName, featureName, stepName, stepResult ) );
-            result.getTearDownResults().add( new SerializableKVP<String, StepResult>( stepName, stepResult ) );
+            result.getTearDownResults().add( new SerializableKVP<>( stepName, stepResult ) );
             result.getIncidents().addAll( stepResult.getIncidents() );
 
             if ( !stepResult.isPassed() )
@@ -325,10 +305,9 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
    }
 
    public static StepResult runTestMethod( KartaRuntime kartaRuntime, ArrayList<TestDataSource> testDataSources, Object testCaseObject,
-                                           TestExecutionContext testExecutionContext, Method methodToInvoke )
-            throws Throwable
+                                           TestExecutionContext testExecutionContext, Method methodToInvoke ) throws Throwable
    {
-      Date startTime = new Date();
+      Date       startTime = new Date();
       StepResult stepResult;
       testExecutionContext.mergeTestData( null, null, testDataSources );
 
@@ -341,7 +320,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
       }
       else
       {
-         stepResult = StepResult.builder().successful( ( returnType == boolean.class ) ? ( (boolean) resultReturned ) : true ).build();
+         stepResult = StepResult.builder().successful( returnType != boolean.class || ( (boolean) resultReturned ) ).build();
       }
 
       if ( stepResult.getEndTime() == null )

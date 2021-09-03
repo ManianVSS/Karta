@@ -1,17 +1,13 @@
 package org.mvss.karta.framework.randomization;
 
+import lombok.*;
+
 import java.io.Serializable;
 import java.util.Random;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-
 /**
  * A generic numeric range which can act as a range for numerical values
- * 
+ *
  * @author Manian
  */
 @Getter
@@ -22,18 +18,18 @@ import lombok.ToString;
 public class Range implements Serializable
 {
    /**
-    * 
+    *
     */
    private static final long serialVersionUID = 1L;
 
-   private long              min              = 0;
-   private long              max              = Long.MAX_VALUE;
+   private long min = 0;
+   private long max = Long.MAX_VALUE;
 
    /**
     * Select a random value in the range using the provided randomizer.
-    * 
-    * @param random
-    * @return
+    *
+    * @param random Random
+    * @return long
     */
    public long getNext( Random random )
    {

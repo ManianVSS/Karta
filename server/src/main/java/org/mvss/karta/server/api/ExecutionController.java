@@ -41,7 +41,7 @@ public class ExecutionController
    }
 
    @ResponseStatus( HttpStatus.OK )
-   @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_FEATURESOURCE )
+   @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_FEATURE_SOURCE )
    public FeatureResult startFeatureSourceRun( @RequestParam( defaultValue = Constants.UNNAMED ) String runName, @RequestBody String featureSourceString ) throws IllegalAccessException, InvocationTargetException
    {
       if ( runName.equals( Constants.UNNAMED ) )

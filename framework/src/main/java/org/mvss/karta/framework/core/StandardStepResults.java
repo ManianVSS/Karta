@@ -4,7 +4,7 @@ import java.util.Date;
 
 /**
  * Utility class for step results
- * 
+ *
  * @author Manian
  */
 public class StandardStepResults
@@ -27,9 +27,9 @@ public class StandardStepResults
 
    /**
     * Create a step result with error using error message
-    * 
-    * @param message
-    * @return
+    *
+    * @param message Message to print
+    * @return StepResult
     */
    public static StepResult error( String message )
    {
@@ -38,9 +38,9 @@ public class StandardStepResults
 
    /**
     * Create a step result with error using Throwable
-    * 
-    * @param t
-    * @return
+    *
+    * @param t Throwable
+    * @return StepResult
     */
    public static StepResult error( Throwable t )
    {
@@ -49,10 +49,10 @@ public class StandardStepResults
 
    /**
     * Create a step result with error using error message and Throwable
-    * 
-    * @param message
-    * @param t
-    * @return
+    *
+    * @param message Message to print
+    * @param t       Throwable
+    * @return StepResult
     */
    public static StepResult error( String message, Throwable t )
    {
@@ -61,9 +61,9 @@ public class StandardStepResults
 
    /**
     * Create a step result with error using a test incident
-    * 
-    * @param incident
-    * @return
+    *
+    * @param incident TestIncident
+    * @return StepResult
     */
    public static StepResult error( TestIncident incident )
    {
@@ -75,9 +75,9 @@ public class StandardStepResults
 
    /**
     * Create a step result with failure using Throwable
-    * 
-    * @param t
-    * @return
+    *
+    * @param t Throwable
+    * @return Throwable
     */
    public static StepResult failure( Throwable t )
    {
@@ -86,9 +86,9 @@ public class StandardStepResults
 
    /**
     * Create a step result with failure using a test incident
-    * 
-    * @param incident
-    * @return
+    *
+    * @param incident TestIncident
+    * @return StepResult
     */
    public static StepResult failure( TestIncident incident )
    {

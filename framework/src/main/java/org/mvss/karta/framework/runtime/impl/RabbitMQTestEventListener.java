@@ -1,17 +1,15 @@
 package org.mvss.karta.framework.runtime.impl;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
-
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.SerializationUtils;
 
 @Log4j2
 public class RabbitMQTestEventListener implements TestEventListener
@@ -19,28 +17,28 @@ public class RabbitMQTestEventListener implements TestEventListener
    private static final String PLUGIN_NAME = "RabbitMQTestEventListener";
 
    @PropertyMapping( group = PLUGIN_NAME, value = "queueName" )
-   private String              queueName   = "KartaEvents";
+   private String queueName = "KartaEvents";
 
    @PropertyMapping( group = PLUGIN_NAME, value = "userName" )
-   private String              userName    = "guest";
+   private String userName = "guest";
 
    @PropertyMapping( group = PLUGIN_NAME, value = "password" )
-   private String              password    = "guest";
+   private String password = "guest";
 
    @PropertyMapping( group = PLUGIN_NAME, value = "virtualHost" )
-   private String              virtualHost = "/";
+   private String virtualHost = "/";
 
    @PropertyMapping( group = PLUGIN_NAME, value = "hostName" )
-   private String              hostName    = "localhost";
+   private String hostName = "localhost";
 
    @PropertyMapping( group = PLUGIN_NAME, value = "portNumber" )
-   private int                 portNumber  = 5672;
+   private int portNumber = 5672;
 
-   private ConnectionFactory   factory;
-   private Connection          connection;
-   private Channel             channel;
+   private ConnectionFactory factory;
+   private Connection        connection;
+   private Channel           channel;
 
-   private boolean             initialized = false;
+   private boolean initialized = false;
 
    @Override
    public String getPluginName()
@@ -66,7 +64,7 @@ public class RabbitMQTestEventListener implements TestEventListener
       factory.setPort( portNumber );
 
       connection = factory.newConnection();
-      channel = connection.createChannel();
+      channel    = connection.createChannel();
 
       channel.queueDeclare( queueName, false, false, false, null );
 

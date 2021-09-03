@@ -4,7 +4,7 @@ import java.util.Date;
 
 /**
  * Utility class for scenario results
- * 
+ *
  * @author Manian
  */
 public class StandardScenarioResults

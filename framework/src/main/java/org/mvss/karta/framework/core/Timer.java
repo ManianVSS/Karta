@@ -1,21 +1,15 @@
 package org.mvss.karta.framework.core;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.*;
+
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-
 /**
  * This class can store time taken for activities.
- * 
+ *
  * @author Manian
  */
 @Getter
@@ -28,13 +22,13 @@ public class Timer implements Serializable, Comparable<Timer>
 {
    private static final long serialVersionUID = 1L;
 
-   private volatile Instant  startTime;
-   private volatile Instant  endTime;
+   private volatile Instant startTime;
+   private volatile Instant endTime;
 
    public synchronized void start()
    {
       startTime = Instant.now();
-      endTime = startTime;
+      endTime   = startTime;
    }
 
    public synchronized void stop()
@@ -58,14 +52,7 @@ public class Timer implements Serializable, Comparable<Timer>
    {
       if ( startTime == null )
       {
-         if ( otherTimer.startTime != null )
-         {
-            return 1;
-         }
-         else
-         {
-            return 0;
-         }
+         return ( otherTimer.startTime == null ) ? 0 : 1;
       }
       else
       {
@@ -85,7 +72,6 @@ public class Timer implements Serializable, Comparable<Timer>
             {
                return startTimeCompare;
             }
-
          }
       }
    }
