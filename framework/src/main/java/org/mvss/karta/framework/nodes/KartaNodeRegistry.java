@@ -1,9 +1,9 @@
 package org.mvss.karta.framework.nodes;
 
-import org.mvss.karta.framework.runtime.Constants;
-import org.mvss.karta.framework.utils.RMIUtils;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.utils.RMIUtils;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
@@ -95,11 +95,11 @@ public class KartaNodeRegistry implements AutoCloseable
       }
       catch ( RemoteException ce )
       {
-         log.error( "Connection could not be estabished to node " + nodeConfiguration );
+         log.error( "Connection could not be established to node " + nodeConfiguration );
       }
       catch ( Throwable t )
       {
-         log.error( "Exception occured when trying to connect to node " + nodeConfiguration, t );
+         log.error( "Exception occurred when trying to connect to node " + nodeConfiguration, t );
       }
 
       return false;

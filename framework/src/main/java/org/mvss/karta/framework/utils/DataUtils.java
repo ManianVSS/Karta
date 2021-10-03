@@ -1,7 +1,7 @@
 package org.mvss.karta.framework.utils;
 
-import org.mvss.karta.framework.runtime.Constants;
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.runtime.Constants;
 
 import java.io.Serializable;
 import java.util.*;
@@ -287,9 +287,9 @@ public class DataUtils
    }
 
    /**
-    * Returns an string incremented by one.
+    * Returns a string incremented by one.
     * Only alphanumeric digits are considered for incrementing and carry forward.
-    * Digits are assumed to have most significant digit from left to least significant digit to right (natural ordering).
+    * Digits are assumed to have most significant digit from left to the least significant digit to right (natural ordering).
     * e.g. "aZ9_z$z" is incremented to "bA0_a$a"
     */
    @SuppressWarnings( {"ConstantConditions", "UnusedAssignment"} )

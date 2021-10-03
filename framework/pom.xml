@@ -119,6 +119,11 @@
             <version>0.1.55</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>

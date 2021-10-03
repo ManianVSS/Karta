@@ -2,9 +2,9 @@ package org.mvss.karta.framework.runtime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonFormat.Shape;
-import org.mvss.karta.framework.runtime.testcatalog.Test;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.runtime.testcatalog.Test;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -54,6 +54,9 @@ public class RunInfo implements Serializable
 
    @JsonFormat( shape = Shape.STRING )
    private Duration coolDownBetweenIterations;
+
+   @Builder.Default
+   private long iterationsPerCoolDownPeriod = 1;
 
    @Builder.Default
    private int numberOfIterationsInParallel = 1;
@@ -106,7 +109,8 @@ public class RunInfo implements Serializable
                .chanceBasedScenarioExecution( test.getChanceBasedScenarioExecution() )
                .exclusiveScenarioPerIteration( test.getExclusiveScenarioPerIteration() ).numberOfIterations( test.getNumberOfIterations() )
                .runDuration( test.getRunDuration() ).coolDownBetweenIterations( test.getCoolDownBetweenIterations() )
-               .numberOfIterationsInParallel( test.getNumberOfThreads() ).build();
+               .iterationsPerCoolDownPeriod( test.getIterationsPerCoolDownPeriod() ).numberOfIterationsInParallel( test.getNumberOfThreads() )
+               .build();
 
       runInfo.setPlugins( test );
 

@@ -188,7 +188,7 @@ public class StepResult implements Serializable
    }
 
    /**
-    * Convert events and other objects received from remote execution to appropriate sub class
+    * Convert events and other objects received from remote execution to appropriate subclass
     */
    public void processRemoteResults()
    {

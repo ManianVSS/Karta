@@ -1,9 +1,9 @@
 package org.mvss.karta.framework.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.*;
 import org.mvss.karta.framework.runtime.event.Event;
 import org.mvss.karta.framework.runtime.event.StandardEventsTypes;
-import lombok.*;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -65,7 +65,7 @@ public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
    @Override
    public int compareTo( ScenarioResult other )
    {
-      return (int) ( ( iterationIndex - other.iterationIndex ) % Integer.MAX_VALUE );
+      return ( iterationIndex - other.iterationIndex ) % Integer.MAX_VALUE;
    }
 
    public ScenarioResult trimForReport()
@@ -94,7 +94,7 @@ public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
    }
 
    /**
-    * Converts events and other objects received from remote execution to appropriate sub class
+    * Converts events and other objects received from remote execution to appropriate subclass
     */
    public void processRemoteResults()
    {

@@ -22,4 +22,6 @@ public @interface ScenarioFailed
     * Tag regex patterns to match
     */
    String[] value() default Constants.REGEX_ALL_STRING;
+
+   //TODO: Add sequence to sort actions hooks
 }

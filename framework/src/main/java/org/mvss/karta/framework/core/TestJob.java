@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * This class describes an test job object.
+ * This class describes a test job object.
  *
  * @author Manian
  */

@@ -52,7 +52,7 @@ public class TestJobResult implements Serializable, Comparable<TestJobResult>
    }
 
    /**
-    * Converts events and other objects received from remote execution to appropriate sub class
+    * Converts events and other objects received from remote execution to appropriate subclass
     */
    public void processRemoteResults()
    {

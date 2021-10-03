@@ -56,7 +56,7 @@ public class FeatureRunner implements Callable<FeatureResult>
    /**
     * The callback implementation for feature iteration result updates for running Test Feature
     *
-    * @param iterationResult
+    * @param iterationResult HashMap<String, ScenarioResult>
     */
    private void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
    {
@@ -64,7 +64,7 @@ public class FeatureRunner implements Callable<FeatureResult>
    }
 
    @Builder.Default
-   private ArrayList<Long> runningJobs = new ArrayList<Long>();
+   private ArrayList<Long> runningJobs = new ArrayList<>();
 
    private void deleteJobs()
    {
@@ -121,7 +121,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             }
          }
 
-         HashMap<String, Serializable> variables = new HashMap<String, Serializable>();
+         HashMap<String, Serializable> variables = new HashMap<>();
 
          for ( TestJob job : testFeature.getTestJobs() )
          {
@@ -132,7 +132,7 @@ public class FeatureRunner implements Callable<FeatureResult>
 
                if ( jobInterval > 0 )
                {
-                  HashMap<String, Object> jobData = new HashMap<String, Object>();
+                  HashMap<String, Object> jobData = new HashMap<>();
                   jobData.put( Constants.KARTA_RUNTIME, kartaRuntime );
                   jobData.put( Constants.RUN_INFO, runInfo );
                   jobData.put( Constants.FEATURE_NAME, testFeature.getName() );
@@ -156,7 +156,7 @@ public class FeatureRunner implements Callable<FeatureResult>
 
          int iterationIndex = -1;
 
-         HashMap<TestScenario, AtomicInteger> scenarioIterationIndexMap = new HashMap<TestScenario, AtomicInteger>();
+         HashMap<TestScenario, AtomicInteger> scenarioIterationIndexMap = new HashMap<>();
          testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario, new AtomicInteger() ) );
 
          long setupStepIndex = -1;
@@ -193,7 +193,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             {
                eventProcessor.raiseEvent( new FeatureSetupStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-               result.getSetupResults().add( new SerializableKVP<String, StepResult>( step.getStep(), stepResult ) );
+               result.getSetupResults().add( new SerializableKVP<>( step.getStep(), stepResult ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )
@@ -210,11 +210,10 @@ public class FeatureRunner implements Callable<FeatureResult>
                         result.setError( true );
                      }
                   }
-
                   updateResultCallBack();
-                  return result;
                }
             }
+            return result;
          }
 
          long     numberOfIterations            = runInfo.getNumberOfIterations();
@@ -223,6 +222,7 @@ public class FeatureRunner implements Callable<FeatureResult>
          boolean  exclusiveScenarioPerIteration = runInfo.isExclusiveScenarioPerIteration();
          Duration targetRunDuration             = runInfo.getRunDuration();
          Duration coolDownBetweenIterations     = runInfo.getCoolDownBetweenIterations();
+         long     iterationsPerCoolDownPeriod   = runInfo.getIterationsPerCoolDownPeriod();
 
          if ( !DataUtils.inRange( numberOfIterations, 0, Integer.MAX_VALUE ) )
          {
@@ -257,7 +257,7 @@ public class FeatureRunner implements Callable<FeatureResult>
                }
             }
 
-            ArrayList<TestScenario> scenariosToRun = new ArrayList<TestScenario>();
+            ArrayList<TestScenario> scenariosToRun = new ArrayList<>();
 
             if ( chanceBasedScenarioExecution )
             {
@@ -289,7 +289,7 @@ public class FeatureRunner implements Callable<FeatureResult>
                      .scenarioSetupSteps( testFeature.getScenarioSetupSteps() ).scenariosToRun( scenariosToRun )
                      .scenarioTearDownSteps( testFeature.getScenarioTearDownSteps() ).iterationIndex( iterationIndex )
                      .scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) )
-                     .resultConsumer( ( iterationResult ) -> accumulateIterationResult( iterationResult ) ).build();
+                     .resultConsumer( this::accumulateIterationResult ).build();
 
             if ( useMinions )
             {
@@ -309,12 +309,13 @@ public class FeatureRunner implements Callable<FeatureResult>
             else
             {
                log.debug( "Iteration queued " + iterationIndex + " with scenarios " + scenariosToRun );
+               assert iterationExecutionService != null;
                iterationExecutionService.submit( iterationRunner );
             }
 
             if ( coolDownBetweenIterations != null )
             {
-               if ( iterationIndex % numberOfIterationsInParallel == 0 )
+               if ( iterationIndex % ( numberOfIterationsInParallel * iterationsPerCoolDownPeriod ) == 0 )
                {
                   WaitUtil.sleep( coolDownBetweenIterations.toMillis() );
                }
@@ -324,7 +325,10 @@ public class FeatureRunner implements Callable<FeatureResult>
          if ( numberOfIterationsInParallel > 1 )
          {
             iterationExecutionService.shutdown();
-            iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS );
+            if ( !iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS ) )
+            {
+               iterationExecutionService.shutdownNow();
+            }
          }
 
          testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario ).set( 0 ) );
@@ -362,13 +366,12 @@ public class FeatureRunner implements Callable<FeatureResult>
             {
                eventProcessor.raiseEvent( new FeatureTearDownStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-               result.getTearDownResults().add( new SerializableKVP<String, StepResult>( step.getStep(), stepResult ) );
+               result.getTearDownResults().add( new SerializableKVP<>( step.getStep(), stepResult ) );
                result.getIncidents().addAll( stepResult.getIncidents() );
 
                if ( !stepResult.isPassed() )
                {
                   result.setSuccessful( false );
-                  continue;
                }
             }
          }
@@ -387,7 +390,7 @@ public class FeatureRunner implements Callable<FeatureResult>
       }
       catch ( Throwable t )
       {
-         log.error( "Exception occured during feature run", t );
+         log.error( "Exception occurred during feature run", t );
          log.error( ExceptionUtils.getStackTrace( t ) );
          result.setError( true );
       }

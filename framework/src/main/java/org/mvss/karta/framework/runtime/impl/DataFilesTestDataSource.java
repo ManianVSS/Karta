@@ -1,6 +1,8 @@
 package org.mvss.karta.framework.runtime.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.FileUtils;
 import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
@@ -8,8 +10,6 @@ import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.utils.ParserUtils;
 import org.mvss.karta.framework.utils.PropertyUtils;
-import lombok.extern.log4j.Log4j2;
-import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;

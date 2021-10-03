@@ -1,10 +1,10 @@
 package org.mvss.karta.framework.nodes;
 
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.utils.RMIUtils;
-import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
 
 import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
@@ -19,9 +19,9 @@ import java.rmi.registry.Registry;
 @Getter
 public class KartaNodeServer implements AutoCloseable
 {
-   private KartaRuntime kartaRuntime;
-   private Registry     rmiRegistry;
-   private KartaNode    kartaNode;
+   private final KartaRuntime kartaRuntime;
+   private       Registry     rmiRegistry;
+   private       KartaNode    kartaNode;
 
    private boolean started = false;
 

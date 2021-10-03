@@ -1,12 +1,12 @@
 package org.mvss.karta.framework.runtime;
 
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.KartaAutoWired;
 import org.mvss.karta.framework.enums.ContextType;
 import org.mvss.karta.framework.utils.AnnotationScanner;
 import org.mvss.karta.framework.utils.DataUtils;
-import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -230,8 +230,7 @@ public class BeanRegistry
          {
             field.setAccessible( true );
             Class<?> fieldClass = field.getType();
-            String   beanName   = DataUtils.pickString( StringUtils::isNotEmpty, kartaAutoWired.value(), kartaAutoWired.name(),
-                     fieldClass.getName() );
+            String beanName = DataUtils.pickString( StringUtils::isNotEmpty, kartaAutoWired.value(), kartaAutoWired.name(), fieldClass.getName() );
             Object valueToSet = beanMap.get( beanName );
 
             if ( valueToSet != null )
@@ -265,7 +264,6 @@ public class BeanRegistry
       }
 
       AnnotationScanner.forEachField( theClassOfObject, KartaAutoWired.class, AnnotationScanner.IS_NON_STATIC.and( AnnotationScanner.IS_NON_FINAL ),
-               AnnotationScanner.IS_NON_VOID_TYPE,
                ( type, field, annotationObject ) -> beanRegistry.setFieldValue( object, field, (KartaAutoWired) annotationObject ) );
 
       Class<?> superClass = theClassOfObject.getSuperclass();
@@ -301,7 +299,6 @@ public class BeanRegistry
       }
 
       AnnotationScanner.forEachField( theClassOfObject, KartaAutoWired.class, AnnotationScanner.IS_STATIC.and( AnnotationScanner.IS_NON_FINAL ),
-               AnnotationScanner.IS_NON_VOID_TYPE,
                ( type, field, annotationObject ) -> beanRegistry.setFieldValue( null, field, (KartaAutoWired) annotationObject ) );
 
       Class<?> superClass = theClassOfObject.getSuperclass();

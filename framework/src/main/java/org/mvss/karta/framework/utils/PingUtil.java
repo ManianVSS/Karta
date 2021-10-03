@@ -1,23 +1,16 @@
 package org.mvss.karta.framework.utils;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.security.GeneralSecurityException;
-import java.security.cert.X509Certificate;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.TrustStrategy;
+
+import javax.net.ssl.*;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.GeneralSecurityException;
 
 public class PingUtil
 {
@@ -49,7 +42,7 @@ public class PingUtil
          sc.init( null, trustAllCerts, new java.security.SecureRandom() );
          HttpsURLConnection.setDefaultSSLSocketFactory( sc.getSocketFactory() );
       }
-      catch ( Exception e )
+      catch ( Exception ignored )
       {
       }
 
@@ -57,42 +50,27 @@ public class PingUtil
 
    public HttpClient getInsecureHttpClient() throws GeneralSecurityException
    {
-      TrustStrategy trustStrategy = new TrustStrategy()
-      {
-         @Override
-         public boolean isTrusted( X509Certificate[] chain, String authType )
-         {
-            return true;
-         }
-      };
-
-      HostnameVerifier hostnameVerifier = new HostnameVerifier()
-      {
-         @Override
-         public boolean verify( String hostname, SSLSession session )
-         {
-            return true;
-         }
-      };
-
-      return HttpClients.custom().setSSLSocketFactory( new SSLConnectionSocketFactory( new SSLContextBuilder().loadTrustMaterial( trustStrategy ).build(), hostnameVerifier ) ).build();
+      TrustStrategy    trustStrategy    = ( chain, authType ) -> true;
+      HostnameVerifier hostnameVerifier = ( hostname, session ) -> true;
+      return HttpClients.custom().setSSLSocketFactory(
+               new SSLConnectionSocketFactory( new SSLContextBuilder().loadTrustMaterial( trustStrategy ).build(), hostnameVerifier ) ).build();
    }
 
    public static boolean toggleFunction( boolean toggle, boolean value )
    {
-      return toggle ? !value : value;
+      return toggle != value;
    }
 
    public static boolean isURLAvailable( String url )
    {
-      return checkURLAvalability( url, false );
+      return checkURLAvailability( url, false );
    }
 
    public static boolean isURLAvailable( String url, long consistentRetries )
    {
       for ( long i = 0; i < consistentRetries; i++ )
       {
-         if ( !checkURLAvalability( url, false ) )
+         if ( !checkURLAvailability( url, false ) )
          {
             return false;
          }
@@ -102,10 +80,10 @@ public class PingUtil
 
    public static boolean isURLUnavailable( String url )
    {
-      return checkURLAvalability( url, true );
+      return checkURLAvailability( url, true );
    }
 
-   public static boolean checkURLAvalability( String url, boolean negativeCheck )
+   public static boolean checkURLAvailability( String url, boolean negativeCheck )
    {
       HttpURLConnection connection = null;
 
@@ -131,7 +109,7 @@ public class PingUtil
             {
                connection.getInputStream().close();
             }
-            catch ( IOException e )
+            catch ( IOException ignored )
             {
 
             }

@@ -14,12 +14,6 @@
             <version>0.1.0</version>
             <scope>provided</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <version>3.141.59</version>
-        </dependency>
     </dependencies>
 
     <build>

@@ -2,15 +2,15 @@ package org.mvss.karta.framework.restclient;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import org.mvss.karta.framework.enums.DataFormat;
-import org.mvss.karta.framework.runtime.Constants;
-import org.mvss.karta.framework.utils.ParserUtils;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.mvss.karta.framework.enums.DataFormat;
+import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.utils.ParserUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,11 +26,11 @@ public class ApacheRestResponse implements RestResponse
 {
    private static final long serialVersionUID = 1L;
 
-   private String                  protocolVersion;
-   private int                     statusCode;
-   private String                  reasonPhrase;
-   private HashMap<String, String> headers;
-   private ContentType             contentType;
+   private final String                  protocolVersion;
+   private final int                     statusCode;
+   private final String                  reasonPhrase;
+   private final HashMap<String, String> headers;
+   private       ContentType             contentType;
 
    private InputStream contentStream;
 

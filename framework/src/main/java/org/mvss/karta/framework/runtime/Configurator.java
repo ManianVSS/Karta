@@ -1,12 +1,12 @@
 package org.mvss.karta.framework.runtime;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.mvss.karta.framework.enums.DataFormat;
-import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
-import org.mvss.karta.framework.utils.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
+import org.mvss.karta.framework.enums.DataFormat;
+import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
+import org.mvss.karta.framework.utils.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -238,7 +238,7 @@ public class Configurator
    public static void loadProperties( HashMap<String, HashMap<String, Serializable>> propertiesStore, Object object ) throws IllegalArgumentException
    {
       AnnotationScanner.forEachField( object.getClass(), PropertyMapping.class, AnnotationScanner.IS_NON_STATIC.and( AnnotationScanner.IS_NON_FINAL ),
-               null, ( type, field, annotation ) -> PropertyUtils.setFieldValue( propertiesStore, object, field, (PropertyMapping) annotation ) );
+               ( type, field, annotation ) -> PropertyUtils.setFieldValue( propertiesStore, object, field, (PropertyMapping) annotation ) );
    }
 
    /**
@@ -259,7 +259,7 @@ public class Configurator
             throws IllegalArgumentException
    {
       AnnotationScanner.forEachField( classToLoadPropertiesWith, PropertyMapping.class,
-               AnnotationScanner.IS_STATIC.and( AnnotationScanner.IS_NON_FINAL ), null,
+               AnnotationScanner.IS_STATIC.and( AnnotationScanner.IS_NON_FINAL ),
                ( type, field, annotation ) -> PropertyUtils.setFieldValue( propertiesStore, null, field, (PropertyMapping) annotation ) );
    }
 

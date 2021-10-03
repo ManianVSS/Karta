@@ -1,5 +1,17 @@
 package org.mvss.karta.framework.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import lombok.Getter;
+import org.apache.commons.beanutils.BeanUtilsBean;
+import org.apache.commons.io.FilenameUtils;
+import org.mvss.karta.framework.enums.DataFormat;
+import org.mvss.karta.framework.runtime.Constants;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringReader;
@@ -7,47 +19,32 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
 
-import org.apache.commons.beanutils.BeanUtilsBean;
-import org.apache.commons.io.FilenameUtils;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.mvss.karta.framework.enums.DataFormat;
-import org.mvss.karta.framework.runtime.Constants;
-
-import lombok.Getter;
-
 /**
  * Utility class for parsing data and serializing to string for different formats (YAML, JSON, XML)
- * 
+ *
  * @author Manian
  */
 public class ParserUtils
 {
-   public static final TypeReference<HashMap<String, Serializable>> genericHashMapObjectType = new TypeReference<HashMap<String, Serializable>>()
-                                                                                             {
-                                                                                             };
+   public static final TypeReference<HashMap<String, Serializable>> genericHashMapObjectType = new TypeReference<>()
+   {
+   };
 
-   private static TypeReference<ArrayList<String>>                  arrayListOfStringType    = new TypeReference<ArrayList<String>>()
-                                                                                             {
-                                                                                             };
-
-   @Getter
-   private static ObjectMapper                                      objectMapper             = new ObjectMapper();
+   private static final TypeReference<ArrayList<String>> arrayListOfStringType = new TypeReference<>()
+   {
+   };
 
    @Getter
-   private static ObjectMapper                                      yamlObjectMapper         = new ObjectMapper( new YAMLFactory() );
+   private static final ObjectMapper objectMapper = new ObjectMapper();
 
    @Getter
-   private static XmlMapper                                         xmlMapper                = new XmlMapper();
+   private static final ObjectMapper yamlObjectMapper = new ObjectMapper( new YAMLFactory() );
 
    @Getter
-   private static BeanUtilsBean                                     nullAwareBeanUtils       = new NullAwareBeanUtilsBean();
+   private static final XmlMapper xmlMapper = new XmlMapper();
+
+   @Getter
+   private static final BeanUtilsBean nullAwareBeanUtils = new NullAwareBeanUtilsBean();
 
    static
    {
@@ -61,39 +58,22 @@ public class ParserUtils
 
    /**
     * Parses a list of string from String (JSON source)
-    * 
-    * @param source
-    * @return
-    * @throws JsonMappingException
-    * @throws JsonProcessingException
     */
-   public static ArrayList<String> parseListOfStringFromJson( String source ) throws JsonMappingException, JsonProcessingException
+   public static ArrayList<String> parseListOfStringFromJson( String source ) throws JsonProcessingException
    {
       return objectMapper.readValue( source, arrayListOfStringType );
    }
 
    /**
     * Parses a list of string from String (YAML source)
-    * 
-    * @param source
-    * @return
-    * @throws JsonMappingException
-    * @throws JsonProcessingException
     */
-   public static ArrayList<String> parseListOfStringFromYaml( String source ) throws JsonMappingException, JsonProcessingException
+   public static ArrayList<String> parseListOfStringFromYaml( String source ) throws JsonProcessingException
    {
       return yamlObjectMapper.readValue( source, arrayListOfStringType );
    }
 
    /**
     * Generic method to parse a serializable object of type T based on data format and type reference from the string source.
-    * 
-    * @param <T>
-    * @param format
-    * @param content
-    * @param valueTypeRef
-    * @return
-    * @throws IOException
     */
    public static <T> T readValue( DataFormat format, String content, TypeReference<T> valueTypeRef ) throws IOException
    {
@@ -120,13 +100,6 @@ public class ParserUtils
 
    /**
     * Generic method to parse a serializable object of type T based on data format and class from the string source.
-    * 
-    * @param <T>
-    * @param format
-    * @param content
-    * @param valueType
-    * @return
-    * @throws IOException
     */
    public static <T> T readValue( DataFormat format, String content, Class<T> valueType ) throws IOException
    {
@@ -153,12 +126,6 @@ public class ParserUtils
 
    /**
     * Generic method to convert an object to type T based on data format from another value of type reference .
-    * 
-    * @param <T>
-    * @param format
-    * @param fromValue
-    * @param valueTypeRef
-    * @return
     */
    public static <T> T convertValue( DataFormat format, Object fromValue, TypeReference<T> valueTypeRef )
    {
@@ -177,12 +144,6 @@ public class ParserUtils
 
    /**
     * Generic method to convert an object to type T based on data format from another value of different class compatible with respect to object properties.
-    * 
-    * @param <T>
-    * @param format
-    * @param fromValue
-    * @param toValueType
-    * @return
     */
    @SuppressWarnings( "unchecked" )
    public static <T> T convertValue( DataFormat format, Object fromValue, Class<T> toValueType )
@@ -207,13 +168,11 @@ public class ParserUtils
 
    /**
     * Get data format for file by name based on the file extension
-    * 
-    * @param fileName
-    * @return
     */
    public static DataFormat getFileDataFormat( String fileName )
    {
-      String fileExtension = FilenameUtils.getExtension( fileName );// ( fileName.contains( Constants.DOT ) && !fileName.endsWith( Constants.DOT ) ) ? fileName.toLowerCase().substring( fileName.lastIndexOf( Constants.DOT ) + 1 ) : Constants.EMPTY_STRING;
+      String fileExtension = FilenameUtils.getExtension(
+               fileName );// ( fileName.contains( Constants.DOT ) && !fileName.endsWith( Constants.DOT ) ) ? fileName.toLowerCase().substring( fileName.lastIndexOf( Constants.DOT ) + 1 ) : Constants.EMPTY_STRING;
       if ( fileExtension.equals( Constants.JSON ) )
       {
          return DataFormat.JSON;

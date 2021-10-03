@@ -1,5 +1,7 @@
 package org.mvss.karta.framework.runtime;
 
+import lombok.*;
+import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.TestScenario;
@@ -10,8 +12,6 @@ import org.mvss.karta.framework.runtime.event.ScenarioCompleteEvent;
 import org.mvss.karta.framework.runtime.event.ScenarioStartEvent;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
-import lombok.*;
-import lombok.extern.log4j.Log4j2;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
 
    @Builder.Default
    private HashMap<String, Serializable> variables = new HashMap<>();
-   
+
    private HashMap<String, ScenarioResult> result;
 
    private Consumer<HashMap<String, ScenarioResult>> resultConsumer;

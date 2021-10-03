@@ -1,5 +1,7 @@
 package org.mvss.karta.framework.utils;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -9,11 +11,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 
-import org.apache.commons.io.IOUtils;
-
 /**
  * Utility class for loading resources from class-path or file-system.
- * 
+ *
  * @author Manian
  */
 public class ClassPathLoaderUtils
@@ -21,10 +21,6 @@ public class ClassPathLoaderUtils
    /**
     * Get the URI of a file from file system(higher priority) or class-path resource.
     * Returns null if not found
-    * 
-    * @param fileName
-    * @return
-    * @throws URISyntaxException
     */
    public static URI getFileOrResourceURI( String fileName ) throws URISyntaxException
    {
@@ -43,13 +39,8 @@ public class ClassPathLoaderUtils
    /**
     * Get the file input stream of a file from file system(higher priority) or class-path resource
     * Returns null if not found
-    * 
-    * @param fileName
-    * @return
-    * @throws IOException
-    * @throws URISyntaxException
     */
-   public static InputStream getFileStream( String fileName ) throws IOException, URISyntaxException
+   public static InputStream getFileStream( String fileName ) throws IOException
    {
       File fileToLoad = new File( fileName );
 
@@ -64,11 +55,6 @@ public class ClassPathLoaderUtils
    /**
     * Get all text of a file from file system(higher priority) or class-path resource
     * Returns null if not found
-    * 
-    * @param fileName
-    * @return
-    * @throws IOException
-    * @throws URISyntaxException
     */
    public static String readAllText( String fileName ) throws IOException, URISyntaxException
    {

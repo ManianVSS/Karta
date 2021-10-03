@@ -1,5 +1,8 @@
 package org.mvss.karta.framework.runtime.event;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.framework.core.PreparedScenario;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.TestFeature;
@@ -10,9 +13,6 @@ import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
 import org.mvss.karta.framework.runtime.interfaces.TestLifeCycleHook;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.WaitUtil;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
 
 import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
@@ -100,7 +100,7 @@ public class EventProcessor implements AutoCloseable
          }
          catch ( Throwable t )
          {
-            log.error( "Exception occured during event processing ", t );
+            log.error( "Exception occurred during event processing ", t );
          }
       }
    }

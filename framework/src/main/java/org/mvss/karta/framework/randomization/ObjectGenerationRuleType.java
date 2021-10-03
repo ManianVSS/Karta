@@ -16,7 +16,7 @@ public enum ObjectGenerationRuleType
     * String with a range
     */
    STRING_RANGE,
-   
+
    /**
     * Integer value range
     */
@@ -43,7 +43,7 @@ public enum ObjectGenerationRuleType
    OBJECT_RULE,
 
    /**
-    * Generate a object from an mutually exclusive object rule selected by their probabilities.
+    * Generate an object from a mutually exclusive object rule selected by their probabilities.
     * Can be used to generate random values or field for parent rule.
     */
    MUTEX_OBJECT_RULE_VALUE,

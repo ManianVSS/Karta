@@ -58,6 +58,9 @@ public class Test implements Serializable, Comparable<Test>
    @JsonFormat( shape = Shape.STRING )
    private Duration coolDownBetweenIterations;
 
+   @Builder.Default
+   private long iterationsPerCoolDownPeriod = 1;
+
    private String threadGroup;
 
    @Builder.Default

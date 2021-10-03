@@ -174,7 +174,7 @@ public class RandomizationUtils
             returnList = new ArrayList<>( items );
             if ( count > 0 )
             {
-               for ( int dicardedItems = 0; dicardedItems < count; dicardedItems++ )
+               for ( int discardedItems = 0; discardedItems < count; discardedItems++ )
                {
                   returnList.remove( random.nextInt( returnList.size() ) );
                }
@@ -273,7 +273,7 @@ public class RandomizationUtils
    }
 
    /**
-    * Randomly generate an alpha numeric string of specified length.
+    * Randomly generate an alphanumeric string of specified length.
     */
    public static String randomAlphaNumericString( Random random, int length )
    {

@@ -149,14 +149,14 @@ public class KartaConfiguration implements Serializable
    {
       // TODO: Change to a generic utility to copy properties with an annotation for mapping
       DataUtils.addMissing( pluginConfigurations, override.pluginConfigurations );
-      defaultFeatureSourceParser = NullAwareBeanUtilsBean.getOverridenValue( defaultFeatureSourceParser, override.defaultFeatureSourceParser );
-      defaultStepRunner          = NullAwareBeanUtilsBean.getOverridenValue( defaultStepRunner, override.defaultStepRunner );
+      defaultFeatureSourceParser = NullAwareBeanUtilsBean.getOverriddenValue( defaultFeatureSourceParser, override.defaultFeatureSourceParser );
+      defaultStepRunner          = NullAwareBeanUtilsBean.getOverriddenValue( defaultStepRunner, override.defaultStepRunner );
       DataUtils.addMissing( defaultTestDataSources, override.defaultTestDataSources );
       DataUtils.addMissing( enabledPlugins, override.enabledPlugins );
       DataUtils.addMissing( propertyFiles, override.propertyFiles );
       DataUtils.addMissing( testCatalogFragmentFiles, override.testCatalogFragmentFiles );
-      sslProperties = NullAwareBeanUtilsBean.getOverridenValue( sslProperties, override.sslProperties );
-      localNode     = NullAwareBeanUtilsBean.getOverridenValue( localNode, override.localNode );
+      sslProperties = NullAwareBeanUtilsBean.getOverriddenValue( sslProperties, override.sslProperties );
+      localNode     = NullAwareBeanUtilsBean.getOverriddenValue( localNode, override.localNode );
       DataUtils.addMissing( nodes, override.nodes );
       minionsEnabled = override.minionsEnabled;
       DataUtils.mergeMapInto( override.threadGroups, threadGroups );

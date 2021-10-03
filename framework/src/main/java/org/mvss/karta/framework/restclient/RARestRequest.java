@@ -1,12 +1,12 @@
 package org.mvss.karta.framework.restclient;
 
-import org.mvss.karta.framework.utils.DataUtils;
-import org.mvss.karta.framework.utils.ParserUtils;
 import io.restassured.RestAssured;
 import io.restassured.specification.RequestSpecification;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
+import org.mvss.karta.framework.utils.DataUtils;
+import org.mvss.karta.framework.utils.ParserUtils;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -19,9 +19,9 @@ public class RARestRequest implements RestRequest
    private static final long serialVersionUID = 1L;
 
    private String                  url;
-   private HashMap<String, String> headers = new HashMap<String, String>();
-   private HashMap<String, String> cookies = new HashMap<String, String>();
-   private HashMap<String, String> params  = new HashMap<String, String>();
+   private HashMap<String, String> headers = new HashMap<>();
+   private HashMap<String, String> cookies = new HashMap<>();
+   private HashMap<String, String> params  = new HashMap<>();
    private ContentType             contentType;
    private ContentType             accept;
    private Serializable            body;
@@ -54,8 +54,10 @@ public class RARestRequest implements RestRequest
          restClient = new RARestClient();
       }
 
+      assert restClient != null;
       RequestSpecification baseSpecification    = restClient.getRequestSpecBuilder().build();
       RequestSpecification requestSpecification = ( baseSpecification == null ) ? RestAssured.given() : baseSpecification;
+      assert baseSpecification != null;
       baseSpecification.cookies( restClient.getCookies() );
       requestSpecification.contentType( contentType.toString() ).accept( accept.toString() ).headers( headers ).cookies( cookies ).params( params )
                .body( body );

@@ -29,7 +29,7 @@ public class Constants
    public static final String STEP_RUNNER_PLUGIN       = "stepRunnerPlugin";
    public static final String TEST_DATA_SOURCE_PLUGINS = "testDataSourcePlugins";
 
-   public static final String NULL_STRING  = (String) null;
+   public static final String NULL_STRING  = null;
    public static final String EMPTY_STRING = "";
 
    public static final String DOT              = ".";

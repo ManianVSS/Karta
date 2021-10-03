@@ -1,28 +1,14 @@
 package org.mvss.karta.framework.utils;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.util.Date;
+import com.jcraft.jsch.*;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+
+import java.io.*;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.UserInfo;
-
-import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Getter
@@ -31,10 +17,49 @@ public class SSHUtil implements AutoCloseable
    protected JSch    jsch    = new JSch();
    protected Session session = null;
 
-   protected String  user;
-   protected String  pass;
-   protected String  host;
-   protected int     port;
+   protected String user;
+   protected String pass;
+   protected String host;
+   protected int    port;
+
+   public SSHUtil()
+   {
+
+   }
+
+   public SSHUtil( String user, String pass, String host ) throws JSchException
+   {
+      this( user, pass, host, 22 );
+   }
+
+   public SSHUtil( String user, String pass, String host, int port ) throws JSchException
+   {
+      init( user, pass, host, port );
+   }
+
+   /**
+    * Internal method for checking acknowledgement
+    */
+   private static int checkAck( InputStream in ) throws Exception
+   {
+      int b = in.read();
+
+      if ( b == 1 || b == 2 )
+      {
+         StringBuilder sb = new StringBuilder();
+         int           c;
+         do
+         {
+            c = in.read();
+            sb.append( (char) c );
+         }
+         while ( c != '\n' );
+
+         throw new Exception( "Scp error: " + sb );
+      }
+
+      return b;
+   }
 
    public void connect() throws JSchException
    {
@@ -52,34 +77,6 @@ public class SSHUtil implements AutoCloseable
       }
    }
 
-   public SSHUtil()
-   {
-
-   }
-
-   /**
-    * @param user
-    * @param pass
-    * @param host
-    * @throws JSchException
-    */
-   public SSHUtil( String user, String pass, String host ) throws JSchException
-   {
-      this( user, pass, host, 22 );
-   }
-
-   /**
-    * @param user
-    * @param pass
-    * @param host
-    * @param port
-    * @throws JSchException
-    */
-   public SSHUtil( String user, String pass, String host, int port ) throws JSchException
-   {
-      init( user, pass, host, port );
-   }
-
    protected void init( String user, String pass, String host, int port ) throws JSchException
    {
       this.user = user;
@@ -90,9 +87,6 @@ public class SSHUtil implements AutoCloseable
       connect();
    }
 
-   /**
-    * 
-    */
    @Override
    public void close()
    {
@@ -101,16 +95,6 @@ public class SSHUtil implements AutoCloseable
          session.disconnect();
          session = null;
       }
-   }
-
-   /*
-    * (non-Javadoc)
-    * @see java.lang.Object#finalize()
-    */
-   @Override
-   protected void finalize() throws Throwable
-   {
-      close();
    }
 
    public int executeCommand( String command ) throws Exception
@@ -126,7 +110,7 @@ public class SSHUtil implements AutoCloseable
 
    public int executeCommand( String command, PrintStream outputStream ) throws Exception
    {
-      int exitCode = -1;
+      int     exitCode;
       Channel channel = session.openChannel( "exec" );
       ( (ChannelExec) channel ).setCommand( command );
       channel.setInputStream( null );
@@ -157,13 +141,7 @@ public class SSHUtil implements AutoCloseable
             exitCode = channel.getExitStatus();
             break;
          }
-         try
-         {
-            Thread.sleep( 1000 );
-         }
-         catch ( Exception ee )
-         {
-         }
+         WaitUtil.sleep( 1000 );
       }
       channel.disconnect();
       return exitCode;
@@ -177,44 +155,38 @@ public class SSHUtil implements AutoCloseable
    public String executeCommandReturningOutput( String command, boolean useSudo ) throws Exception
    {
       connect();
-      String output = null;
-      int exitCode = -1;
+      String output;
 
       log.debug( "Running command " + command + " sudo=" + useSudo );
-      try (ByteArrayOutputStream baos = new ByteArrayOutputStream())
+      try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream())
       {
          if ( useSudo )
          {
-            exitCode = executeSudoCommand( command, new PrintStream( baos ) );
+            executeSudoCommand( command, new PrintStream( byteArrayOutputStream ) );
          }
          else
          {
-            exitCode = executeCommand( command, new PrintStream( baos ) );
+            executeCommand( command, new PrintStream( byteArrayOutputStream ) );
          }
-         output = baos.toString();
-
-         if ( exitCode != 0 )
-         {
-
-         }
+         output = byteArrayOutputStream.toString();
       }
 
       return output;
    }
 
-   public Future<String> executeCommandReturningOutputFuture( String command, boolean useSudo, ExecutorService executor ) throws Exception
+   public Future<String> executeCommandReturningOutputFuture( String command, boolean useSudo, ExecutorService executor )
    {
       return executor.submit( () -> executeCommandReturningOutput( command, useSudo ) );
    }
 
    public String executeCommandWithTimeout( String command, boolean useSudo, long timeOut, long checkInterval ) throws Throwable
    {
-      ExecutorService executor = Executors.newSingleThreadExecutor();
-      Future<String> futureOutput = executeCommandReturningOutputFuture( command, useSudo, executor );
-      String output = null;
+      ExecutorService executor     = Executors.newSingleThreadExecutor();
+      Future<String>  futureOutput = executeCommandReturningOutputFuture( command, useSudo, executor );
+      String          output       = null;
 
       log.info( "Going to wait for the command to return output..." );
-      WaitUtil.waitUntil( () -> futureOutput.isDone(), timeOut, checkInterval, WaitUtil.defaultWaitIterationTask );
+      WaitUtil.waitUntil( futureOutput::isDone, timeOut, checkInterval, WaitUtil.defaultWaitIterationTask );
       executor.shutdown();
 
       if ( futureOutput.isDone() )
@@ -225,13 +197,12 @@ public class SSHUtil implements AutoCloseable
 
    public int executeSudoCommand( String command, PrintStream outputStream ) throws Exception
    {
-      int exitCode = -1;
+      int     exitCode;
       Channel channel = session.openChannel( "exec" );
-
       ( (ChannelExec) channel ).setCommand( "sudo -S -p '' " + command );
-
-      InputStream in = channel.getInputStream();
+      InputStream  in  = channel.getInputStream();
       OutputStream out = channel.getOutputStream();
+
       ( (ChannelExec) channel ).setErrStream( outputStream != null ? outputStream : System.err, true );
 
       channel.connect();
@@ -259,13 +230,7 @@ public class SSHUtil implements AutoCloseable
             exitCode = channel.getExitStatus();
             break;
          }
-         try
-         {
-            Thread.sleep( 1000 );
-         }
-         catch ( Exception ee )
-         {
-         }
+         WaitUtil.sleep( 1000 );
       }
       channel.disconnect();
       return exitCode;
@@ -290,27 +255,7 @@ public class SSHUtil implements AutoCloseable
       return exitCode;
    }
 
-   // public int executeShellCommand( String shellPath, String shellCommandFile ) throws Exception
-   // {
-   // return executeShellCommand( shellPath, shellCommandFile, System.out );
-   // }
-
-   // public int executeShellCommand( String shellPath, String shellCommandFile, PrintStream outputStream ) throws Exception
-   // {
-   // int exitCode = -1;
-   // String shellCommandBaseFileName = new File( shellCommandFile ).getName();
-   // String folderName = ".sshutil/temp" + System.currentTimeMillis();
-   // String remoteFile = folderName + "/" + shellCommandBaseFileName;
-   // executeCommand( "mkdir -p " + folderName, outputStream );
-   // uploadFile( shellCommandFile, remoteFile );
-   // executeCommand( "chmod u+x " + remoteFile, outputStream );
-   // exitCode = executeCommand( shellPath + " " + remoteFile, outputStream );
-   // executeCommand( "rm -rf " + folderName, outputStream );
-   //
-   // return exitCode;
-   // }
-
-   public boolean getFile( String remoteFile, String localFile, boolean useSudo ) throws Exception
+   public boolean getFile( String remoteFile, String localeftFile, boolean useSudo )
    {
       try
       {
@@ -325,44 +270,37 @@ public class SSHUtil implements AutoCloseable
 
             remoteFile = tempFile;
          }
-         getFile( remoteFile, localFile );
+         getFile( remoteFile, localeftFile );
          return true;
       }
       catch ( Exception e )
       {
-         log.error( "Exception occured", e );
+         log.error( "Exception occurred", e );
          return false;
       }
    }
 
-   /**
-    * Method to get a remote file from SSH server
-    * 
-    * @param remoteFile
-    * @param localFile
-    * @throws Exception
-    */
-   public void getFile( String remoteFile, String localFile ) throws Exception
+   public void getFile( String remoteFile, String localeftFile ) throws Exception
    {
       FileOutputStream fos = null;
       try
       {
          String prefix = null;
-         if ( new File( localFile ).isDirectory() )
+         if ( new File( localeftFile ).isDirectory() )
          {
-            prefix = localFile + File.separator;
+            prefix = localeftFile + File.separator;
          }
 
-         // exec 'scp -f rfile' remotely
+         // exec 'scp -f rightFile' remotely
          remoteFile = remoteFile.replace( "'", "'\"'\"'" );
          remoteFile = "'" + remoteFile + "'";
-         String command = "scp -f " + remoteFile;
+         String  command = "scp -f " + remoteFile;
          Channel channel = session.openChannel( "exec" );
          ( (ChannelExec) channel ).setCommand( command );
 
          // get I/O streams for remote scp
          OutputStream out = channel.getOutputStream();
-         InputStream in = channel.getInputStream();
+         InputStream  in  = channel.getInputStream();
 
          channel.connect();
 
@@ -384,7 +322,7 @@ public class SSHUtil implements AutoCloseable
             // read '0644 '
             in.read( buf, 0, 5 );
 
-            long filesize = 0L;
+            long fileSize = 0L;
             while ( true )
             {
                if ( in.read( buf, 0, 1 ) < 0 )
@@ -394,11 +332,11 @@ public class SSHUtil implements AutoCloseable
                }
                if ( buf[0] == ' ' )
                   break;
-               filesize = filesize * 10L + buf[0] - '0';
+               fileSize = fileSize * 10L + buf[0] - '0';
             }
 
-            String file = null;
-            for ( int i = 0;; i++ )
+            String file;
+            for ( int i = 0; ; i++ )
             {
                in.read( buf, i, 1 );
                if ( buf[i] == (byte) 0x0a )
@@ -412,15 +350,15 @@ public class SSHUtil implements AutoCloseable
             out.write( buf, 0, 1 );
             out.flush();
 
-            // read a content of lfile
-            fos = new FileOutputStream( prefix == null ? localFile : prefix + file );
+            // read a content of leftFile
+            fos = new FileOutputStream( prefix == null ? localeftFile : prefix + file );
             int foo;
             while ( true )
             {
-               if ( buf.length < filesize )
+               if ( buf.length < fileSize )
                   foo = buf.length;
                else
-                  foo = (int) filesize;
+                  foo = (int) fileSize;
                foo = in.read( buf, 0, foo );
                if ( foo < 0 )
                {
@@ -428,8 +366,8 @@ public class SSHUtil implements AutoCloseable
                   break;
                }
                fos.write( buf, 0, foo );
-               filesize -= foo;
-               if ( filesize == 0L )
+               fileSize -= foo;
+               if ( fileSize == 0L )
                   break;
             }
             fos.close();
@@ -452,14 +390,9 @@ public class SSHUtil implements AutoCloseable
       catch ( Exception e )
       {
          log.info( e );
-         try
+         if ( fos != null )
          {
-            if ( fos != null )
-               fos.close();
-         }
-         catch ( Exception ee )
-         {
-            throw ee;
+            fos.close();
          }
 
          throw e;
@@ -470,47 +403,43 @@ public class SSHUtil implements AutoCloseable
    {
       executeCommand( "mkdir -p " + remoteFolder );
 
-      File folder = new File( localFolder );
+      File   folder      = new File( localFolder );
       File[] listOfFiles = folder.listFiles();
 
-      for ( int i = 0; i < listOfFiles.length; i++ )
-      {
-         String baseName = listOfFiles[i].getName();
-         String absolutePath = listOfFiles[i].getAbsolutePath();
+      assert listOfFiles != null;
 
-         if ( listOfFiles[i].isFile() )
+      for ( File listOfFile : listOfFiles )
+      {
+         String baseName     = listOfFile.getName();
+         String absolutePath = listOfFile.getAbsolutePath();
+
+         if ( listOfFile.isFile() )
          {
             uploadFile( absolutePath, remoteFolder + "/" + baseName );
          }
-         else if ( listOfFiles[i].isDirectory() )
+         else if ( listOfFile.isDirectory() )
          {
             uploadFolder( absolutePath, remoteFolder + "/" + baseName );
          }
       }
    }
 
-   public int runFile( String localFileName, String remoteFileName, String args, boolean sudo ) throws Exception
+   public int runFile( String localeftFileName, String remoteFileName, String args, boolean sudo ) throws Exception
    {
       connect();
-      uploadFile( localFileName, remoteFileName );
+      uploadFile( localeftFileName, remoteFileName );
       String command = "bash " + remoteFileName + " " + args;
-      int exitCode = executeCommand( command, sudo );
-      return exitCode;
+      return executeCommand( command, sudo );
    }
 
    /**
     * Method to upload a local file to SSH server
-    * 
-    * @param localFile
-    * @param remoteFile
-    * @throws Exception
     */
-   public void uploadFile( String localFile, String remoteFile ) throws Exception
+   public void uploadFile( String localeftFile, String remoteFile ) throws Exception
    {
       connect();
-      FileInputStream fis = null;
+      FileInputStream fis;
 
-      boolean ptimestamp = false;
       String remoteBaseFileName = remoteFile;
 
       if ( remoteFile.lastIndexOf( '/' ) > 0 )
@@ -518,16 +447,16 @@ public class SSHUtil implements AutoCloseable
          remoteBaseFileName = remoteFile.substring( remoteFile.lastIndexOf( '/' ) + 1 );
       }
 
-      // exec 'scp -t rfile' remotely
+      // exec 'scp -t rightFile' remotely
       remoteFile = remoteFile.replace( "'", "'\"'\"'" );
       remoteFile = "'" + remoteFile + "'";
-      String command = "scp " + ( ptimestamp ? "-p" : "" ) + " -t " + remoteFile;
+      String  command = "scp  -t " + remoteFile;
       Channel channel = session.openChannel( "exec" );
       ( (ChannelExec) channel ).setCommand( command );
 
       // get I/O streams for remote scp
       OutputStream out = channel.getOutputStream();
-      InputStream in = channel.getInputStream();
+      InputStream  in  = channel.getInputStream();
 
       channel.connect();
 
@@ -536,25 +465,11 @@ public class SSHUtil implements AutoCloseable
          throw new Exception( "Acknowledgement check failed" );
       }
 
-      File _lfile = new File( localFile );
+      File _leftFile = new File( localeftFile );
 
-      if ( ptimestamp )
-      {
-         command = "T " + ( _lfile.lastModified() / 1000 ) + " 0";
-         // The access time should be sent here,
-         // but it is not accessible with JavaAPI ;-<
-         command += ( " " + ( _lfile.lastModified() / 1000 ) + " 0\n" );
-         out.write( command.getBytes() );
-         out.flush();
-         if ( checkAck( in ) != 0 )
-         {
-            throw new Exception( "Acknowledgement check failed" );
-         }
-      }
-
-      // send "C0644 filesize filename", where filename should not include '/'
-      long filesize = _lfile.length();
-      command = "C0644 " + filesize + " ";
+      // send "C0644 fileSize filename", where filename should not include '/'
+      long fileSize = _leftFile.length();
+      command = "C0644 " + fileSize + " ";
       command += remoteBaseFileName;
       command += "\n";
       out.write( command.getBytes() );
@@ -564,8 +479,8 @@ public class SSHUtil implements AutoCloseable
          throw new Exception( "Acknowledgement check failed" );
       }
 
-      // send a content of lfile
-      fis = new FileInputStream( localFile );
+      // send a content of leftFile
+      fis = new FileInputStream( localeftFile );
       byte[] buf = new byte[1024];
       while ( true )
       {
@@ -575,7 +490,6 @@ public class SSHUtil implements AutoCloseable
          out.write( buf, 0, len ); // out.flush();
       }
       fis.close();
-      fis = null;
       // send '\0'
       buf[0] = 0;
       out.write( buf, 0, 1 );
@@ -586,44 +500,30 @@ public class SSHUtil implements AutoCloseable
       }
       out.close();
       channel.disconnect();
-      // }
-      // catch ( Exception e )
-      // {
-      // log.info( e );
-      // try
-      // {
-      // if ( fis != null )
-      // fis.close();
-      // }
-      // catch ( Exception ee )
-      // {
-      // }
-      // }
    }
 
-   public boolean uploadFile( String localFileName, String remoteFileName, boolean useSudo ) throws Exception
+   public boolean uploadFile( String localeftFileName, String remoteFileName, boolean useSudo ) throws Exception
    {
       if ( useSudo )
       {
          String tempFile = executeCommandReturningOutput( "mktemp", false ).trim();
-         uploadFile( localFileName, tempFile );
+         uploadFile( localeftFileName, tempFile );
          executeCommand( "sudo mv " + tempFile + " " + remoteFileName, true );
       }
       else
       {
-         uploadFile( localFileName, remoteFileName );
+         uploadFile( localeftFileName, remoteFileName );
       }
 
       return true;
    }
 
-   public void writeFile( byte[] content, String remoteFile ) throws Exception
+   public void writeFile( byte[] content, String remoteFile )
    {
 
       InputStream fis = null;
       try
       {
-         boolean ptimestamp = false;
          String remoteBaseFileName = remoteFile;
 
          if ( remoteFile.lastIndexOf( '/' ) > 0 )
@@ -631,16 +531,16 @@ public class SSHUtil implements AutoCloseable
             remoteBaseFileName = remoteFile.substring( remoteFile.lastIndexOf( '/' ) + 1 );
          }
 
-         // exec 'scp -t rfile' remotely
+         // exec 'scp -t rightFile' remotely
          remoteFile = remoteFile.replace( "'", "'\"'\"'" );
          remoteFile = "'" + remoteFile + "'";
-         String command = "scp " + ( ptimestamp ? "-p" : "" ) + " -t " + remoteFile;
+         String  command = "scp  -t " + remoteFile;
          Channel channel = session.openChannel( "exec" );
          ( (ChannelExec) channel ).setCommand( command );
 
          // get I/O streams for remote scp
          OutputStream out = channel.getOutputStream();
-         InputStream in = channel.getInputStream();
+         InputStream  in  = channel.getInputStream();
 
          channel.connect();
 
@@ -651,23 +551,9 @@ public class SSHUtil implements AutoCloseable
 
          long modifiedTime = System.currentTimeMillis();
 
-         if ( ptimestamp )
-         {
-            command = "T " + ( modifiedTime / 1000 ) + " 0";
-            // The access time should be sent here,
-            // but it is not accessible with JavaAPI ;-<
-            command += ( " " + ( modifiedTime / 1000 ) + " 0\n" );
-            out.write( command.getBytes() );
-            out.flush();
-            if ( checkAck( in ) != 0 )
-            {
-               throw new Exception( "Acknowledgement check failed" );
-            }
-         }
-
-         // send "C0644 filesize filename", where filename should not include '/'
-         long filesize = content.length;
-         command = "C0644 " + filesize + " ";
+         // send "C0644 fileSize filename", where filename should not include '/'
+         long fileSize = content.length;
+         command = "C0644 " + fileSize + " ";
          command += remoteBaseFileName;
          command += "\n";
          out.write( command.getBytes() );
@@ -677,7 +563,7 @@ public class SSHUtil implements AutoCloseable
             throw new Exception( "Acknowledgement check failed" );
          }
 
-         // send a content of lfile
+         // send a content of leftFile
          fis = new ByteArrayInputStream( content );
          byte[] buf = new byte[1024];
          while ( true )
@@ -708,7 +594,7 @@ public class SSHUtil implements AutoCloseable
             if ( fis != null )
                fis.close();
          }
-         catch ( Exception ee )
+         catch ( Exception ignored )
          {
          }
       }
@@ -716,16 +602,11 @@ public class SSHUtil implements AutoCloseable
 
    /**
     * Method to upload a local file to SSH server
-    * 
-    * @param remoteFile
-    * @throws Exception
     */
-   public void uploadStreamAsFile( InputStream is, long filesize, String remoteFile ) throws Exception
+   public void uploadStreamAsFile( InputStream is, long fileSize, String remoteFile )
    {
       try
       {
-         boolean ptimestamp = false;
-
          String remoteBaseFileName = remoteFile;
 
          if ( remoteFile.lastIndexOf( '/' ) > 0 )
@@ -733,16 +614,16 @@ public class SSHUtil implements AutoCloseable
             remoteBaseFileName = remoteFile.substring( remoteFile.lastIndexOf( '/' ) + 1 );
          }
 
-         // exec 'scp -t rfile' remotely
+         // exec 'scp -t rightFile' remotely
          remoteFile = remoteFile.replace( "'", "'\"'\"'" );
          remoteFile = "'" + remoteFile + "'";
-         String command = "scp " + ( ptimestamp ? "-p" : "" ) + " -t " + remoteFile;
+         String  command = "scp  -t " + remoteFile;
          Channel channel = session.openChannel( "exec" );
          ( (ChannelExec) channel ).setCommand( command );
 
          // get I/O streams for remote scp
          OutputStream out = channel.getOutputStream();
-         InputStream in = channel.getInputStream();
+         InputStream  in  = channel.getInputStream();
 
          channel.connect();
 
@@ -751,24 +632,8 @@ public class SSHUtil implements AutoCloseable
             throw new Exception( "Acknowledgement check failed" );
          }
 
-         if ( ptimestamp )
-         {
-            long currentMillis = new Date().getTime();
-
-            command = "T " + ( currentMillis / 1000 ) + " 0";
-            // The access time should be sent here,
-            // but it is not accessible with JavaAPI ;-<
-            command += ( " " + ( currentMillis / 1000 ) + " 0\n" );
-            out.write( command.getBytes() );
-            out.flush();
-            if ( checkAck( in ) != 0 )
-            {
-               throw new Exception( "Acknowledgement check failed" );
-            }
-         }
-
-         // send "C0644 filesize filename", where filename should not include '/'
-         command = "C0644 " + filesize + " " + remoteBaseFileName;
+         // send "C0644 fileSize filename", where filename should not include '/'
+         command = "C0644 " + fileSize + " " + remoteBaseFileName;
 
          command += "\n";
          out.write( command.getBytes() );
@@ -807,48 +672,20 @@ public class SSHUtil implements AutoCloseable
             if ( is != null )
                is.close();
          }
-         catch ( Exception ee )
+         catch ( Exception ignored )
          {
          }
       }
-   }
-
-   /**
-    * Internal method for checking acknowledgement
-    * 
-    * @param in
-    * @return
-    * @throws Exception
-    */
-   private static int checkAck( InputStream in ) throws Exception
-   {
-      int b = in.read();
-
-      if ( b == 1 || b == 2 )
-      {
-         StringBuffer sb = new StringBuffer();
-         int c;
-         do
-         {
-            c = in.read();
-            sb.append( (char) c );
-         }
-         while ( c != '\n' );
-
-         throw new Exception( "Scp error: " + sb.toString() );
-      }
-
-      return b;
    }
 
    /**
     * This class is used internally to pass user password to JSch library
-    * 
+    *
     * @author 212735819
     */
    private static class ByPassUserInfo implements UserInfo
    {
-      private String password;
+      private final String password;
 
       public ByPassUserInfo( String password )
       {

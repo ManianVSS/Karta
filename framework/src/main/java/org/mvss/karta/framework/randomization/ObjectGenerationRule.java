@@ -43,22 +43,22 @@ public class ObjectGenerationRule implements Serializable, ObjectWithChance
 
    /**
     * The rule type indicates what kind of object is to be generated.
-    * For nested generation rule, ObjectGenerationRuleType.OBJECT_RULE can be used.
-    * For static generic objects, ObjectGenerationRuleType.VALUES can be used. etc
+    * For nested generation rule, "ObjectGenerationRuleType.OBJECT_RULE" can be used.
+    * For static generic objects, "ObjectGenerationRuleType.VALUES" can be used. etc
     */
    @Builder.Default
    private ObjectGenerationRuleType ruleType = ObjectGenerationRuleType.VALUES;
 
    /**
     * The generic range to pick/generate an object with a range characteristic.
-    * If rule type is INTEGER_RANGE, an random integer is picked from ranged.
+    * If rule type is INTEGER_RANGE, a random integer is picked from ranged.
     * If rule type is STRING_RANGE, a random string is generated with the length subjected to this range.
     */
    @Builder.Default
    private Range range = null;
 
    /**
-    * The list of possible values(generic serializable objects) if object generation rule is ObjectGenerationRuleType.VALUES
+    * The list of possible values(generic serializable objects) if object generation rule is "ObjectGenerationRuleType.VALUES"
     */
    @Builder.Default
    private ArrayList<Serializable> values = null;

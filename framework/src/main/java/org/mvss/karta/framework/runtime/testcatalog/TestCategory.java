@@ -123,11 +123,12 @@ public class TestCategory implements Serializable
       return null;
    }
 
-   public void propagateAttributes( String sourceArchive, String fspp, String srp, HashSet<String> tdsp, String tg, HashSet<String> tags )
+   public void propagateAttributes( String sourceArchive, String inFeatureSourceParser, String srp, HashSet<String> inTestDataSources, String tg,
+                                    HashSet<String> tags )
    {
-      if ( StringUtils.isEmpty( featureSourceParser ) && StringUtils.isNotEmpty( fspp ) )
+      if ( StringUtils.isEmpty( featureSourceParser ) && StringUtils.isNotEmpty( inFeatureSourceParser ) )
       {
-         featureSourceParser = fspp;
+         featureSourceParser = inFeatureSourceParser;
       }
 
       if ( StringUtils.isEmpty( stepRunner ) && StringUtils.isNotEmpty( srp ) )
@@ -135,9 +136,9 @@ public class TestCategory implements Serializable
          stepRunner = srp;
       }
 
-      if ( tdsp != null )
+      if ( inTestDataSources != null )
       {
-         testDataSources.addAll( tdsp );
+         testDataSources.addAll( inTestDataSources );
       }
 
       if ( StringUtils.isEmpty( threadGroup ) && StringUtils.isNotEmpty( tg ) )

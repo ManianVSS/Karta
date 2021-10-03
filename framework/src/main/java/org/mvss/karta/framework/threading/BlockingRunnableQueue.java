@@ -4,14 +4,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * An implementation of LinkedBlockingQueue&lt;Runnable&gt; which blocks while queue is full and does not fail on interruption
- * 
+ *
  * @author Manian
  */
 public class BlockingRunnableQueue extends LinkedBlockingQueue<Runnable>
 {
 
    /**
-    * 
+    *
     */
    private static final long serialVersionUID = 1L;
 
@@ -30,9 +30,8 @@ public class BlockingRunnableQueue extends LinkedBlockingQueue<Runnable>
             put( runnable );
             break;
          }
-         catch ( InterruptedException interruptedException )
+         catch ( InterruptedException ignored )
          {
-            continue;
          }
       }
       return true;

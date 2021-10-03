@@ -3,6 +3,9 @@ package org.mvss.karta.framework.runtime.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.mvss.karta.framework.core.*;
 import org.mvss.karta.framework.enums.StepOutputType;
 import org.mvss.karta.framework.runtime.*;
@@ -12,9 +15,6 @@ import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.runtime.interfaces.TestLifeCycleHook;
 import org.mvss.karta.framework.utils.AnnotationScanner;
 import org.mvss.karta.framework.utils.ParserUtils;
-import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
@@ -104,7 +104,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                continue;
             }
 
-            log.debug( "Mapping stepdef " + stepDefString + " to " + methodDescription );
+            log.debug( "Mapping step definition " + stepDefString + " to " + methodDescription );
 
             Class<?> stepDefinitionClass = candidateStepDefinitionMethod.getDeclaringClass();
 
@@ -782,7 +782,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       }
       catch ( Throwable t )
       {
-         String errorMessage = "Exception occured while running chaos action " + preparedChaosAction;
+         String errorMessage = "Exception occurred while running chaos action " + preparedChaosAction;
          log.error( errorMessage, t );
          result = StandardStepResults.error( errorMessage, t );
       }
@@ -849,7 +849,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       }
       catch ( Throwable t )
       {
-         String errorMessage = "Exception occured while running step definition " + conditionIdentifier;
+         String errorMessage = "Exception occurred while running step definition " + conditionIdentifier;
          log.error( errorMessage, t );
          return false;
       }

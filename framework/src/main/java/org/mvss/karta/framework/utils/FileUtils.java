@@ -1,24 +1,16 @@
 package org.mvss.karta.framework.utils;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 import java.util.Random;
 
 public class FileUtils
 {
-   private static Random random = new Random();
+   private static final Random random = new Random();
 
    public static byte[] getAllBytesInResourceFile( String resourceName ) throws IOException
    {
@@ -32,31 +24,31 @@ public class FileUtils
 
    public static byte[] readContentFromInputStream( InputStream inputStream ) throws IOException
    {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
       byte[] buffer = new byte[65536];
 
-      int bytesRead = 0;
+      int bytesRead;
 
       while ( ( bytesRead = inputStream.read( buffer, 0, buffer.length ) ) > 0 )
       {
-         baos.write( buffer, 0, bytesRead );
+         byteArrayOutputStream.write( buffer, 0, bytesRead );
       }
 
-      return baos.toByteArray();
+      return byteArrayOutputStream.toByteArray();
    }
 
    public static void writeStreamToFile( InputStream inputStream, String fileName ) throws IOException
    {
-      try (FileOutputStream fout = new FileOutputStream( new File( fileName ) ))
+      try (FileOutputStream fileOutputStream = new FileOutputStream( fileName ))
       {
          byte[] buffer = new byte[65536];
 
-         int bytesRead = 0;
+         int bytesRead;
 
          while ( ( bytesRead = inputStream.read( buffer, 0, buffer.length ) ) > 0 )
          {
-            fout.write( buffer, 0, bytesRead );
+            fileOutputStream.write( buffer, 0, bytesRead );
          }
       }
    }
@@ -67,12 +59,14 @@ public class FileUtils
       File file = new File( fileName );
       if ( file.exists() )
       {
-         file.delete();
-         file.createNewFile();
+         if ( !file.delete() )
+         {
+            throw new IOException( "Could not delete file " + fileName );
+         }
       }
-      else
+      if ( !file.createNewFile() )
       {
-         file.createNewFile();
+         throw new IOException( "Could not create new file " + fileName );
       }
       FileWriter writer = new FileWriter( file );
       writer.write( fileContent );

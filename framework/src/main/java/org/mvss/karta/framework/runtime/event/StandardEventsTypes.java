@@ -53,8 +53,7 @@ public class StandardEventsTypes
 
    public static final String TEST_INCIDENT_OCCURRENCE_EVENT = "TestIncidentOccurrenceEvent";
 
-   public static final HashMap<String, Class<? extends Event>> eventTypeMap = new HashMap<String, Class<? extends Event>>();
-   ;
+   public static final HashMap<String, Class<? extends Event>> eventTypeMap = new HashMap<>();
 
    static
    {

@@ -1,11 +1,11 @@
 package org.mvss.karta.framework.nodes;
 
+import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.framework.core.*;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunInfo;
 import org.mvss.karta.framework.runtime.TestFailureException;
 import org.mvss.karta.framework.runtime.TestJobRunner;
-import lombok.extern.log4j.Log4j2;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -21,7 +21,7 @@ public class KartaNodeImpl extends UnicastRemoteObject implements KartaNode, Ser
 {
    private static final long serialVersionUID = 1L;
 
-   private transient KartaRuntime kartaRuntime;
+   private final transient KartaRuntime kartaRuntime;
 
    public KartaNodeImpl( KartaRuntime kartaRuntime ) throws RemoteException
    {

@@ -30,7 +30,7 @@ public class Event implements Serializable
       this.id               = UUID.randomUUID();
       this.runName          = runName;
       this.timeOfOccurrence = Date.from( Instant.now() );
-      this.parameters       = new HashMap<String, Serializable>();
+      this.parameters       = new HashMap<>();
    }
 
    public Event( String runName )
@@ -45,7 +45,7 @@ public class Event implements Serializable
       this.runName          = runName;
       this.id               = id;
       this.timeOfOccurrence = timeOfOccurrence;
-      this.parameters       = new HashMap<String, Serializable>();
+      this.parameters       = new HashMap<>();
    }
 
    public Event( Event event )

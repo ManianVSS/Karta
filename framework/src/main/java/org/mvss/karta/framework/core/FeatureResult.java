@@ -110,7 +110,7 @@ public class FeatureResult implements Serializable
    }
 
    /**
-    * Converts events and other objects received from remote execution to appropriate sub class
+    * Converts events and other objects received from remote execution to appropriate subclass
     */
    public void processRemoteResults()
    {

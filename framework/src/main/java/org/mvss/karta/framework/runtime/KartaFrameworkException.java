@@ -7,10 +7,6 @@ package org.mvss.karta.framework.runtime;
  */
 public class KartaFrameworkException extends Exception
 {
-
-   /**
-    *
-    */
    private static final long serialVersionUID = 1L;
 
    public KartaFrameworkException( String message )

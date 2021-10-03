@@ -1,12 +1,12 @@
 package org.mvss.karta.framework.utils;
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.apache.commons.beanutils.BeanUtilsBean;
+
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * This class extends BeanUtilsBean for copying bean properties ignoring null values for source properties.
- * 
+ *
  * @author Manian
  */
 public class NullAwareBeanUtilsBean extends BeanUtilsBean
@@ -20,15 +20,8 @@ public class NullAwareBeanUtilsBean extends BeanUtilsBean
       }
    }
 
-   public static <T> T getOverridenValue( T originalValue, T overriddenValue )
+   public static <T> T getOverriddenValue( T originalValue, T overriddenValue )
    {
-      if ( overriddenValue == null )
-      {
-         return originalValue;
-      }
-      else
-      {
-         return overriddenValue;
-      }
+      return ( overriddenValue == null ) ? originalValue : overriddenValue;
    }
 }
