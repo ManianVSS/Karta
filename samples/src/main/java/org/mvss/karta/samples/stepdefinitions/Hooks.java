@@ -1,33 +1,39 @@
 package org.mvss.karta.samples.stepdefinitions;
 
-import java.util.ArrayList;
-
-import org.mvss.karta.framework.core.AfterFeature;
-import org.mvss.karta.framework.core.AfterRun;
-import org.mvss.karta.framework.core.AfterScenario;
-import org.mvss.karta.framework.core.BeforeFeature;
-import org.mvss.karta.framework.core.BeforeRun;
-import org.mvss.karta.framework.core.BeforeScenario;
-import org.mvss.karta.framework.core.PreparedScenario;
-import org.mvss.karta.framework.core.TestFeature;
-import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
-import org.mvss.karta.samples.config.AutomationDriverFactory;
-import org.mvss.karta.samples.resources.AutomationDriver;
-
 import lombok.extern.log4j.Log4j2;
+import org.mvss.karta.framework.core.*;
+import org.mvss.karta.framework.runtime.Configurator;
+import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.runtime.KartaRuntime;
+import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
+import org.mvss.karta.framework.web.WebDriverOptions;
+import org.mvss.karta.framework.web.WebDriverWrapper;
+import org.mvss.karta.samples.pom.w3s.W3SchoolsApp;
+
+import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * This class defines the life cycle hooks for Karta using Kriya plug-in. </br>
- * 
+ *
  * @author Manian
  */
 @Log4j2
 public class Hooks
 {
+   @KartaAutoWired
+   private KartaRuntime kartaRuntime;
+
+   @KartaAutoWired
+   private Configurator configurator;
+
+   @PropertyMapping( group = "WebAutomation", value = "webDriverOptions" )
+   private WebDriverOptions webDriverOptions = new WebDriverOptions();
+
    @PropertyMapping( group = "Kriya", value = "stepDefinitionPackageNames" )
    private ArrayList<String> stepDefinitionPackageNames = null;
 
-   @BeforeRun( ".*" )
+   @BeforeRun
    public void beforeRun( String runName )
    {
       log.info( "@BeforeRun Kriya tag check " + runName );
@@ -39,22 +45,51 @@ public class Hooks
       log.info( "@BeforeFeature Kriya tag check " + runName + " " + feature.getName() );
    }
 
-   @BeforeScenario( "UI" )
+   @BeforeScenario( Constants.UI )
    public void beforeUIScenarios( String runName, String featureName, PreparedScenario scenario )
    {
-      log.info( "Test hooks property mapping step definition package names: " + stepDefinitionPackageNames );
-      log.info( "@BeforeScenario Kriya tag check " + runName + " " + featureName + " " + scenario.getName() );
-      AutomationDriver automationDriver = AutomationDriverFactory.createAutomationDriver();
-      scenario.getContextBeanRegistry().add( "AutomationDriverObject", automationDriver );
+      log.info( "@BeforeScenario load web driver " + runName + Constants.SPACE + featureName + Constants.SPACE + scenario.getName() );
+      W3SchoolsApp w3SchoolsApp = new W3SchoolsApp( kartaRuntime, webDriverOptions );
+      scenario.getContextBeanRegistry().put( W3SchoolsApp.W_3_SCHOOLS_APP, w3SchoolsApp );
    }
 
-   @AfterScenario( "UI" )
+   @ScenarioFailed( Constants.UI )
+   public void takeScreenshotForUIScenarioFailure( String runName, String featureName, PreparedScenario scenario, ScenarioResult scenarioResult )
+   {
+      log.info( "@ScenarioFailed called for " + runName + Constants.SPACE + featureName + Constants.SPACE + scenario.getName() );
+
+      W3SchoolsApp w3SchoolsApp = (W3SchoolsApp) scenario.getContextBeanRegistry().get( W3SchoolsApp.W_3_SCHOOLS_APP );
+
+      log.info( "Scenario result is " + scenarioResult );
+
+      if ( w3SchoolsApp != null )
+      {
+         WebDriverWrapper driver = w3SchoolsApp.getDriver();
+         if ( driver != null )
+         {
+            try
+            {
+               driver.takeSnapshot( "FailureScreenshot-" );
+            }
+            catch ( IOException e )
+            {
+               log.warn( "Could not take Screen shot", e );
+            }
+         }
+      }
+   }
+
+   @AfterScenario( Constants.UI )
    public void afterUIScenarios( String runName, String featureName, PreparedScenario scenario )
    {
-      log.info( "@AfterScenario Kriya tag check " + runName + " " + featureName + " " + scenario.getName() );
+      log.info( "@AfterScenario close web driver " + runName + Constants.SPACE + featureName + Constants.SPACE + scenario.getName() );
       try
       {
-         ( (AutomationDriver) scenario.getContextBeanRegistry().get( "AutomationDriverObject" ) ).close();
+         W3SchoolsApp w3SchoolsApp = (W3SchoolsApp) scenario.getContextBeanRegistry().get( W3SchoolsApp.W_3_SCHOOLS_APP );
+         if ( w3SchoolsApp != null )
+         {
+            w3SchoolsApp.close();
+         }
       }
       catch ( Exception e )
       {
@@ -68,7 +103,7 @@ public class Hooks
       log.info( "@AfterFeature Kriya tag check " + runName + " " + feature.getName() );
    }
 
-   @AfterRun( ".*" )
+   @AfterRun
    public void afterRun( String runName )
    {
       log.info( "@AfterRun Kriya tag check " + runName );

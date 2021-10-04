@@ -27,6 +27,7 @@ propertyFiles:
   - SampleRunProperties.yaml
   - SampleRunProperties2.yaml
   - SampleRunProperties3.properties
+  - WebAutomationProperties.yaml
 
 nodes:
   - name: Node1
@@ -51,7 +52,7 @@ threadGroups:
 configurationScanPackages:
   - org.mvss.karta.samples
 
-testCatalogFragmentFiles: []
+testCatalogFragmentFiles: [ ]
 
 properties:
   Karta:
@@ -65,7 +66,7 @@ properties:
 
   KriyaExt:
     stepDefinitionPackageNames:
-      - org.mvss.karta.samples    
+      - org.mvss.karta.samples
 
   RandomTestDataSource:
     seed: 1723

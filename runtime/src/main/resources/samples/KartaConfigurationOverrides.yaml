@@ -27,6 +27,7 @@ propertyFiles:
   - SampleRunProperties.yaml
   - SampleRunProperties2.yaml
   - SampleRunProperties3.properties
+  - WebAutomationProperties.yaml
 
 nodes:
   - name: Node1

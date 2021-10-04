@@ -1,0 +1,15 @@
+WebAutomation:
+  webDriverOptions:
+    webDriverLocation: /chromedriver
+    browser: CHROME
+    headless: false
+    ignoreCertificates: true
+    implicitWaitTime: PT10S
+    screenSize:
+      maximized: true
+      width: 1920
+      height: 1080
+    waitTimeout: PT1M
+    longWaitTimeout: PT3M
+
+  w3SchoolsURL: https://www.w3schools.com/

@@ -37,31 +37,23 @@ tests:
     numberOfThreads: 5
     sourceArchive: samples.jar
 
-  - name: UIAutomation
-    priority: 1
-    description: UI Automation test
-    tags:
-      - UI
-    featureFileName: featureFiles/UITests/UIAutomation.yaml
-    numberOfIterations: 1
-    sourceArchive: samples.jar
+#  - name: WebAutomation
+  #    priority: 1
+  #    description: Web Automation test
+  #    tags:
+  #      - UI
+  #    featureFileName: featureFiles/UITests/WebAutomation.yaml
+  #    numberOfIterations: 10
+  #    numberOfThreads: 5
+  #    sourceArchive: samples.jar
 
-  - name: FailureSimulationFeature
-    description: sample feature file
-    tags:
-      - negative
-    featureFileName: featureFiles/TestSet1/FailureSimulationFeature.yaml
-    numberOfIterations: 1000
-    numberOfThreads: 100
+#  - name: FailureSimulationFeature
+#    description: sample feature file
+#    tags:
+#      - negative
+#    featureFileName: featureFiles/TestSet1/FailureSimulationFeature.yaml
+#    numberOfIterations: 1000
+#    numberOfThreads: 100
 
-  # - name: UIAutomationWithError
-  #   priority: 1
-  #   description: UI Automation test with error
-  #   tags:
-  #     - UI
-  #     - negative
-  #   featureFileName: featureFiles/UITests/UIAutomationWithError.yaml
-  #   numberOfIterations: 1
-  #   sourceArchive: samples.jar
 
 subCategories: []

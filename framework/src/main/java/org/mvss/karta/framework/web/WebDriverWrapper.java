@@ -20,7 +20,6 @@ import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 @Getter
 @Log4j2
@@ -490,40 +489,34 @@ public class WebDriverWrapper implements AutoCloseable
 
    }
 
-   @SuppressWarnings( "unchecked" )
    public void waitForObjectToAppear( WebElement element )
    {
-      wait.until( (Function<WebDriver, WebElement>) ExpectedConditions.visibilityOf( element ) );
+      wait.until( ExpectedConditions.visibilityOf( element ) );
    }
 
-   @SuppressWarnings( "unchecked" )
    public void waitForFrameToAppear( WebElement element )
    {
-      wait.until( (Function<WebDriver, WebElement>) ExpectedConditions.frameToBeAvailableAndSwitchToIt( element ) );
+      wait.until( ExpectedConditions.frameToBeAvailableAndSwitchToIt( element ) );
    }
 
-   @SuppressWarnings( "unchecked" )
    public void waitForFrameToAppear( By frameLocator )
    {
-      wait.until( (Function<WebDriver, WebElement>) ExpectedConditions.frameToBeAvailableAndSwitchToIt( frameLocator ) );
+      wait.until( ExpectedConditions.frameToBeAvailableAndSwitchToIt( frameLocator ) );
    }
 
-   @SuppressWarnings( "unchecked" )
    public void waitForFrameToAppear( String frameLocator )
    {
-      wait.until( (Function<WebDriver, WebElement>) ExpectedConditions.frameToBeAvailableAndSwitchToIt( frameLocator ) );
+      wait.until( ExpectedConditions.frameToBeAvailableAndSwitchToIt( frameLocator ) );
    }
 
-   @SuppressWarnings( "unchecked" )
    public void negativeWaitForObjectToAppear( WebElement element )
    {
-      negativeWait.until( (Function<WebDriver, WebElement>) ExpectedConditions.visibilityOf( element ) );
+      negativeWait.until( ExpectedConditions.visibilityOf( element ) );
    }
 
-   @SuppressWarnings( "unchecked" )
    public void waitForObjectToDisappear( WebElement element )
    {
-      wait.until( (Function<WebDriver, WebElement>) ExpectedConditions.visibilityOf( element ) );
+      wait.until( ExpectedConditions.visibilityOf( element ) );
    }
 
    public static byte[] getScreenShot( WebDriver driver )
@@ -544,8 +537,8 @@ public class WebDriverWrapper implements AutoCloseable
       File             srcFile    = ( (TakesScreenshot) driver ).getScreenshotAs( OutputType.FILE );
       Date             date       = new Date();
       SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd HH-mm-ss" );
-
-      FileUtils.copyFile( srcFile, new File( fileName + "-" + dateFormat.format( date ) + ".jpg" ) );
+      UUID             uuid       = UUID.randomUUID();
+      FileUtils.copyFile( srcFile, new File( fileName + "-" + dateFormat.format( date ) + "-" + uuid + ".jpg" ) );
    }
 
    public void takeSnapshot( String name ) throws IOException
@@ -553,40 +546,34 @@ public class WebDriverWrapper implements AutoCloseable
       takeSnapshot( driver, name );
    }
 
-   @SuppressWarnings( "unchecked" )
    public void waitForObjectTobeClickable( WebElement element )
    {
-      wait.until( (Function<WebDriver, WebElement>) ExpectedConditions.elementToBeClickable( element ) );
+      wait.until( ExpectedConditions.elementToBeClickable( element ) );
    }
 
-   @SuppressWarnings( "unchecked" )
    public void waitForLocatorToVisible( By locator )
    {
-      wait.until( (Function<WebDriver, WebElement>) ExpectedConditions.visibilityOfElementLocated( locator ) );
+      wait.until( ExpectedConditions.visibilityOfElementLocated( locator ) );
    }
 
-   @SuppressWarnings( "unchecked" )
    public WebElement waitForLocatorTobeClickable( By locator )
    {
-      return wait.until( (Function<WebDriver, WebElement>) ExpectedConditions.elementToBeClickable( locator ) );
+      return wait.until( ExpectedConditions.elementToBeClickable( locator ) );
    }
 
-   @SuppressWarnings( "unchecked" )
    public void waitForCSSClassToBeApplied( WebElement element, String cssClass )
    {
-      wait.until( (Function<WebDriver, WebElement>) ExpectedConditions.visibilityOfElementLocated( By.className( cssClass ) ) );
+      wait.until( ExpectedConditions.visibilityOfElementLocated( By.className( cssClass ) ) );
    }
 
-   @SuppressWarnings( "unchecked" )
    public void waitLongerForObjectToAppear( WebElement element )
    {
-      waitLonger.until( (Function<WebDriver, WebElement>) ExpectedConditions.visibilityOf( element ) );
+      waitLonger.until( ExpectedConditions.visibilityOf( element ) );
    }
 
-   @SuppressWarnings( "unchecked" )
    public void waitForElementTextToChangeTo( WebElement element, String text )
    {
-      wait.until( (Function<WebDriver, WebElement>) ExpectedConditions.textToBePresentInElement( element, text ) );
+      wait.until( ExpectedConditions.textToBePresentInElement( element, text ) );
    }
 
    public String getTitle()
