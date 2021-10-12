@@ -213,7 +213,11 @@ public class FeatureRunner implements Callable<FeatureResult>
                   updateResultCallBack();
                }
             }
-            return result;
+
+            if ( !result.isSuccessful() )
+            {
+               return result;
+            }
          }
 
          long     numberOfIterations            = runInfo.getNumberOfIterations();
