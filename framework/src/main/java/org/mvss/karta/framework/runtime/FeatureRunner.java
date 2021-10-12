@@ -1,5 +1,8 @@
 package org.mvss.karta.framework.runtime;
 
+import lombok.*;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mvss.karta.framework.core.*;
 import org.mvss.karta.framework.nodes.KartaNode;
 import org.mvss.karta.framework.nodes.KartaNodeRegistry;
@@ -9,9 +12,6 @@ import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.WaitUtil;
-import lombok.*;
-import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -315,7 +315,7 @@ public class FeatureRunner implements Callable<FeatureResult>
 
             if ( coolDownBetweenIterations != null )
             {
-               if ( iterationIndex % ( numberOfIterationsInParallel * iterationsPerCoolDownPeriod ) == 0 )
+               if ( ( iterationIndex + 1 ) % ( numberOfIterationsInParallel * iterationsPerCoolDownPeriod ) == 0 )
                {
                   WaitUtil.sleep( coolDownBetweenIterations.toMillis() );
                }
