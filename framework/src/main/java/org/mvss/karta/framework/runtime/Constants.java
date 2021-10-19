@@ -160,5 +160,7 @@ public class Constants
    public static final String ANT_MATCHER_RUN = "/run/**";
    public static final String ANT_MATCHER_API = "/api/**";
 
-   public static final String UI = "UI";
+   public static final String UI                  = "UI";
+   public static final String PNG                 = ".png";
+   public static final String YYYY_MM_DD_HH_MM_SS = "yyyy-MM-dd HH-mm-ss";
 }

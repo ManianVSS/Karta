@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.runtime.Constants;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.FindBy;
@@ -209,7 +210,6 @@ public class WebDriverWrapper implements AutoCloseable
 
    public void navigateTo( String URL )
    {
-
       driver.navigate().to( URL );
    }
 
@@ -235,7 +235,6 @@ public class WebDriverWrapper implements AutoCloseable
 
    public boolean isElementAvailable( WebElement element )
    {
-
       try
       {
          waitForObjectToAppear( element );
@@ -245,7 +244,6 @@ public class WebDriverWrapper implements AutoCloseable
       {
          return false;
       }
-
    }
 
    public boolean isElementUnavailable( WebElement element )
@@ -259,7 +257,6 @@ public class WebDriverWrapper implements AutoCloseable
       {
          return true;
       }
-
    }
 
    public boolean isElementEnabled( WebElement element )
@@ -528,7 +525,8 @@ public class WebDriverWrapper implements AutoCloseable
    {
       if ( driver != null )
       {
-         FileUtils.writeByteArrayToFile( new File( prefix + "_" + System.currentTimeMillis() + ".png" ), WebDriverWrapper.getScreenShot( driver ) );
+         FileUtils.writeByteArrayToFile( new File( prefix + Constants.UNDERSCORE + System.currentTimeMillis() + Constants.PNG ),
+                  WebDriverWrapper.getScreenShot( driver ) );
       }
    }
 
@@ -536,9 +534,9 @@ public class WebDriverWrapper implements AutoCloseable
    {
       File             srcFile    = ( (TakesScreenshot) driver ).getScreenshotAs( OutputType.FILE );
       Date             date       = new Date();
-      SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd HH-mm-ss" );
+      SimpleDateFormat dateFormat = new SimpleDateFormat( Constants.YYYY_MM_DD_HH_MM_SS );
       UUID             uuid       = UUID.randomUUID();
-      FileUtils.copyFile( srcFile, new File( fileName + "-" + dateFormat.format( date ) + "-" + uuid + ".jpg" ) );
+      FileUtils.copyFile( srcFile, new File( fileName + Constants.HYPHEN + dateFormat.format( date ) + Constants.HYPHEN + uuid + Constants.PNG ) );
    }
 
    public void takeSnapshot( String name ) throws IOException
