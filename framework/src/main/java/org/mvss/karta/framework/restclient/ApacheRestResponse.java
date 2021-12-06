@@ -10,6 +10,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
 
 import java.io.IOException;
@@ -49,13 +50,24 @@ public class ApacheRestResponse implements RestResponse
 
          if ( header.getName().equals( Constants.CONTENT_TYPE ) )
          {
-            this.contentType = ContentType.getByMimeType( header.getValue() );
+            String contentTypeString = DataUtils.getContainedKey( header.getValue(), ContentType.getCONTENT_TYPE_MAP().keySet() );
+
+            if ( contentTypeString != null )
+            {
+               this.contentType = ContentType.getByMimeType( contentTypeString );
+            }
+
+            //            if ( contentTypeHeader.contains( Constants.SEMICOLON ) && !contentTypeHeader.startsWith( Constants.SEMICOLON ) )
+            //            {
+            //               contentTypeHeader = contentTypeHeader.substring( 0, contentTypeHeader.indexOf( ';' ) );
+            //            }
+            //            this.contentType = ContentType.getByMimeType( contentTypeHeader );
          }
       }
 
       if ( this.contentType == null )
       {
-         this.contentType = ContentType.APPLICATION_OCTET_STREAM;
+         this.contentType = ContentType.APPLICATION_JSON;
       }
 
       HttpEntity entity = response.getEntity();

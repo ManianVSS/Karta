@@ -36,6 +36,7 @@ public class Constants
    public static final String COMMA            = ",";
    public static final String SLASH            = "/";
    public static final String COLON            = ":";
+   public static final String SEMICOLON        = ";";
    public static final String HYPHEN           = "-";
    public static final String UNDERSCORE       = "_";
    public static final String DOUBLE_QUOTES    = "\"";
@@ -75,6 +76,7 @@ public class Constants
    public static final String APPLICATION_JSON = "application/json";
    public static final String ACCEPT           = "Accept";
    public static final String AUTHORIZATION    = "Authorization";
+   public static final String BASIC            = "Basic ";
    public static final String BEARER           = "Bearer ";
    public static final String STATUS           = "status";
    public static final String READY            = "Ready";

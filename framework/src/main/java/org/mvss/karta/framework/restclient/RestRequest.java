@@ -28,4 +28,8 @@ public interface RestRequest extends Serializable
    Serializable getBody();
 
    void setBody( Serializable body );
+
+   void basicAuth( String userName, String password ) throws Exception;
+
+   void bearerTokenAuth( String bearerToken ) throws Exception;
 }

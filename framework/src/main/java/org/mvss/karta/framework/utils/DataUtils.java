@@ -369,7 +369,7 @@ public class DataUtils
          }
       }
 
-      return values[values.length - 1];
+      return null;
    }
 
    public static String pickString( Predicate<String> condition, String... strings )
@@ -407,5 +407,17 @@ public class DataUtils
       }
 
       return fullURL;
+   }
+
+   public static String getContainedKey( String source, Set<String> keySet )
+   {
+      for ( String key : keySet )
+      {
+         if ( source.contains( key ) )
+         {
+            return key;
+         }
+      }
+      return null;
    }
 }
