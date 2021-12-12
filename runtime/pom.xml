@@ -16,28 +16,28 @@
     <parent>
         <groupId>org.mvss</groupId>
         <artifactId>karta</artifactId>
-        <version>0.1.0</version>
+        <version>0.1.1</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>org.mvss.karta</groupId>
             <artifactId>framework</artifactId>
-            <version>0.1.0</version>
+            <version>0.1.1</version>
             <scope>runtime</scope>
         </dependency>
 
         <dependency>
             <groupId>org.mvss.karta</groupId>
             <artifactId>server</artifactId>
-            <version>0.1.0</version>
+            <version>0.1.1</version>
             <scope>runtime</scope>
         </dependency>
 
         <dependency>
             <groupId>org.mvss.karta</groupId>
             <artifactId>samples</artifactId>
-            <version>0.1.0</version>
+            <version>0.1.1</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -140,7 +140,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>

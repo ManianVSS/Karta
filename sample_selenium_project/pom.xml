@@ -7,11 +7,19 @@
     <version>0.0.1</version>
     <description>Sample test project</description>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>11</java.version>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <log4j2.version>2.15.0</log4j2.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.mvss.karta</groupId>
             <artifactId>framework</artifactId>
-            <version>0.1.0</version>
+            <version>0.1.1</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
