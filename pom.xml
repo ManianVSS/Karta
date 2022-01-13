@@ -15,7 +15,8 @@
 		<maven.compiler.target>${java.version}</maven.compiler.target>
 		<maven.compiler.source>${java.version}</maven.compiler.source>
 		<project.version>0.1.0</project.version>
-		<spring.boot.version>2.3.2.RELEASE</spring.boot.version>
+		<spring.boot.version>2.6.2</spring.boot.version>
+		<log4j2.version>2.17.1</log4j2.version>
 	</properties>
 
 	<modules>
