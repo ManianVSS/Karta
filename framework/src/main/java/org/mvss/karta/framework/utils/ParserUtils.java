@@ -1,5 +1,6 @@
 package org.mvss.karta.framework.utils;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -49,10 +50,15 @@ public class ParserUtils
    static
    {
       objectMapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
+      objectMapper.setSerializationInclusion( JsonInclude.Include.NON_NULL );
       objectMapper.findAndRegisterModules();
+
       yamlObjectMapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
+      yamlObjectMapper.setSerializationInclusion( JsonInclude.Include.NON_NULL );
       yamlObjectMapper.findAndRegisterModules();
+
       xmlMapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
+      xmlMapper.setSerializationInclusion( JsonInclude.Include.NON_NULL );
       xmlMapper.findAndRegisterModules();
    }
 
