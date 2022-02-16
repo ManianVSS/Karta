@@ -74,8 +74,6 @@ testScenarios:
         condition: When the calculator is powered "Off"
       - step: Given the calculator is powered off
         condition: When the calculator is powered "On"
-      - step: Given the calculator is powered off
-        condition: When the calculator is powered "On"
 scenarioTearDownSteps:
   - step: Then dummy teardown step
 

@@ -201,23 +201,21 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
             Parameter[] params = candidateChaosActionMethod.getParameters();
 
-            if ( !( ( params.length >= 2 ) && ( TestExecutionContext.class == params[0].getType() ) && ( PreparedChaosAction.class == params[1].getType() ) ) )
+            for ( Parameter param : params )
             {
-               log.error(
-                        "Chaos action definition method " + methodDescription + " should have first two parameters of types(" + TestExecutionContext.class.getName() + ", " + PreparedChaosAction.class.getName() + ")" );
-               continue;
-            }
+               Class<?> paramType = param.getType();
 
-            for ( int paramNo = 2; paramNo < params.length; paramNo++ )
-            {
-               TestData        testDataAnnotation        = params[paramNo].getAnnotation( TestData.class );
-               ContextBean     contextBeanAnnotation     = params[paramNo].getAnnotation( ContextBean.class );
-               ContextVariable contextVariableAnnotation = params[paramNo].getAnnotation( ContextVariable.class );
-
-               if ( ( testDataAnnotation == null ) && ( contextBeanAnnotation == null ) && ( contextVariableAnnotation == null ) )
+               if ( ( paramType != TestExecutionContext.class ) && ( paramType != PreparedChaosAction.class ) )
                {
-                  log.error(
-                           "Chaos action definition method " + methodDescription + "'s parameter is not mapped mapped with an appropriate annotation(" + TestData.class.getName() + ", " + ContextBean.class.getName() + ", " + ContextVariable.class.getName() + ")" );
+                  TestData        testDataAnnotation        = param.getAnnotation( TestData.class );
+                  ContextBean     contextBeanAnnotation     = param.getAnnotation( ContextBean.class );
+                  ContextVariable contextVariableAnnotation = param.getAnnotation( ContextVariable.class );
+
+                  if ( ( testDataAnnotation == null ) && ( contextBeanAnnotation == null ) && ( contextVariableAnnotation == null ) )
+                  {
+                     log.error(
+                              "Chaos action definition method " + methodDescription + "'s parameter is not mapped mapped with an appropriate annotation(" + TestData.class.getName() + ", " + ContextBean.class.getName() + ", " + ContextVariable.class.getName() + ")" );
+                  }
                }
             }
 
@@ -727,20 +725,27 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
 
             Parameter[]       parametersObj = chaosActionHandlerMethodToInvoke.getParameters();
             ArrayList<Object> values        = new ArrayList<>();
-            values.add( testExecutionContext );
-            values.add( preparedChaosAction );
+            BeanRegistry      beanRegistry  = testExecutionContext.getContextBeanRegistry();
 
-            BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
-
-            if ( parametersObj.length > 2 )
+            for ( Parameter parameter : parametersObj )
             {
-               for ( int i = 2; i < parametersObj.length; i++ )
-               {
-                  TestData        testDataAnnotation        = parametersObj[i].getAnnotation( TestData.class );
-                  ContextBean     contextBeanAnnotation     = parametersObj[i].getAnnotation( ContextBean.class );
-                  ContextVariable contextVariableAnnotation = parametersObj[i].getAnnotation( ContextVariable.class );
+               Class<?> paramType = parameter.getType();
 
-                  JavaType typeToConvertTo = objectMapper.getTypeFactory().constructType( parametersObj[i].getParameterizedType() );
+               if ( paramType == TestExecutionContext.class )
+               {
+                  values.add( testExecutionContext );
+               }
+               else if ( paramType == PreparedChaosAction.class )
+               {
+                  values.add( preparedChaosAction );
+               }
+               else
+               {
+                  TestData        testDataAnnotation        = parameter.getAnnotation( TestData.class );
+                  ContextBean     contextBeanAnnotation     = parameter.getAnnotation( ContextBean.class );
+                  ContextVariable contextVariableAnnotation = parameter.getAnnotation( ContextVariable.class );
+
+                  JavaType typeToConvertTo = objectMapper.getTypeFactory().constructType( parameter.getParameterizedType() );
 
                   if ( testDataAnnotation != null )
                   {
