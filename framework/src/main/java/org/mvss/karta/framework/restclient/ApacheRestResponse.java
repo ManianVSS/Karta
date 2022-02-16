@@ -56,12 +56,6 @@ public class ApacheRestResponse implements RestResponse
             {
                this.contentType = ContentType.getByMimeType( contentTypeString );
             }
-
-            //            if ( contentTypeHeader.contains( Constants.SEMICOLON ) && !contentTypeHeader.startsWith( Constants.SEMICOLON ) )
-            //            {
-            //               contentTypeHeader = contentTypeHeader.substring( 0, contentTypeHeader.indexOf( ';' ) );
-            //            }
-            //            this.contentType = ContentType.getByMimeType( contentTypeHeader );
          }
       }
 

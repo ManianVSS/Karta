@@ -98,7 +98,13 @@ public class BeanRegistry
     */
    public Object put( String beanName, Object bean )
    {
-      return globalBeans.put( beanName, bean );
+      return put( ContextType.GLOBAL, null, beanName, bean );
+   }
+
+   public Object put( ContextType contextType, String contextName, String beanName, Object bean )
+   {
+      HashMap<String, Object> beanMap = getBeanMap( contextType, contextName );
+      return beanMap.put( beanName, bean );
    }
 
    /**
@@ -124,11 +130,18 @@ public class BeanRegistry
     */
    public boolean add( String beanName, Object bean )
    {
-      if ( globalBeans.containsKey( beanName ) )
+      return add( ContextType.GLOBAL, null, beanName, bean );
+   }
+
+   public boolean add( ContextType contextType, String contextName, String beanName, Object bean )
+   {
+      HashMap<String, Object> beanMap = getBeanMap( contextType, contextName );
+
+      if ( beanMap.containsKey( beanName ) )
       {
          return false;
       }
-      globalBeans.put( beanName, bean );
+      beanMap.put( beanName, bean );
       return true;
    }
 
@@ -174,14 +187,16 @@ public class BeanRegistry
     * @param contextName String
     * @return HashMap<String, Object>
     */
-   public HashMap<String, Object> getBeanMap( ContextType contextType, String contextName )
+   private HashMap<String, Object> getBeanMap( ContextType contextType, String contextName )
    {
       switch ( contextType )
       {
          case NAMED:
+            initNamedContextRegistry( contextName );
             return namedContextBeanMap.get( DataUtils.pickString( StringUtils::isNotEmpty, contextName, Constants.EMPTY_STRING ) );
 
          case THREAD:
+            initThreadContextRegistry();
             return threadContextBeanMap.get( Thread.currentThread() );
 
          default:
@@ -210,7 +225,7 @@ public class BeanRegistry
     */
    public void loadBeans( Object object ) throws IllegalArgumentException
    {
-      loadBeans( object, object.getClass(), this );
+      loadBeans( object, object.getClass() );
    }
 
    /**
@@ -230,8 +245,9 @@ public class BeanRegistry
          {
             field.setAccessible( true );
             Class<?> fieldClass = field.getType();
-            String beanName = DataUtils.pickString( StringUtils::isNotEmpty, kartaAutoWired.value(), kartaAutoWired.name(), fieldClass.getName() );
-            Object valueToSet = beanMap.get( beanName );
+            String   beanName   = DataUtils.pickString( StringUtils::isNotEmpty, kartaAutoWired.value(), kartaAutoWired.name(),
+                     fieldClass.getName() );
+            Object   valueToSet = beanMap.get( beanName );
 
             if ( valueToSet != null )
             {
@@ -252,10 +268,9 @@ public class BeanRegistry
     *
     * @param object           Object
     * @param theClassOfObject Class<?>
-    * @param beanRegistry     BeanRegistry
     * @throws IllegalArgumentException IllegalArgumentException
     */
-   public static void loadBeans( Object object, Class<?> theClassOfObject, BeanRegistry beanRegistry ) throws IllegalArgumentException
+   public void loadBeans( Object object, Class<?> theClassOfObject ) throws IllegalArgumentException
    {
       if ( ( object == null ) || ( theClassOfObject == null ) || theClassOfObject.getName()
                .equals( Object.class.getName() ) || !theClassOfObject.isAssignableFrom( object.getClass() ) )
@@ -264,12 +279,12 @@ public class BeanRegistry
       }
 
       AnnotationScanner.forEachField( theClassOfObject, KartaAutoWired.class, AnnotationScanner.IS_NON_STATIC.and( AnnotationScanner.IS_NON_FINAL ),
-               ( type, field, annotationObject ) -> beanRegistry.setFieldValue( object, field, (KartaAutoWired) annotationObject ) );
+               ( type, field, annotationObject ) -> setFieldValue( object, field, (KartaAutoWired) annotationObject ) );
 
       Class<?> superClass = theClassOfObject.getSuperclass();
       if ( !superClass.getName().equals( Object.class.getName() ) )
       {
-         loadBeans( object, superClass, beanRegistry );
+         loadBeans( object, superClass );
       }
    }
 
@@ -281,30 +296,18 @@ public class BeanRegistry
     */
    public void loadStaticBeans( Class<?> theClassOfObject ) throws IllegalArgumentException
    {
-      loadStaticBeans( theClassOfObject, this );
-   }
-
-   /**
-    * Wires the static field mapped in the object using KartaAutoWired annotation to values from the bean map.
-    *
-    * @param theClassOfObject Class<?>
-    * @param beanRegistry     BeanRegistry
-    * @throws IllegalArgumentException IllegalArgumentException
-    */
-   public static void loadStaticBeans( Class<?> theClassOfObject, BeanRegistry beanRegistry ) throws IllegalArgumentException
-   {
       if ( ( theClassOfObject == null ) || theClassOfObject.getName().equals( Object.class.getName() ) )
       {
          return;
       }
 
       AnnotationScanner.forEachField( theClassOfObject, KartaAutoWired.class, AnnotationScanner.IS_STATIC.and( AnnotationScanner.IS_NON_FINAL ),
-               ( type, field, annotationObject ) -> beanRegistry.setFieldValue( null, field, (KartaAutoWired) annotationObject ) );
+               ( type, field, annotationObject ) -> setFieldValue( null, field, (KartaAutoWired) annotationObject ) );
 
       Class<?> superClass = theClassOfObject.getSuperclass();
       if ( !superClass.getName().equals( Object.class.getName() ) )
       {
-         loadStaticBeans( superClass, beanRegistry );
+         loadStaticBeans( superClass );
       }
    }
 }

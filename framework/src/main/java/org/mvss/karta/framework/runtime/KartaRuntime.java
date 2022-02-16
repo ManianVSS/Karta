@@ -1,10 +1,17 @@
 package org.mvss.karta.framework.runtime;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.configuration.KartaConfiguration;
 import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.core.*;
+import org.mvss.karta.framework.nodes.IKartaNodeRegistry;
 import org.mvss.karta.framework.nodes.KartaNodeConfiguration;
 import org.mvss.karta.framework.nodes.KartaNodeRegistry;
 import org.mvss.karta.framework.randomization.ObjectGenerationRule;
@@ -15,12 +22,6 @@ import org.mvss.karta.framework.runtime.testcatalog.TestCatalogManager;
 import org.mvss.karta.framework.runtime.testcatalog.TestCategory;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,7 +63,7 @@ public class KartaRuntime implements AutoCloseable
    private EventProcessor eventProcessor;
 
    @Getter
-   private KartaNodeRegistry nodeRegistry;
+   private IKartaNodeRegistry nodeRegistry;
 
    private static final ObjectMapper yamlObjectMapper = ParserUtils.getYamlObjectMapper();
 
@@ -416,7 +417,8 @@ public class KartaRuntime implements AutoCloseable
       }
       catch ( Throwable t )
       {
-         log.error( "Exception while parsing bean definition from method  " + beanDefinitionMethod.getName(), t );
+         log.error( "Exception while calling initialization method for " + classToWorkWith.getName() + Constants.DOT + beanDefinitionMethod.getName(),
+                  t );
       }
 
    };

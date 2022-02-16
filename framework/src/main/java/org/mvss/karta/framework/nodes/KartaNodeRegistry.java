@@ -16,7 +16,7 @@ import java.util.HashMap;
  * @author Manian
  */
 @Log4j2
-public class KartaNodeRegistry implements AutoCloseable
+public class KartaNodeRegistry implements IKartaNodeRegistry
 {
    @Getter
    private final ArrayList<KartaNode> minions = new ArrayList<>();
@@ -41,6 +41,7 @@ public class KartaNodeRegistry implements AutoCloseable
    /**
     * Add a karta node/minion by configuration
     */
+   @Override
    public boolean addNode( KartaNodeConfiguration nodeConfiguration )
    {
       try
@@ -108,6 +109,7 @@ public class KartaNodeRegistry implements AutoCloseable
    /**
     * Remove a karta name from registry by name.
     */
+   @Override
    public boolean removeNode( String name )
    {
       boolean nodeRemoved;
@@ -129,6 +131,7 @@ public class KartaNodeRegistry implements AutoCloseable
    /**
     * Get a karta node in registry by name.
     */
+   @Override
    public KartaNode getNode( String name )
    {
       synchronized ( lock )
@@ -140,6 +143,7 @@ public class KartaNodeRegistry implements AutoCloseable
    /**
     * Gets the next minion to use by cycling through the list of minions.
     */
+   @Override
    public KartaNode getNextMinion()
    {
       synchronized ( lock )

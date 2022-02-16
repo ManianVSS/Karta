@@ -4,8 +4,8 @@ import lombok.*;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mvss.karta.framework.core.*;
+import org.mvss.karta.framework.nodes.IKartaNodeRegistry;
 import org.mvss.karta.framework.nodes.KartaNode;
-import org.mvss.karta.framework.nodes.KartaNodeRegistry;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
 import org.mvss.karta.framework.runtime.event.*;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
@@ -100,9 +100,9 @@ public class FeatureRunner implements Callable<FeatureResult>
 
          result = new FeatureResult();
          result.setFeatureName( testFeature.getName() );
-         EventProcessor    eventProcessor      = kartaRuntime.getEventProcessor();
-         KartaNodeRegistry nodeRegistry        = kartaRuntime.getNodeRegistry();
-         BeanRegistry      contextBeanRegistry = new BeanRegistry();
+         EventProcessor     eventProcessor      = kartaRuntime.getEventProcessor();
+         IKartaNodeRegistry nodeRegistry        = kartaRuntime.getNodeRegistry();
+         BeanRegistry       contextBeanRegistry = new BeanRegistry();
 
          Random random = kartaRuntime.getRandom();
 

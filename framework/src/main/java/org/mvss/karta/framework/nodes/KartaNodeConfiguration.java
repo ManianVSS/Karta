@@ -1,9 +1,11 @@
 package org.mvss.karta.framework.nodes;
 
-import org.mvss.karta.framework.enums.NodeType;
 import lombok.*;
+import org.mvss.karta.framework.enums.NodeType;
+import org.mvss.karta.framework.runtime.Constants;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * This class groups the node configuration for a Karta node
@@ -16,12 +18,13 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@EqualsAndHashCode
 public class KartaNodeConfiguration implements Serializable
 {
-   /**
-    *
-    */
    private static final long serialVersionUID = 1L;
+
+   @Builder.Default
+   private UUID uuid = UUID.randomUUID();
 
    /**
     * Name of the Karta node. This ideally should indicate the role of the node if not a minion.
@@ -59,51 +62,10 @@ public class KartaNodeConfiguration implements Serializable
    @Builder.Default
    private NodeType nodeType = NodeType.RMI;
 
-   @Override
-   public int hashCode()
-   {
-      final int prime  = 31;
-      int       result = 1;
-      result = prime * result + ( enableSSL ? 1231 : 1237 );
-      result = prime * result + ( ( host == null ) ? 0 : host.hashCode() );
-      result = prime * result + ( minion ? 1231 : 1237 );
-      result = prime * result + ( ( name == null ) ? 0 : name.hashCode() );
-      result = prime * result + ( ( nodeType == null ) ? 0 : nodeType.hashCode() );
-      result = prime * result + port;
-      return result;
-   }
-
-   @Override
-   public boolean equals( Object obj )
-   {
-      if ( this == obj )
-         return true;
-      if ( obj == null )
-         return false;
-      if ( getClass() != obj.getClass() )
-         return false;
-      KartaNodeConfiguration other = (KartaNodeConfiguration) obj;
-      if ( enableSSL != other.enableSSL )
-         return false;
-      if ( host == null )
-      {
-         if ( other.host != null )
-            return false;
-      }
-      else if ( !host.equals( other.host ) )
-         return false;
-      if ( minion != other.minion )
-         return false;
-      if ( name == null )
-      {
-         if ( other.name != null )
-            return false;
-      }
-      else if ( !name.equals( other.name ) )
-         return false;
-      if ( nodeType != other.nodeType )
-         return false;
-      return port == other.port;
-   }
-
+   /**
+    * The custom implementation class for KartaNode.
+    * This class needs to have a constructor which accepts
+    */
+   @Builder.Default
+   private String implementation = Constants.EMPTY_STRING;
 }
