@@ -19,6 +19,6 @@ jobs:
         with:
           java-version: 11
       - name: Build with Maven
-        run: mvn -B package --file pom.xml
+        run: mvn -B package -T 4 --file pom.xml
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag karta:0.1.1
