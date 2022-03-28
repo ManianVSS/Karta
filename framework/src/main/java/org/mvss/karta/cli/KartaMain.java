@@ -1,5 +1,8 @@
 package org.mvss.karta.cli;
 
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.cli.*;
+import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.RunResult;
 import org.mvss.karta.framework.nodes.KartaNodeServer;
@@ -7,9 +10,6 @@ import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.RunInfo;
 import org.mvss.karta.framework.runtime.RunTarget;
-import lombok.extern.log4j.Log4j2;
-import org.apache.commons.cli.*;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,7 +38,7 @@ public class KartaMain
       }
    }
 
-   public static void main( String[] args )
+   public static boolean run( String[] args )
    {
       Options       options   = new Options();
       HelpFormatter formatter = new HelpFormatter();
@@ -71,7 +71,7 @@ public class KartaMain
          if ( cmd.hasOption( Constants.HELP ) )
          {
             formatter.printHelp( Constants.KARTA, options );
-            System.exit( 0 );
+            return true;
          }
          else if ( cmd.hasOption( Constants.START_NODE ) )
          {
@@ -193,20 +193,20 @@ public class KartaMain
                               Constants.FAIL ) );
                   }
 
-                  if ( !runResult.isSuccessful() )
-                  {
-                     System.exit( 1 );
-                  }
+                  return runResult.isSuccessful();
                }
-               log.info( "Karta runtime has been closed." );
             }
             else
             {
                if ( optionMissing )
                {
                   formatter.printHelp( Constants.KARTA, options );
-                  System.exit( -1 );
                }
+               else
+               {
+                  log.error( "Run target not available" );
+               }
+               return false;
             }
          }
       }
@@ -214,12 +214,21 @@ public class KartaMain
       {
          System.err.println( uoe.getMessage() );
          formatter.printHelp( Constants.KARTA, options );
-         System.exit( -1 );
+         return false;
       }
       catch ( Throwable t )
       {
          log.error( "Exception caught while init", t );
          formatter.printHelp( Constants.KARTA, options );
+         return false;
+      }
+      return false;
+   }
+
+   public static void main( String[] args )
+   {
+      if ( !run( args ) )
+      {
          System.exit( -1 );
       }
    }

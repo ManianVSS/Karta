@@ -22,13 +22,6 @@
     <dependencies>
         <dependency>
             <groupId>org.mvss.karta</groupId>
-            <artifactId>framework</artifactId>
-            <version>0.1.1</version>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mvss.karta</groupId>
             <artifactId>server</artifactId>
             <version>0.1.1</version>
             <scope>runtime</scope>
@@ -46,39 +39,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>com.googlecode.maven-download-plugin</groupId>
-                <artifactId>download-maven-plugin</artifactId>
-                <version>1.6.7</version>
-                <executions>
-                    <execution>
-                        <id>install-chromeDriverLinux</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>wget</goal>
-                        </goals>
-                        <configuration>
-                            <url>http://chromedriver.storage.googleapis.com/94.0.4606.61/chromedriver_linux64.zip</url>
-                            <unpack>true</unpack>
-                            <outputDirectory>${project.build.directory}/packages/Karta</outputDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>install-chromeDriverWindows</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>wget</goal>
-                        </goals>
-                        <configuration>
-                            <url>https://chromedriver.storage.googleapis.com/94.0.4606.61/chromedriver_win32.zip</url>
-                            <unpack>true</unpack>
-                            <outputDirectory>${project.build.directory}/packages/Karta</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-
-            </plugin>
-
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>

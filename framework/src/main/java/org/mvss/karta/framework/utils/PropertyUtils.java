@@ -3,10 +3,10 @@ package org.mvss.karta.framework.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.mvss.karta.framework.runtime.Constants;
-import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -280,12 +280,7 @@ public class PropertyUtils
       try
       {
          String propertyGroup = propertyMapping.group();
-         String propertyName  = propertyMapping.value();
-
-         if ( StringUtils.isEmpty( propertyName ) )
-         {
-            propertyName = field.getName();
-         }
+         String propertyName  = DataUtils.pickString( StringUtils::isNotEmpty, propertyMapping.name(), propertyMapping.value(), field.getName() );
 
          Serializable propertyValue = getPropertyValue( propertiesStore, propertyGroup, propertyName );
          JavaType covertToTypeTo = objectMapper.getTypeFactory()

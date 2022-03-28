@@ -1,8 +1,8 @@
 WebAutomation:
   webDriverOptions:
-    webDriverLocation: /chromedriver
+    webDriverLocation: ../chromedriver
     browser: CHROME
-    headless: false
+    headless: true
     ignoreCertificates: true
     implicitWaitTime: PT10S
     screenSize:

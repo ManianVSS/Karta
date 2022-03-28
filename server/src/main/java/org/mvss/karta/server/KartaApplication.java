@@ -1,11 +1,7 @@
 package org.mvss.karta.server;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import javax.annotation.PreDestroy;
-
+import lombok.extern.log4j.Log4j2;
+import org.mvss.karta.cli.KartaMain;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -14,7 +10,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 
-import lombok.extern.log4j.Log4j2;
+import javax.annotation.PreDestroy;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Log4j2
 @SpringBootApplication
@@ -25,8 +24,22 @@ public class KartaApplication implements CommandLineRunner
 
    public static void main( String[] args )
    {
-      // Spring boot start
-      SpringApplication.run( KartaApplication.class, args );
+      if ( ( args != null ) && args.length > 0 )
+      {
+         if ( !KartaMain.run( args ) )
+         {
+            System.exit( 0 );
+         }
+         else
+         {
+            System.exit( -1 );
+         }
+      }
+      else
+      {
+         // Spring boot start
+         SpringApplication.run( KartaApplication.class, args );
+      }
    }
 
    @EventListener( ApplicationReadyEvent.class )
@@ -35,23 +48,23 @@ public class KartaApplication implements CommandLineRunner
       kartaRuntime.addNodes();
    }
 
-   public static List<Runnable> exitHooks = Collections.synchronizedList( new ArrayList<Runnable>() );
+   public static List<Runnable> exitHooks = Collections.synchronizedList( new ArrayList<>() );
 
    @Override
-   public void run( String... args ) throws Exception
+   public void run( String... args )
    {
       log.info( "******************** Starting Karta Server *********************" );
    }
 
    @PreDestroy
-   public void onDestroy() throws Exception
+   public void onDestroy()
    {
       log.info( "******************** Stopping Karta Server *********************" );
 
       log.info( "Triggering registered exit hooks" );
-      for ( Runnable exitHook : new ArrayList<Runnable>( exitHooks ) )
+      for ( Runnable exitHook : new ArrayList<>( exitHooks ) )
       {
-         new Thread( exitHook ).run();
+         new Thread( exitHook ).start();
       }
    }
 

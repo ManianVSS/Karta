@@ -86,7 +86,10 @@ public class QuartzJobScheduler
 
    public static void shutdown() throws SchedulerException
    {
-      scheduler.clear();
-      scheduler.shutdown();
+      if ( !scheduler.isShutdown() )
+      {
+         scheduler.clear();
+         scheduler.shutdown();
+      }
    }
 }

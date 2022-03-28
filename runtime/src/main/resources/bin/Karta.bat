@@ -8,5 +8,5 @@ if "%KARTA_HOME%"=="" (
 )
 
 echo Karta home directory is %KARTA_HOME%
-java -cp "*;%KARTA_HOME%/bin/*;%KARTA_HOME%/lib/*" org.mvss.karta.cli.KartaMain %*
+java -Dloader.path=".,%KARTA_HOME%/bin/,%KARTA_HOME%/lib/" -Dspring.main.web-application-type=NONE  -jar %KARTA_HOME%\bin\server.jar %*
 exit /B %errorlevel%

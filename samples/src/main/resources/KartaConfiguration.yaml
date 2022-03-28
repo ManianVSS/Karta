@@ -1,0 +1,83 @@
+pluginConfigurations:
+  - pluginName: Kriya
+    className: org.mvss.karta.framework.runtime.impl.KriyaPlugin
+
+  - pluginName: DataFilesTestDataSource
+    className: org.mvss.karta.framework.runtime.impl.DataFilesTestDataSource
+
+  - pluginName: ObjectGenTestDataSource
+    className: org.mvss.karta.framework.runtime.impl.ObjectGenTestDataSource
+
+  - pluginName: LoggingTestEventListener
+    className: org.mvss.karta.framework.runtime.impl.LoggingTestEventListener
+
+  - pluginName: DumpToFileTestEventListener
+    className: org.mvss.karta.framework.runtime.impl.DumpToFileTestEventListener
+
+  - pluginName: RabbitMQTestEventListener
+    className: org.mvss.karta.framework.runtime.impl.RabbitMQTestEventListener
+
+  - pluginName: HTMLReportTestEventListener
+    className: org.mvss.karta.framework.runtime.impl.HTMLReportTestEventListener
+
+enabledPlugins:
+  - Kriya
+  - DataFilesTestDataSource
+  - ObjectGenTestDataSource
+  - LoggingTestEventListener
+
+defaultFeatureSourceParser: Kriya
+defaultStepRunner: Kriya
+defaultTestDataSources:
+  - DataFilesTestDataSource
+
+propertyFiles:
+  - KartaProperties.yaml
+  - KartaPluginProperties.yaml
+  - KartaTestProperties
+
+sslProperties:
+  trustStoreType: jks
+  trustStore: trustStore.jks
+  trustStorePassword: changeit
+  keyStoreType: pkcs12
+  keyStore: keyStore.p12
+  keyStorePassword: changeit
+
+nodeName: local
+
+nodes: []
+
+minionsEnabled: true
+
+threadGroups:
+  __default__: 1
+
+configurationScanPackages: []
+
+properties:
+  Karta:
+    EventProcessor.numberOfThread: 1
+    EventProcessor.maxEventQueueSize: 100
+    node.config:
+      host: localhost
+      port: "17171"
+      enableSSL: true
+
+  Kriya:
+    stepDefinitionPackageNames: []
+    chaosActionDefinitionPackageNames: []
+
+  DumpToFileTestEventListener:
+    fileName: KartaEventsRawDump.bin
+
+  HTMLReportTestEventListener:
+    runReportsBaseFolderName: reports
+
+  RabbitMQTestEventListener:
+    queueName: KartaEvents
+    userName: guest
+    password: guest
+    virtualHost: "/"
+    hostName: localhost
+    portNumber: 5672

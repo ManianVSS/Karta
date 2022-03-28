@@ -29,21 +29,6 @@ propertyFiles:
   - SampleRunProperties3.properties
   - WebAutomationProperties.yaml
 
-nodes:
-  - name: Node1
-    host: localhost
-    port: 18080
-    enableSSL: true
-    nodeType: REST
-    minion: true
-
-  - name: Node2
-    host: localhost
-    port: 18080
-    enableSSL: true
-    nodeType: REST
-    minion: true
-
 ### Thread group name map to the number of threads to use to run tests with for the thread group. __default__ is the name of the default thread group
 threadGroups:
   calculator: 5
@@ -52,18 +37,17 @@ threadGroups:
 configurationScanPackages:
   - org.mvss.karta.samples
 
-testCatalogFragmentFiles: [ ]
+testCatalogFragmentFiles:
+  - SampleTestCatalogFragment.yaml
 
 properties:
   Karta:
+    detailedResults: false
     EventProcessor.numberOfThread: 10
 
   Kriya:
     stepDefinitionPackageNames:
-      - org.mvss.karta.samples.stepdefinitions
-    chaosActionDefinitionPackageNames:
-      - org.mvss.karta.samples.chaosdefinitions
-
+      - org.mvss.karta.samples
   KriyaExt:
     stepDefinitionPackageNames:
       - org.mvss.karta.samples

@@ -245,7 +245,7 @@ public class BeanRegistry
          {
             field.setAccessible( true );
             Class<?> fieldClass = field.getType();
-            String   beanName   = DataUtils.pickString( StringUtils::isNotEmpty, kartaAutoWired.value(), kartaAutoWired.name(),
+            String   beanName   = DataUtils.pickString( StringUtils::isNotEmpty, kartaAutoWired.name(), kartaAutoWired.value(),
                      fieldClass.getName() );
             Object   valueToSet = beanMap.get( beanName );
 

@@ -315,13 +315,10 @@ public class KartaRuntime implements AutoCloseable
          {
             for ( KartaBean kartaBean : beanDefinitionMethod.getAnnotationsByType( KartaBean.class ) )
             {
-
                Class<?> beanDeclaringClass = beanDefinitionMethod.getDeclaringClass();
-
                initializeClass( beanDeclaringClass );
-
-               String beanName = kartaBean.value();
-
+               String beanName = DataUtils.pickString( StringUtils::isNotEmpty, kartaBean.name(), kartaBean.value(),
+                        beanDefinitionMethod.getReturnType().getName() );
                Class<?>[] paramTypes = beanDefinitionMethod.getParameterTypes();
 
                Object beanObj;
