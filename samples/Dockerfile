@@ -1,4 +1,4 @@
-FROM karta:0.1.1
+FROM manianvss/karta:0.1.1
 
 LABEL maintainer="Manian VSS<manianvss@hotmail.com>"
 
