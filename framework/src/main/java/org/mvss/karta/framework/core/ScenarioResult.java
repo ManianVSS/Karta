@@ -59,7 +59,7 @@ public class ScenarioResult implements Serializable, Comparable<ScenarioResult>
    @JsonIgnore
    public boolean isPassed()
    {
-      return successful && !error && incidents.isEmpty();
+      return successful && !error;
    }
 
    @Override

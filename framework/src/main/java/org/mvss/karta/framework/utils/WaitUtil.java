@@ -1,8 +1,9 @@
 package org.mvss.karta.framework.utils;
 
-import org.mvss.karta.framework.core.CanThrowBooleanSupplier;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.Logger;
+import org.mvss.karta.framework.core.CanThrowBooleanSupplier;
+import org.mvss.karta.framework.core.InvertCanThrowBooleanSupplier;
 
 import java.time.Instant;
 import java.util.concurrent.*;
@@ -76,32 +77,25 @@ public abstract class WaitUtil
       {
          if ( waitConditionFutureTask.isDone() )
          {
-            executorService.shutdown();
-            if ( !executorService.awaitTermination( pollInterval, TimeUnit.MILLISECONDS ) )
-            {
-               log.info( "Failed to wait for executor to complete after termination." );
-               executorService.shutdownNow();
-            }
-
-            return waitConditionFutureTask.get();
+            boolean result = waitConditionFutureTask.get();
+            shutdownExecutor( pollInterval, executorService );
+            return result;
          }
       }
 
-      boolean result = waitConditionFutureTask.isDone() && waitConditionFutureTask.get();
+      log.info( "Timed out waiting for condition evaluation to complete." );
+      shutdownExecutor( pollInterval, executorService );
+      return false;
+   }
 
-      if ( !result )
-      {
-         log.info( "Timed out waiting for condition evaluation to complete." );
-      }
-
+   private static void shutdownExecutor( long pollInterval, ExecutorService executorService ) throws InterruptedException
+   {
       executorService.shutdown();
       if ( !executorService.awaitTermination( pollInterval, TimeUnit.MILLISECONDS ) )
       {
-         log.info( "Timed out waiting for condition evaluation. Will force shutdown of condition evaluation." );
-         waitConditionFutureTask.cancel( true );
+         log.info( "Failed to wait for executor to complete after termination." );
          executorService.shutdownNow();
       }
-      return result;
    }
 
    /**
@@ -163,32 +157,7 @@ public abstract class WaitUtil
    public static WaitResult waitUntilConditionFails( CanThrowBooleanSupplier failWaitCondition, long timeOut, long pollInterval,
                                                      LongConsumer waitIterationTask )
    {
-      Instant initialTimeStamp = Instant.now();
-      Instant currentTimeStap  = initialTimeStamp;
-
-      boolean indefiniteWait = ( timeOut <= 0 );
-
-      for ( long i = 0; indefiniteWait || ( ( currentTimeStap.toEpochMilli() - initialTimeStamp.toEpochMilli() ) < timeOut ); sleep(
-               pollInterval ), currentTimeStap = Instant.now(), i++ )
-      {
-         try
-         {
-            if ( !runConditionInThreadWithTimeout( failWaitCondition, timeOut, pollInterval ) )
-            {
-               return WaitResult.builder().successful( true ).startTime( initialTimeStamp ).endTime( Instant.now() ).build();
-            }
-            if ( waitIterationTask != null )
-            {
-               waitIterationTask.accept( i );
-            }
-         }
-         catch ( Throwable t )
-         {
-            return WaitResult.builder().successful( false ).startTime( initialTimeStamp ).endTime( Instant.now() ).thrown( t ).build();
-         }
-      }
-
-      return WaitResult.builder().successful( false ).startTime( initialTimeStamp ).endTime( Instant.now() ).build();
+      return waitUntil( new InvertCanThrowBooleanSupplier( failWaitCondition ), timeOut, pollInterval, waitIterationTask );
    }
 
    /**

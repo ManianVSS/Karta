@@ -1,12 +1,12 @@
 package org.mvss.karta.framework.runtime.impl;
 
+import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.Initializer;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.runtime.event.*;
 import org.mvss.karta.framework.runtime.interfaces.TestEventListener;
-import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class LoggingTestEventListener implements TestEventListener
@@ -296,8 +296,8 @@ public class LoggingTestEventListener implements TestEventListener
             break;
 
          case StandardEventsTypes.TEST_INCIDENT_OCCURRENCE_EVENT:
-            TestIncidentOccurrenceEvent testIncidentOccurenceEvent = (TestIncidentOccurrenceEvent) event;
-            log.info( "Incident occured: " + testIncidentOccurenceEvent.getIncident() );
+            TestIncidentOccurrenceEvent testIncidentOccurrenceEvent = (TestIncidentOccurrenceEvent) event;
+            log.info( "Incident occurred: " + testIncidentOccurrenceEvent.getIncident() );
             break;
 
          // for cases StandardEventsTypes.UNDEFINED and StandardEventsTypes.GENERIC_TEST_EVENT:

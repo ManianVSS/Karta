@@ -186,11 +186,13 @@ public class SSHUtil implements AutoCloseable
       String          output       = null;
 
       log.info( "Going to wait for the command to return output..." );
-      WaitUtil.waitUntil( futureOutput::isDone, timeOut, checkInterval, WaitUtil.defaultWaitIterationTask );
+      WaitResult waitResult = WaitUtil.waitUntil( futureOutput::isDone, timeOut, checkInterval, WaitUtil.defaultWaitIterationTask );
       executor.shutdown();
 
-      if ( futureOutput.isDone() )
+      if ( waitResult.isSuccessful() && futureOutput.isDone() )
+      {
          output = futureOutput.get();
+      }
 
       return output;
    }

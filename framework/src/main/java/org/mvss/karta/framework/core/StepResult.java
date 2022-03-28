@@ -87,7 +87,7 @@ public class StepResult implements Serializable
    @JsonIgnore
    public boolean isPassed()
    {
-      return successful && !error && incidents.isEmpty();
+      return successful && !error;
    }
 
    /**
