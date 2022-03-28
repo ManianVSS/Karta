@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete packages
-        uses: actions/delete-package-versions@v1
+        uses: actions/delete-package-versions@v2.0.1
         with:
           # Can be a single package version id, or a comma separated list of package version ids.
           # Defaults to an empty string.
