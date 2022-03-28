@@ -1,0 +1,59 @@
+---
+name: SampleTests
+description: sample tests category
+
+tags:
+  - sample
+
+featureSourceParser: Kriya
+stepRunner: Kriya
+testDataSources:
+  - DataFilesTestDataSource
+  - ObjectGenTestDataSource
+  - RandomTestDataSource
+  - CSVTestDataSourcePlugin
+
+tests:
+  - name: SampleGherkinFile5
+    priority: 2
+    description: sample Gherkin feature file4
+    featureSourceParser: Gherkin
+    tags:
+      - Gherkin
+    featureFileName: featureFiles/GherkinTestSet/SampleFeatureFile5.feature
+    numberOfIterations: 4
+    sourceArchive: samples.jar
+
+  - testType: JAVA_TEST
+    priority: 1
+    name: SampleJavaTest
+    description: sample java test
+    tags:
+      - javaTests
+    javaTestClass: org.mvss.karta.samples.tests.Test1
+    chanceBasedScenarioExecution: true
+    exclusiveScenarioPerIteration: true
+    numberOfIterations: 10
+    numberOfThreads: 5
+    sourceArchive: samples.jar
+
+#  - name: WebAutomation
+  #    priority: 1
+  #    description: Web Automation test
+  #    tags:
+  #      - UI
+  #    featureFileName: featureFiles/UITests/WebAutomation.yaml
+  #    numberOfIterations: 10
+  #    numberOfThreads: 5
+  #    sourceArchive: samples.jar
+
+#  - name: FailureSimulationFeature
+#    description: sample feature file
+#    tags:
+#      - negative
+#    featureFileName: featureFiles/TestSet1/FailureSimulationFeature.yaml
+#    numberOfIterations: 1000
+#    numberOfThreads: 100
+
+
+subCategories: []
