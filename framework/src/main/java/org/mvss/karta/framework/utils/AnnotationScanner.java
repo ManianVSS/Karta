@@ -5,9 +5,7 @@ import org.mvss.karta.framework.core.ClassMethodConsumer;
 import org.mvss.karta.framework.core.ObjectMethodConsumer;
 import org.mvss.karta.framework.runtime.Constants;
 import org.reflections.Reflections;
-import org.reflections.scanners.MethodAnnotationsScanner;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
+import org.reflections.scanners.Scanners;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
@@ -64,7 +62,8 @@ public class AnnotationScanner
          try
          {
             Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( annotationScanPackageName ) )
-                     .setScanners( new MethodAnnotationsScanner() ) );
+                     .setScanners( Scanners.MethodsAnnotated ) );
+
             Set<Method> candidateMethods = reflections.getMethodsAnnotatedWith( annotation );
             for ( Method candidateMethod : candidateMethods )
             {
@@ -150,7 +149,7 @@ public class AnnotationScanner
          try
          {
             Reflections reflections = new Reflections( new ConfigurationBuilder().setUrls( ClasspathHelper.forPackage( annotationScanPackageName ) )
-                     .setScanners( new TypeAnnotationsScanner(), new SubTypesScanner() ) );
+                     .setScanners( Scanners.TypesAnnotated, Scanners.SubTypes ) );
             Set<Class<?>> candidateClasses = reflections.getTypesAnnotatedWith( annotation );
 
             for ( Class<?> candidateMethod : candidateClasses )
@@ -190,7 +189,6 @@ public class AnnotationScanner
 
          if ( ( ( annotation == null ) || ( annotationObject != null ) ) && ( ( modifierChecks == null ) || modifierChecks.test(
                   fieldOfClass.getModifiers() ) ) )
-         //&& ( ( typeCheck == null ) || typeCheck.test( fieldOfClass.getType() ) )
          {
             action.accept( classToWorkWith, fieldOfClass, annotationObject );
          }

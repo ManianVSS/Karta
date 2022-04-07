@@ -13,7 +13,6 @@ import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.core.*;
 import org.mvss.karta.framework.nodes.IKartaNodeRegistry;
 import org.mvss.karta.framework.nodes.KartaNodeConfiguration;
-import org.mvss.karta.framework.nodes.KartaNodeRegistry;
 import org.mvss.karta.framework.randomization.ObjectGenerationRule;
 import org.mvss.karta.framework.runtime.event.*;
 import org.mvss.karta.framework.runtime.interfaces.*;
@@ -24,11 +23,9 @@ import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -120,7 +117,7 @@ public class KartaRuntime implements AutoCloseable
    /**
     * Initializes the runtime with the default settings
     */
-   public boolean initializeRuntime() throws IOException, URISyntaxException, IllegalArgumentException
+   public boolean initializeRuntime() throws Exception
    {
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize karta configuration
@@ -232,7 +229,8 @@ public class KartaRuntime implements AutoCloseable
       // Initialize node registry
       /*---------------------------------------------------------------------------------------------------------------------*/
       // TODO: Add task pulling worker minions to support minions as clients rather than open server sockets
-      nodeRegistry = new KartaNodeRegistry();
+
+      nodeRegistry = kartaConfiguration.createNodeRegistry(); //new KartaNodeRegistry();
 
       if ( initializeNodes )
       {

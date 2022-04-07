@@ -66,7 +66,6 @@ public class BeanRegistry
     *
     * @param contextName String
     */
-   @SuppressWarnings( "unused" )
    public void initNamedContextRegistry( String contextName )
    {
       if ( ( contextName != null ) && !namedContextBeanMap.containsKey( contextName ) )
@@ -75,6 +74,17 @@ public class BeanRegistry
          namedContextBeanMap.put( contextName, contextBeanRegistry );
          contextBeanRegistry.put( BeanRegistry.class.getName(), this );
       }
+   }
+
+   /**
+    * Close the context registry mapped by the name.
+    *
+    * @param contextName Object - Context name
+    * @return HashMap<String, Object> - The objects for the mapped context
+    */
+   public HashMap<String, Object> closeContextRegistry( String contextName )
+   {
+      return namedContextBeanMap.remove( contextName );
    }
 
    /**
@@ -193,7 +203,7 @@ public class BeanRegistry
       {
          case NAMED:
             initNamedContextRegistry( contextName );
-            return namedContextBeanMap.get( DataUtils.pickString( StringUtils::isNotEmpty, contextName, Constants.EMPTY_STRING ) );
+            return namedContextBeanMap.get( DataUtils.pickNonNull( contextName, Constants.EMPTY_STRING ) );
 
          case THREAD:
             initThreadContextRegistry();
@@ -257,7 +267,7 @@ public class BeanRegistry
       }
       catch ( IllegalArgumentException | IllegalAccessException e )
       {
-         log.error( "", e );
+         log.error( Constants.EMPTY_STRING, e );
       }
    }
 

@@ -1,6 +1,10 @@
 package org.mvss.karta.configuration;
 
+import lombok.*;
+import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.nodes.IKartaNodeRegistry;
 import org.mvss.karta.framework.nodes.KartaNodeConfiguration;
+import org.mvss.karta.framework.nodes.KartaNodeRegistry;
 import org.mvss.karta.framework.runtime.Configurator;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.runtime.impl.*;
@@ -8,9 +12,9 @@ import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.NullAwareBeanUtilsBean;
 import org.mvss.karta.framework.utils.PropertyUtils;
 import org.mvss.karta.framework.utils.SSLProperties;
-import lombok.*;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,14 +46,12 @@ public class KartaConfiguration implements Serializable
    /**
     * The default feature source parser plug-in
     */
-   @Builder.Default
-   private String defaultFeatureSourceParser = null;
+   private String defaultFeatureSourceParser;
 
    /**
     * The default step runner plug-in
     */
-   @Builder.Default
-   private String defaultStepRunner = null;
+   private String defaultStepRunner;
 
    /**
     * The default set of test data source plug-ins
@@ -60,8 +62,7 @@ public class KartaConfiguration implements Serializable
    /**
     * The set of plug-in which are enabled that are to be initialized and closed with Karta Runtime
     */
-   @Builder.Default
-   private HashSet<String> enabledPlugins = null;
+   private HashSet<String> enabledPlugins;
 
    /**
     * The list of property files to be merged into the Configurator.</br>
@@ -82,17 +83,21 @@ public class KartaConfiguration implements Serializable
     *
     * @see org.mvss.karta.framework.utils.SSLProperties
     */
-   @Builder.Default
-   private SSLProperties sslProperties = null;
+   private SSLProperties sslProperties;
 
    /**
-    * The current node configuration.</br>
-    * This is mandatory if running a minion server or node.
-    *
-    * @see org.mvss.karta.framework.nodes.KartaNodeConfiguration
+    * The karta node registry implementation class
     */
-   @Builder.Default
-   private KartaNodeConfiguration localNode = new KartaNodeConfiguration();
+   private String kartaNodeRegistry;
+
+   //   /**
+   //    * The current node configuration.</br>
+   //    * This is mandatory if running a minion server or node.
+   //    *
+   //    * @see org.mvss.karta.framework.nodes.KartaNodeConfiguration
+   //    */
+   //   @Builder.Default
+   //   private KartaNodeConfiguration localNode = new KartaNodeConfiguration();
 
    /**
     * The list of available nodes available or minions to use. </br>
@@ -155,8 +160,9 @@ public class KartaConfiguration implements Serializable
       DataUtils.addMissing( enabledPlugins, override.enabledPlugins );
       DataUtils.addMissing( propertyFiles, override.propertyFiles );
       DataUtils.addMissing( testCatalogFragmentFiles, override.testCatalogFragmentFiles );
-      sslProperties = NullAwareBeanUtilsBean.getOverriddenValue( sslProperties, override.sslProperties );
-      localNode     = NullAwareBeanUtilsBean.getOverriddenValue( localNode, override.localNode );
+      sslProperties     = NullAwareBeanUtilsBean.getOverriddenValue( sslProperties, override.sslProperties );
+      kartaNodeRegistry = NullAwareBeanUtilsBean.getOverriddenValue( kartaNodeRegistry, override.kartaNodeRegistry );
+      //      localNode     = NullAwareBeanUtilsBean.getOverriddenValue( localNode, override.localNode );
       DataUtils.addMissing( nodes, override.nodes );
       minionsEnabled = override.minionsEnabled;
       DataUtils.mergeMapInto( override.threadGroups, threadGroups );
@@ -198,10 +204,23 @@ public class KartaConfiguration implements Serializable
 
       kartaConfiguration.sslProperties = new SSLProperties();
 
-      kartaConfiguration.minionsEnabled = true;
+      kartaConfiguration.kartaNodeRegistry = KartaNodeRegistry.class.getName();
+      kartaConfiguration.minionsEnabled    = true;
 
       kartaConfiguration.threadGroups.put( Constants.__DEFAULT__, 1 );
 
       return kartaConfiguration;
+   }
+
+   public IKartaNodeRegistry createNodeRegistry()
+            throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException
+   {
+      if ( StringUtils.isEmpty( this.kartaNodeRegistry ) )
+      {
+         this.kartaNodeRegistry = KartaNodeRegistry.class.getName();
+      }
+
+      Class<?> nodeRegistryClass = Class.forName( kartaNodeRegistry );
+      return (IKartaNodeRegistry) nodeRegistryClass.getDeclaredConstructor().newInstance();
    }
 }

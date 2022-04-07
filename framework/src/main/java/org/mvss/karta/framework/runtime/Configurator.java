@@ -151,7 +151,7 @@ public class Configurator
    }
 
    /**
-    * Merge multiple property files to the data store inferencing data format from the file extension.
+    * Merge multiple property files to the data store deducing data format from the file extension.
     */
    public boolean mergePropertiesFiles( String... propertyFiles )
    {
