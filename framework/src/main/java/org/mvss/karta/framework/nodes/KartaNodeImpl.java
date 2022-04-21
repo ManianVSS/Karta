@@ -74,6 +74,10 @@ public class KartaNodeImpl extends UnicastRemoteObject implements KartaNode, Ser
       {
          return StandardStepResults.failure( e );
       }
+      catch ( Throwable t )
+      {
+         return StandardStepResults.error( t );
+      }
    }
 
    @Override
@@ -86,6 +90,10 @@ public class KartaNodeImpl extends UnicastRemoteObject implements KartaNode, Ser
       catch ( TestFailureException e )
       {
          return StandardStepResults.failure( e );
+      }
+      catch ( Throwable t )
+      {
+         return StandardStepResults.error( t );
       }
    }
 

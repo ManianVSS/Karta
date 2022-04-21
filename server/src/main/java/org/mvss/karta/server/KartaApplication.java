@@ -20,26 +20,12 @@ import java.util.List;
 public class KartaApplication implements CommandLineRunner
 {
    @Autowired
-   KartaRuntime kartaRuntime;
+   private KartaRuntime kartaRuntime;
 
    public static void main( String[] args )
    {
-      if ( ( args != null ) && args.length > 0 )
-      {
-         if ( !KartaMain.run( args ) )
-         {
-            System.exit( 0 );
-         }
-         else
-         {
-            System.exit( -1 );
-         }
-      }
-      else
-      {
-         // Spring boot start
-         SpringApplication.run( KartaApplication.class, args );
-      }
+      // Spring boot start
+      SpringApplication.run( KartaApplication.class, args );
    }
 
    @EventListener( ApplicationReadyEvent.class )
@@ -54,6 +40,11 @@ public class KartaApplication implements CommandLineRunner
    public void run( String... args )
    {
       log.info( "******************** Starting Karta Server *********************" );
+      if ( ( args != null ) && args.length > 0 )
+      {
+         boolean returnStatus = KartaMain.run( args );
+         System.exit( returnStatus ? 0 : -1 );
+      }
    }
 
    @PreDestroy

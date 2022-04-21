@@ -12,6 +12,7 @@ import org.mvss.karta.framework.chaos.ChaosAction;
 import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.core.*;
 import org.mvss.karta.framework.nodes.IKartaNodeRegistry;
+import org.mvss.karta.framework.nodes.KartaNode;
 import org.mvss.karta.framework.nodes.KartaNodeConfiguration;
 import org.mvss.karta.framework.randomization.ObjectGenerationRule;
 import org.mvss.karta.framework.runtime.event.*;
@@ -29,7 +30,6 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -975,9 +975,14 @@ public class KartaRuntime implements AutoCloseable
       String        node = job.getNode();
       if ( StringUtils.isNotEmpty( node ) )
       {
-         // TODO: Handle local node
-         // TODO: Handle null node error
-         jobResult = nodeRegistry.getNode( node ).runJobIteration( runInfo, featureName, job.toBuilder().node( null ).build(), iterationIndex );
+         KartaNode nodeObj = nodeRegistry.getNode( node );
+
+         if ( nodeObj == null )
+         {
+            throw new Exception( "Configuration issue: Node with name " + node + " is not registered in node registry" );
+         }
+
+         jobResult = nodeObj.runJobIteration( runInfo, featureName, job.toBuilder().node( null ).build(), iterationIndex );
 
          if ( jobResult == null )
          {
@@ -1224,7 +1229,7 @@ public class KartaRuntime implements AutoCloseable
    /**
     * Runs a PreparedStep based on the RunInfo locally or on a remote node and returns the StepResult
     */
-   public StepResult runStep( RunInfo runInfo, PreparedStep step ) throws TestFailureException, RemoteException
+   public StepResult runStep( RunInfo runInfo, PreparedStep step ) throws Exception
    {
       Date       startTime = new Date();
       StepResult stepResult;
@@ -1232,9 +1237,14 @@ public class KartaRuntime implements AutoCloseable
       String node = step.getNode();
       if ( StringUtils.isNotEmpty( node ) )
       {
-         // TODO: Handle local node
-         // TODO: Handle null node error
-         stepResult = nodeRegistry.getNode( node ).runStep( runInfo, step.toBuilder().node( null ).build() );
+         KartaNode nodeObj = nodeRegistry.getNode( node );
+
+         if ( nodeObj == null )
+         {
+            throw new Exception( "Configuration issue: Node with name " + node + " is not registered in node registry" );
+         }
+
+         stepResult = nodeObj.runStep( runInfo, step.toBuilder().node( null ).build() );
 
          if ( stepResult == null )
          {
@@ -1304,15 +1314,22 @@ public class KartaRuntime implements AutoCloseable
    /**
     * Runs a PreparedChaosAction based on the RunInfo locally or on a remote node and returns the StepResult
     */
-   public StepResult runChaosAction( RunInfo runInfo, PreparedChaosAction preparedChaosAction ) throws TestFailureException, RemoteException
+   public StepResult runChaosAction( RunInfo runInfo, PreparedChaosAction preparedChaosAction ) throws Exception
    {
       Date       startTime = new Date();
       StepResult stepResult;
 
-      String nodeName = preparedChaosAction.getNode();
-      if ( StringUtils.isNotEmpty( nodeName ) )
+      String node = preparedChaosAction.getNode();
+      if ( StringUtils.isNotEmpty( node ) )
       {
-         stepResult = nodeRegistry.getNode( nodeName ).performChaosAction( runInfo, preparedChaosAction.toBuilder().node( null ).build() );
+         KartaNode nodeObj = nodeRegistry.getNode( node );
+
+         if ( nodeObj == null )
+         {
+            throw new Exception( "Configuration issue: Node with name " + node + " is not registered in node registry" );
+         }
+
+         stepResult = nodeObj.performChaosAction( runInfo, preparedChaosAction.toBuilder().node( null ).build() );
 
          if ( stepResult == null )
          {

@@ -72,20 +72,30 @@ public abstract class WaitUtil
 
       boolean indefiniteWait = ( timeOut <= 0 );
 
+      boolean result = false;
+
       for ( long i = 0; indefiniteWait || ( ( currentTimeStamp.toEpochMilli() - initialTimeStamp.toEpochMilli() ) < timeOut ); sleep(
                pollInterval ), currentTimeStamp = Instant.now(), i++ )
       {
          if ( waitConditionFutureTask.isDone() )
          {
-            boolean result = waitConditionFutureTask.get();
-            shutdownExecutor( pollInterval, executorService );
-            return result;
+            result = waitConditionFutureTask.get();
+            break;
          }
       }
 
-      log.info( "Timed out waiting for condition evaluation to complete." );
+      if ( !result )
+      {
+         result = waitConditionFutureTask.isDone() && waitConditionFutureTask.get();
+
+         if ( !result )
+         {
+            log.info( "Timed out waiting for condition evaluation to complete." );
+         }
+      }
+
       shutdownExecutor( pollInterval, executorService );
-      return false;
+      return result;
    }
 
    private static void shutdownExecutor( long pollInterval, ExecutorService executorService ) throws InterruptedException
