@@ -58,7 +58,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
    private boolean initialized = false;
 
    @PropertyMapping( group = PLUGIN_NAME, value = "stepDefinitionPackageNames" )
-   private ArrayList<String> stepDefinitionPackageNames = new ArrayList<>();
+   private ArrayList<String> stepDefinitionPackageNames;
 
    @KartaAutoWired
    private KartaRuntime kartaRuntime;
@@ -412,28 +412,34 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
       }
       log.info( "Initializing " + PLUGIN_NAME + " plugin" );
 
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, StepDefinition.class, AnnotationScanner.IS_PUBLIC, null, null,
-               this::processStepDefinitionMethod );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, ChaosActionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null,
-               this::processChaosDefinitionMethod );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, ConditionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null,
-               this::processConditionMethod );
+      if ( ( stepDefinitionPackageNames != null ) && !stepDefinitionPackageNames.isEmpty() )
+      {
+         AnnotationScanner.forEachMethod( stepDefinitionPackageNames, StepDefinition.class, AnnotationScanner.IS_PUBLIC, null, null,
+                  this::processStepDefinitionMethod );
+         AnnotationScanner.forEachMethod( stepDefinitionPackageNames, ChaosActionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null,
+                  this::processChaosDefinitionMethod );
+         AnnotationScanner.forEachMethod( stepDefinitionPackageNames, ConditionDefinition.class, AnnotationScanner.IS_PUBLIC, null, null,
+                  this::processConditionMethod );
 
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeRun.class, AnnotationScanner.IS_PUBLIC, null, null,
-               processTaggedRunStartHook );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterRun.class, AnnotationScanner.IS_PUBLIC, null, null,
-               processTaggedRunStopHook );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeFeature.class, AnnotationScanner.IS_PUBLIC, null, null,
-               processTaggedFeatureStartHook );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterFeature.class, AnnotationScanner.IS_PUBLIC, null, null,
-               processTaggedFeatureStopHook );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeScenario.class, AnnotationScanner.IS_PUBLIC, null, null,
-               processTaggedScenarioStartHook );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterScenario.class, AnnotationScanner.IS_PUBLIC, null, null,
-               processTaggedScenarioStopHook );
-      AnnotationScanner.forEachMethod( stepDefinitionPackageNames, ScenarioFailed.class, AnnotationScanner.IS_PUBLIC, null, null,
-               processTaggedScenarioFailedHook );
-
+         AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeRun.class, AnnotationScanner.IS_PUBLIC, null, null,
+                  processTaggedRunStartHook );
+         AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterRun.class, AnnotationScanner.IS_PUBLIC, null, null,
+                  processTaggedRunStopHook );
+         AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeFeature.class, AnnotationScanner.IS_PUBLIC, null, null,
+                  processTaggedFeatureStartHook );
+         AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterFeature.class, AnnotationScanner.IS_PUBLIC, null, null,
+                  processTaggedFeatureStopHook );
+         AnnotationScanner.forEachMethod( stepDefinitionPackageNames, BeforeScenario.class, AnnotationScanner.IS_PUBLIC, null, null,
+                  processTaggedScenarioStartHook );
+         AnnotationScanner.forEachMethod( stepDefinitionPackageNames, AfterScenario.class, AnnotationScanner.IS_PUBLIC, null, null,
+                  processTaggedScenarioStopHook );
+         AnnotationScanner.forEachMethod( stepDefinitionPackageNames, ScenarioFailed.class, AnnotationScanner.IS_PUBLIC, null, null,
+                  processTaggedScenarioFailedHook );
+      }
+      else
+      {
+         log.warn( "No step definition packages found." );
+      }
       initialized = true;
       return true;
    }
@@ -716,56 +722,53 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             return StandardStepResults.error( errorMessage );
          }
 
-         if ( chaosActionHandlerMap.containsKey( chaosActionName ) )
+         Pair<Object, Method> chaosActionHandlerObjectMethodPair = chaosActionHandlerMap.get( chaosActionName );
+
+         Object chaosActionHandlerObject         = chaosActionHandlerObjectMethodPair.getLeft();
+         Method chaosActionHandlerMethodToInvoke = chaosActionHandlerObjectMethodPair.getRight();
+
+         Parameter[]       parametersObj = chaosActionHandlerMethodToInvoke.getParameters();
+         ArrayList<Object> values        = new ArrayList<>();
+         BeanRegistry      beanRegistry  = testExecutionContext.getContextBeanRegistry();
+
+         for ( Parameter parameter : parametersObj )
          {
-            Pair<Object, Method> chaosActionHandlerObjectMethodPair = chaosActionHandlerMap.get( chaosActionName );
+            Class<?> paramType = parameter.getType();
 
-            Object chaosActionHandlerObject         = chaosActionHandlerObjectMethodPair.getLeft();
-            Method chaosActionHandlerMethodToInvoke = chaosActionHandlerObjectMethodPair.getRight();
-
-            Parameter[]       parametersObj = chaosActionHandlerMethodToInvoke.getParameters();
-            ArrayList<Object> values        = new ArrayList<>();
-            BeanRegistry      beanRegistry  = testExecutionContext.getContextBeanRegistry();
-
-            for ( Parameter parameter : parametersObj )
+            if ( paramType == TestExecutionContext.class )
             {
-               Class<?> paramType = parameter.getType();
+               values.add( testExecutionContext );
+            }
+            else if ( paramType == PreparedChaosAction.class )
+            {
+               values.add( preparedChaosAction );
+            }
+            else
+            {
+               TestData        testDataAnnotation        = parameter.getAnnotation( TestData.class );
+               ContextBean     contextBeanAnnotation     = parameter.getAnnotation( ContextBean.class );
+               ContextVariable contextVariableAnnotation = parameter.getAnnotation( ContextVariable.class );
 
-               if ( paramType == TestExecutionContext.class )
+               JavaType typeToConvertTo = objectMapper.getTypeFactory().constructType( parameter.getParameterizedType() );
+
+               if ( testDataAnnotation != null )
                {
-                  values.add( testExecutionContext );
+                  values.add( objectMapper.convertValue( testData.get( testDataAnnotation.value() ), typeToConvertTo ) );
                }
-               else if ( paramType == PreparedChaosAction.class )
+               else if ( contextBeanAnnotation != null )
                {
-                  values.add( preparedChaosAction );
+                  if ( beanRegistry != null )
+                  {
+                     values.add( beanRegistry.get( contextBeanAnnotation.value() ) );
+                  }
+                  else
+                  {
+                     values.add( null );
+                  }
                }
-               else
+               else if ( contextVariableAnnotation != null )
                {
-                  TestData        testDataAnnotation        = parameter.getAnnotation( TestData.class );
-                  ContextBean     contextBeanAnnotation     = parameter.getAnnotation( ContextBean.class );
-                  ContextVariable contextVariableAnnotation = parameter.getAnnotation( ContextVariable.class );
-
-                  JavaType typeToConvertTo = objectMapper.getTypeFactory().constructType( parameter.getParameterizedType() );
-
-                  if ( testDataAnnotation != null )
-                  {
-                     values.add( objectMapper.convertValue( testData.get( testDataAnnotation.value() ), typeToConvertTo ) );
-                  }
-                  else if ( contextBeanAnnotation != null )
-                  {
-                     if ( beanRegistry != null )
-                     {
-                        values.add( beanRegistry.get( contextBeanAnnotation.value() ) );
-                     }
-                     else
-                     {
-                        values.add( null );
-                     }
-                  }
-                  else if ( contextVariableAnnotation != null )
-                  {
-                     values.add( objectMapper.convertValue( variables.get( contextVariableAnnotation.value() ), typeToConvertTo ) );
-                  }
+                  values.add( objectMapper.convertValue( variables.get( contextVariableAnnotation.value() ), typeToConvertTo ) );
                }
             }
 

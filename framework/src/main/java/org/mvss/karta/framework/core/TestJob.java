@@ -1,8 +1,8 @@
 package org.mvss.karta.framework.core;
 
+import lombok.*;
 import org.mvss.karta.framework.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.enums.JobType;
-import lombok.*;
 import org.quartz.SimpleTrigger;
 
 import java.io.Serializable;
@@ -46,4 +46,6 @@ public class TestJob implements Serializable
    private String node;
 
    private HashMap<String, ArrayList<Serializable>> testDataSet;
+
+   private boolean daemonProcess;
 }

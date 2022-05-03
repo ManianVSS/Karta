@@ -216,6 +216,11 @@ public class KartaMain
          formatter.printHelp( Constants.KARTA, options );
          return false;
       }
+      catch ( InterruptedException ie )
+      {
+         log.error( "Run interrupted" );
+         return false;
+      }
       catch ( Throwable t )
       {
          log.error( "Exception caught while init", t );

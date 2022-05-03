@@ -76,7 +76,11 @@ public class EventProcessor implements AutoCloseable
       {
          while ( !eventProcessingQueue.isEmpty() )
          {
-            WaitUtil.sleep( POLL_TIME_FOR_EVENT_QUEUE_CLEARING );
+            if ( WaitUtil.sleep( POLL_TIME_FOR_EVENT_QUEUE_CLEARING, false, false ) )
+            {
+               log.info( "Interrupted while trying to wait for event queue clearing" );
+               break;
+            }
          }
          eventListenerExecutorService.shutdown();
          if ( !eventListenerExecutorService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS ) )

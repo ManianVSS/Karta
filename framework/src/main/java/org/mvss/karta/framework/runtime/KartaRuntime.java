@@ -220,17 +220,28 @@ public class KartaRuntime implements AutoCloseable
       /*---------------------------------------------------------------------------------------------------------------------*/
       eventProcessor = new EventProcessor();
       configurator.loadProperties( eventProcessor );
-      pnpRegistry.getEnabledPluginsOfType( TestEventListener.class )
-               .forEach( ( plugin ) -> eventProcessor.addEventListener( (TestEventListener) plugin ) );
-      pnpRegistry.getEnabledPluginsOfType( TestLifeCycleHook.class )
-               .forEach( ( plugin ) -> eventProcessor.addLifeCycleHook( (TestLifeCycleHook) plugin ) );
+      for ( Plugin plugin : pnpRegistry.getEnabledPluginsOfType( TestEventListener.class ) )
+      {
+         if ( !eventProcessor.addEventListener( (TestEventListener) plugin ) )
+         {
+            return false;
+         }
+      }
+
+      for ( Plugin plugin : pnpRegistry.getEnabledPluginsOfType( TestLifeCycleHook.class ) )
+      {
+         if ( !eventProcessor.addLifeCycleHook( (TestLifeCycleHook) plugin ) )
+         {
+            return false;
+         }
+      }
 
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize node registry
       /*---------------------------------------------------------------------------------------------------------------------*/
       // TODO: Add task pulling worker minions to support minions as clients rather than open server sockets
 
-      nodeRegistry = kartaConfiguration.createNodeRegistry(); //new KartaNodeRegistry();
+      nodeRegistry = kartaConfiguration.createNodeRegistry();
 
       if ( initializeNodes )
       {
@@ -934,7 +945,7 @@ public class KartaRuntime implements AutoCloseable
    /**
     * Runs a TestFeature locally (or remotely invoked) using the RunInfo provided and returns the FeatureResult
     */
-   public FeatureResult runFeature( RunInfo runInfo, TestFeature feature )
+   public FeatureResult runFeature( RunInfo runInfo, TestFeature feature ) throws InterruptedException
    {
       StepRunner stepRunner = getStepRunner( runInfo );
 
@@ -957,6 +968,10 @@ public class KartaRuntime implements AutoCloseable
       {
          FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime( this ).runInfo( runInfo ).testFeature( feature ).build();
          return featureRunner.call();
+      }
+      catch ( InterruptedException ie )
+      {
+         throw ie;
       }
       catch ( Throwable t )
       {
@@ -1004,7 +1019,7 @@ public class KartaRuntime implements AutoCloseable
     * Runs a PreparedScenario locally (or remotely invoked) using the RunInfo provided and returns the ScenarioResult
     */
    public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario,
-                                          long scenarioIterationNumber )
+                                          long scenarioIterationNumber ) throws InterruptedException
    {
       ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime( this ).runInfo( runInfo ).featureName( featureName )
                .iterationIndex( iterationIndex ).testScenario( testScenario ).scenarioIterationNumber( scenarioIterationNumber ).build();
@@ -1215,7 +1230,7 @@ public class KartaRuntime implements AutoCloseable
    /**
     * Evaluates if the step to run based on condition in the step. True if no condition mentioned.
     */
-   public boolean shouldStepNeedNotBeRun( RunInfo runInfo, PreparedStep step )
+   public boolean shouldStepNeedNotBeRun( RunInfo runInfo, PreparedStep step ) throws InterruptedException
    {
       String condition = step.getCondition();
       if ( StringUtils.isNotBlank( condition ) )
@@ -1272,21 +1287,12 @@ public class KartaRuntime implements AutoCloseable
             }
 
             stepExecutorService.shutdown();
-            try
+
+            if ( !stepExecutorService.awaitTermination( Long.MAX_VALUE, TimeUnit.SECONDS ) )
             {
-               // TODO: Change to WaitUtil implementation with max timeout
-               if ( !stepExecutorService.awaitTermination( Long.MAX_VALUE, TimeUnit.SECONDS ) )
-               {
-                  log.error( "Wait for executor service termination failed." );
-               }
+               log.error( "Wait for executor service termination failed." );
             }
-            catch ( InterruptedException ie )
-            {
-               if ( !stepExecutorService.isTerminated() )
-               {
-                  log.warn( "Wait for parallel step threads was interrupted ", ie );
-               }
-            }
+
          }
          else
          {

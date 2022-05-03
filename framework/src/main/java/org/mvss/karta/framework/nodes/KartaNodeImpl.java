@@ -38,7 +38,7 @@ public class KartaNodeImpl extends UnicastRemoteObject implements KartaNode, Ser
    }
 
    @Override
-   public FeatureResult runFeature( RunInfo runInfo, TestFeature feature ) throws RemoteException
+   public FeatureResult runFeature( RunInfo runInfo, TestFeature feature ) throws RemoteException, InterruptedException
    {
       return kartaRuntime.runFeature( runInfo, feature );
    }
@@ -58,7 +58,7 @@ public class KartaNodeImpl extends UnicastRemoteObject implements KartaNode, Ser
 
    @Override
    public ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario,
-                                          long scenarioIterationNumber ) throws RemoteException
+                                          long scenarioIterationNumber ) throws RemoteException, InterruptedException
    {
       return kartaRuntime.runTestScenario( runInfo, featureName, iterationIndex, testScenario, scenarioIterationNumber );
    }

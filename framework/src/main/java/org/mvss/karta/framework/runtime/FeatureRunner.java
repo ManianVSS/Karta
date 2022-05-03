@@ -11,7 +11,6 @@ import org.mvss.karta.framework.runtime.event.*;
 import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
-import org.mvss.karta.framework.utils.WaitUtil;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -66,9 +65,25 @@ public class FeatureRunner implements Callable<FeatureResult>
    @Builder.Default
    private ArrayList<Long> runningJobs = new ArrayList<>();
 
+   @Builder.Default
+   private ArrayList<Thread> daemonJobThreads = new ArrayList<>();
+
    private void deleteJobs()
    {
       boolean deleteJobResults = QuartzJobScheduler.deleteJobs( runningJobs );
+
+      for ( Thread daemonJobThread : daemonJobThreads )
+      {
+         try
+         {
+            daemonJobThread.interrupt();
+         }
+         catch ( SecurityException se )
+         {
+            log.error( "Error while interrupting daemon job thread " + daemonJobThread.getName(), se );
+            deleteJobResults = false;
+         }
+      }
 
       if ( !deleteJobResults )
       {
@@ -91,7 +106,7 @@ public class FeatureRunner implements Callable<FeatureResult>
     * Call implementation for asynchronous calling.
     */
    @Override
-   public FeatureResult call()
+   public FeatureResult call() throws InterruptedException
    {
       try
       {
@@ -130,7 +145,15 @@ public class FeatureRunner implements Callable<FeatureResult>
                long jobInterval = job.getInterval();
                int  repeatCount = job.getIterationCount();
 
-               if ( jobInterval > 0 )
+               if ( job.isDaemonProcess() )
+               {
+                  DaemonTestJob daemonTestJob = DaemonTestJob.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo )
+                           .featureName( testFeature.getName() ).testJob( job ).contextBeanRegistry( contextBeanRegistry ).build();
+                  Thread daemonJobThread = new Thread( daemonTestJob );
+                  daemonJobThread.start();
+                  daemonJobThreads.add( daemonJobThread );
+               }
+               else if ( jobInterval > 0 )
                {
                   HashMap<String, Object> jobData = new HashMap<>();
                   jobData.put( Constants.KARTA_RUNTIME, kartaRuntime );
@@ -149,8 +172,9 @@ public class FeatureRunner implements Callable<FeatureResult>
             }
             catch ( Throwable t )
             {
-               log.error( "Exception occured while scheduling jobs ", t );
+               log.error( "Exception occurred while scheduling jobs ", t );
                deleteJobs();
+               throw t;
             }
          }
 
@@ -321,7 +345,7 @@ public class FeatureRunner implements Callable<FeatureResult>
             {
                if ( ( iterationIndex + 1 ) % ( numberOfIterationsInParallel * iterationsPerCoolDownPeriod ) == 0 )
                {
-                  WaitUtil.sleep( coolDownBetweenIterations.toMillis() );
+                  Thread.sleep( coolDownBetweenIterations.toMillis() );
                }
             }
          }
@@ -391,6 +415,10 @@ public class FeatureRunner implements Callable<FeatureResult>
          }
 
          eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature, result ) );
+      }
+      catch ( InterruptedException ie )
+      {
+         throw ie;
       }
       catch ( Throwable t )
       {

@@ -21,26 +21,58 @@ public abstract class WaitUtil
    private static final int    PROGRESS_STAGE_ITERATION_COUNT = 10;
 
    /**
-    * Sleeps for the specified time amount without raising any interrupted exceptions
+    * Sleeps for the specified time amount and throws {@link InterruptedException} immediately or after sleeping if ignored
     *
-    * @param milliseconds The sleep time in milliseconds.
+    * @param milliseconds               The sleep time in milliseconds.
+    * @param ignoreInterruptDuringSleep Whether to ignore an {@link InterruptedException} while sleeping
+    * @param throwInterruptedException  Whether to throw the {@link InterruptedException} if interrupted.
+    *                                   <b><u>Note: If using this option, use the return value as an indicator to close the thread.</u></b>
+    * @return true if interrupted and configured to not throw {@link InterruptedException} else returns false
     */
-   public static void sleep( long milliseconds )
+   public static boolean sleep( long milliseconds, boolean ignoreInterruptDuringSleep, boolean throwInterruptedException ) throws InterruptedException
    {
       long currentTime = System.currentTimeMillis();
       long sleepUntil  = currentTime + milliseconds;
 
-      try
+      if ( ignoreInterruptDuringSleep )
       {
-         Thread.sleep( sleepUntil - currentTime );
-      }
-      catch ( InterruptedException ignored )
-      {
-         if ( !( sleepUntil >= ( currentTime = System.currentTimeMillis() ) ) )
+         try
          {
-            sleep( sleepUntil - currentTime );
+            Thread.sleep( milliseconds );
+         }
+         catch ( InterruptedException interruptedException )
+         {
+            if ( !( sleepUntil >= ( currentTime = System.currentTimeMillis() ) ) )
+            {
+               sleep( sleepUntil - currentTime, true, false );
+
+               if ( throwInterruptedException )
+               {
+                  throw interruptedException;
+               }
+               else
+               {
+                  return true;
+               }
+            }
          }
       }
+      else if ( throwInterruptedException )
+      {
+         try
+         {
+            Thread.sleep( milliseconds );
+         }
+         catch ( InterruptedException ignored )
+         {
+            return true;
+         }
+      }
+      else
+      {
+         Thread.sleep( milliseconds );
+      }
+      return false;
    }
 
    /**
@@ -74,7 +106,7 @@ public abstract class WaitUtil
 
       boolean result = false;
 
-      for ( long i = 0; indefiniteWait || ( ( currentTimeStamp.toEpochMilli() - initialTimeStamp.toEpochMilli() ) < timeOut ); sleep(
+      for ( long i = 0; indefiniteWait || ( ( currentTimeStamp.toEpochMilli() - initialTimeStamp.toEpochMilli() ) < timeOut ); Thread.sleep(
                pollInterval ), currentTimeStamp = Instant.now(), i++ )
       {
          if ( waitConditionFutureTask.isDone() )
@@ -122,13 +154,14 @@ public abstract class WaitUtil
     * @return WaitResult
     */
    public static WaitResult waitUntil( CanThrowBooleanSupplier waitCondition, long timeOut, long pollInterval, LongConsumer waitIterationTask )
+            throws InterruptedException
    {
       Instant initialTimeStamp = Instant.now();
       Instant currentTimeStamp = initialTimeStamp;
 
       boolean indefiniteWait = ( timeOut <= 0 );
 
-      for ( long i = 0; indefiniteWait || ( ( currentTimeStamp.toEpochMilli() - initialTimeStamp.toEpochMilli() ) < timeOut ); sleep(
+      for ( long i = 0; indefiniteWait || ( ( currentTimeStamp.toEpochMilli() - initialTimeStamp.toEpochMilli() ) < timeOut ); Thread.sleep(
                pollInterval ), currentTimeStamp = Instant.now(), i++ )
       {
          try
@@ -141,6 +174,10 @@ public abstract class WaitUtil
             {
                waitIterationTask.accept( i );
             }
+         }
+         catch ( InterruptedException ie )
+         {
+            throw ie;
          }
          catch ( Throwable t )
          {
@@ -165,7 +202,7 @@ public abstract class WaitUtil
     * @return WaitResult
     */
    public static WaitResult waitUntilConditionFails( CanThrowBooleanSupplier failWaitCondition, long timeOut, long pollInterval,
-                                                     LongConsumer waitIterationTask )
+                                                     LongConsumer waitIterationTask ) throws InterruptedException
    {
       return waitUntil( new InvertCanThrowBooleanSupplier( failWaitCondition ), timeOut, pollInterval, waitIterationTask );
    }

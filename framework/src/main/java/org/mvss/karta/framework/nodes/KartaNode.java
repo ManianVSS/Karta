@@ -19,7 +19,7 @@ public interface KartaNode extends Remote, AutoCloseable
    /**
     * Run a test feature
     */
-   FeatureResult runFeature( RunInfo runInfo, TestFeature feature ) throws RemoteException;
+   FeatureResult runFeature( RunInfo runInfo, TestFeature feature ) throws RemoteException, InterruptedException;
 
    /**
     * Run a test job iteration
@@ -30,7 +30,7 @@ public interface KartaNode extends Remote, AutoCloseable
     * Run a scenario iteration
     */
    ScenarioResult runTestScenario( RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario,
-                                   long scenarioIterationNumber ) throws RemoteException;
+                                   long scenarioIterationNumber ) throws RemoteException, InterruptedException;
 
    /**
     * Run a prepared test step.

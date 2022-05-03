@@ -69,7 +69,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
    }
 
    @Override
-   public HashMap<String, ScenarioResult> call()
+   public HashMap<String, ScenarioResult> call() throws InterruptedException
    {
       result = new HashMap<>();
       try
@@ -96,19 +96,9 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
                      0;
             log.debug( "Running Scenario: " + testScenario.getName() + "[" + scenarioIterationNumber + "]:" );
 
-            PreparedScenario preparedScenario;
-
-            try
-            {
-               preparedScenario = kartaRuntime.getPreparedScenario( runInfo, featureName, scenarioIterationNumber, DataUtils.cloneMap( variables ),
-                        commonTestDataSet, scenarioSetupSteps, testScenario, scenarioTearDownSteps );
-               scenarioMapping.put( preparedScenario, testScenario );
-            }
-            catch ( Throwable t )
-            {
-               log.error( "Exception occurred when preparing scenario " + testScenario + " for running", t );
-               continue;
-            }
+            PreparedScenario preparedScenario = kartaRuntime.getPreparedScenario( runInfo, featureName, scenarioIterationNumber,
+                     DataUtils.cloneMap( variables ), commonTestDataSet, scenarioSetupSteps, testScenario, scenarioTearDownSteps );
+            scenarioMapping.put( preparedScenario, testScenario );
 
             eventProcessor.raiseEvent( new ScenarioStartEvent( runName, featureName, iterationIndex, testScenario ) );
 
@@ -136,6 +126,10 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
             }
          }
 
+      }
+      catch ( InterruptedException ie )
+      {
+         throw ie;
       }
       catch ( Throwable t )
       {

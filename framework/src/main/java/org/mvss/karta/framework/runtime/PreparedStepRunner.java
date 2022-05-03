@@ -1,12 +1,12 @@
 package org.mvss.karta.framework.runtime;
 
+import lombok.*;
+import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
-import lombok.*;
-import lombok.extern.log4j.Log4j2;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,7 +30,7 @@ public class PreparedStepRunner implements Callable<StepResult>
    private PreparedStep         step;
    private Consumer<StepResult> resultConsumer;
 
-   public StepResult execute()
+   public StepResult execute() throws InterruptedException
    {
       StepResult stepResult;
 
@@ -65,21 +65,9 @@ public class PreparedStepRunner implements Callable<StepResult>
                }
 
                stepExecutorService.shutdown();
-               try
+               if ( !stepExecutorService.awaitTermination( Long.MAX_VALUE, TimeUnit.SECONDS ) )
                {
-                  // TODO: Change to WaitUtil impl with max timeout
-                  if ( !stepExecutorService.awaitTermination( Long.MAX_VALUE, TimeUnit.SECONDS ) )
-                  {
-                     log.error( "Failed awaiting termination of step executor service" );
-                  }
-               }
-               catch ( InterruptedException ie )
-               {
-                  // Nothing to do
-                  if ( !stepExecutorService.isTerminated() )
-                  {
-                     log.warn( "Wait for parallel step threads was interrupted ", ie );
-                  }
+                  log.error( "Failed awaiting termination of step executor service" );
                }
                stepResult = cumulativeStepResult;
             }
@@ -109,7 +97,7 @@ public class PreparedStepRunner implements Callable<StepResult>
    }
 
    @Override
-   public StepResult call()
+   public StepResult call() throws InterruptedException
    {
       Date       startTime = new Date();
       StepResult stepResult;//= new StepResult();
@@ -131,6 +119,10 @@ public class PreparedStepRunner implements Callable<StepResult>
                }
             }
          }
+      }
+      catch ( InterruptedException e )
+      {
+         throw e;
       }
       catch ( Throwable t )
       {

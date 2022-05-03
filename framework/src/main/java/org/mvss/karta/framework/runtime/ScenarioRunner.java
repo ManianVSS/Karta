@@ -2,12 +2,12 @@ package org.mvss.karta.framework.runtime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import org.mvss.karta.framework.core.*;
-import org.mvss.karta.framework.nodes.KartaNode;
-import org.mvss.karta.framework.runtime.event.*;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.mvss.karta.framework.core.*;
+import org.mvss.karta.framework.nodes.KartaNode;
+import org.mvss.karta.framework.runtime.event.*;
 
 import java.rmi.RemoteException;
 import java.util.Date;
@@ -52,7 +52,7 @@ public class ScenarioRunner implements Callable<ScenarioResult>
    }
 
    @Override
-   public ScenarioResult call()
+   public ScenarioResult call() throws InterruptedException
    {
       // TODO: Check for nulls
 
@@ -168,6 +168,10 @@ public class ScenarioRunner implements Callable<ScenarioResult>
                   }
                }
             }
+         }
+         catch ( InterruptedException ie )
+         {
+            throw ie;
          }
          catch ( Throwable t )
          {

@@ -1,5 +1,8 @@
 package org.mvss.karta.framework.runtime;
 
+import lombok.*;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.core.FeatureResult;
 import org.mvss.karta.framework.core.ScenarioResult;
 import org.mvss.karta.framework.core.SerializableKVP;
@@ -13,9 +16,6 @@ import org.mvss.karta.framework.runtime.interfaces.TestDataSource;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
-import lombok.*;
-import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
@@ -57,7 +57,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
    }
 
    @Override
-   public FeatureResult call()
+   public FeatureResult call() throws InterruptedException
    {
       try
       {
@@ -234,16 +234,9 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
 
          iterationExecutionService.shutdown();
 
-         try
+         if ( !iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS ) )
          {
-            if ( !iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS ) )
-            {
-               log.error( "Failed awaiting termination for iteration execution service." );
-            }
-         }
-         catch ( InterruptedException ie )
-         {
-            log.error( "Interruption while awaiting termination for iteration execution service." );
+            log.error( "Failed awaiting termination for iteration execution service." );
          }
 
          scenarioMethods.forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario.getObject() ).set( 0 ) );
@@ -289,6 +282,10 @@ public class JavaFeatureRunner implements Callable<FeatureResult>
          }
 
          eventProcessor.raiseEvent( new JavaFeatureCompleteEvent( runName, featureName, result ) );
+      }
+      catch ( InterruptedException ie )
+      {
+         throw ie;
       }
       catch ( Throwable t )
       {

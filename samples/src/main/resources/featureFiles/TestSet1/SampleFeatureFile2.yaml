@@ -21,6 +21,11 @@ testJobs:
       - step: the calculator is powered on
       - step: the all clear button is pressed
 
+  - name: daemonJob1
+    daemonProcess: true
+    steps:
+      - step: monitor the calculator
+
 setupSteps:
   - step: Given the calculator is powered on
 

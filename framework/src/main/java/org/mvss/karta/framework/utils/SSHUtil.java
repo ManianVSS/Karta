@@ -141,7 +141,8 @@ public class SSHUtil implements AutoCloseable
             exitCode = channel.getExitStatus();
             break;
          }
-         WaitUtil.sleep( 1000 );
+         //noinspection BusyWait
+         Thread.sleep( 1000 );
       }
       channel.disconnect();
       return exitCode;
@@ -232,7 +233,8 @@ public class SSHUtil implements AutoCloseable
             exitCode = channel.getExitStatus();
             break;
          }
-         WaitUtil.sleep( 1000 );
+         //noinspection BusyWait
+         Thread.sleep( 1000 );
       }
       channel.disconnect();
       return exitCode;
@@ -403,7 +405,10 @@ public class SSHUtil implements AutoCloseable
 
    public void uploadFolder( String localFolder, String remoteFolder ) throws Exception
    {
-      executeCommand( "mkdir -p " + remoteFolder );
+      if ( executeCommand( "mkdir -p " + remoteFolder ) != 0 )
+      {
+         return;
+      }
 
       File   folder      = new File( localFolder );
       File[] listOfFiles = folder.listFiles();
