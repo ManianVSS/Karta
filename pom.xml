@@ -16,7 +16,8 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <project.version>0.1.1</project.version>
         <spring.boot.version>2.6.2</spring.boot.version>
-		<log4j2.version>2.17.1</log4j2.version>
+        <log4j2.version>2.17.1</log4j2.version>
+        <distmgmt.repo.url>https://maven.pkg.github.com/ManianVSS/Karta</distmgmt.repo.url>
     </properties>
 
     <modules>
@@ -42,7 +43,7 @@
         <repository>
             <id>github</id>
             <name>GitHub ManianVSS Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/ManianVSS/Karta</url>
+            <url>${distmgmt.repo.url}</url>
         </repository>
     </distributionManagement>
 
