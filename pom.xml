@@ -17,6 +17,10 @@
         <project.version>0.1.1</project.version>
         <spring.boot.version>2.6.2</spring.boot.version>
         <log4j2.version>2.17.1</log4j2.version>
+
+        <!-- While building can overwrite with -Ddistmgmt.repo.id=myrepoid -Ddistmgmt.repo.url=http://mynexus.url/path -->
+        <distmgmt.repo.id>github</distmgmt.repo.id>
+        <distmgmt.repo.name>GitHub ManianVSS Apache Maven Packages</distmgmt.repo.name>
         <distmgmt.repo.url>https://maven.pkg.github.com/ManianVSS/Karta</distmgmt.repo.url>
     </properties>
 
@@ -41,8 +45,8 @@
 
     <distributionManagement>
         <repository>
-            <id>github</id>
-            <name>GitHub ManianVSS Apache Maven Packages</name>
+            <id>${distmgmt.repo.id}</id>
+            <name>${distmgmt.repo.name}</name>
             <url>${distmgmt.repo.url}</url>
         </repository>
     </distributionManagement>
