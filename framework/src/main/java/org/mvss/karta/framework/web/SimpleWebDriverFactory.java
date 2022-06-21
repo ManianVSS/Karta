@@ -109,6 +109,11 @@ public class SimpleWebDriverFactory
             chromeOptions.setAcceptInsecureCerts( webDriverOptions.isIgnoreCertificates() );
             chromeOptions.setHeadless( webDriverOptions.isHeadless() );
 
+            if ( webDriverOptions.getAdditionalArguments() != null )
+            {
+               chromeOptions.addArguments( webDriverOptions.getAdditionalArguments() );
+            }
+
             if ( proxy != null )
             {
                chromeOptions.setProxy( proxy );
@@ -121,6 +126,11 @@ public class SimpleWebDriverFactory
             FirefoxOptions firefoxOptions = new FirefoxOptions();
             firefoxOptions.setAcceptInsecureCerts( webDriverOptions.isIgnoreCertificates() );
             firefoxOptions.setHeadless( webDriverOptions.isHeadless() );
+
+            if ( webDriverOptions.getAdditionalArguments() != null )
+            {
+               firefoxOptions.addArguments( webDriverOptions.getAdditionalArguments() );
+            }
 
             if ( proxy != null )
             {

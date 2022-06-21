@@ -30,6 +30,9 @@ public class RARestRequest implements RestRequest
    private ContentType             accept;
    private Serializable            body;
 
+   protected boolean                 multiPartEnabled;
+   protected HashMap<String, Object> multiParts = new HashMap<>();
+
    public static RestRequestBuilder requestBuilder()
    {
       return new RestRequestBuilder()
@@ -45,6 +48,8 @@ public class RARestRequest implements RestRequest
             request.accept      = accept;
             request.body        = body;
             request.cookies.putAll( cookies );
+            request.multiPartEnabled = multiPartEnabled;
+            request.multiParts       = multiParts;
 
             return request;
          }
@@ -55,14 +60,24 @@ public class RARestRequest implements RestRequest
    {
       if ( restClient == null )
       {
+         //noinspection resource
          restClient = new RARestClient();
       }
 
       RequestSpecification baseSpecification    = restClient.getRequestSpecBuilder().build();
       RequestSpecification requestSpecification = ( baseSpecification == null ) ? RestAssured.given() : baseSpecification;
       requestSpecification.cookies( restClient.getCookies() );
-      requestSpecification.contentType( contentType.toString() ).accept( accept.toString() ).headers( headers ).cookies( cookies ).params( params )
-               .body( body );
+
+      requestSpecification.accept( accept.toString() ).headers( headers ).cookies( cookies ).params( params );
+
+      if ( multiPartEnabled )
+      {
+         multiParts.forEach( requestSpecification::multiPart );
+      }
+      else
+      {
+         requestSpecification.contentType( contentType.toString() ).body( body );
+      }
 
       requestSpecification.baseUri( DataUtils.constructURL( restClient.getBaseUrl(), this.url ) );
 

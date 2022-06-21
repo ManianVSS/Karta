@@ -3,13 +3,19 @@ package org.mvss.karta.framework.restclient;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.SerializationUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.SerializableEntity;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
 
+import java.io.File;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Base64;
 import java.util.HashMap;
@@ -32,6 +38,9 @@ public class ApacheRestRequest implements RestRequest
    private ContentType             accept;
    private Serializable            body;
 
+   protected boolean                 multiPartEnabled;
+   protected HashMap<String, Object> multiParts = new HashMap<>();
+
    public static RestRequestBuilder requestBuilder()
    {
       return new RestRequestBuilder()
@@ -47,6 +56,8 @@ public class ApacheRestRequest implements RestRequest
             request.accept      = accept;
             request.body        = body;
             request.cookies.putAll( cookies );
+            request.multiPartEnabled = multiPartEnabled;
+            request.multiParts       = multiParts;
 
             return request;
          }
@@ -70,7 +81,37 @@ public class ApacheRestRequest implements RestRequest
          requestBuilder.addParameter( parameter.getKey(), parameter.getValue() );
       }
 
-      if ( body != null )
+      if ( multiPartEnabled )
+      {
+         MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
+         entityBuilder.setMode( HttpMultipartMode.BROWSER_COMPATIBLE );
+
+         multiParts.forEach( ( name, value ) -> {
+            if ( value instanceof String )
+            {
+               entityBuilder.addTextBody( name, (String) value );
+            }
+            else if ( value instanceof File )
+            {
+               entityBuilder.addBinaryBody( name, (File) value );
+            }
+            else if ( value instanceof InputStream )
+            {
+               entityBuilder.addBinaryBody( name, (InputStream) value );
+            }
+            else if ( value.getClass().isArray() && ( value.getClass().getComponentType() == byte.class ) )
+            {
+               entityBuilder.addBinaryBody( name, (byte[]) value );
+            }
+            else if ( value instanceof Serializable )
+            {
+               entityBuilder.addBinaryBody( name, SerializationUtils.serialize( (Serializable) value ) );
+            }
+         } );
+         HttpEntity multiPartHttpEntity = entityBuilder.build();
+         requestBuilder.setEntity( multiPartHttpEntity );
+      }
+      else if ( body != null )
       {
          if ( contentType == ContentType.APPLICATION_OCTET_STREAM )
          {

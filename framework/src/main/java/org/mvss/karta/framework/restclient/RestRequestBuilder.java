@@ -1,9 +1,9 @@
 package org.mvss.karta.framework.restclient;
 
-import org.mvss.karta.framework.runtime.Constants;
-import org.mvss.karta.framework.utils.ParserUtils;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.SerializationUtils;
+import org.mvss.karta.framework.runtime.Constants;
+import org.mvss.karta.framework.utils.ParserUtils;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -19,7 +19,11 @@ public abstract class RestRequestBuilder implements Serializable
    protected       ContentType                   contentType;
    protected       ContentType                   accept;
    protected       Serializable                  body;
-   protected final HashMap<String, String>       cookies = new HashMap<>();
+
+   protected boolean                 multiPartEnabled;
+   protected HashMap<String, Object> multiParts = new HashMap<>();
+
+   protected final HashMap<String, String> cookies = new HashMap<>();
 
    public RestRequestBuilder url( String url )
    {
@@ -128,6 +132,13 @@ public abstract class RestRequestBuilder implements Serializable
    {
       this.accept = contentType;
       this.header( Constants.ACCEPT, contentType.mimeType );
+      return this;
+   }
+
+   public RestRequestBuilder multiPart( String name, Object multiPartObject )
+   {
+      multiPartEnabled = true;
+      multiParts.put( name, multiPartObject );
       return this;
    }
 

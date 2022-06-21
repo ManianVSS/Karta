@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
@@ -13,6 +14,8 @@ import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -176,5 +179,14 @@ public class ApacheRestResponse implements RestResponse
    public InputStream getStream()
    {
       return contentStream;
+   }
+
+   @Override
+   public void downloadFile( File file ) throws IOException
+   {
+      try (FileOutputStream fileOutputStream = new FileOutputStream( file ))
+      {
+         IOUtils.copy( contentStream, fileOutputStream );
+      }
    }
 }

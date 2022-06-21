@@ -2,12 +2,16 @@ package org.mvss.karta.framework.restclient;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import org.mvss.karta.framework.runtime.Constants;
 import io.restassured.http.Header;
 import io.restassured.response.Response;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.apache.commons.io.IOUtils;
+import org.mvss.karta.framework.runtime.Constants;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 
@@ -83,5 +87,14 @@ public class RARestResponse implements RestResponse
    public void close() throws Exception
    {
       response.asInputStream().close();
+   }
+
+   @Override
+   public void downloadFile( File file ) throws IOException
+   {
+      try (FileOutputStream fileOutputStream = new FileOutputStream( file ))
+      {
+         IOUtils.copy( response.asInputStream(), fileOutputStream );
+      }
    }
 }

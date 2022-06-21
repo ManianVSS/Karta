@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 @Getter
@@ -43,4 +44,6 @@ public class WebDriverOptions implements Serializable
 
    @Builder.Default
    private Duration longWaitTimeout = Duration.ofMinutes( 3 );
+
+   private ArrayList<String> additionalArguments;
 }
