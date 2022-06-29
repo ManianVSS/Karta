@@ -5,6 +5,7 @@ import org.mvss.karta.framework.core.*;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
 import org.mvss.karta.framework.runtime.TestExecutionContext;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Random;
@@ -16,12 +17,22 @@ public class StepDefinitionsCollection2
    private volatile String token  = RandomizationUtils.randomAlphaNumericString( random, 10 );
 
    @StepDefinition( "a binary operation is perfomed on the calculator" )
-   public StepResult a_binary_operation_is_performed_on_the_calculator( TestExecutionContext context ) throws Throwable
+   public StepResult a_binary_operation_is_performed_on_the_calculator( TestExecutionContext context, @TestData( "operand2" ) Integer intRange,
+                                                                        @TestData( "operand3" ) byte[] byteRange )
    {
-      log.info( "a binary operation is perfomed on the calculator with token " + token + " and  data: " + context.getData() );
-      Thread.sleep( 1000 );
+      log.info( "a binary operation is performed on the calculator with token " + token + " and  data: " + context.getData() );
+
+      if ( byteRange != null )
+      {
+         log.info( "Operand 3 is " + DatatypeConverter.printHexBinary( byteRange ) );
+      }
+      
       HashMap<String, Serializable> results = new HashMap<>();
-      results.put( "BinaryOperationResult", random.nextInt( 100 ) );
+      if ( ( intRange == null ) || ( intRange == 0 ) )
+      {
+         intRange = Integer.MAX_VALUE;
+      }
+      results.put( "BinaryOperationResult", random.nextInt( intRange ) );
       return StepResult.builder().successful( true ).results( results ).build();
    }
 

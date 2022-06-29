@@ -26,6 +26,7 @@ testScenarios:
           operand1: 100
           operation: "/"
           operand2: 200
+          operand3: [ 1, 2, 3 ]
       - step: And the calculator should display "0.5"
 
   - name: Scenario3
@@ -43,12 +44,17 @@ testScenarios:
         testData:
           operand1: 0
           operation: "*"
-        variableTestDataRuleMap:
+        variableTestDataRules:
           operand2:
             ruleType: INTEGER_RANGE
             range:
               min: 1
               max: 100000
+          operand3:
+            ruleType: BINARY_DATA_RANGE
+            range:
+              min: 1024
+              max: 2048
       - step: And the calculator should display "0"
 
   - name: ConditionalStepExecution

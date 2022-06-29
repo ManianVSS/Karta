@@ -2,7 +2,6 @@ package org.mvss.karta.framework.randomization;
 
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
-import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -234,7 +233,7 @@ public class ObjectGenerationRule implements Serializable, ObjectWithChance
 
                byte[] toReturn = new byte[length];
                random.nextBytes( toReturn );
-               return Base64Coder.encode( toReturn );
+               return toReturn;
 
             default:
                return null;
