@@ -62,8 +62,8 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
     */
    private synchronized void accumulateScenarioResult( PreparedScenario scenario, ScenarioResult scenarioResult )
    {
-      result.put( scenario.getName(), scenarioResult.trimForReport() );
-
+      result.put( scenario.getName(), kartaRuntime.getKartaConfiguration().getDetailedReport() ? scenarioResult : scenarioResult.trimForReport() );
+    
       kartaRuntime.getEventProcessor().raiseEvent(
                new ScenarioCompleteEvent( runInfo.getRunName(), featureName, iterationIndex, scenarioMapping.get( scenario ), scenarioResult ) );
    }

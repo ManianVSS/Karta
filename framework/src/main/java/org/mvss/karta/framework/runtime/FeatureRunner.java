@@ -121,7 +121,7 @@ public class FeatureRunner implements Callable<FeatureResult>
 
          Random random = kartaRuntime.getRandom();
 
-         boolean useMinions = kartaRuntime.getKartaConfiguration().isMinionsEnabled() && !nodeRegistry.getMinions().isEmpty();
+         boolean useMinions = kartaRuntime.getKartaConfiguration().getMinionsEnabled() && !nodeRegistry.getMinions().isEmpty();
 
          eventProcessor.raiseEvent( new FeatureStartEvent( runName, testFeature ) );
 

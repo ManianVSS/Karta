@@ -111,7 +111,7 @@ public class KartaConfiguration implements Serializable
     * Indicates if minions are enabled to run scenario iterations for load sharing.
     */
    @Builder.Default
-   private boolean minionsEnabled = true;
+   private Boolean minionsEnabled = true;
 
    /**
     * The map of thread group name and respective thread count.</br>
@@ -132,6 +132,12 @@ public class KartaConfiguration implements Serializable
     */
    @Builder.Default
    private HashMap<String, HashMap<String, Serializable>> properties = new HashMap<>();
+
+   /**
+    * Indicates if detailed reporting is to be disabled by trimming.
+    */
+   @Builder.Default
+   private Boolean detailedReport = true;
 
    /**
     * Expands system and environmental variables into keys configuration value. </br>
@@ -168,6 +174,7 @@ public class KartaConfiguration implements Serializable
       DataUtils.mergeMapInto( override.threadGroups, threadGroups );
       DataUtils.addMissing( configurationScanPackages, override.configurationScanPackages );
       Configurator.mergeProperties( properties, override.properties );
+      detailedReport = override.detailedReport;
    }
 
    public static synchronized KartaConfiguration getDefaultConfiguration()
@@ -209,6 +216,7 @@ public class KartaConfiguration implements Serializable
 
       kartaConfiguration.threadGroups.put( Constants.__DEFAULT__, 1 );
 
+      kartaConfiguration.detailedReport = true;
       return kartaConfiguration;
    }
 
