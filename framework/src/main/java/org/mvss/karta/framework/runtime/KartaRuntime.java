@@ -156,12 +156,14 @@ public class KartaRuntime implements AutoCloseable
          kartaConfiguration = KartaConfiguration.getDefaultConfiguration();
       }
 
+      log.debug( "Karta configuration loaded as: " + kartaConfiguration );
       configString = ClassPathLoaderUtils.readAllText( Constants.KARTA_CONFIGURATION_OVERRIDES_YAML );
       if ( configString != null )
       {
          try
          {
             KartaConfiguration kartaOverrideConfiguration = yamlObjectMapper.readValue( configString, KartaConfiguration.class );
+            log.debug( "Karta configuration override loaded as: " + kartaOverrideConfiguration );
             kartaConfiguration.overrideConfiguration( kartaOverrideConfiguration );
          }
          catch ( Exception e )
@@ -172,6 +174,8 @@ public class KartaRuntime implements AutoCloseable
       }
 
       kartaConfiguration.expandSystemAndEnvProperties();
+
+      log.info( "Karta configuration after override and expansion is: " + kartaConfiguration );
 
       /*---------------------------------------------------------------------------------------------------------------------*/
       // Initialize random

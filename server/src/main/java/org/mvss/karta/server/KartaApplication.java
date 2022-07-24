@@ -42,6 +42,7 @@ public class KartaApplication implements CommandLineRunner
       log.info( "******************** Starting Karta Server *********************" );
       if ( ( args != null ) && args.length > 0 )
       {
+         kartaRuntime.addNodes();
          boolean returnStatus = KartaMain.run( args );
          System.exit( returnStatus ? 0 : -1 );
       }

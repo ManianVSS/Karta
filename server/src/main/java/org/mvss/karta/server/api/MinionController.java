@@ -2,15 +2,12 @@ package org.mvss.karta.server.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mvss.karta.framework.core.*;
+import org.mvss.karta.framework.nodes.dto.*;
 import org.mvss.karta.framework.runtime.*;
-import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.Serializable;
-import java.util.HashMap;
 
 @RestController
 public class MinionController
@@ -29,23 +26,25 @@ public class MinionController
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_STEP )
-   public StepResult runStep( @RequestBody HashMap<String, Serializable> parameters )
+   public StepResult runStep( @RequestBody StepRunInfo stepRunInfo )
    {
       try
       {
-         if ( parameters == null )
+         if ( stepRunInfo == null )
          {
-            return StandardStepResults.error( "Missing parameters in body" );
+            return StandardStepResults.error( "Missing StepRunInfo in body" );
          }
 
-         RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ?
-                  objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) :
-                  kartaRuntime.getDefaultRunInfo();
-         PreparedStep testStep = objectMapper.convertValue( parameters.get( Constants.TEST_STEP ), PreparedStep.class );
+         RunInfo runInfo = stepRunInfo.getRunInfo();
+         if ( runInfo == null )
+         {
+            runInfo = kartaRuntime.getDefaultRunInfo();
+         }
+         PreparedStep testStep = stepRunInfo.getPreparedStep();
 
          if ( testStep == null )
          {
-            return StandardStepResults.error( "Step to run missing in parameters" );
+            return StandardStepResults.error( "Step to run missing in StepRunInfo" );
          }
 
          return kartaRuntime.runStep( runInfo, testStep );
@@ -62,23 +61,24 @@ public class MinionController
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_CHAOS_ACTION )
-   public StepResult runChaosAction( @RequestBody HashMap<String, Serializable> parameters )
+   public StepResult runChaosAction( @RequestBody ChaosActionRunInfo chaosActionRunInfo )
    {
       try
       {
-         if ( parameters == null )
+         if ( chaosActionRunInfo == null )
          {
-            return StandardStepResults.error( "Missing parameters in body" );
+            return StandardStepResults.error( "Missing ChaosActionRunInfo in body" );
          }
-
-         RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ?
-                  objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) :
-                  kartaRuntime.getDefaultRunInfo();
-         PreparedChaosAction chaosAction = objectMapper.convertValue( parameters.get( Constants.CHAOS_ACTION ), PreparedChaosAction.class );
+         RunInfo runInfo = chaosActionRunInfo.getRunInfo();
+         if ( runInfo == null )
+         {
+            runInfo = kartaRuntime.getDefaultRunInfo();
+         }
+         PreparedChaosAction chaosAction = chaosActionRunInfo.getPreparedChaosAction();
 
          if ( chaosAction == null )
          {
-            return StandardStepResults.error( "Chaos action to run missing in parameters" );
+            return StandardStepResults.error( "Chaos action to run missing in ChaosActionRunInfo" );
          }
 
          return kartaRuntime.runChaosAction( runInfo, chaosAction );
@@ -95,26 +95,27 @@ public class MinionController
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_SCENARIO )
-   public ScenarioResult runScenario( @RequestBody HashMap<String, Serializable> parameters )
+   public ScenarioResult runScenario( @RequestBody ScenarioRunInfo scenarioRunInfo )
    {
       try
       {
-         if ( parameters == null )
+         if ( scenarioRunInfo == null )
          {
-            return StandardScenarioResults.error( "Missing parameters in body" );
+            return StandardScenarioResults.error( "Missing ScenarioRunInfo in body" );
          }
-
-         RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ?
-                  objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) :
-                  kartaRuntime.getDefaultRunInfo();
-         String           featureName             = (String) parameters.get( Constants.FEATURE_NAME );
-         int              iterationIndex          = DataUtils.serializableToInteger( parameters.get( Constants.ITERATION_INDEX ), -1 );
-         PreparedScenario testScenario            = objectMapper.convertValue( parameters.get( Constants.TEST_SCENARIO ), PreparedScenario.class );
-         long             scenarioIterationNumber = DataUtils.serializableToLong( parameters.get( Constants.SCENARIO_ITERATION_NUMBER ), -1 );
+         RunInfo runInfo = scenarioRunInfo.getRunInfo();
+         if ( runInfo == null )
+         {
+            runInfo = kartaRuntime.getDefaultRunInfo();
+         }
+         String           featureName             = scenarioRunInfo.getFeatureName();
+         int              iterationIndex          = scenarioRunInfo.getIterationIndex();
+         PreparedScenario testScenario            = scenarioRunInfo.getPreparedScenario();
+         long             scenarioIterationNumber = scenarioRunInfo.getScenarioIterationNumber();
 
          if ( testScenario == null )
          {
-            return StandardScenarioResults.error( "Scenario to run missing in parameters" );
+            return StandardScenarioResults.error( "Scenario to run missing in ScenarioRunInfo" );
          }
          testScenario.normalizeVariables();
          return kartaRuntime.runTestScenario( runInfo, featureName, iterationIndex, testScenario, scenarioIterationNumber );
@@ -127,23 +128,25 @@ public class MinionController
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_JOB_ITERATION )
-   public TestJobResult runJobIteration( @RequestBody HashMap<String, Serializable> parameters ) throws Throwable
+   public TestJobResult runJobIteration( @RequestBody JobIterationRunInfo jobIterationRunInfo ) throws Throwable
    {
-      if ( parameters == null )
+      if ( jobIterationRunInfo == null )
       {
-         throw new Exception( "Missing parameters in body" );
+         throw new Exception( "Missing JobIterationRunInfo in body" );
       }
 
-      RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ?
-               objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) :
-               kartaRuntime.getDefaultRunInfo();
-      String  featureName    = (String) parameters.get( Constants.FEATURE_NAME );
-      TestJob job            = objectMapper.convertValue( parameters.get( Constants.JOB ), TestJob.class );
-      int     iterationIndex = DataUtils.serializableToInteger( parameters.get( Constants.ITERATION_INDEX ), -1 );
+      RunInfo runInfo = jobIterationRunInfo.getRunInfo();
+      if ( runInfo == null )
+      {
+         runInfo = kartaRuntime.getDefaultRunInfo();
+      }
+      String  featureName    = jobIterationRunInfo.getFeatureName();
+      TestJob job            = jobIterationRunInfo.getTestJob();
+      int     iterationIndex = jobIterationRunInfo.getIterationIndex();
 
       if ( job == null )
       {
-         throw new Exception( "Missing job to run in parameters" );
+         throw new Exception( "Missing job to run in JobIterationRunInfo" );
       }
 
       return TestJobRunner.run( kartaRuntime, runInfo, featureName, job, iterationIndex, null );
@@ -151,24 +154,26 @@ public class MinionController
 
    @ResponseStatus( HttpStatus.OK )
    @RequestMapping( method = RequestMethod.POST, value = Constants.PATH_RUN_FEATURE )
-   public FeatureResult runFeature( @RequestBody HashMap<String, Serializable> parameters )
+   public FeatureResult runFeature( @RequestBody FeatureRunInfo featureRunInfo )
    {
       String featureName = Constants.UNNAMED;
       try
       {
-         if ( parameters == null )
+         if ( featureRunInfo == null )
          {
-            return StandardFeatureResults.error( featureName, "Missing parameters in body" );
+            return StandardFeatureResults.error( featureName, "Missing FeatureRunInfo in body" );
          }
 
-         RunInfo runInfo = parameters.containsKey( Constants.RUN_INFO ) ?
-                  objectMapper.convertValue( parameters.get( Constants.RUN_INFO ), RunInfo.class ) :
-                  kartaRuntime.getDefaultRunInfo();
-         TestFeature feature = objectMapper.convertValue( parameters.get( Constants.FEATURE ), TestFeature.class );
+         RunInfo runInfo = featureRunInfo.getRunInfo();
+         if ( runInfo == null )
+         {
+            runInfo = kartaRuntime.getDefaultRunInfo();
+         }
+         TestFeature feature = featureRunInfo.getTestFeature();
 
          if ( feature == null )
          {
-            return StandardFeatureResults.error( featureName, "Feature to run missing in parameters" );
+            return StandardFeatureResults.error( featureName, "Feature to run missing in FeatureRunInfo" );
          }
 
          return kartaRuntime.runFeature( runInfo, feature );

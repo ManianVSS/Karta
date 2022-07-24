@@ -1,12 +1,11 @@
 package org.mvss.karta.server.beans;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.beanutils.BeanUtilsBean;
 import org.mvss.karta.framework.utils.NullAwareBeanUtilsBean;
+import org.mvss.karta.framework.utils.ParserUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
 public class UtilBeans
@@ -14,15 +13,12 @@ public class UtilBeans
    @Bean
    public ObjectMapper getObjectMapper()
    {
-      ObjectMapper objectMapper = new ObjectMapper();
-      objectMapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
-      return objectMapper;
+      return ParserUtils.getObjectMapper();
    }
 
    @Bean
    public BeanUtilsBean getBeanUtilsBean()
    {
-      BeanUtilsBean notNull = new NullAwareBeanUtilsBean();
-      return notNull;
+      return new NullAwareBeanUtilsBean();
    }
 }
