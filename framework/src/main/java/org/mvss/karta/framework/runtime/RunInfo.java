@@ -82,7 +82,7 @@ public class RunInfo implements Serializable
       }
    }
 
-   public void setPlugins( Test test )
+   public void addPluginsFromTest( Test test )
    {
       String featureSourceParserPlugin = test.getFeatureSourceParser();
       if ( StringUtils.isNotBlank( featureSourceParserPlugin ) )
@@ -112,7 +112,7 @@ public class RunInfo implements Serializable
                .iterationsPerCoolDownPeriod( test.getIterationsPerCoolDownPeriod() ).numberOfIterationsInParallel( test.getNumberOfThreads() )
                .build();
 
-      runInfo.setPlugins( test );
+      runInfo.addPluginsFromTest( test );
 
       return runInfo;
    }
