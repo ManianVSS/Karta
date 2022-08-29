@@ -21,7 +21,7 @@ public class ProxyOptions implements Serializable
    private boolean proxyAuthentication = false;
    private String  username;
    private String  password;
-   private String  noProxy             = "localhost,127.*,[::1],10.*,192.168.*,172.16.*";
+   private String  noProxy             = "localhost,127\\.*,\\[::1\\],10\\.*,192\\.168\\.*,172\\.*";
 
    private transient ArrayList<Pattern> noProxyPatterns = new ArrayList<>();
 

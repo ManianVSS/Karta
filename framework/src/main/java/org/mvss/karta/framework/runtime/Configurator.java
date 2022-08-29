@@ -23,7 +23,7 @@ import java.util.Properties;
 
 /**
  * This class is used to load properties (Serializable fields) of an object or class.
- * The properties serialization format supported are YAML, JSON and XML.
+ * The properties' serialization format supported are YAML, JSON and XML.
  * The properties are merged into a properties store which is a map of property group
  * to map of property name to property values.
  *
