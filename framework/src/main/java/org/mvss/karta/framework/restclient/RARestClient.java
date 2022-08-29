@@ -4,13 +4,18 @@ import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class RARestClient implements RestClient
 {
    private RequestSpecBuilder requestSpecBuilder = new RequestSpecBuilder();
@@ -18,9 +23,55 @@ public class RARestClient implements RestClient
 
    private HashMap<String, String> cookies = new HashMap<>();
 
-   public RARestClient()
+   public static class Builder implements Serializable
    {
+      private String                  baseUrl;
+      private boolean                 relaxedHTTPSValidation;
+      private ProxyOptions            proxyOptions;
+      private HashMap<String, String> cookies = new HashMap<>();
 
+      public Builder baseUrl( String baseUrl )
+      {
+         this.baseUrl = baseUrl;
+         return this;
+      }
+
+      public Builder relaxedHTTPSValidation( boolean relaxedHTTPSValidation )
+      {
+         this.relaxedHTTPSValidation = relaxedHTTPSValidation;
+         return this;
+      }
+
+      public Builder proxyOptions( ProxyOptions proxyOptions )
+      {
+         this.proxyOptions = proxyOptions;
+         return this;
+      }
+
+      public Builder cookies( HashMap<String, String> cookies )
+      {
+         this.cookies = cookies;
+         return this;
+      }
+
+      public RARestClient build()
+      {
+         RequestSpecBuilder requestSpecBuilder = new RequestSpecBuilder();
+
+         if ( relaxedHTTPSValidation )
+         {
+            requestSpecBuilder.setRelaxedHTTPSValidation();
+         }
+
+         if ( proxyOptions != null )
+         {
+            requestSpecBuilder.setProxy( proxyOptions.getHost(), proxyOptions.getPort(), proxyOptions.getProtocol() );
+         }
+
+         requestSpecBuilder.setBaseUri( baseUrl );
+
+         return new RARestClient( requestSpecBuilder, baseUrl, cookies );
+      }
    }
 
    public RARestClient( boolean relaxedHTTPSValidation )

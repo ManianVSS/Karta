@@ -1,22 +1,33 @@
 package org.mvss.karta.framework.restclient;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.http.HttpException;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.conn.routing.HttpRoute;
+import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.cookie.BasicClientCookie;
+import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashMap;
 
 @Getter
 @Setter
+@AllArgsConstructor
 public class ApacheRestClient implements RestClient
 {
    private CloseableHttpClient httpClient;
@@ -24,6 +35,65 @@ public class ApacheRestClient implements RestClient
    private HttpClientContext   context     = HttpClientContext.create();
 
    private String              baseUrl;
+
+   public static class Builder implements Serializable
+   {
+      private String       baseUrl;
+      private boolean      relaxedHTTPSValidation;
+      private ProxyOptions proxyOptions;
+
+      public Builder baseUrl( String baseUrl )
+      {
+         this.baseUrl = baseUrl;
+         return this;
+      }
+
+      public Builder relaxedHTTPSValidation( boolean relaxedHTTPSValidation )
+      {
+         this.relaxedHTTPSValidation = relaxedHTTPSValidation;
+         return this;
+      }
+
+      public Builder proxyOptions( ProxyOptions proxyOptions )
+      {
+         this.proxyOptions = proxyOptions;
+         return this;
+      }
+
+      public ApacheRestClient build()
+      {
+         HttpClientBuilder httpClientBuilder = HttpClients.custom();
+
+         if ( relaxedHTTPSValidation )
+         {
+            httpClientBuilder.setSSLSocketFactory( ApacheHTTPClientUtils.getSslConnectionSocketFactory() );
+         }
+
+         if ( proxyOptions != null )
+         {
+            HttpHost proxyHost = new HttpHost( proxyOptions.getHost(), proxyOptions.getPort(), proxyOptions.getProtocol() );
+            HttpRoutePlanner routePlanner = new DefaultProxyRoutePlanner( proxyHost )
+            {
+               public HttpRoute determineRoute( final HttpHost host, final HttpRequest request, final HttpContext context ) throws HttpException
+               {
+                  String hostname = host.getHostName();
+                  if ( proxyOptions.isNonProxyHost( hostname ) )
+                  {
+                     return new HttpRoute( host );
+                  }
+                  return super.determineRoute( host, request, context );
+               }
+            };
+            httpClientBuilder.setRoutePlanner( routePlanner );
+         }
+
+         BasicCookieStore  cookieStore = new BasicCookieStore();
+         HttpClientContext context     = HttpClientContext.create();
+         context.setAttribute( HttpClientContext.COOKIE_STORE, cookieStore );
+
+         return new ApacheRestClient( httpClientBuilder.build(), cookieStore, context, baseUrl );
+      }
+   }
 
    public ApacheRestClient()
    {
