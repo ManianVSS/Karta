@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 
 /**
  * Stores results of a TestFeature execution.
- * 
+ *
  * @author Manian
  */
 @Getter
@@ -20,20 +20,20 @@ import java.util.Map.Entry;
 @AllArgsConstructor
 public class FeatureResult implements Serializable
 {
-   private static final long                              serialVersionUID   = 1L;
+   private static final long serialVersionUID = 1L;
 
-   private String                                         featureName;
-
-   @Builder.Default
-   private Date                                           startTime          = new Date();
-
-   private Date                                           endTime;
+   private String featureName;
 
    @Builder.Default
-   private boolean                                        successful         = true;
+   private Date startTime = new Date();
+
+   private Date endTime;
 
    @Builder.Default
-   private boolean                                        error              = false;
+   private boolean successful = true;
+
+   @Builder.Default
+   private boolean error = false;
 
    @Builder.Default
    private HashSet<TestIncident> incidents = new HashSet<>();
@@ -79,6 +79,7 @@ public class FeatureResult implements Serializable
          if ( detailedResults )
          {
             ArrayList<ScenarioResult> scenarioResults = scenarioResultsMap.computeIfAbsent( testScenario, k -> new ArrayList<>() );
+            scenarioResults.sort( ScenarioResult::compareTo );
             scenarioResults.add( scenarioResult );
          }
          if ( !scenarioPassed )

@@ -285,6 +285,7 @@ public class KartaRuntime implements AutoCloseable
       /*---------------------------------------------------------------------------------------------------------------------*/
       beanRegistry = new BeanRegistry();
       beanRegistry.add( this );
+      beanRegistry.add( kartaConfiguration );
       beanRegistry.add( configurator );
       beanRegistry.add( testCatalogManager );
       beanRegistry.add( eventProcessor );

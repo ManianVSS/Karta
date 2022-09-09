@@ -1,8 +1,8 @@
 package org.mvss.karta.framework.web;
 
-import org.mvss.karta.framework.runtime.KartaRuntime;
 import lombok.Getter;
 import lombok.ToString;
+import org.mvss.karta.framework.runtime.KartaRuntime;
 
 @Getter
 @ToString
@@ -22,14 +22,13 @@ public abstract class WebAUT implements AutoCloseable
       this.kartaRuntime     = kartaRuntime;
       this.name             = name;
       this.webDriverOptions = webDriverOptions;
+      kartaRuntime.initializeObject( this );
    }
 
-   public WebAUT( KartaRuntime kartaRuntime, String name, WebDriverOptions webDriverOptions, WebDriverWrapper driver ) throws PageException
+   public WebAUT( KartaRuntime kartaRuntime, String name, WebDriverOptions webDriverOptions, WebDriverWrapper driver )
    {
       this( kartaRuntime, name, webDriverOptions );
       this.driver = driver;
-      kartaRuntime.initializeObject( this );
-      openStartPage();
    }
 
    public abstract void openStartPage() throws PageException;

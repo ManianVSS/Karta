@@ -46,14 +46,16 @@ sslProperties:
 
 nodeName: local
 
-nodes: []
+nodes: [ ]
 
 minionsEnabled: true
 
 threadGroups:
   __default__: 1
 
-configurationScanPackages: []
+configurationScanPackages: [ ]
+
+detailedReport: true
 
 properties:
   Karta:
@@ -65,8 +67,8 @@ properties:
       enableSSL: true
 
   Kriya:
-    stepDefinitionPackageNames: []
-    chaosActionDefinitionPackageNames: []
+    stepDefinitionPackageNames: [ ]
+    chaosActionDefinitionPackageNames: [ ]
 
   DumpToFileTestEventListener:
     fileName: KartaEventsRawDump.bin

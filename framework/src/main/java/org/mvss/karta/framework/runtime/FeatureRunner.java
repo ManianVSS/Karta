@@ -8,7 +8,6 @@ import org.mvss.karta.framework.nodes.IKartaNodeRegistry;
 import org.mvss.karta.framework.nodes.KartaNode;
 import org.mvss.karta.framework.randomization.RandomizationUtils;
 import org.mvss.karta.framework.runtime.event.*;
-import org.mvss.karta.framework.runtime.interfaces.PropertyMapping;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
 
@@ -49,9 +48,6 @@ public class FeatureRunner implements Callable<FeatureResult>
 
    private FeatureResult result;
 
-   @PropertyMapping( value = "detailedResults" )
-   private static boolean detailedResults = false;
-
    /**
     * The callback implementation for feature iteration result updates for running Test Feature
     *
@@ -59,7 +55,7 @@ public class FeatureRunner implements Callable<FeatureResult>
     */
    private void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
    {
-      result.addIterationResult( iterationResult, detailedResults );
+      result.addIterationResult( iterationResult, kartaRuntime.getKartaConfiguration().getDetailedReport() );
    }
 
    @Builder.Default

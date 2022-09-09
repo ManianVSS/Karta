@@ -157,7 +157,7 @@ public class BeanRegistry
 
    /**
     * Get the bean in the bean registry by name.
-    * Returns null for non existent bean names.
+    * Returns null for non-existent bean names.
     *
     * @param beanName String
     * @return Object
@@ -239,7 +239,7 @@ public class BeanRegistry
    }
 
    /**
-    * Sets the value for a field of a object/class based on the registry and auto wiring type.
+    * Sets the value for a field of an object/class based on the registry and auto wiring type.
     *
     * @param object         Object
     * @param field          Field
@@ -255,9 +255,8 @@ public class BeanRegistry
          {
             field.setAccessible( true );
             Class<?> fieldClass = field.getType();
-            String   beanName   = DataUtils.pickString( StringUtils::isNotEmpty, kartaAutoWired.name(), kartaAutoWired.value(),
-                     fieldClass.getName() );
-            Object   valueToSet = beanMap.get( beanName );
+            String beanName = DataUtils.pickString( StringUtils::isNotEmpty, kartaAutoWired.name(), kartaAutoWired.value(), fieldClass.getName() );
+            Object valueToSet = beanMap.get( beanName );
 
             if ( valueToSet != null )
             {
