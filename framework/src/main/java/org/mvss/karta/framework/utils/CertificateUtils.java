@@ -1,9 +1,5 @@
 package org.mvss.karta.framework.utils;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.runtime.Constants;
@@ -18,19 +14,17 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 @Log4j2
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class CertificateUtils
 {
-   private static final char[] HEX_DIGITS = "0123456789abcdef".toCharArray();
-   public static final  String CHANGE_IT  = "changeit";
+   private static final char[] HEX_DIGITS         = "0123456789abcdef".toCharArray();
+   public static final  String CHANGE_IT          = "changeit";
+   public static final  String JAVA_HOME          = "JAVA_HOME";
+   public static final  String JAVA_HOME1         = "java.home";
+   public static final  String CACERTS            = "cacerts";
+   public static final  String EXCEPTION_OCCURRED = "Exception occurred";
 
    public static void main( String[] args )
    {
-      CertificateUtils certificateUtils = new CertificateUtils();
-
       if ( args.length < 2 )
       {
          log.info( "Usage: java InstallCert <host>[:port] alias [passphrase] [-DJAVA_HOME=<Java_to_edit>]" );
@@ -46,7 +40,7 @@ public class CertificateUtils
 
       try
       {
-         if ( certificateUtils.installCertificate( null, hostname, port, passphrase, alias ) )
+         if ( installCertificate( null, hostname, port, passphrase, alias ) )
          {
             log.info( "Certificate installed successful" );
          }
@@ -57,7 +51,7 @@ public class CertificateUtils
       }
    }
 
-   public X509Certificate getCertificateForServer( String hostname, int port, KeyStore keystore )
+   public static X509Certificate getCertificateForServer( String hostname, int port, KeyStore keystore )
    {
       try
       {
@@ -108,16 +102,16 @@ public class CertificateUtils
       }
       catch ( Exception e )
       {
-         log.error( "Exception occurred", e );
+         log.error( EXCEPTION_OCCURRED, e );
          return null;
       }
    }
 
-   public boolean installCertificate( String jreHome, String hostname, int port, char[] passphrase, String alias )
+   public static boolean installCertificate( String jreHome, String hostname, int port, char[] passphrase, String alias )
    {
       if ( StringUtils.isBlank( jreHome ) )
       {
-         jreHome = PropertyUtils.getSystemOrEnvProperty( "JAVA_HOME", System.getProperty( "java.home" ) );
+         jreHome = PropertyUtils.getSystemOrEnvProperty( JAVA_HOME, System.getProperty( JAVA_HOME1 ) );
       }
 
       File jreSecurityDirectory = new File( jreHome + File.separator + "lib" + File.separator + "security" );
@@ -130,7 +124,7 @@ public class CertificateUtils
 
       try
       {
-         File jreCACertsFile = new File( jreSecurityDirectory, "cacerts" );
+         File jreCACertsFile = new File( jreSecurityDirectory, CACERTS );
          log.info( "Loading KeyStore " + jreCACertsFile + " ..." );
          KeyStore keystore;
          try (FileInputStream fileinputstream = new FileInputStream( jreCACertsFile ))
@@ -157,7 +151,7 @@ public class CertificateUtils
       catch ( Exception e )
       {
          e.printStackTrace();
-         log.error( "Exception occurred", e );
+         log.error( EXCEPTION_OCCURRED, e );
          return false;
       }
       return true;
