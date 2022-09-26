@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.mvss.karta.framework.core.dto.ProxyOptions;
 
 import java.io.Serializable;
 import java.util.HashMap;

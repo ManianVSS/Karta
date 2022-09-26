@@ -1,4 +1,4 @@
-package org.mvss.karta.framework.restclient;
+package org.mvss.karta.framework.core.dto;
 
 import lombok.*;
 

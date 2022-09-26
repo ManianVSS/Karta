@@ -1,8 +1,10 @@
 package org.mvss.karta.framework.utils;
 
 import com.jcraft.jsch.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import org.mvss.karta.framework.core.dto.ProxyOptions;
 
 import java.io.*;
 import java.util.Properties;
@@ -14,13 +16,24 @@ import java.util.concurrent.Future;
 @Getter
 public class SSHUtil implements AutoCloseable
 {
-   protected JSch    jsch    = new JSch();
-   protected Session session = null;
+   public static final String EXEC                          = "exec";
+   public static final String SUDO_S_P                      = "sudo -S -p '' ";
+   public static final String MKTEMP                        = "mktemp";
+   public static final String CP_NO_PRESERVE_MODE_OWNERSHIP = "cp --no-preserve=mode,ownership ";
+   public static final String EXCEPTION_OCCURRED            = "Exception occurred";
+   public static final String SCP_F                         = "scp -f ";
+   public static final String STRICT_HOST_KEY_CHECKING      = "StrictHostKeyChecking";
+   public static final String NO                            = "no";
+
+   protected transient JSch    jsch    = new JSch();
+   protected transient Session session = null;
 
    protected String user;
    protected String pass;
    protected String host;
    protected int    port;
+
+   protected ProxyOptions proxyOptions;
 
    public SSHUtil()
    {
@@ -34,7 +47,13 @@ public class SSHUtil implements AutoCloseable
 
    public SSHUtil( String user, String pass, String host, int port ) throws JSchException
    {
-      init( user, pass, host, port );
+      init( user, pass, host, port, null );
+   }
+
+   @Builder
+   public SSHUtil( String user, String pass, String host, int port, ProxyOptions proxyOptions ) throws JSchException
+   {
+      init( user, pass, host, port, proxyOptions );
    }
 
    /**
@@ -70,19 +89,30 @@ public class SSHUtil implements AutoCloseable
          session.setUserInfo( ui );
 
          Properties config = new Properties();
-         config.setProperty( "StrictHostKeyChecking", "no" );
+         config.setProperty( STRICT_HOST_KEY_CHECKING, NO );
          session.setConfig( config );
+
+         if ( proxyOptions != null )
+         {
+            ProxyHTTP proxyHTTP = new ProxyHTTP( proxyOptions.getHost(), proxyOptions.getPort() );
+            if ( proxyOptions.isProxyAuthentication() )
+            {
+               proxyHTTP.setUserPasswd( proxyOptions.getUsername(), proxyOptions.getPassword() );
+            }
+            session.setProxy( proxyHTTP );
+         }
 
          session.connect();
       }
    }
 
-   protected void init( String user, String pass, String host, int port ) throws JSchException
+   protected void init( String user, String pass, String host, int port, ProxyOptions proxyOptions ) throws JSchException
    {
-      this.user = user;
-      this.pass = pass;
-      this.host = host;
-      this.port = port;
+      this.user         = user;
+      this.pass         = pass;
+      this.host         = host;
+      this.port         = port;
+      this.proxyOptions = proxyOptions;
 
       connect();
    }
@@ -111,7 +141,7 @@ public class SSHUtil implements AutoCloseable
    public int executeCommand( String command, PrintStream outputStream ) throws Exception
    {
       int     exitCode;
-      Channel channel = session.openChannel( "exec" );
+      Channel channel = session.openChannel( EXEC );
       ( (ChannelExec) channel ).setCommand( command );
       channel.setInputStream( null );
       InputStream in = channel.getInputStream();
@@ -201,8 +231,8 @@ public class SSHUtil implements AutoCloseable
    public int executeSudoCommand( String command, PrintStream outputStream ) throws Exception
    {
       int     exitCode;
-      Channel channel = session.openChannel( "exec" );
-      ( (ChannelExec) channel ).setCommand( "sudo -S -p '' " + command );
+      Channel channel = session.openChannel( EXEC );
+      ( (ChannelExec) channel ).setCommand( SUDO_S_P + command );
       InputStream  in  = channel.getInputStream();
       OutputStream out = channel.getOutputStream();
 
@@ -242,9 +272,9 @@ public class SSHUtil implements AutoCloseable
 
    public int executeSudoCommandWithoutOutput( String command ) throws Exception
    {
-      Channel channel = session.openChannel( "exec" );
+      Channel channel = session.openChannel( EXEC );
 
-      ( (ChannelExec) channel ).setCommand( "sudo -S -p '' " + command );
+      ( (ChannelExec) channel ).setCommand( SUDO_S_P + command );
 
       // InputStream in = channel.getInputStream();
       OutputStream out = channel.getOutputStream();
@@ -259,47 +289,47 @@ public class SSHUtil implements AutoCloseable
       return exitCode;
    }
 
-   public boolean getFile( String remoteFile, String localeftFile, boolean useSudo )
+   public boolean getFile( String remoteFile, String localFile, boolean useSudo )
    {
       try
       {
          if ( useSudo )
          {
-            String tempFile = executeCommandReturningOutput( "mktemp", false ).trim();
+            String tempFile = executeCommandReturningOutput( MKTEMP, false ).trim();
 
-            if ( executeSudoCommand( "cp --no-preserve=mode,ownership " + remoteFile + " " + tempFile ) != 0 )
+            if ( executeSudoCommand( CP_NO_PRESERVE_MODE_OWNERSHIP + remoteFile + " " + tempFile ) != 0 )
             {
                return false;
             }
 
             remoteFile = tempFile;
          }
-         getFile( remoteFile, localeftFile );
+         getFile( remoteFile, localFile );
          return true;
       }
       catch ( Exception e )
       {
-         log.error( "Exception occurred", e );
+         log.error( EXCEPTION_OCCURRED, e );
          return false;
       }
    }
 
-   public void getFile( String remoteFile, String localeftFile ) throws Exception
+   public void getFile( String remoteFile, String localFile ) throws Exception
    {
       FileOutputStream fos = null;
       try
       {
          String prefix = null;
-         if ( new File( localeftFile ).isDirectory() )
+         if ( new File( localFile ).isDirectory() )
          {
-            prefix = localeftFile + File.separator;
+            prefix = localFile + File.separator;
          }
 
          // exec 'scp -f rightFile' remotely
          remoteFile = remoteFile.replace( "'", "'\"'\"'" );
          remoteFile = "'" + remoteFile + "'";
-         String  command = "scp -f " + remoteFile;
-         Channel channel = session.openChannel( "exec" );
+         String  command = SCP_F + remoteFile;
+         Channel channel = session.openChannel( EXEC );
          ( (ChannelExec) channel ).setCommand( command );
 
          // get I/O streams for remote scp
@@ -355,7 +385,7 @@ public class SSHUtil implements AutoCloseable
             out.flush();
 
             // read a content of leftFile
-            fos = new FileOutputStream( prefix == null ? localeftFile : prefix + file );
+            fos = new FileOutputStream( prefix == null ? localFile : prefix + file );
             int foo;
             while ( true )
             {
@@ -431,10 +461,10 @@ public class SSHUtil implements AutoCloseable
       }
    }
 
-   public int runFile( String localeftFileName, String remoteFileName, String args, boolean sudo ) throws Exception
+   public int runFile( String localFileName, String remoteFileName, String args, boolean sudo ) throws Exception
    {
       connect();
-      uploadFile( localeftFileName, remoteFileName );
+      uploadFile( localFileName, remoteFileName );
       String command = "bash " + remoteFileName + " " + args;
       return executeCommand( command, sudo );
    }
@@ -442,7 +472,7 @@ public class SSHUtil implements AutoCloseable
    /**
     * Method to upload a local file to SSH server
     */
-   public void uploadFile( String localeftFile, String remoteFile ) throws Exception
+   public void uploadFile( String localFile, String remoteFile ) throws Exception
    {
       connect();
       FileInputStream fis;
@@ -458,7 +488,7 @@ public class SSHUtil implements AutoCloseable
       remoteFile = remoteFile.replace( "'", "'\"'\"'" );
       remoteFile = "'" + remoteFile + "'";
       String  command = "scp  -t " + remoteFile;
-      Channel channel = session.openChannel( "exec" );
+      Channel channel = session.openChannel( EXEC );
       ( (ChannelExec) channel ).setCommand( command );
 
       // get I/O streams for remote scp
@@ -472,7 +502,7 @@ public class SSHUtil implements AutoCloseable
          throw new Exception( "Acknowledgement check failed" );
       }
 
-      File _leftFile = new File( localeftFile );
+      File _leftFile = new File( localFile );
 
       // send "C0644 fileSize filename", where filename should not include '/'
       long fileSize = _leftFile.length();
@@ -487,7 +517,7 @@ public class SSHUtil implements AutoCloseable
       }
 
       // send a content of leftFile
-      fis = new FileInputStream( localeftFile );
+      fis = new FileInputStream( localFile );
       byte[] buf = new byte[1024];
       while ( true )
       {
@@ -509,17 +539,17 @@ public class SSHUtil implements AutoCloseable
       channel.disconnect();
    }
 
-   public boolean uploadFile( String localeftFileName, String remoteFileName, boolean useSudo ) throws Exception
+   public boolean uploadFile( String localFileName, String remoteFileName, boolean useSudo ) throws Exception
    {
       if ( useSudo )
       {
-         String tempFile = executeCommandReturningOutput( "mktemp", false ).trim();
-         uploadFile( localeftFileName, tempFile );
+         String tempFile = executeCommandReturningOutput( MKTEMP, false ).trim();
+         uploadFile( localFileName, tempFile );
          executeCommand( "sudo mv " + tempFile + " " + remoteFileName, true );
       }
       else
       {
-         uploadFile( localeftFileName, remoteFileName );
+         uploadFile( localFileName, remoteFileName );
       }
 
       return true;
@@ -542,7 +572,7 @@ public class SSHUtil implements AutoCloseable
          remoteFile = remoteFile.replace( "'", "'\"'\"'" );
          remoteFile = "'" + remoteFile + "'";
          String  command = "scp  -t " + remoteFile;
-         Channel channel = session.openChannel( "exec" );
+         Channel channel = session.openChannel( EXEC );
          ( (ChannelExec) channel ).setCommand( command );
 
          // get I/O streams for remote scp
@@ -625,7 +655,7 @@ public class SSHUtil implements AutoCloseable
          remoteFile = remoteFile.replace( "'", "'\"'\"'" );
          remoteFile = "'" + remoteFile + "'";
          String  command = "scp  -t " + remoteFile;
-         Channel channel = session.openChannel( "exec" );
+         Channel channel = session.openChannel( EXEC );
          ( (ChannelExec) channel ).setCommand( command );
 
          // get I/O streams for remote scp
@@ -687,8 +717,6 @@ public class SSHUtil implements AutoCloseable
 
    /**
     * This class is used internally to pass user password to JSch library
-    *
-    * @author 212735819
     */
    private static class ByPassUserInfo implements UserInfo
    {

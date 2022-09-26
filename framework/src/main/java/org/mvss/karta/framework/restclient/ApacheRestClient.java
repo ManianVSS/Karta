@@ -20,6 +20,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.protocol.HttpContext;
+import org.mvss.karta.framework.core.dto.ProxyOptions;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -34,7 +35,7 @@ public class ApacheRestClient implements RestClient
    private BasicCookieStore    cookieStore = new BasicCookieStore();
    private HttpClientContext   context     = HttpClientContext.create();
 
-   private String              baseUrl;
+   private String baseUrl;
 
    public static class Builder implements Serializable
    {
