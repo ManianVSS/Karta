@@ -6,12 +6,15 @@ import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.ParserUtils;
 
 import java.io.Serializable;
+import java.util.Base64;
 import java.util.HashMap;
 
 @Log4j2
 public abstract class RestRequestBuilder implements Serializable
 {
    private static final long serialVersionUID = 1L;
+
+   private static final Base64.Encoder encoder = Base64.getEncoder();
 
    protected       String                        url;
    protected final HashMap<String, Serializable> headers = new HashMap<>();
@@ -139,6 +142,18 @@ public abstract class RestRequestBuilder implements Serializable
    {
       multiPartEnabled = true;
       multiParts.put( name, multiPartObject );
+      return this;
+   }
+
+   public RestRequestBuilder basicAuth( String userName, String password )
+   {
+      headers.put( Constants.AUTHORIZATION, Constants.BASIC + encoder.encodeToString( ( userName + Constants.COLON + password ).getBytes() ) );
+      return this;
+   }
+
+   public RestRequestBuilder bearerTokenAuth( String bearerToken )
+   {
+      headers.put( Constants.AUTHORIZATION, Constants.BEARER + bearerToken );
       return this;
    }
 
