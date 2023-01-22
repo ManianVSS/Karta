@@ -76,6 +76,21 @@ testScenarios:
         testData:
           someData1: dataValue1
           someData2: dataValue2
+      - step: When Testing group of steps in parallel
+        runStepsInParallel: true
+        steps:
+          - step: When the button "2" is pressed
+            testData:
+              someData1: dataValue1
+              someData2: dataValue2
+          - step: And the button "+" is pressed
+          - step: And the button "3" is pressed
+          - step: And the button "=" is pressed
+          - step: And the calculator should display "5"
+          - step: Given the calculator is powered off
+        testData:
+          someData1: dataValue1
+          someData2: dataValue2
       - step: Given the calculator is powered on
         condition: When the calculator is powered "Off"
       - step: Given the calculator is powered off

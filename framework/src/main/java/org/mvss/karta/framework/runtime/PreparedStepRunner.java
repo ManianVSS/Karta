@@ -6,15 +6,15 @@ import org.mvss.karta.framework.core.PreparedStep;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.core.StepResult;
 import org.mvss.karta.framework.runtime.interfaces.StepRunner;
-import org.mvss.karta.framework.threading.BlockingRunnableQueue;
+import org.mvss.karta.framework.utils.ParallelCausesException;
+import org.mvss.karta.framework.utils.ThreadUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -47,50 +47,44 @@ public class PreparedStepRunner implements Callable<StepResult>
          else
          {
             // TODO: Forward test data and test data set from parent step to nested steps
-            Boolean runInParallel = step.getRunStepsInParallel();
+            boolean runInParallel = ( step.getRunStepsInParallel() != null ) && step.getRunStepsInParallel();
 
-            if ( ( runInParallel != null ) && runInParallel )
+            StepResult cumulativeStepResult = new StepResult();
+            List<Callable<StepResult>> preparedStepRunners = nestedSteps.stream()
+                     .map( nestedStep -> PreparedStepRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo ).step( nestedStep ).build() )
+                     .collect( Collectors.toList() );
+            if ( !ThreadUtils.runCallables( preparedStepRunners, cumulativeStepResult::mergeResults, runInParallel, nestedSteps.size() ) )
             {
-               int        numberOfParallelSteps = nestedSteps.size();
-               StepResult cumulativeStepResult  = new StepResult();
-               cumulativeStepResult.setStartTime( new Date() );
-               ExecutorService stepExecutorService = new ThreadPoolExecutor( numberOfParallelSteps, numberOfParallelSteps, 0L, TimeUnit.MILLISECONDS,
-                        new BlockingRunnableQueue( numberOfParallelSteps ) );
-
-               for ( PreparedStep nestedStep : nestedSteps )
-               {
-                  PreparedStepRunner preparedStepRunner = PreparedStepRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo )
-                           .step( nestedStep ).resultConsumer( cumulativeStepResult::mergeResults ).build();
-                  stepExecutorService.submit( preparedStepRunner );
-               }
-
-               stepExecutorService.shutdown();
-               if ( !stepExecutorService.awaitTermination( Long.MAX_VALUE, TimeUnit.SECONDS ) )
+               if ( runInParallel )
                {
                   log.error( "Failed awaiting termination of step executor service" );
                }
-               stepResult = cumulativeStepResult;
             }
-            else
-            {
-               stepResult = new StepResult();
-               for ( PreparedStep nestedStep : nestedSteps )
-               {
-                  PreparedStepRunner preparedStepRunner = PreparedStepRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo )
-                           .step( nestedStep ).build();
-                  stepResult.mergeResults( preparedStepRunner.call() );
-
-                  if ( !stepResult.isPassed() )
-                  {
-                     return stepResult;
-                  }
-               }
-            }
+            stepResult = cumulativeStepResult;
          }
       }
       catch ( TestFailureException t )
       {
          stepResult = StandardStepResults.failure( t );
+      }
+      catch ( ParallelCausesException parallelCausesException )
+      {
+         boolean allAreTestFailures = true;
+         for ( Throwable throwable : parallelCausesException.causeList )
+         {
+            if ( !( throwable instanceof TestFailureException ) )
+            {
+               allAreTestFailures = false;
+               break;
+            }
+         }
+         stepResult = allAreTestFailures ?
+                  StandardStepResults.failure( parallelCausesException ) :
+                  StandardStepResults.error( parallelCausesException );
+      }
+      catch ( Throwable t )
+      {
+         stepResult = StandardStepResults.error( t );
       }
 
       return stepResult;

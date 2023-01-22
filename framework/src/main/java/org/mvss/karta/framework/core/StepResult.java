@@ -120,11 +120,11 @@ public class StepResult implements Serializable
     *
     * @param stepResult StepResult
     */
-   public synchronized void mergeResults( StepResult stepResult )
+   public synchronized boolean mergeResults( StepResult stepResult )
    {
       if ( stepResult == null )
       {
-         return;
+         return isPassed();
       }
 
       if ( stepResult.startTime != null )
@@ -175,6 +175,7 @@ public class StepResult implements Serializable
          }
          attachments.putAll( stepResult.attachments );
       }
+      return isPassed();
    }
 
    /**
