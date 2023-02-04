@@ -3,13 +3,19 @@ package org.mvss.karta.framework.runtime;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.mvss.karta.framework.core.*;
+import org.mvss.karta.Constants;
+import org.mvss.karta.framework.models.event.*;
+import org.mvss.karta.framework.models.generic.SerializableKVP;
+import org.mvss.karta.framework.models.result.FeatureResult;
+import org.mvss.karta.framework.models.result.ScenarioResult;
+import org.mvss.karta.framework.models.result.StepResult;
+import org.mvss.karta.framework.models.run.RunInfo;
+import org.mvss.karta.framework.models.test.*;
 import org.mvss.karta.framework.nodes.IKartaNodeRegistry;
 import org.mvss.karta.framework.nodes.KartaNode;
-import org.mvss.karta.framework.randomization.RandomizationUtils;
-import org.mvss.karta.framework.runtime.event.*;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.DataUtils;
+import org.mvss.karta.framework.utils.RandomizationUtils;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -33,397 +39,323 @@ import java.util.function.Consumer;
 @AllArgsConstructor
 @Log4j2
 @Builder
-public class FeatureRunner implements Callable<FeatureResult>
-{
-   private KartaRuntime kartaRuntime;
+public class FeatureRunner implements Callable<FeatureResult> {
+    private KartaRuntime kartaRuntime;
 
-   private RunInfo runInfo;
+    private RunInfo runInfo;
 
-   private TestFeature testFeature;
+    private TestFeature testFeature;
 
-   /**
-    * The call back for updating execution result of the TestFeature after run completes.
-    */
-   private Consumer<FeatureResult> resultConsumer;
+    /**
+     * The call back for updating execution result of the TestFeature after run completes.
+     */
+    private Consumer<FeatureResult> resultConsumer;
 
-   private FeatureResult result;
+    private FeatureResult result;
+    @Builder.Default
+    private ArrayList<Long> runningJobs = new ArrayList<>();
+    @Builder.Default
+    private ArrayList<Thread> daemonJobThreads = new ArrayList<>();
 
-   /**
-    * The callback implementation for feature iteration result updates for running Test Feature
-    *
-    * @param iterationResult HashMap<String, ScenarioResult>
-    */
-   private void accumulateIterationResult( HashMap<String, ScenarioResult> iterationResult )
-   {
-      result.addIterationResult( iterationResult, kartaRuntime.getKartaConfiguration().getDetailedReport() );
-   }
+    /**
+     * The callback implementation for feature iteration result updates for running Test Feature
+     *
+     * @param iterationResult HashMap<String, ScenarioResult>
+     */
+    private void accumulateIterationResult(HashMap<String, ScenarioResult> iterationResult) {
+        result.addIterationResult(iterationResult, kartaRuntime.getKartaConfiguration().getDetailedReport());
+    }
 
-   @Builder.Default
-   private ArrayList<Long> runningJobs = new ArrayList<>();
+    private void deleteJobs() {
+        boolean deleteJobResults = QuartzJobScheduler.deleteJobs(runningJobs);
 
-   @Builder.Default
-   private ArrayList<Thread> daemonJobThreads = new ArrayList<>();
-
-   private void deleteJobs()
-   {
-      boolean deleteJobResults = QuartzJobScheduler.deleteJobs( runningJobs );
-
-      for ( Thread daemonJobThread : daemonJobThreads )
-      {
-         try
-         {
-            daemonJobThread.interrupt();
-         }
-         catch ( SecurityException se )
-         {
-            log.error( "Error while interrupting daemon job thread " + daemonJobThread.getName(), se );
-            deleteJobResults = false;
-         }
-      }
-
-      if ( !deleteJobResults )
-      {
-         log.error( "Failed to delete test jobs" );
-         result.setSuccessful( false );
-      }
-   }
-
-   public void updateResultCallBack()
-   {
-      result.setEndTime( new Date() );
-      if ( resultConsumer != null )
-      {
-         resultConsumer.accept( result );
-      }
-   }
-
-   /**
-    * After initializing calling this method would run the feature.
-    * Call implementation for asynchronous calling.
-    */
-   @Override
-   public FeatureResult call() throws InterruptedException
-   {
-      try
-      {
-         String          runName = runInfo.getRunName();
-         HashSet<String> tags    = runInfo.getTags();
-
-         result = new FeatureResult();
-         result.setFeatureName( testFeature.getName() );
-         EventProcessor     eventProcessor      = kartaRuntime.getEventProcessor();
-         IKartaNodeRegistry nodeRegistry        = kartaRuntime.getNodeRegistry();
-         BeanRegistry       contextBeanRegistry = new BeanRegistry();
-
-         Random random = kartaRuntime.getRandom();
-
-         boolean useMinions = kartaRuntime.getKartaConfiguration().getMinionsEnabled() && !nodeRegistry.getMinions().isEmpty();
-
-         eventProcessor.raiseEvent( new FeatureStartEvent( runName, testFeature ) );
-
-         if ( tags != null )
-         {
-            if ( !eventProcessor.featureStart( runName, testFeature, tags ) )
-            {
-               eventProcessor.featureStop( runName, testFeature, tags );
-               result.setError( true );
-               updateResultCallBack();
-               return result;
+        for (Thread daemonJobThread : daemonJobThreads) {
+            try {
+                daemonJobThread.interrupt();
+            } catch (SecurityException se) {
+                log.error("Error while interrupting daemon job thread " + daemonJobThread.getName(), se);
+                deleteJobResults = false;
             }
-         }
+        }
 
-         HashMap<String, Serializable> variables = new HashMap<>();
+        if (!deleteJobResults) {
+            log.error("Failed to delete test jobs");
+            result.setSuccessful(false);
+        }
+    }
 
-         for ( TestJob job : testFeature.getTestJobs() )
-         {
-            try
-            {
-               long jobInterval = job.getInterval();
-               int  repeatCount = job.getIterationCount();
+    public void updateResultCallBack() {
+        result.setEndTime(new Date());
+        if (resultConsumer != null) {
+            resultConsumer.accept(result);
+        }
+    }
 
-               if ( job.isDaemonProcess() )
-               {
-                  DaemonTestJob daemonTestJob = DaemonTestJob.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo )
-                           .featureName( testFeature.getName() ).testJob( job ).contextBeanRegistry( contextBeanRegistry ).build();
-                  Thread daemonJobThread = new Thread( daemonTestJob );
-                  daemonJobThread.start();
-                  daemonJobThreads.add( daemonJobThread );
-               }
-               else if ( jobInterval > 0 )
-               {
-                  HashMap<String, Object> jobData = new HashMap<>();
-                  jobData.put( Constants.KARTA_RUNTIME, kartaRuntime );
-                  jobData.put( Constants.RUN_INFO, runInfo );
-                  jobData.put( Constants.FEATURE_NAME, testFeature.getName() );
-                  jobData.put( Constants.TEST_JOB, job );
-                  jobData.put( Constants.ITERATION_COUNTER, new AtomicInteger() );
-                  jobData.put( Constants.BEAN_REGISTRY, contextBeanRegistry );
-                  long jobId = QuartzJobScheduler.scheduleJob( QuartzTestJob.class, jobInterval, repeatCount, jobData );
-                  runningJobs.add( jobId );
-               }
-               else
-               {
-                  TestJobRunner.run( kartaRuntime, runInfo, testFeature.getName(), job, 0, contextBeanRegistry );
-               }
-            }
-            catch ( Throwable t )
-            {
-               log.error( "Exception occurred while scheduling jobs ", t );
-               deleteJobs();
-               throw t;
-            }
-         }
+    /**
+     * After initializing calling this method would run the feature.
+     * Call implementation for asynchronous calling.
+     */
+    @Override
+    public FeatureResult call() throws InterruptedException {
+        try {
+            String runName = runInfo.getRunName();
+            HashSet<String> tags = runInfo.getTags();
 
-         int iterationIndex = -1;
+            result = new FeatureResult();
+            result.setFeatureName(testFeature.getName());
+            EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
+            IKartaNodeRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
+            BeanRegistry contextBeanRegistry = new BeanRegistry();
 
-         HashMap<TestScenario, AtomicInteger> scenarioIterationIndexMap = new HashMap<>();
-         testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.put( scenario, new AtomicInteger() ) );
+            Random random = kartaRuntime.getRandom();
 
-         long setupStepIndex = -1;
-         for ( TestStep step : testFeature.getSetupSteps() )
-         {
-            setupStepIndex++;
-            StepResult stepResult = new StepResult();
-            stepResult.setStepIndex( setupStepIndex );
-            stepResult.setSuccessful( true );
+            boolean useMinions = kartaRuntime.getKartaConfiguration().getMinionsEnabled() && !nodeRegistry.getMinions().isEmpty();
 
-            PreparedStep preparedStep = kartaRuntime.getPreparedStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__,
-                     variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
+            eventProcessor.raiseEvent(new FeatureStartEvent(runName, testFeature));
 
-            if ( kartaRuntime.shouldStepNeedNotBeRun( runInfo, preparedStep ) )
-            {
-               continue;
+            if (tags != null) {
+                if (!eventProcessor.featureStart(runName, testFeature, tags)) {
+                    eventProcessor.featureStop(runName, testFeature, tags);
+                    result.setError(true);
+                    updateResultCallBack();
+                    return result;
+                }
             }
 
-            eventProcessor.raiseEvent( new FeatureSetupStepStartEvent( runName, testFeature, step ) );
+            HashMap<String, Serializable> variables = new HashMap<>();
 
-            try
-            {
-               stepResult = kartaRuntime.runStep( runInfo, preparedStep );
-               stepResult.setStepIndex( setupStepIndex );
-            }
-            catch ( TestFailureException tfe )
-            {
-               log.error( "Exception when running step", tfe );
-               stepResult.setSuccessful( false );
-               TestIncident incident = TestIncident.builder().thrownCause( tfe ).build();
-               stepResult.addIncident( incident );
-            }
-            finally
-            {
-               eventProcessor.raiseEvent( new FeatureSetupStepCompleteEvent( runName, testFeature, step, stepResult ) );
+            for (TestJob job : testFeature.getTestJobs()) {
+                try {
+                    long jobInterval = job.getInterval();
+                    int repeatCount = job.getIterationCount();
 
-               result.getSetupResults().add( new SerializableKVP<>( step.getStep(), stepResult ) );
-               result.getIncidents().addAll( stepResult.getIncidents() );
-
-               if ( !stepResult.isPassed() )
-               {
-                  result.setSuccessful( false );
-                  deleteJobs();
-
-                  eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature, result ) );
-
-                  if ( tags != null )
-                  {
-                     if ( !eventProcessor.featureStop( runName, testFeature, tags ) )
-                     {
-                        result.setError( true );
-                     }
-                  }
-                  updateResultCallBack();
-               }
+                    if (job.isDaemonProcess()) {
+                        DaemonTestJob daemonTestJob = DaemonTestJob.builder().kartaRuntime(kartaRuntime).runInfo(runInfo)
+                                .featureName(testFeature.getName()).testJob(job).contextBeanRegistry(contextBeanRegistry).build();
+                        Thread daemonJobThread = new Thread(daemonTestJob);
+                        daemonJobThread.start();
+                        daemonJobThreads.add(daemonJobThread);
+                    } else if (jobInterval > 0) {
+                        HashMap<String, Object> jobData = new HashMap<>();
+                        jobData.put(Constants.KARTA_RUNTIME, kartaRuntime);
+                        jobData.put(Constants.RUN_INFO, runInfo);
+                        jobData.put(Constants.FEATURE_NAME, testFeature.getName());
+                        jobData.put(Constants.TEST_JOB, job);
+                        jobData.put(Constants.ITERATION_COUNTER, new AtomicInteger());
+                        jobData.put(Constants.BEAN_REGISTRY, contextBeanRegistry);
+                        long jobId = QuartzJobScheduler.scheduleJob(QuartzTestJob.class, jobInterval, repeatCount, jobData);
+                        runningJobs.add(jobId);
+                    } else {
+                        TestJobRunner.run(kartaRuntime, runInfo, testFeature.getName(), job, 0, contextBeanRegistry);
+                    }
+                } catch (Throwable t) {
+                    log.error("Exception occurred while scheduling jobs ", t);
+                    deleteJobs();
+                    throw t;
+                }
             }
 
-            if ( !result.isSuccessful() )
-            {
-               return result;
-            }
-         }
+            int iterationIndex = -1;
 
-         long     numberOfIterations            = runInfo.getNumberOfIterations();
-         int      numberOfIterationsInParallel  = runInfo.getNumberOfIterationsInParallel();
-         boolean  chanceBasedScenarioExecution  = runInfo.isChanceBasedScenarioExecution();
-         boolean  exclusiveScenarioPerIteration = runInfo.isExclusiveScenarioPerIteration();
-         Duration targetRunDuration             = runInfo.getRunDuration();
-         Duration coolDownBetweenIterations     = runInfo.getCoolDownBetweenIterations();
-         long     iterationsPerCoolDownPeriod   = runInfo.getIterationsPerCoolDownPeriod();
+            HashMap<TestScenario, AtomicInteger> scenarioIterationIndexMap = new HashMap<>();
+            testFeature.getTestScenarios().forEach((scenario) -> scenarioIterationIndexMap.put(scenario, new AtomicInteger()));
 
-         if ( !DataUtils.inRange( numberOfIterations, 0, Integer.MAX_VALUE ) )
-         {
-            log.error( "Configuration error: invalid number of iterations: " + numberOfIterations );
-            numberOfIterations = 0;
-         }
+            long setupStepIndex = -1;
+            for (TestStep step : testFeature.getSetupSteps()) {
+                setupStepIndex++;
+                StepResult stepResult = new StepResult();
+                stepResult.setStepIndex(setupStepIndex);
+                stepResult.setSuccessful(true);
 
-         if ( !DataUtils.inRange( numberOfIterationsInParallel, 1, Integer.MAX_VALUE ) )
-         {
-            log.error( "Configuration error: invalid number of threads: " + numberOfIterationsInParallel );
-            numberOfIterationsInParallel = 1;
-         }
+                PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__,
+                        variables, testFeature.getTestDataSet(), step, contextBeanRegistry);
 
-         ExecutorService iterationExecutionService = null;
+                if (kartaRuntime.shouldStepNeedNotBeRun(runInfo, preparedStep)) {
+                    continue;
+                }
 
-         if ( numberOfIterationsInParallel > 1 )
-         {
-            iterationExecutionService = new ThreadPoolExecutor( numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS,
-                     new BlockingRunnableQueue( numberOfIterationsInParallel ) );
-         }
+                eventProcessor.raiseEvent(new FeatureSetupStepStartEvent(runName, testFeature, step));
 
-         Instant startTime = Instant.now();
+                try {
+                    stepResult = kartaRuntime.runStep(runInfo, preparedStep);
+                    stepResult.setStepIndex(setupStepIndex);
+                } catch (TestFailureException tfe) {
+                    log.error("Exception when running step", tfe);
+                    stepResult.setSuccessful(false);
+                    TestIncident incident = TestIncident.builder().thrownCause(tfe).build();
+                    stepResult.addIncident(incident);
+                } finally {
+                    eventProcessor.raiseEvent(new FeatureSetupStepCompleteEvent(runName, testFeature, step, stepResult));
 
-         for ( iterationIndex = 0; ( numberOfIterations <= 0 ) || ( iterationIndex < numberOfIterations ); iterationIndex++ )
-         {
-            // Break on target Run Duration
-            if ( targetRunDuration != null )
-            {
-               if ( targetRunDuration.compareTo( Duration.between( startTime, Instant.now() ) ) <= 0 )
-               {
-                  break;
-               }
-            }
+                    result.getSetupResults().add(new SerializableKVP<>(step.getStep(), stepResult));
+                    result.getIncidents().addAll(stepResult.getIncidents());
 
-            ArrayList<TestScenario> scenariosToRun = new ArrayList<>();
+                    if (!stepResult.isPassed()) {
+                        result.setSuccessful(false);
+                        deleteJobs();
 
-            if ( chanceBasedScenarioExecution )
-            {
-               if ( exclusiveScenarioPerIteration )
-               {
-                  TestScenario scenarioToRun = RandomizationUtils.generateNextMutexComposition( random, testFeature.getTestScenarios() );
+                        eventProcessor.raiseEvent(new FeatureCompleteEvent(runName, testFeature, result));
 
-                  if ( scenarioToRun != null )
-                  {
-                     scenariosToRun.add( scenarioToRun );
-                  }
-                  else
-                  {
-                     continue;
-                  }
-               }
-               else
-               {
-                  scenariosToRun.addAll( RandomizationUtils.generateNextComposition( random, testFeature.getTestScenarios() ) );
-               }
-            }
-            else
-            {
-               scenariosToRun = testFeature.getTestScenarios();
+                        if (tags != null) {
+                            if (!eventProcessor.featureStop(runName, testFeature, tags)) {
+                                result.setError(true);
+                            }
+                        }
+                        updateResultCallBack();
+                    }
+                }
+
+                if (!result.isSuccessful()) {
+                    return result;
+                }
             }
 
-            IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime( kartaRuntime ).runInfo( runInfo )
-                     .featureName( testFeature.getName() ).commonTestDataSet( testFeature.getTestDataSet() )
-                     .scenarioSetupSteps( testFeature.getScenarioSetupSteps() ).scenariosToRun( scenariosToRun )
-                     .scenarioTearDownSteps( testFeature.getScenarioTearDownSteps() ).iterationIndex( iterationIndex )
-                     .scenarioIterationIndexMap( scenarioIterationIndexMap ).variables( DataUtils.cloneMap( variables ) )
-                     .resultConsumer( this::accumulateIterationResult ).build();
+            long numberOfIterations = runInfo.getNumberOfIterations();
+            int numberOfIterationsInParallel = runInfo.getNumberOfIterationsInParallel();
+            boolean chanceBasedScenarioExecution = runInfo.isChanceBasedScenarioExecution();
+            boolean exclusiveScenarioPerIteration = runInfo.isExclusiveScenarioPerIteration();
+            Duration targetRunDuration = runInfo.getRunDuration();
+            Duration coolDownBetweenIterations = runInfo.getCoolDownBetweenIterations();
+            long iterationsPerCoolDownPeriod = runInfo.getIterationsPerCoolDownPeriod();
 
-            if ( useMinions )
-            {
-               KartaNode minion = nodeRegistry.getNextMinion();
-
-               if ( minion != null )
-               {
-                  iterationRunner.setMinionToUse( minion );
-               }
+            if (!DataUtils.inRange(numberOfIterations, 0, Integer.MAX_VALUE)) {
+                log.error("Configuration error: invalid number of iterations: " + numberOfIterations);
+                numberOfIterations = 0;
             }
 
-            if ( numberOfIterationsInParallel == 1 )
-            {
-               log.debug( "Iteration start " + iterationIndex + " with scenarios " + scenariosToRun );
-               iterationRunner.call();
-            }
-            else
-            {
-               log.debug( "Iteration queued " + iterationIndex + " with scenarios " + scenariosToRun );
-               assert iterationExecutionService != null;
-               iterationExecutionService.submit( iterationRunner );
+            if (!DataUtils.inRange(numberOfIterationsInParallel, 1, Integer.MAX_VALUE)) {
+                log.error("Configuration error: invalid number of threads: " + numberOfIterationsInParallel);
+                numberOfIterationsInParallel = 1;
             }
 
-            if ( coolDownBetweenIterations != null )
-            {
-               if ( ( iterationIndex + 1 ) % ( numberOfIterationsInParallel * iterationsPerCoolDownPeriod ) == 0 )
-               {
-                  Thread.sleep( coolDownBetweenIterations.toMillis() );
-               }
-            }
-         }
+            ExecutorService iterationExecutionService = null;
 
-         if ( numberOfIterationsInParallel > 1 )
-         {
-            iterationExecutionService.shutdown();
-            if ( !iterationExecutionService.awaitTermination( Long.MAX_VALUE, TimeUnit.NANOSECONDS ) )
-            {
-               iterationExecutionService.shutdownNow();
-            }
-         }
-
-         testFeature.getTestScenarios().forEach( ( scenario ) -> scenarioIterationIndexMap.get( scenario ).set( 0 ) );
-
-         long teardownStepIndex = -1;
-         iterationIndex = -1;
-         for ( TestStep step : testFeature.getTearDownSteps() )
-         {
-            teardownStepIndex++;
-            StepResult stepResult = new StepResult();
-            stepResult.setStepIndex( teardownStepIndex );
-            PreparedStep preparedStep = kartaRuntime.getPreparedStep( runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__,
-                     variables, testFeature.getTestDataSet(), step, contextBeanRegistry );
-
-            if ( kartaRuntime.shouldStepNeedNotBeRun( runInfo, preparedStep ) )
-            {
-               continue;
+            if (numberOfIterationsInParallel > 1) {
+                iterationExecutionService = new ThreadPoolExecutor(numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS,
+                        new BlockingRunnableQueue(numberOfIterationsInParallel));
             }
 
-            eventProcessor.raiseEvent( new FeatureTearDownStepStartEvent( runName, testFeature, step ) );
+            Instant startTime = Instant.now();
 
-            try
-            {
-               stepResult = kartaRuntime.runStep( runInfo, preparedStep );
-               stepResult.setStepIndex( teardownStepIndex );
+            for (iterationIndex = 0; (numberOfIterations <= 0) || (iterationIndex < numberOfIterations); iterationIndex++) {
+                // Break on target Run Duration
+                if (targetRunDuration != null) {
+                    if (targetRunDuration.compareTo(Duration.between(startTime, Instant.now())) <= 0) {
+                        break;
+                    }
+                }
+
+                ArrayList<TestScenario> scenariosToRun = new ArrayList<>();
+
+                if (chanceBasedScenarioExecution) {
+                    if (exclusiveScenarioPerIteration) {
+                        TestScenario scenarioToRun = RandomizationUtils.generateNextMutexComposition(random, testFeature.getTestScenarios());
+
+                        if (scenarioToRun != null) {
+                            scenariosToRun.add(scenarioToRun);
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        scenariosToRun.addAll(RandomizationUtils.generateNextComposition(random, testFeature.getTestScenarios()));
+                    }
+                } else {
+                    scenariosToRun = testFeature.getTestScenarios();
+                }
+
+                IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime(kartaRuntime).runInfo(runInfo)
+                        .featureName(testFeature.getName()).commonTestDataSet(testFeature.getTestDataSet())
+                        .scenarioSetupSteps(testFeature.getScenarioSetupSteps()).scenariosToRun(scenariosToRun)
+                        .scenarioTearDownSteps(testFeature.getScenarioTearDownSteps()).iterationIndex(iterationIndex)
+                        .scenarioIterationIndexMap(scenarioIterationIndexMap).variables(DataUtils.cloneMap(variables))
+                        .resultConsumer(this::accumulateIterationResult).build();
+
+                if (useMinions) {
+                    KartaNode minion = nodeRegistry.getNextMinion();
+
+                    if (minion != null) {
+                        iterationRunner.setMinionToUse(minion);
+                    }
+                }
+
+                if (numberOfIterationsInParallel == 1) {
+                    log.debug("Iteration start " + iterationIndex + " with scenarios " + scenariosToRun);
+                    iterationRunner.call();
+                } else {
+                    log.debug("Iteration queued " + iterationIndex + " with scenarios " + scenariosToRun);
+                    assert iterationExecutionService != null;
+                    iterationExecutionService.submit(iterationRunner);
+                }
+
+                if (coolDownBetweenIterations != null) {
+                    if ((iterationIndex + 1) % (numberOfIterationsInParallel * iterationsPerCoolDownPeriod) == 0) {
+                        Thread.sleep(coolDownBetweenIterations.toMillis());
+                    }
+                }
             }
-            catch ( TestFailureException tfe )
-            {
-               log.error( "Exception when running step", tfe );
-               stepResult.setSuccessful( false );
-               TestIncident incident = TestIncident.builder().thrownCause( tfe ).build();
-               stepResult.addIncident( incident );
+
+            if (numberOfIterationsInParallel > 1) {
+                iterationExecutionService.shutdown();
+                if (!iterationExecutionService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)) {
+                    iterationExecutionService.shutdownNow();
+                }
             }
-            finally
-            {
-               eventProcessor.raiseEvent( new FeatureTearDownStepCompleteEvent( runName, testFeature, step, stepResult ) );
 
-               result.getTearDownResults().add( new SerializableKVP<>( step.getStep(), stepResult ) );
-               result.getIncidents().addAll( stepResult.getIncidents() );
+            testFeature.getTestScenarios().forEach((scenario) -> scenarioIterationIndexMap.get(scenario).set(0));
 
-               if ( !stepResult.isPassed() )
-               {
-                  result.setSuccessful( false );
-               }
+            long teardownStepIndex = -1;
+            iterationIndex = -1;
+            for (TestStep step : testFeature.getTearDownSteps()) {
+                teardownStepIndex++;
+                StepResult stepResult = new StepResult();
+                stepResult.setStepIndex(teardownStepIndex);
+                PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__,
+                        variables, testFeature.getTestDataSet(), step, contextBeanRegistry);
+
+                if (kartaRuntime.shouldStepNeedNotBeRun(runInfo, preparedStep)) {
+                    continue;
+                }
+
+                eventProcessor.raiseEvent(new FeatureTearDownStepStartEvent(runName, testFeature, step));
+
+                try {
+                    stepResult = kartaRuntime.runStep(runInfo, preparedStep);
+                    stepResult.setStepIndex(teardownStepIndex);
+                } catch (TestFailureException tfe) {
+                    log.error("Exception when running step", tfe);
+                    stepResult.setSuccessful(false);
+                    TestIncident incident = TestIncident.builder().thrownCause(tfe).build();
+                    stepResult.addIncident(incident);
+                } finally {
+                    eventProcessor.raiseEvent(new FeatureTearDownStepCompleteEvent(runName, testFeature, step, stepResult));
+
+                    result.getTearDownResults().add(new SerializableKVP<>(step.getStep(), stepResult));
+                    result.getIncidents().addAll(stepResult.getIncidents());
+
+                    if (!stepResult.isPassed()) {
+                        result.setSuccessful(false);
+                    }
+                }
             }
-         }
 
-         deleteJobs();
+            deleteJobs();
 
-         if ( tags != null )
-         {
-            if ( !eventProcessor.featureStop( runName, testFeature, tags ) )
-            {
-               result.setError( true );
+            if (tags != null) {
+                if (!eventProcessor.featureStop(runName, testFeature, tags)) {
+                    result.setError(true);
+                }
             }
-         }
 
-         eventProcessor.raiseEvent( new FeatureCompleteEvent( runName, testFeature, result ) );
-      }
-      catch ( InterruptedException ie )
-      {
-         throw ie;
-      }
-      catch ( Throwable t )
-      {
-         log.error( "Exception occurred during feature run", t );
-         log.error( ExceptionUtils.getStackTrace( t ) );
-         result.setError( true );
-      }
+            eventProcessor.raiseEvent(new FeatureCompleteEvent(runName, testFeature, result));
+        } catch (InterruptedException ie) {
+            throw ie;
+        } catch (Throwable t) {
+            log.error("Exception occurred during feature run", t);
+            log.error(ExceptionUtils.getStackTrace(t));
+            result.setError(true);
+        }
 
-      updateResultCallBack();
-      return result;
-   }
+        updateResultCallBack();
+        return result;
+    }
 }

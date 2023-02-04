@@ -8,25 +8,25 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 
-public interface RestResponse extends Serializable, AutoCloseable
-{
-   String getProtocolVersion();
+@SuppressWarnings("unused")
+public interface RestResponse extends Serializable, AutoCloseable {
+    String getProtocolVersion();
 
-   int getStatusCode();
+    int getStatusCode();
 
-   String getReasonPhrase();
+    String getReasonPhrase();
 
-   HashMap<String, String> getHeaders();
+    HashMap<String, String> getHeaders();
 
-   ContentType getContentType();
+    ContentType getContentType();
 
-   String getBody() throws IOException;
+    String getBody() throws IOException;
 
-   <T> T getBodyAs( Class<T> type ) throws IOException;
+    <T> T getBodyAs(Class<T> type) throws IOException;
 
-   <T> T getBodyAs( TypeReference<T> type ) throws IOException;
+    <T> T getBodyAs(TypeReference<T> type) throws IOException;
 
-   InputStream getStream() throws IOException;
+    InputStream getStream() throws IOException;
 
-   void downloadFile( File file ) throws IOException;
+    void downloadFile(File file) throws IOException;
 }

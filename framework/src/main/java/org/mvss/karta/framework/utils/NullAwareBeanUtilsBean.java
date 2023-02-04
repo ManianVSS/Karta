@@ -9,19 +9,15 @@ import java.lang.reflect.InvocationTargetException;
  *
  * @author Manian
  */
-public class NullAwareBeanUtilsBean extends BeanUtilsBean
-{
-   @Override
-   public void copyProperty( Object dest, String name, Object value ) throws IllegalAccessException, InvocationTargetException
-   {
-      if ( value != null )
-      {
-         super.copyProperty( dest, name, value );
-      }
-   }
+public class NullAwareBeanUtilsBean extends BeanUtilsBean {
+    public static <T> T getOverriddenValue(T originalValue, T overriddenValue) {
+        return (overriddenValue == null) ? originalValue : overriddenValue;
+    }
 
-   public static <T> T getOverriddenValue( T originalValue, T overriddenValue )
-   {
-      return ( overriddenValue == null ) ? originalValue : overriddenValue;
-   }
+    @Override
+    public void copyProperty(Object dest, String name, Object value) throws IllegalAccessException, InvocationTargetException {
+        if (value != null) {
+            super.copyProperty(dest, name, value);
+        }
+    }
 }

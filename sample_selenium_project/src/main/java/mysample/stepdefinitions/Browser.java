@@ -1,6 +1,5 @@
 package mysample.stepdefinitions;
 
-public enum Browser
-{
-   FIREFOX, CHROME, EDGE, SAFARI
+public enum Browser {
+    FIREFOX, CHROME, EDGE, SAFARI
 }

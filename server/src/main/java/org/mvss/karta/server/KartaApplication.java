@@ -17,47 +17,43 @@ import java.util.List;
 
 @Log4j2
 @SpringBootApplication
-public class KartaApplication implements CommandLineRunner
-{
-   @Autowired
-   private KartaRuntime kartaRuntime;
+public class KartaApplication implements CommandLineRunner {
+    public static List<Runnable> exitHooks = Collections.synchronizedList(new ArrayList<>());
+    @Autowired
+    private KartaRuntime kartaRuntime;
 
-   public static void main( String[] args )
-   {
-      // Spring boot start
-      SpringApplication.run( KartaApplication.class, args );
-   }
+    public static void main(String[] args) {
+        if (args.length > 0) {
+            KartaMain.main(args);
+        } else {
+            // Spring boot start
+            SpringApplication.run(KartaApplication.class, args);
+        }
+    }
 
-   @EventListener( ApplicationReadyEvent.class )
-   public void applicationStartup()
-   {
-      kartaRuntime.addNodes();
-   }
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationStartup() {
+        kartaRuntime.addNodes();
+    }
 
-   public static List<Runnable> exitHooks = Collections.synchronizedList( new ArrayList<>() );
+    @Override
+    public void run(String... args) {
+        log.info("******************** Starting Karta Server *********************");
+//        if ((args != null) && args.length > 0) {
+//            kartaRuntime.addNodes();
+//            boolean returnStatus = KartaMain.run(args);
+//            System.exit(returnStatus ? 0 : -1);
+//        }
+    }
 
-   @Override
-   public void run( String... args )
-   {
-      log.info( "******************** Starting Karta Server *********************" );
-      if ( ( args != null ) && args.length > 0 )
-      {
-         kartaRuntime.addNodes();
-         boolean returnStatus = KartaMain.run( args );
-         System.exit( returnStatus ? 0 : -1 );
-      }
-   }
+    @PreDestroy
+    public void onDestroy() {
+        log.info("******************** Stopping Karta Server *********************");
 
-   @PreDestroy
-   public void onDestroy()
-   {
-      log.info( "******************** Stopping Karta Server *********************" );
-
-      log.info( "Triggering registered exit hooks" );
-      for ( Runnable exitHook : new ArrayList<>( exitHooks ) )
-      {
-         new Thread( exitHook ).start();
-      }
-   }
+        log.info("Triggering registered exit hooks");
+        for (Runnable exitHook : new ArrayList<>(exitHooks)) {
+            new Thread(exitHook).start();
+        }
+    }
 
 }

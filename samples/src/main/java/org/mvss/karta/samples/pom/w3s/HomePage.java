@@ -6,28 +6,24 @@ import org.mvss.karta.framework.web.WebAUT;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 
-public class HomePage extends AbstractPage
-{
-   @FindBy( xpath = "//a[@title='Home']//i" )
-   private WebElement logo;
+public class HomePage extends AbstractPage {
+    @FindBy(xpath = "//a[@title='Home']//i")
+    private WebElement logo;
 
-   @FindBy( xpath = "//div[@id='main']//a[contains(text(),'Learn HTML')]" )
-   private WebElement learnHTMLButton;
+    @FindBy(xpath = "//div[@id='main']//a[contains(text(),'Learn HTML')]")
+    private WebElement learnHTMLButton;
 
-   public HomePage( WebAUT webAUT ) throws PageException
-   {
-      super( webAUT );
-   }
+    public HomePage(WebAUT webAUT) throws PageException {
+        super(webAUT);
+    }
 
-   @Override
-   public boolean validate()
-   {
-      return driver.isElementAvailable( learnHTMLButton );
-   }
+    @Override
+    public boolean validate() {
+        return driver.isElementAvailable(learnHTMLButton);
+    }
 
-   public LearnHTMLHomePage clickOnLearnHTML() throws PageException
-   {
-      driver.clickElement( learnHTMLButton );
-      return new LearnHTMLHomePage( webAUT );
-   }
+    public LearnHTMLHomePage clickOnLearnHTML() throws PageException {
+        driver.clickElement(learnHTMLButton);
+        return new LearnHTMLHomePage(webAUT);
+    }
 }

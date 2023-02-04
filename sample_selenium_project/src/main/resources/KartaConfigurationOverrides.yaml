@@ -1,4 +1,3 @@
-
 configurationScanPackages:
   - automation.framework.webui
     mysample.pom

@@ -4,7 +4,7 @@ import com.jcraft.jsch.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
-import org.mvss.karta.framework.core.dto.ProxyOptions;
+import org.mvss.karta.framework.configuration.ProxyOptions;
 
 import java.io.*;
 import java.util.Properties;
@@ -14,753 +14,644 @@ import java.util.concurrent.Future;
 
 @Log4j2
 @Getter
-public class SSHUtil implements AutoCloseable
-{
-   public static final String EXEC                          = "exec";
-   public static final String SUDO_S_P                      = "sudo -S -p '' ";
-   public static final String MKTEMP                        = "mktemp";
-   public static final String CP_NO_PRESERVE_MODE_OWNERSHIP = "cp --no-preserve=mode,ownership ";
-   public static final String EXCEPTION_OCCURRED            = "Exception occurred";
-   public static final String SCP_F                         = "scp -f ";
-   public static final String STRICT_HOST_KEY_CHECKING      = "StrictHostKeyChecking";
-   public static final String NO                            = "no";
+@SuppressWarnings("unused")
+public class SSHUtil implements AutoCloseable {
+    public static final String EXEC = "exec";
+    public static final String SUDO_S_P = "sudo -S -p '' ";
+    public static final String MKTEMP = "mktemp";
+    public static final String CP_NO_PRESERVE_MODE_OWNERSHIP = "cp --no-preserve=mode,ownership ";
+    public static final String EXCEPTION_OCCURRED = "Exception occurred";
+    public static final String SCP_F = "scp -f ";
+    public static final String STRICT_HOST_KEY_CHECKING = "StrictHostKeyChecking";
+    public static final String NO = "no";
 
-   protected transient JSch    jsch    = new JSch();
-   protected transient Session session = null;
+    protected transient JSch jsch = new JSch();
+    protected transient Session session = null;
 
-   protected String user;
-   protected String pass;
-   protected String host;
-   protected int    port;
+    protected String user;
+    protected String pass;
+    protected String host;
+    protected int port;
 
-   protected ProxyOptions proxyOptions;
+    protected ProxyOptions proxyOptions;
 
-   public SSHUtil()
-   {
+    public SSHUtil() {
 
-   }
+    }
 
-   public SSHUtil( String user, String pass, String host ) throws JSchException
-   {
-      this( user, pass, host, 22 );
-   }
+    public SSHUtil(String user, String pass, String host) throws JSchException {
+        this(user, pass, host, 22);
+    }
 
-   public SSHUtil( String user, String pass, String host, int port ) throws JSchException
-   {
-      init( user, pass, host, port, null );
-   }
+    public SSHUtil(String user, String pass, String host, int port) throws JSchException {
+        init(user, pass, host, port, null);
+    }
 
-   @Builder
-   public SSHUtil( String user, String pass, String host, int port, ProxyOptions proxyOptions ) throws JSchException
-   {
-      init( user, pass, host, port, proxyOptions );
-   }
+    @Builder
+    public SSHUtil(String user, String pass, String host, int port, ProxyOptions proxyOptions) throws JSchException {
+        init(user, pass, host, port, proxyOptions);
+    }
 
-   /**
-    * Internal method for checking acknowledgement
-    */
-   private static int checkAck( InputStream in ) throws Exception
-   {
-      int b = in.read();
+    /**
+     * Internal method for checking acknowledgement
+     */
+    private static int checkAck(InputStream in) throws Exception {
+        int b = in.read();
 
-      if ( b == 1 || b == 2 )
-      {
-         StringBuilder sb = new StringBuilder();
-         int           c;
-         do
-         {
-            c = in.read();
-            sb.append( (char) c );
-         }
-         while ( c != '\n' );
-
-         throw new Exception( "Scp error: " + sb );
-      }
-
-      return b;
-   }
-
-   public void connect() throws JSchException
-   {
-      if ( ( session == null ) || !session.isConnected() )
-      {
-         session = jsch.getSession( user, host, port );
-         UserInfo ui = new ByPassUserInfo( pass );
-         session.setUserInfo( ui );
-
-         Properties config = new Properties();
-         config.setProperty( STRICT_HOST_KEY_CHECKING, NO );
-         session.setConfig( config );
-
-         if ( proxyOptions != null )
-         {
-            ProxyHTTP proxyHTTP = new ProxyHTTP( proxyOptions.getHost(), proxyOptions.getPort() );
-            if ( proxyOptions.isProxyAuthentication() )
-            {
-               proxyHTTP.setUserPasswd( proxyOptions.getUsername(), proxyOptions.getPassword() );
+        if (b == 1 || b == 2) {
+            StringBuilder sb = new StringBuilder();
+            int c;
+            do {
+                c = in.read();
+                sb.append((char) c);
             }
-            session.setProxy( proxyHTTP );
-         }
+            while (c != '\n');
 
-         session.connect();
-      }
-   }
+            throw new Exception("Scp error: " + sb);
+        }
 
-   protected void init( String user, String pass, String host, int port, ProxyOptions proxyOptions ) throws JSchException
-   {
-      this.user         = user;
-      this.pass         = pass;
-      this.host         = host;
-      this.port         = port;
-      this.proxyOptions = proxyOptions;
+        return b;
+    }
 
-      connect();
-   }
+    public void connect() throws JSchException {
+        if ((session == null) || !session.isConnected()) {
+            session = jsch.getSession(user, host, port);
+            UserInfo ui = new ByPassUserInfo(pass);
+            session.setUserInfo(ui);
 
-   @Override
-   public void close()
-   {
-      if ( ( session != null ) && ( session.isConnected() ) )
-      {
-         session.disconnect();
-         session = null;
-      }
-   }
+            Properties config = new Properties();
+            config.setProperty(STRICT_HOST_KEY_CHECKING, NO);
+            session.setConfig(config);
 
-   public int executeCommand( String command ) throws Exception
-   {
-      return executeCommand( command, System.out );
-   }
-
-   public int executeCommand( String command, boolean sudo ) throws Exception
-   {
-      connect();
-      return sudo ? executeSudoCommand( command, System.out ) : executeCommand( command, System.out );
-   }
-
-   public int executeCommand( String command, PrintStream outputStream ) throws Exception
-   {
-      int     exitCode;
-      Channel channel = session.openChannel( EXEC );
-      ( (ChannelExec) channel ).setCommand( command );
-      channel.setInputStream( null );
-      InputStream in = channel.getInputStream();
-      ( (ChannelExec) channel ).setErrStream( outputStream != null ? outputStream : System.err, true );
-      channel.connect();
-      byte[] tmp = new byte[1024];
-      while ( true )
-      {
-         while ( in.available() > 0 )
-         {
-            int i = in.read( tmp, 0, 1024 );
-            if ( i < 0 )
-            {
-               break;
-            }
-            if ( outputStream != null )
-            {
-               outputStream.print( new String( tmp, 0, i ) );
-            }
-         }
-         if ( channel.isClosed() )
-         {
-            if ( in.available() > 0 )
-            {
-               continue;
-            }
-            exitCode = channel.getExitStatus();
-            break;
-         }
-         //noinspection BusyWait
-         Thread.sleep( 1000 );
-      }
-      channel.disconnect();
-      return exitCode;
-   }
-
-   public int executeSudoCommand( String command ) throws Exception
-   {
-      return executeSudoCommand( command, System.out );
-   }
-
-   public String executeCommandReturningOutput( String command, boolean useSudo ) throws Exception
-   {
-      connect();
-      String output;
-
-      log.debug( "Running command " + command + " sudo=" + useSudo );
-      try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream())
-      {
-         if ( useSudo )
-         {
-            executeSudoCommand( command, new PrintStream( byteArrayOutputStream ) );
-         }
-         else
-         {
-            executeCommand( command, new PrintStream( byteArrayOutputStream ) );
-         }
-         output = byteArrayOutputStream.toString();
-      }
-
-      return output;
-   }
-
-   public Future<String> executeCommandReturningOutputFuture( String command, boolean useSudo, ExecutorService executor )
-   {
-      return executor.submit( () -> executeCommandReturningOutput( command, useSudo ) );
-   }
-
-   public String executeCommandWithTimeout( String command, boolean useSudo, long timeOut, long checkInterval ) throws Throwable
-   {
-      ExecutorService executor     = Executors.newSingleThreadExecutor();
-      Future<String>  futureOutput = executeCommandReturningOutputFuture( command, useSudo, executor );
-      String          output       = null;
-
-      log.info( "Going to wait for the command to return output..." );
-      WaitResult waitResult = WaitUtil.waitUntil( futureOutput::isDone, timeOut, checkInterval, WaitUtil.defaultWaitIterationTask );
-      executor.shutdown();
-
-      if ( waitResult.isSuccessful() && futureOutput.isDone() )
-      {
-         output = futureOutput.get();
-      }
-
-      return output;
-   }
-
-   public int executeSudoCommand( String command, PrintStream outputStream ) throws Exception
-   {
-      int     exitCode;
-      Channel channel = session.openChannel( EXEC );
-      ( (ChannelExec) channel ).setCommand( SUDO_S_P + command );
-      InputStream  in  = channel.getInputStream();
-      OutputStream out = channel.getOutputStream();
-
-      ( (ChannelExec) channel ).setErrStream( outputStream != null ? outputStream : System.err, true );
-
-      channel.connect();
-
-      out.write( ( pass + "\n" ).getBytes() );
-      out.flush();
-
-      byte[] tmp = new byte[1024];
-      while ( true )
-      {
-         while ( in.available() > 0 )
-         {
-            int i = in.read( tmp, 0, 1024 );
-            if ( i < 0 )
-            {
-               break;
-            }
-            if ( outputStream != null )
-            {
-               outputStream.print( new String( tmp, 0, i ) );
-            }
-         }
-         if ( channel.isClosed() )
-         {
-            exitCode = channel.getExitStatus();
-            break;
-         }
-         //noinspection BusyWait
-         Thread.sleep( 1000 );
-      }
-      channel.disconnect();
-      return exitCode;
-   }
-
-   public int executeSudoCommandWithoutOutput( String command ) throws Exception
-   {
-      Channel channel = session.openChannel( EXEC );
-
-      ( (ChannelExec) channel ).setCommand( SUDO_S_P + command );
-
-      // InputStream in = channel.getInputStream();
-      OutputStream out = channel.getOutputStream();
-      ( (ChannelExec) channel ).setErrStream( System.err, true );
-
-      channel.connect();
-
-      out.write( ( pass + "\n" ).getBytes() );
-      out.flush();
-      int exitCode = channel.getExitStatus();
-      channel.disconnect();
-      return exitCode;
-   }
-
-   public boolean getFile( String remoteFile, String localFile, boolean useSudo )
-   {
-      try
-      {
-         if ( useSudo )
-         {
-            String tempFile = executeCommandReturningOutput( MKTEMP, false ).trim();
-
-            if ( executeSudoCommand( CP_NO_PRESERVE_MODE_OWNERSHIP + remoteFile + " " + tempFile ) != 0 )
-            {
-               return false;
+            if (proxyOptions != null) {
+                ProxyHTTP proxyHTTP = new ProxyHTTP(proxyOptions.getHost(), proxyOptions.getPort());
+                if (proxyOptions.isProxyAuthentication()) {
+                    proxyHTTP.setUserPasswd(proxyOptions.getUsername(), proxyOptions.getPassword());
+                }
+                session.setProxy(proxyHTTP);
             }
 
-            remoteFile = tempFile;
-         }
-         getFile( remoteFile, localFile );
-         return true;
-      }
-      catch ( Exception e )
-      {
-         log.error( EXCEPTION_OCCURRED, e );
-         return false;
-      }
-   }
+            session.connect();
+        }
+    }
 
-   public void getFile( String remoteFile, String localFile ) throws Exception
-   {
-      FileOutputStream fos = null;
-      try
-      {
-         String prefix = null;
-         if ( new File( localFile ).isDirectory() )
-         {
-            prefix = localFile + File.separator;
-         }
+    protected void init(String user, String pass, String host, int port, ProxyOptions proxyOptions) throws JSchException {
+        this.user = user;
+        this.pass = pass;
+        this.host = host;
+        this.port = port;
+        this.proxyOptions = proxyOptions;
 
-         // exec 'scp -f rightFile' remotely
-         remoteFile = remoteFile.replace( "'", "'\"'\"'" );
-         remoteFile = "'" + remoteFile + "'";
-         String  command = SCP_F + remoteFile;
-         Channel channel = session.openChannel( EXEC );
-         ( (ChannelExec) channel ).setCommand( command );
+        connect();
+    }
 
-         // get I/O streams for remote scp
-         OutputStream out = channel.getOutputStream();
-         InputStream  in  = channel.getInputStream();
+    @Override
+    public void close() {
+        if ((session != null) && (session.isConnected())) {
+            session.disconnect();
+            session = null;
+        }
+    }
 
-         channel.connect();
+    public int executeCommand(String command) throws Exception {
+        return executeCommand(command, System.out);
+    }
 
-         byte[] buf = new byte[1024];
+    public int executeCommand(String command, boolean sudo) throws Exception {
+        connect();
+        return sudo ? executeSudoCommand(command, System.out) : executeCommand(command, System.out);
+    }
 
-         // send '\0'
-         buf[0] = 0;
-         out.write( buf, 0, 1 );
-         out.flush();
+    public int executeCommand(String command, PrintStream outputStream) throws Exception {
+        int exitCode;
+        Channel channel = session.openChannel(EXEC);
+        ((ChannelExec) channel).setCommand(command);
+        channel.setInputStream(null);
+        InputStream in = channel.getInputStream();
+        ((ChannelExec) channel).setErrStream(outputStream != null ? outputStream : System.err, true);
+        channel.connect();
+        byte[] tmp = new byte[1024];
+        while (true) {
+            while (in.available() > 0) {
+                int i = in.read(tmp, 0, 1024);
+                if (i < 0) {
+                    break;
+                }
+                if (outputStream != null) {
+                    outputStream.print(new String(tmp, 0, i));
+                }
+            }
+            if (channel.isClosed()) {
+                if (in.available() > 0) {
+                    continue;
+                }
+                exitCode = channel.getExitStatus();
+                break;
+            }
+            //noinspection BusyWait
+            Thread.sleep(1000);
+        }
+        channel.disconnect();
+        return exitCode;
+    }
 
-         while ( true )
-         {
-            int c = checkAck( in );
-            if ( c != 'C' )
-            {
-               break;
+    public int executeSudoCommand(String command) throws Exception {
+        return executeSudoCommand(command, System.out);
+    }
+
+    public String executeCommandReturningOutput(String command, boolean useSudo) throws Exception {
+        connect();
+        String output;
+
+        log.debug("Running command " + command + " sudo=" + useSudo);
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+            if (useSudo) {
+                executeSudoCommand(command, new PrintStream(byteArrayOutputStream));
+            } else {
+                executeCommand(command, new PrintStream(byteArrayOutputStream));
+            }
+            output = byteArrayOutputStream.toString();
+        }
+
+        return output;
+    }
+
+    public Future<String> executeCommandReturningOutputFuture(String command, boolean useSudo, ExecutorService executor) {
+        return executor.submit(() -> executeCommandReturningOutput(command, useSudo));
+    }
+
+    public String executeCommandWithTimeout(String command, boolean useSudo, long timeOut, long checkInterval) throws Throwable {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<String> futureOutput = executeCommandReturningOutputFuture(command, useSudo, executor);
+        String output = null;
+
+        log.info("Going to wait for the command to return output...");
+        WaitResult waitResult = WaitUtil.waitUntil(futureOutput::isDone, timeOut, checkInterval, WaitUtil.defaultWaitIterationTask);
+        executor.shutdown();
+
+        if (waitResult.isSuccessful() && futureOutput.isDone()) {
+            output = futureOutput.get();
+        }
+
+        return output;
+    }
+
+    public int executeSudoCommand(String command, PrintStream outputStream) throws Exception {
+        int exitCode;
+        Channel channel = session.openChannel(EXEC);
+        ((ChannelExec) channel).setCommand(SUDO_S_P + command);
+        InputStream in = channel.getInputStream();
+        OutputStream out = channel.getOutputStream();
+
+        ((ChannelExec) channel).setErrStream(outputStream != null ? outputStream : System.err, true);
+
+        channel.connect();
+
+        out.write((pass + "\n").getBytes());
+        out.flush();
+
+        byte[] tmp = new byte[1024];
+        while (true) {
+            while (in.available() > 0) {
+                int i = in.read(tmp, 0, 1024);
+                if (i < 0) {
+                    break;
+                }
+                if (outputStream != null) {
+                    outputStream.print(new String(tmp, 0, i));
+                }
+            }
+            if (channel.isClosed()) {
+                exitCode = channel.getExitStatus();
+                break;
+            }
+            //noinspection BusyWait
+            Thread.sleep(1000);
+        }
+        channel.disconnect();
+        return exitCode;
+    }
+
+    public int executeSudoCommandWithoutOutput(String command) throws Exception {
+        Channel channel = session.openChannel(EXEC);
+
+        ((ChannelExec) channel).setCommand(SUDO_S_P + command);
+
+        // InputStream in = channel.getInputStream();
+        OutputStream out = channel.getOutputStream();
+        ((ChannelExec) channel).setErrStream(System.err, true);
+
+        channel.connect();
+
+        out.write((pass + "\n").getBytes());
+        out.flush();
+        int exitCode = channel.getExitStatus();
+        channel.disconnect();
+        return exitCode;
+    }
+
+    public boolean getFile(String remoteFile, String localFile, boolean useSudo) {
+        try {
+            if (useSudo) {
+                String tempFile = executeCommandReturningOutput(MKTEMP, false).trim();
+
+                if (executeSudoCommand(CP_NO_PRESERVE_MODE_OWNERSHIP + remoteFile + " " + tempFile) != 0) {
+                    return false;
+                }
+
+                remoteFile = tempFile;
+            }
+            getFile(remoteFile, localFile);
+            return true;
+        } catch (Exception e) {
+            log.error(EXCEPTION_OCCURRED, e);
+            return false;
+        }
+    }
+
+    public void getFile(String remoteFile, String localFile) throws Exception {
+        FileOutputStream fos = null;
+        try {
+            String prefix = null;
+            if (new File(localFile).isDirectory()) {
+                prefix = localFile + File.separator;
             }
 
-            // read '0644 '
-            in.read( buf, 0, 5 );
+            // exec 'scp -f rightFile' remotely
+            remoteFile = remoteFile.replace("'", "'\"'\"'");
+            remoteFile = "'" + remoteFile + "'";
+            String command = SCP_F + remoteFile;
+            Channel channel = session.openChannel(EXEC);
+            ((ChannelExec) channel).setCommand(command);
 
-            long fileSize = 0L;
-            while ( true )
-            {
-               if ( in.read( buf, 0, 1 ) < 0 )
-               {
-                  // error
-                  break;
-               }
-               if ( buf[0] == ' ' )
-                  break;
-               fileSize = fileSize * 10L + buf[0] - '0';
-            }
+            // get I/O streams for remote scp
+            OutputStream out = channel.getOutputStream();
+            InputStream in = channel.getInputStream();
 
-            String file;
-            for ( int i = 0; ; i++ )
-            {
-               in.read( buf, i, 1 );
-               if ( buf[i] == (byte) 0x0a )
-               {
-                  file = new String( buf, 0, i );
-                  break;
-               }
-            }
+            channel.connect();
 
-            buf[0] = 0;
-            out.write( buf, 0, 1 );
-            out.flush();
-
-            // read a content of leftFile
-            fos = new FileOutputStream( prefix == null ? localFile : prefix + file );
-            int foo;
-            while ( true )
-            {
-               if ( buf.length < fileSize )
-                  foo = buf.length;
-               else
-                  foo = (int) fileSize;
-               foo = in.read( buf, 0, foo );
-               if ( foo < 0 )
-               {
-                  // error
-                  break;
-               }
-               fos.write( buf, 0, foo );
-               fileSize -= foo;
-               if ( fileSize == 0L )
-                  break;
-            }
-            fos.close();
-            fos = null;
-
-            if ( checkAck( in ) != 0 )
-            {
-               throw new Exception( "Acknowledgement check failed" );
-            }
+            byte[] buf = new byte[1024];
 
             // send '\0'
             buf[0] = 0;
-            out.write( buf, 0, 1 );
+            out.write(buf, 0, 1);
             out.flush();
-         }
 
-         channel.disconnect();
+            while (true) {
+                int c = checkAck(in);
+                if (c != 'C') {
+                    break;
+                }
 
-      }
-      catch ( Exception e )
-      {
-         log.info( e );
-         if ( fos != null )
-         {
-            fos.close();
-         }
+                // read '0644 '
+                int read = in.read(buf, 0, 5);
 
-         throw e;
-      }
-   }
+                long fileSize = 0L;
+                while (true) {
+                    if (in.read(buf, 0, 1) < 0) {
+                        // error
+                        break;
+                    }
+                    if (buf[0] == ' ')
+                        break;
+                    fileSize = fileSize * 10L + buf[0] - '0';
+                }
 
-   public void uploadFolder( String localFolder, String remoteFolder ) throws Exception
-   {
-      if ( executeCommand( "mkdir -p " + remoteFolder ) != 0 )
-      {
-         return;
-      }
+                String file;
+                for (int i = 0; ; i++) {
+                    int read1 = in.read(buf, i, 1);
+                    if (buf[i] == (byte) 0x0a) {
+                        file = new String(buf, 0, i);
+                        break;
+                    }
+                }
 
-      File   folder      = new File( localFolder );
-      File[] listOfFiles = folder.listFiles();
+                buf[0] = 0;
+                out.write(buf, 0, 1);
+                out.flush();
 
-      assert listOfFiles != null;
+                // read a content of leftFile
+                fos = new FileOutputStream(prefix == null ? localFile : prefix + file);
+                int foo;
+                while (true) {
+                    if (buf.length < fileSize)
+                        foo = buf.length;
+                    else
+                        foo = (int) fileSize;
+                    foo = in.read(buf, 0, foo);
+                    if (foo < 0) {
+                        // error
+                        break;
+                    }
+                    fos.write(buf, 0, foo);
+                    fileSize -= foo;
+                    if (fileSize == 0L)
+                        break;
+                }
+                fos.close();
+                fos = null;
 
-      for ( File listOfFile : listOfFiles )
-      {
-         String baseName     = listOfFile.getName();
-         String absolutePath = listOfFile.getAbsolutePath();
+                if (checkAck(in) != 0) {
+                    throw new Exception("Acknowledgement check failed");
+                }
 
-         if ( listOfFile.isFile() )
-         {
-            uploadFile( absolutePath, remoteFolder + "/" + baseName );
-         }
-         else if ( listOfFile.isDirectory() )
-         {
-            uploadFolder( absolutePath, remoteFolder + "/" + baseName );
-         }
-      }
-   }
+                // send '\0'
+                buf[0] = 0;
+                out.write(buf, 0, 1);
+                out.flush();
+            }
 
-   public int runFile( String localFileName, String remoteFileName, String args, boolean sudo ) throws Exception
-   {
-      connect();
-      uploadFile( localFileName, remoteFileName );
-      String command = "bash " + remoteFileName + " " + args;
-      return executeCommand( command, sudo );
-   }
+            channel.disconnect();
 
-   /**
-    * Method to upload a local file to SSH server
-    */
-   public void uploadFile( String localFile, String remoteFile ) throws Exception
-   {
-      connect();
-      FileInputStream fis;
+        } catch (Exception e) {
+            log.info(e);
+            if (fos != null) {
+                fos.close();
+            }
 
-      String remoteBaseFileName = remoteFile;
+            throw e;
+        }
+    }
 
-      if ( remoteFile.lastIndexOf( '/' ) > 0 )
-      {
-         remoteBaseFileName = remoteFile.substring( remoteFile.lastIndexOf( '/' ) + 1 );
-      }
+    public void uploadFolder(String localFolder, String remoteFolder) throws Exception {
+        if (executeCommand("mkdir -p " + remoteFolder) != 0) {
+            return;
+        }
 
-      // exec 'scp -t rightFile' remotely
-      remoteFile = remoteFile.replace( "'", "'\"'\"'" );
-      remoteFile = "'" + remoteFile + "'";
-      String  command = "scp  -t " + remoteFile;
-      Channel channel = session.openChannel( EXEC );
-      ( (ChannelExec) channel ).setCommand( command );
+        File folder = new File(localFolder);
+        File[] listOfFiles = folder.listFiles();
 
-      // get I/O streams for remote scp
-      OutputStream out = channel.getOutputStream();
-      InputStream  in  = channel.getInputStream();
+        assert listOfFiles != null;
 
-      channel.connect();
+        for (File listOfFile : listOfFiles) {
+            String baseName = listOfFile.getName();
+            String absolutePath = listOfFile.getAbsolutePath();
 
-      if ( checkAck( in ) != 0 )
-      {
-         throw new Exception( "Acknowledgement check failed" );
-      }
+            if (listOfFile.isFile()) {
+                uploadFile(absolutePath, remoteFolder + "/" + baseName);
+            } else if (listOfFile.isDirectory()) {
+                uploadFolder(absolutePath, remoteFolder + "/" + baseName);
+            }
+        }
+    }
 
-      File _leftFile = new File( localFile );
+    public int runFile(String localFileName, String remoteFileName, String args, boolean sudo) throws Exception {
+        connect();
+        uploadFile(localFileName, remoteFileName);
+        String command = "bash " + remoteFileName + " " + args;
+        return executeCommand(command, sudo);
+    }
 
-      // send "C0644 fileSize filename", where filename should not include '/'
-      long fileSize = _leftFile.length();
-      command = "C0644 " + fileSize + " ";
-      command += remoteBaseFileName;
-      command += "\n";
-      out.write( command.getBytes() );
-      out.flush();
-      if ( checkAck( in ) != 0 )
-      {
-         throw new Exception( "Acknowledgement check failed" );
-      }
+    /**
+     * Method to upload a local file to SSH server
+     */
+    public void uploadFile(String localFile, String remoteFile) throws Exception {
+        connect();
+        FileInputStream fis;
 
-      // send a content of leftFile
-      fis = new FileInputStream( localFile );
-      byte[] buf = new byte[1024];
-      while ( true )
-      {
-         int len = fis.read( buf, 0, buf.length );
-         if ( len <= 0 )
-            break;
-         out.write( buf, 0, len ); // out.flush();
-      }
-      fis.close();
-      // send '\0'
-      buf[0] = 0;
-      out.write( buf, 0, 1 );
-      out.flush();
-      if ( checkAck( in ) != 0 )
-      {
-         throw new Exception( "Acknowledgement check failed" );
-      }
-      out.close();
-      channel.disconnect();
-   }
+        String remoteBaseFileName = remoteFile;
 
-   public boolean uploadFile( String localFileName, String remoteFileName, boolean useSudo ) throws Exception
-   {
-      if ( useSudo )
-      {
-         String tempFile = executeCommandReturningOutput( MKTEMP, false ).trim();
-         uploadFile( localFileName, tempFile );
-         executeCommand( "sudo mv " + tempFile + " " + remoteFileName, true );
-      }
-      else
-      {
-         uploadFile( localFileName, remoteFileName );
-      }
+        if (remoteFile.lastIndexOf('/') > 0) {
+            remoteBaseFileName = remoteFile.substring(remoteFile.lastIndexOf('/') + 1);
+        }
 
-      return true;
-   }
+        // exec 'scp -t rightFile' remotely
+        remoteFile = remoteFile.replace("'", "'\"'\"'");
+        remoteFile = "'" + remoteFile + "'";
+        String command = "scp  -t " + remoteFile;
+        Channel channel = session.openChannel(EXEC);
+        ((ChannelExec) channel).setCommand(command);
 
-   public void writeFile( byte[] content, String remoteFile )
-   {
+        // get I/O streams for remote scp
+        OutputStream out = channel.getOutputStream();
+        InputStream in = channel.getInputStream();
 
-      InputStream fis = null;
-      try
-      {
-         String remoteBaseFileName = remoteFile;
+        channel.connect();
 
-         if ( remoteFile.lastIndexOf( '/' ) > 0 )
-         {
-            remoteBaseFileName = remoteFile.substring( remoteFile.lastIndexOf( '/' ) + 1 );
-         }
+        if (checkAck(in) != 0) {
+            throw new Exception("Acknowledgement check failed");
+        }
 
-         // exec 'scp -t rightFile' remotely
-         remoteFile = remoteFile.replace( "'", "'\"'\"'" );
-         remoteFile = "'" + remoteFile + "'";
-         String  command = "scp  -t " + remoteFile;
-         Channel channel = session.openChannel( EXEC );
-         ( (ChannelExec) channel ).setCommand( command );
+        File _leftFile = new File(localFile);
 
-         // get I/O streams for remote scp
-         OutputStream out = channel.getOutputStream();
-         InputStream  in  = channel.getInputStream();
+        // send "C0644 fileSize filename", where filename should not include '/'
+        long fileSize = _leftFile.length();
+        command = "C0644 " + fileSize + " ";
+        command += remoteBaseFileName;
+        command += "\n";
+        out.write(command.getBytes());
+        out.flush();
+        if (checkAck(in) != 0) {
+            throw new Exception("Acknowledgement check failed");
+        }
 
-         channel.connect();
+        // send a content of leftFile
+        fis = new FileInputStream(localFile);
+        byte[] buf = new byte[1024];
+        while (true) {
+            int len = fis.read(buf, 0, buf.length);
+            if (len <= 0)
+                break;
+            out.write(buf, 0, len); // out.flush();
+        }
+        fis.close();
+        // send '\0'
+        buf[0] = 0;
+        out.write(buf, 0, 1);
+        out.flush();
+        if (checkAck(in) != 0) {
+            throw new Exception("Acknowledgement check failed");
+        }
+        out.close();
+        channel.disconnect();
+    }
 
-         if ( checkAck( in ) != 0 )
-         {
-            throw new Exception( "Acknowledgement check failed" );
-         }
+    public boolean uploadFile(String localFileName, String remoteFileName, boolean useSudo) throws Exception {
+        if (useSudo) {
+            String tempFile = executeCommandReturningOutput(MKTEMP, false).trim();
+            uploadFile(localFileName, tempFile);
+            executeCommand("sudo mv " + tempFile + " " + remoteFileName, true);
+        } else {
+            uploadFile(localFileName, remoteFileName);
+        }
 
-         long modifiedTime = System.currentTimeMillis();
+        return true;
+    }
 
-         // send "C0644 fileSize filename", where filename should not include '/'
-         long fileSize = content.length;
-         command = "C0644 " + fileSize + " ";
-         command += remoteBaseFileName;
-         command += "\n";
-         out.write( command.getBytes() );
-         out.flush();
-         if ( checkAck( in ) != 0 )
-         {
-            throw new Exception( "Acknowledgement check failed" );
-         }
+    public void writeFile(byte[] content, String remoteFile) {
 
-         // send a content of leftFile
-         fis = new ByteArrayInputStream( content );
-         byte[] buf = new byte[1024];
-         while ( true )
-         {
-            int len = fis.read( buf, 0, buf.length );
-            if ( len <= 0 )
-               break;
-            out.write( buf, 0, len ); // out.flush();
-         }
-         fis.close();
-         fis = null;
-         // send '\0'
-         buf[0] = 0;
-         out.write( buf, 0, 1 );
-         out.flush();
-         if ( checkAck( in ) != 0 )
-         {
-            throw new Exception( "Acknowledgement check failed" );
-         }
-         out.close();
-         channel.disconnect();
-      }
-      catch ( Exception e )
-      {
-         log.info( e );
-         try
-         {
-            if ( fis != null )
-               fis.close();
-         }
-         catch ( Exception ignored )
-         {
-         }
-      }
-   }
+        InputStream fis = null;
+        try {
+            String remoteBaseFileName = remoteFile;
 
-   /**
-    * Method to upload a local file to SSH server
-    */
-   public void uploadStreamAsFile( InputStream is, long fileSize, String remoteFile )
-   {
-      try
-      {
-         String remoteBaseFileName = remoteFile;
+            if (remoteFile.lastIndexOf('/') > 0) {
+                remoteBaseFileName = remoteFile.substring(remoteFile.lastIndexOf('/') + 1);
+            }
 
-         if ( remoteFile.lastIndexOf( '/' ) > 0 )
-         {
-            remoteBaseFileName = remoteFile.substring( remoteFile.lastIndexOf( '/' ) + 1 );
-         }
+            // exec 'scp -t rightFile' remotely
+            remoteFile = remoteFile.replace("'", "'\"'\"'");
+            remoteFile = "'" + remoteFile + "'";
+            String command = "scp  -t " + remoteFile;
+            Channel channel = session.openChannel(EXEC);
+            ((ChannelExec) channel).setCommand(command);
 
-         // exec 'scp -t rightFile' remotely
-         remoteFile = remoteFile.replace( "'", "'\"'\"'" );
-         remoteFile = "'" + remoteFile + "'";
-         String  command = "scp  -t " + remoteFile;
-         Channel channel = session.openChannel( EXEC );
-         ( (ChannelExec) channel ).setCommand( command );
+            // get I/O streams for remote scp
+            OutputStream out = channel.getOutputStream();
+            InputStream in = channel.getInputStream();
 
-         // get I/O streams for remote scp
-         OutputStream out = channel.getOutputStream();
-         InputStream  in  = channel.getInputStream();
+            channel.connect();
 
-         channel.connect();
+            if (checkAck(in) != 0) {
+                throw new Exception("Acknowledgement check failed");
+            }
 
-         if ( checkAck( in ) != 0 )
-         {
-            throw new Exception( "Acknowledgement check failed" );
-         }
+            long modifiedTime = System.currentTimeMillis();
 
-         // send "C0644 fileSize filename", where filename should not include '/'
-         command = "C0644 " + fileSize + " " + remoteBaseFileName;
+            // send "C0644 fileSize filename", where filename should not include '/'
+            long fileSize = content.length;
+            command = "C0644 " + fileSize + " ";
+            command += remoteBaseFileName;
+            command += "\n";
+            out.write(command.getBytes());
+            out.flush();
+            if (checkAck(in) != 0) {
+                throw new Exception("Acknowledgement check failed");
+            }
 
-         command += "\n";
-         out.write( command.getBytes() );
-         out.flush();
-         if ( checkAck( in ) != 0 )
-         {
-            throw new Exception( "Acknowledgement check failed" );
-         }
+            // send a content of leftFile
+            fis = new ByteArrayInputStream(content);
+            byte[] buf = new byte[1024];
+            while (true) {
+                int len = fis.read(buf, 0, buf.length);
+                if (len <= 0)
+                    break;
+                out.write(buf, 0, len); // out.flush();
+            }
+            fis.close();
+            fis = null;
+            // send '\0'
+            buf[0] = 0;
+            out.write(buf, 0, 1);
+            out.flush();
+            if (checkAck(in) != 0) {
+                throw new Exception("Acknowledgement check failed");
+            }
+            out.close();
+            channel.disconnect();
+        } catch (Exception e) {
+            log.info(e);
+            try {
+                if (fis != null)
+                    fis.close();
+            } catch (Exception ignored) {
+            }
+        }
+    }
 
-         byte[] buf = new byte[1024];
-         while ( true )
-         {
-            int len = is.read( buf, 0, buf.length );
-            if ( len <= 0 )
-               break;
-            out.write( buf, 0, len ); // out.flush();
-         }
-         is.close();
-         is = null;
-         // send '\0'
-         buf[0] = 0;
-         out.write( buf, 0, 1 );
-         out.flush();
-         if ( checkAck( in ) != 0 )
-         {
-            throw new Exception( "Acknowledgement check failed" );
-         }
-         out.close();
-         channel.disconnect();
-      }
-      catch ( Exception e )
-      {
-         log.info( e );
-         try
-         {
-            if ( is != null )
-               is.close();
-         }
-         catch ( Exception ignored )
-         {
-         }
-      }
-   }
+    /**
+     * Method to upload a local file to SSH server
+     */
+    public void uploadStreamAsFile(InputStream is, long fileSize, String remoteFile) {
+        try {
+            String remoteBaseFileName = remoteFile;
 
-   /**
-    * This class is used internally to pass user password to JSch library
-    */
-   private static class ByPassUserInfo implements UserInfo
-   {
-      private final String password;
+            if (remoteFile.lastIndexOf('/') > 0) {
+                remoteBaseFileName = remoteFile.substring(remoteFile.lastIndexOf('/') + 1);
+            }
 
-      public ByPassUserInfo( String password )
-      {
-         super();
-         this.password = password;
-      }
+            // exec 'scp -t rightFile' remotely
+            remoteFile = remoteFile.replace("'", "'\"'\"'");
+            remoteFile = "'" + remoteFile + "'";
+            String command = "scp  -t " + remoteFile;
+            Channel channel = session.openChannel(EXEC);
+            ((ChannelExec) channel).setCommand(command);
 
-      @Override
-      public String getPassphrase()
-      {
-         return null;
-      }
+            // get I/O streams for remote scp
+            OutputStream out = channel.getOutputStream();
+            InputStream in = channel.getInputStream();
 
-      @Override
-      public String getPassword()
-      {
-         return password;
-      }
+            channel.connect();
 
-      @Override
-      public boolean promptPassword( String message )
-      {
-         return true;
-      }
+            if (checkAck(in) != 0) {
+                throw new Exception("Acknowledgement check failed");
+            }
 
-      @Override
-      public boolean promptPassphrase( String message )
-      {
-         return true;
-      }
+            // send "C0644 fileSize filename", where filename should not include '/'
+            command = "C0644 " + fileSize + " " + remoteBaseFileName;
 
-      @Override
-      public boolean promptYesNo( String message )
-      {
-         return true;
-      }
+            command += "\n";
+            out.write(command.getBytes());
+            out.flush();
+            if (checkAck(in) != 0) {
+                throw new Exception("Acknowledgement check failed");
+            }
 
-      @Override
-      public void showMessage( String message )
-      {
-      }
-   }
+            byte[] buf = new byte[1024];
+            while (true) {
+                int len = is.read(buf, 0, buf.length);
+                if (len <= 0)
+                    break;
+                out.write(buf, 0, len); // out.flush();
+            }
+            is.close();
+            is = null;
+            // send '\0'
+            buf[0] = 0;
+            out.write(buf, 0, 1);
+            out.flush();
+            if (checkAck(in) != 0) {
+                throw new Exception("Acknowledgement check failed");
+            }
+            out.close();
+            channel.disconnect();
+        } catch (Exception e) {
+            log.info(e);
+            try {
+                if (is != null)
+                    is.close();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    /**
+     * This class is used internally to pass user password to JSch library
+     */
+    private static class ByPassUserInfo implements UserInfo {
+        private final String password;
+
+        public ByPassUserInfo(String password) {
+            super();
+            this.password = password;
+        }
+
+        @Override
+        public String getPassphrase() {
+            return null;
+        }
+
+        @Override
+        public String getPassword() {
+            return password;
+        }
+
+        @Override
+        public boolean promptPassword(String message) {
+            return true;
+        }
+
+        @Override
+        public boolean promptPassphrase(String message) {
+            return true;
+        }
+
+        @Override
+        public boolean promptYesNo(String message) {
+            return true;
+        }
+
+        @Override
+        public void showMessage(String message) {
+        }
+    }
 }

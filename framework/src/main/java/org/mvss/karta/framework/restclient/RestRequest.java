@@ -3,33 +3,33 @@ package org.mvss.karta.framework.restclient;
 import java.io.Serializable;
 import java.util.HashMap;
 
-public interface RestRequest extends Serializable
-{
-   String getUrl();
+@SuppressWarnings("unused")
+public interface RestRequest extends Serializable {
+    String getUrl();
 
-   void setUrl( String url );
+    void setUrl(String url);
 
-   HashMap<String, String> getHeaders();
+    HashMap<String, String> getHeaders();
 
-   void setHeaders( HashMap<String, String> headers );
+    void setHeaders(HashMap<String, String> headers);
 
-   HashMap<String, String> getParams();
+    HashMap<String, String> getParams();
 
-   void setParams( HashMap<String, String> params );
+    void setParams(HashMap<String, String> params);
 
-   ContentType getAccept();
+    ContentType getAccept();
 
-   void setAccept( ContentType accept );
+    void setAccept(ContentType accept);
 
-   ContentType getContentType();
+    ContentType getContentType();
 
-   void setContentType( ContentType contentType );
+    void setContentType(ContentType contentType);
 
-   Serializable getBody();
+    Serializable getBody();
 
-   void setBody( Serializable body );
+    void setBody(Serializable body);
 
-   void basicAuth( String userName, String password ) throws Exception;
+    void basicAuth(String userName, String password) throws Exception;
 
-   void bearerTokenAuth( String bearerToken ) throws Exception;
+    void bearerTokenAuth(String bearerToken) throws Exception;
 }

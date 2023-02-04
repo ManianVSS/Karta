@@ -7,33 +7,26 @@ import java.util.concurrent.LinkedBlockingQueue;
  *
  * @author Manian
  */
-public class BlockingRunnableQueue extends LinkedBlockingQueue<Runnable>
-{
+public class BlockingRunnableQueue extends LinkedBlockingQueue<Runnable> {
 
-   /**
-    *
-    */
-   private static final long serialVersionUID = 1L;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
 
-   public BlockingRunnableQueue( int capacity )
-   {
-      super( capacity );
-   }
+    public BlockingRunnableQueue(int capacity) {
+        super(capacity);
+    }
 
-   @Override
-   public boolean offer( Runnable runnable )
-   {
-      while ( true )
-      {
-         try
-         {
-            put( runnable );
-            break;
-         }
-         catch ( InterruptedException ignored )
-         {
-         }
-      }
-      return true;
-   }
+    @Override
+    public boolean offer(Runnable runnable) {
+        while (true) {
+            try {
+                put(runnable);
+                break;
+            } catch (InterruptedException ignored) {
+            }
+        }
+        return true;
+    }
 }

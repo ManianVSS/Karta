@@ -1,6 +1,6 @@
 package randomization;
 
-public enum Role
-{
-   ENGINEER, MANAGER, EXECUTIVE
+@SuppressWarnings("unused")
+public enum Role {
+    ENGINEER, MANAGER, EXECUTIVE
 }

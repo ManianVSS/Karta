@@ -37,7 +37,7 @@ tests:
     numberOfThreads: 5
     sourceArchive: samples.jar
 
-#  - name: WebAutomation
+  #  - name: WebAutomation
   #    priority: 1
   #    description: Web Automation test
   #    tags:
@@ -56,4 +56,4 @@ tests:
 #    numberOfThreads: 100
 
 
-subCategories: []
+subCategories: [ ]

@@ -20,7 +20,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.protocol.HttpContext;
-import org.mvss.karta.framework.core.dto.ProxyOptions;
+import org.mvss.karta.framework.configuration.ProxyOptions;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -29,232 +29,195 @@ import java.util.HashMap;
 @Getter
 @Setter
 @AllArgsConstructor
-public class ApacheRestClient implements RestClient
-{
-   private CloseableHttpClient httpClient;
-   private BasicCookieStore    cookieStore = new BasicCookieStore();
-   private HttpClientContext   context     = HttpClientContext.create();
+@SuppressWarnings("unused")
+public class ApacheRestClient implements RestClient {
+    private CloseableHttpClient httpClient;
+    private BasicCookieStore cookieStore = new BasicCookieStore();
+    private HttpClientContext context = HttpClientContext.create();
 
-   private String baseUrl;
+    private String baseUrl;
 
-   public static class Builder implements Serializable
-   {
-      private String       baseUrl;
-      private boolean      relaxedHTTPSValidation;
-      private ProxyOptions proxyOptions;
+    public ApacheRestClient() {
+        context.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+        httpClient = HttpClients.createDefault();
+    }
 
-      public Builder baseUrl( String baseUrl )
-      {
-         this.baseUrl = baseUrl;
-         return this;
-      }
+    public ApacheRestClient(boolean relaxedHTTPSValidation) {
+        context.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+        if (relaxedHTTPSValidation) {
+            httpClient = ApacheHTTPClientUtils.getInsecureHTTPSClient();
+        } else {
+            httpClient = HttpClients.createDefault();
+        }
+    }
 
-      public Builder relaxedHTTPSValidation( boolean relaxedHTTPSValidation )
-      {
-         this.relaxedHTTPSValidation = relaxedHTTPSValidation;
-         return this;
-      }
+    public ApacheRestClient(SSLConnectionSocketFactory sslConnectionSocketFactory) {
+        context.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+        httpClient = HttpClients.custom().setSSLSocketFactory(sslConnectionSocketFactory).build();
+    }
 
-      public Builder proxyOptions( ProxyOptions proxyOptions )
-      {
-         this.proxyOptions = proxyOptions;
-         return this;
-      }
+    public ApacheRestClient(String baseUrl) {
+        this();
+        this.baseUrl = baseUrl;
+    }
 
-      public ApacheRestClient build()
-      {
-         HttpClientBuilder httpClientBuilder = HttpClients.custom();
+    public ApacheRestClient(String baseUrl, boolean relaxedHTTPSValidation) {
+        this(relaxedHTTPSValidation);
+        this.baseUrl = baseUrl;
+    }
 
-         if ( relaxedHTTPSValidation )
-         {
-            httpClientBuilder.setSSLSocketFactory( ApacheHTTPClientUtils.getSslConnectionSocketFactory() );
-         }
+    public ApacheRestClient(String baseUrl, SSLConnectionSocketFactory sslConnectionSocketFactory) {
+        this(sslConnectionSocketFactory);
+        this.baseUrl = baseUrl;
+    }
 
-         if ( proxyOptions != null )
-         {
-            HttpHost proxyHost = new HttpHost( proxyOptions.getHost(), proxyOptions.getPort(), proxyOptions.getProtocol() );
-            HttpRoutePlanner routePlanner = new DefaultProxyRoutePlanner( proxyHost )
-            {
-               public HttpRoute determineRoute( final HttpHost host, final HttpRequest request, final HttpContext context ) throws HttpException
-               {
-                  String hostname = host.getHostName();
-                  if ( proxyOptions.isNonProxyHost( hostname ) )
-                  {
-                     return new HttpRoute( host );
-                  }
-                  return super.determineRoute( host, request, context );
-               }
-            };
-            httpClientBuilder.setRoutePlanner( routePlanner );
-         }
+    @Override
+    public void close() throws Exception {
+        if (httpClient != null) {
+            httpClient.close();
+            httpClient = null;
+        }
+    }
 
-         BasicCookieStore  cookieStore = new BasicCookieStore();
-         HttpClientContext context     = HttpClientContext.create();
-         context.setAttribute( HttpClientContext.COOKIE_STORE, cookieStore );
+    @Override
+    public HashMap<String, String> getCookies() {
+        HashMap<String, String> cookies = new HashMap<>();
+        cookieStore.getCookies().forEach(cookie -> cookies.put(cookie.getName(), cookie.getValue()));
+        return cookies;
+    }
 
-         return new ApacheRestClient( httpClientBuilder.build(), cookieStore, context, baseUrl );
-      }
-   }
+    @Override
+    public void setCookies(HashMap<String, String> cookies) {
+        cookies.forEach((key, value) -> cookieStore.addCookie(new BasicClientCookie(key, value)));
+    }
 
-   public ApacheRestClient()
-   {
-      context.setAttribute( HttpClientContext.COOKIE_STORE, cookieStore );
-      httpClient = HttpClients.createDefault();
-   }
+    public CloseableHttpResponse execute(HttpUriRequest httpUriRequest) throws IOException {
+        if (httpClient == null) {
+            return null;
+        }
+        return httpClient.execute(httpUriRequest, context);
+    }
 
-   public ApacheRestClient( boolean relaxedHTTPSValidation )
-   {
-      context.setAttribute( HttpClientContext.COOKIE_STORE, cookieStore );
-      if ( relaxedHTTPSValidation )
-      {
-         httpClient = ApacheHTTPClientUtils.getInsecureHTTPSClient();
-      }
-      else
-      {
-         httpClient = HttpClients.createDefault();
-      }
-   }
+    public RestResponse runMethod(RequestBuilderMethod method, ApacheRestRequest ahRequest, String suffixPath) throws IOException {
+        setCookies(ahRequest.getCookies());
+        RequestBuilder requestBuilder = method.httpMethod(ahRequest.getFullURL(baseUrl, suffixPath));
+        HttpUriRequest httpUriRequest = ahRequest.prepareRequest(requestBuilder).build();
 
-   public ApacheRestClient( SSLConnectionSocketFactory sslConnectionSocketFactory )
-   {
-      context.setAttribute( HttpClientContext.COOKIE_STORE, cookieStore );
-      httpClient = HttpClients.custom().setSSLSocketFactory( sslConnectionSocketFactory ).build();
-   }
+        CloseableHttpResponse closeableHttpResponse = execute(httpUriRequest);
+        return new ApacheRestResponse(closeableHttpResponse);
+    }
 
-   public ApacheRestClient( String baseUrl )
-   {
-      this();
-      this.baseUrl = baseUrl;
-   }
+    @Override
+    public RestResponse get(RestRequest request) throws Exception {
+        ApacheRestRequest ahRequest = (ApacheRestRequest) request;
+        return runMethod(RequestBuilder::get, ahRequest, null);
+    }
 
-   public ApacheRestClient( String baseUrl, boolean relaxedHTTPSValidation )
-   {
-      this( relaxedHTTPSValidation );
-      this.baseUrl = baseUrl;
-   }
+    @Override
+    public RestResponse get(RestRequest request, String path) throws Exception {
+        ApacheRestRequest ahRequest = (ApacheRestRequest) request;
+        return runMethod(RequestBuilder::get, ahRequest, path);
+    }
 
-   public ApacheRestClient( String baseUrl, SSLConnectionSocketFactory sslConnectionSocketFactory )
-   {
-      this( sslConnectionSocketFactory );
-      this.baseUrl = baseUrl;
-   }
+    @Override
+    public RestResponse post(RestRequest request) throws Exception {
+        ApacheRestRequest ahRequest = (ApacheRestRequest) request;
+        return runMethod(RequestBuilder::post, ahRequest, null);
+    }
 
-   @Override
-   public void close() throws Exception
-   {
-      if ( httpClient != null )
-      {
-         httpClient.close();
-         httpClient = null;
-      }
-   }
+    @Override
+    public RestResponse post(RestRequest request, String path) throws Exception {
+        ApacheRestRequest ahRequest = (ApacheRestRequest) request;
+        return runMethod(RequestBuilder::post, ahRequest, path);
+    }
 
-   @Override
-   public HashMap<String, String> getCookies()
-   {
-      HashMap<String, String> cookies = new HashMap<>();
-      cookieStore.getCookies().forEach( cookie -> cookies.put( cookie.getName(), cookie.getValue() ) );
-      return cookies;
-   }
+    @Override
+    public RestResponse put(RestRequest request) throws Exception {
+        ApacheRestRequest ahRequest = (ApacheRestRequest) request;
+        return runMethod(RequestBuilder::put, ahRequest, null);
+    }
 
-   @Override
-   public void setCookies( HashMap<String, String> cookies )
-   {
-      cookies.forEach( ( key, value ) -> cookieStore.addCookie( new BasicClientCookie( key, value ) ) );
-   }
+    @Override
+    public RestResponse put(RestRequest request, String path) throws Exception {
+        ApacheRestRequest ahRequest = (ApacheRestRequest) request;
+        return runMethod(RequestBuilder::put, ahRequest, path);
+    }
 
-   @FunctionalInterface
-   private interface RequestBuilderMethod
-   {
-      RequestBuilder httpMethod( String path );
-   }
+    @Override
+    public RestResponse patch(RestRequest request) throws Exception {
+        ApacheRestRequest ahRequest = (ApacheRestRequest) request;
+        return runMethod(RequestBuilder::patch, ahRequest, null);
+    }
 
-   public CloseableHttpResponse execute( HttpUriRequest httpUriRequest ) throws IOException
-   {
-      if ( httpClient == null )
-      {
-         return null;
-      }
-      return httpClient.execute( httpUriRequest, context );
-   }
+    @Override
+    public RestResponse patch(RestRequest request, String path) throws Exception {
+        ApacheRestRequest ahRequest = (ApacheRestRequest) request;
+        return runMethod(RequestBuilder::patch, ahRequest, path);
+    }
 
-   public RestResponse runMethod( RequestBuilderMethod method, ApacheRestRequest ahRequest, String suffixPath ) throws IOException
-   {
-      setCookies( ahRequest.getCookies() );
-      RequestBuilder requestBuilder = method.httpMethod( ahRequest.getFullURL( baseUrl, suffixPath ) );
-      HttpUriRequest httpUriRequest = ahRequest.prepareRequest( requestBuilder ).build();
+    @Override
+    public RestResponse delete(RestRequest request) throws Exception {
+        ApacheRestRequest ahRequest = (ApacheRestRequest) request;
+        return runMethod(RequestBuilder::delete, ahRequest, null);
+    }
 
-      CloseableHttpResponse closeableHttpResponse = execute( httpUriRequest );
-      return new ApacheRestResponse( closeableHttpResponse );
-   }
+    @Override
+    public RestResponse delete(RestRequest request, String path) throws Exception {
+        ApacheRestRequest ahRequest = (ApacheRestRequest) request;
+        return runMethod(RequestBuilder::delete, ahRequest, path);
+    }
 
-   @Override
-   public RestResponse get( RestRequest request ) throws Exception
-   {
-      ApacheRestRequest ahRequest = (ApacheRestRequest) request;
-      return runMethod( RequestBuilder::get, ahRequest, null );
-   }
+    @FunctionalInterface
+    private interface RequestBuilderMethod {
+        RequestBuilder httpMethod(String path);
+    }
 
-   @Override
-   public RestResponse get( RestRequest request, String path ) throws Exception
-   {
-      ApacheRestRequest ahRequest = (ApacheRestRequest) request;
-      return runMethod( RequestBuilder::get, ahRequest, path );
-   }
+    public static class Builder implements Serializable {
+        private String baseUrl;
+        private boolean relaxedHTTPSValidation;
+        private ProxyOptions proxyOptions;
 
-   @Override
-   public RestResponse post( RestRequest request ) throws Exception
-   {
-      ApacheRestRequest ahRequest = (ApacheRestRequest) request;
-      return runMethod( RequestBuilder::post, ahRequest, null );
-   }
+        public Builder baseUrl(String baseUrl) {
+            this.baseUrl = baseUrl;
+            return this;
+        }
 
-   @Override
-   public RestResponse post( RestRequest request, String path ) throws Exception
-   {
-      ApacheRestRequest ahRequest = (ApacheRestRequest) request;
-      return runMethod( RequestBuilder::post, ahRequest, path );
-   }
+        public Builder relaxedHTTPSValidation(boolean relaxedHTTPSValidation) {
+            this.relaxedHTTPSValidation = relaxedHTTPSValidation;
+            return this;
+        }
 
-   @Override
-   public RestResponse put( RestRequest request ) throws Exception
-   {
-      ApacheRestRequest ahRequest = (ApacheRestRequest) request;
-      return runMethod( RequestBuilder::put, ahRequest, null );
-   }
+        public Builder proxyOptions(ProxyOptions proxyOptions) {
+            this.proxyOptions = proxyOptions;
+            return this;
+        }
 
-   @Override
-   public RestResponse put( RestRequest request, String path ) throws Exception
-   {
-      ApacheRestRequest ahRequest = (ApacheRestRequest) request;
-      return runMethod( RequestBuilder::put, ahRequest, path );
-   }
+        public ApacheRestClient build() {
+            HttpClientBuilder httpClientBuilder = HttpClients.custom();
 
-   @Override
-   public RestResponse patch( RestRequest request ) throws Exception
-   {
-      ApacheRestRequest ahRequest = (ApacheRestRequest) request;
-      return runMethod( RequestBuilder::patch, ahRequest, null );
-   }
+            if (relaxedHTTPSValidation) {
+                httpClientBuilder.setSSLSocketFactory(ApacheHTTPClientUtils.getSslConnectionSocketFactory());
+            }
 
-   @Override
-   public RestResponse patch( RestRequest request, String path ) throws Exception
-   {
-      ApacheRestRequest ahRequest = (ApacheRestRequest) request;
-      return runMethod( RequestBuilder::patch, ahRequest, path );
-   }
+            if (proxyOptions != null) {
+                HttpHost proxyHost = new HttpHost(proxyOptions.getHost(), proxyOptions.getPort(), proxyOptions.getProtocol());
+                HttpRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxyHost) {
+                    public HttpRoute determineRoute(final HttpHost host, final HttpRequest request, final HttpContext context) throws HttpException {
+                        String hostname = host.getHostName();
+                        if (proxyOptions.isNonProxyHost(hostname)) {
+                            return new HttpRoute(host);
+                        }
+                        return super.determineRoute(host, request, context);
+                    }
+                };
+                httpClientBuilder.setRoutePlanner(routePlanner);
+            }
 
-   @Override
-   public RestResponse delete( RestRequest request ) throws Exception
-   {
-      ApacheRestRequest ahRequest = (ApacheRestRequest) request;
-      return runMethod( RequestBuilder::delete, ahRequest, null );
-   }
+            BasicCookieStore cookieStore = new BasicCookieStore();
+            HttpClientContext context = HttpClientContext.create();
+            context.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
 
-   @Override
-   public RestResponse delete( RestRequest request, String path ) throws Exception
-   {
-      ApacheRestRequest ahRequest = (ApacheRestRequest) request;
-      return runMethod( RequestBuilder::delete, ahRequest, path );
-   }
+            return new ApacheRestClient(httpClientBuilder.build(), cookieStore, context, baseUrl);
+        }
+    }
 }

@@ -29,10 +29,10 @@ fieldGenRules:
     ruleType: MUTEX_OBJECT_RULE_VALUE
     fieldGenRules:
       - ruleType: VALUES
-        values: [FEMALE, MALE]
+        values: [ FEMALE, MALE ]
         probability: 0.9
       - ruleType: VALUES
-        values: [TRANSGENDER]
+        values: [ TRANSGENDER ]
         probability: 0.1
   - fieldName: married
     ruleType: BOOLEAN
@@ -40,13 +40,13 @@ fieldGenRules:
     ruleType: MUTEX_OBJECT_RULE_VALUE
     fieldGenRules:
       - ruleType: VALUES
-        values: [ENGINEER]
+        values: [ ENGINEER ]
         probability: 0.9
       - ruleType: VALUES
-        values: [MANAGER]
+        values: [ MANAGER ]
         probability: 0.09
       - ruleType: VALUES
-        values: [EXECUTIVE]
+        values: [ EXECUTIVE ]
         probability: 0.01
   - fieldName: salary
     ruleType: INTEGER_RANGE

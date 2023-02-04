@@ -5,10 +5,9 @@ package org.mvss.karta.framework.enums;
  *
  * @author Manian
  */
-public enum DataFormat
-{
-   JSON,
-   YAML,
-   XML,
-   PROPERTIES
+public enum DataFormat {
+    JSON,
+    YAML,
+    XML,
+    PROPERTIES
 }

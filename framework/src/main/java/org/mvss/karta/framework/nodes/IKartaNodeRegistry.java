@@ -1,16 +1,16 @@
 package org.mvss.karta.framework.nodes;
 
-public interface IKartaNodeRegistry extends AutoCloseable
-{
-   boolean addNode( KartaNodeConfiguration nodeConfiguration );
+@SuppressWarnings("unused")
+public interface IKartaNodeRegistry extends AutoCloseable {
+    boolean addNode(KartaNodeConfiguration nodeConfiguration);
 
-   boolean removeNode( String name );
+    boolean removeNode(String name);
 
-   KartaNode getNode( String name );
+    KartaNode getNode(String name);
 
-   KartaNode getNextMinion();
+    KartaNode getNextMinion();
 
-   java.util.ArrayList<KartaNode> getMinions();
+    java.util.ArrayList<KartaNode> getMinions();
 
-   java.util.HashMap<String, KartaNode> getNodes();
+    java.util.HashMap<String, KartaNode> getNodes();
 }

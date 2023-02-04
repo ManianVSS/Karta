@@ -1,176 +1,176 @@
 Sample Java Test Feature:
-    __feature_setup__:
-        My feature setup:
-            data1:
-                - value1
-                - value2
-                - value3
-            data2:
-                - mapval1:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval2:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval3:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
+  __feature_setup__:
+    My feature setup:
+      data1:
+        - value1
+        - value2
+        - value3
+      data2:
+        - mapval1:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval2:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval3:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
 
+  Scenario1:
+    My scenario setup:
+      data1:
+        - value1
+        - value2
+        - value3
+      data2:
+        - mapval1:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval2:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval3:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
     Scenario1:
-        My scenario setup:
-            data1:
-                - value1
-                - value2
-                - value3
-            data2:
-                - mapval1:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval2:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval3:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-        Scenario1:
-            data1:
-                - value1
-                - value2
-                - value3
-            data2:
-                - mapval1:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval2:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval3:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
+      data1:
+        - value1
+        - value2
+        - value3
+      data2:
+        - mapval1:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval2:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval3:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
 
-        My scenario teardown:
-            data1:
-                - value1
-                - value2
-                - value3
-            data2:
-                - mapval1:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval2:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval3:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
+    My scenario teardown:
+      data1:
+        - value1
+        - value2
+        - value3
+      data2:
+        - mapval1:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval2:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval3:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+  Scenario2:
+    My scenario setup:
+      data1:
+        - value1
+        - value2
+        - value3
+      data2:
+        - mapval1:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval2:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval3:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
     Scenario2:
-        My scenario setup:
-            data1:
-                - value1
-                - value2
-                - value3
-            data2:
-                - mapval1:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval2:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval3:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-        Scenario2:
-            data1:
-                - value1
-                - value2
-                - value3
-            data2:
-                - mapval1:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval2:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval3:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
+      data1:
+        - value1
+        - value2
+        - value3
+      data2:
+        - mapval1:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval2:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval3:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
 
-        My scenario teardown:
-            data1:
-                - value1
-                - value2
-                - value3
-            data2:
-                - mapval1:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval2:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval3:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
+    My scenario teardown:
+      data1:
+        - value1
+        - value2
+        - value3
+      data2:
+        - mapval1:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval2:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval3:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+  Scenario3:
+    My scenario setup:
+      data1:
+        - value1
+        - value2
+        - value3
+      data2:
+        - mapval1:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval2:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval3:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
     Scenario3:
-        My scenario setup:
-            data1:
-                - value1
-                - value2
-                - value3
-            data2:
-                - mapval1:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval2:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval3:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-        Scenario3:
-            data1:
-                - value1
-                - value2
-                - value3
-            data2:
-                - mapval1:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval2:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval3:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
+      data1:
+        - value1
+        - value2
+        - value3
+      data2:
+        - mapval1:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval2:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval3:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
 
-        My scenario teardown:
-            data1:
-                - value1
-                - value2
-                - value3
-            data2:
-                - mapval1:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval2:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval3:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
+    My scenario teardown:
+      data1:
+        - value1
+        - value2
+        - value3
+      data2:
+        - mapval1:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval2:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval3:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
 
-    __feature_teardown__:
-        My feature teardown:
-            data1:
-                - value1
-                - value2
-                - value3
-            data2:
-                - mapval1:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval2:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
-                - mapval3:
-                      mapvalkey1: mapvalkey1value
-                      mapvalkey2: mapvalkey2value
+  __feature_teardown__:
+    My feature teardown:
+      data1:
+        - value1
+        - value2
+        - value3
+      data2:
+        - mapval1:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval2:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value
+        - mapval3:
+            mapvalkey1: mapvalkey1value
+            mapvalkey2: mapvalkey2value

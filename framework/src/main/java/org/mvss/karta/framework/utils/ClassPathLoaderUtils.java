@@ -16,55 +16,48 @@ import java.nio.charset.Charset;
  *
  * @author Manian
  */
-public class ClassPathLoaderUtils
-{
-   /**
-    * Get the URI of a file from file system(higher priority) or class-path resource.
-    * Returns null if not found
-    */
-   public static URI getFileOrResourceURI( String fileName ) throws URISyntaxException
-   {
-      File fileToLoad = new File( fileName );
+public class ClassPathLoaderUtils {
+    /**
+     * Get the URI of a file from file system(higher priority) or class-path resource.
+     * Returns null if not found
+     */
+    public static URI getFileOrResourceURI(String fileName) throws URISyntaxException {
+        File fileToLoad = new File(fileName);
 
-      if ( fileToLoad.exists() )
-      {
-         return fileToLoad.toURI();
-      }
+        if (fileToLoad.exists()) {
+            return fileToLoad.toURI();
+        }
 
-      URL url = ClassPathLoaderUtils.class.getResource( "/" + fileName );
+        URL url = ClassPathLoaderUtils.class.getResource("/" + fileName);
 
-      return ( url == null ) ? null : url.toURI();
-   }
+        return (url == null) ? null : url.toURI();
+    }
 
-   /**
-    * Get the file input stream of a file from file system(higher priority) or class-path resource
-    * Returns null if not found
-    */
-   public static InputStream getFileStream( String fileName ) throws IOException
-   {
-      File fileToLoad = new File( fileName );
+    /**
+     * Get the file input stream of a file from file system(higher priority) or class-path resource
+     * Returns null if not found
+     */
+    public static InputStream getFileStream(String fileName) throws IOException {
+        File fileToLoad = new File(fileName);
 
-      if ( fileToLoad.exists() && fileToLoad.isFile() )
-      {
-         return new FileInputStream( fileToLoad );
-      }
+        if (fileToLoad.exists() && fileToLoad.isFile()) {
+            return new FileInputStream(fileToLoad);
+        }
 
-      return ClassPathLoaderUtils.class.getResourceAsStream( "/" + fileName );
-   }
+        return ClassPathLoaderUtils.class.getResourceAsStream("/" + fileName);
+    }
 
-   /**
-    * Get all text of a file from file system(higher priority) or class-path resource
-    * Returns null if not found
-    */
-   public static String readAllText( String fileName ) throws IOException, URISyntaxException
-   {
-      InputStream fileInputStream = getFileStream( fileName );
+    /**
+     * Get all text of a file from file system(higher priority) or class-path resource
+     * Returns null if not found
+     */
+    public static String readAllText(String fileName) throws IOException, URISyntaxException {
+        InputStream fileInputStream = getFileStream(fileName);
 
-      if ( fileInputStream == null )
-      {
-         return null;
-      }
-      return IOUtils.toString( fileInputStream, Charset.defaultCharset() );
-   }
+        if (fileInputStream == null) {
+            return null;
+        }
+        return IOUtils.toString(fileInputStream, Charset.defaultCharset());
+    }
 
 }

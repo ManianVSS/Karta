@@ -10,40 +10,36 @@ import java.util.HashMap;
 @Getter
 @Setter
 @ToString
-@Builder( toBuilder = true )
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class WebDriverOptions implements Serializable
-{
-   private static final long serialVersionUID = 1L;
+public class WebDriverOptions implements Serializable {
+    public static final ScreenSize DEFAULT_SCREEN_SIZE = new ScreenSize();
+    private static final long serialVersionUID = 1L;
+    @Builder.Default
+    private String webDriverLocation = "chromedriver";
+    @Builder.Default
+    private Browser browser = Browser.CHROME;
 
-   @Builder.Default
-   private String webDriverLocation = "chromedriver";
+    private HashMap<String, Serializable> proxyConfiguration;
 
-   public static final ScreenSize DEFAULT_SCREEN_SIZE = new ScreenSize();
+    @Builder.Default
+    private boolean headless = true;
 
-   @Builder.Default
-   private Browser browser = Browser.CHROME;
+    @Builder.Default
+    private boolean ignoreCertificates = true;
 
-   private HashMap<String, Serializable> proxyConfiguration;
+    @Builder.Default
+    private ScreenSize screenSize = DEFAULT_SCREEN_SIZE;
 
-   @Builder.Default
-   private boolean headless = true;
+    @Builder.Default
+    private Duration implicitWaitTime = Duration.ofSeconds(5);
 
-   @Builder.Default
-   private boolean ignoreCertificates = true;
+    @Builder.Default
+    private Duration waitTimeout = Duration.ofMinutes(1);
 
-   @Builder.Default
-   private ScreenSize screenSize = DEFAULT_SCREEN_SIZE;
+    @Builder.Default
+    private Duration longWaitTimeout = Duration.ofMinutes(3);
 
-   @Builder.Default
-   private Duration implicitWaitTime = Duration.ofSeconds( 5 );
-
-   @Builder.Default
-   private Duration waitTimeout = Duration.ofMinutes( 1 );
-
-   @Builder.Default
-   private Duration longWaitTimeout = Duration.ofMinutes( 3 );
-
-   private ArrayList<String> additionalArguments;
+    private ArrayList<String> additionalArguments;
 }

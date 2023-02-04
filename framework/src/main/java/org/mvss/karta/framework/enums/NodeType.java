@@ -5,8 +5,7 @@ package org.mvss.karta.framework.enums;
  *
  * @author Manian
  */
-public enum NodeType
-{
-   RMI,
-   REST
+public enum NodeType {
+    RMI,
+    REST
 }

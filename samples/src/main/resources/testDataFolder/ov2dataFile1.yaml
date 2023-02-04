@@ -1,17 +1,17 @@
 __generic_feature__:
-        __generic_scenario__:
-                __generic_step__:
-                        data3:
-                                - cvalue1
-                                - cvalue2
-                                - cvalue3
-                        data2:
-                                - mapval1:
-                                          cmapvalkey1: cmapvalkey1value
-                                          cmapvalkey2: cmapvalkey2value
-                                - mapval2:
-                                          cmapvalkey1: cmapvalkey1value
-                                          cmapvalkey2: cmapvalkey2value
-                                - mapval3:
-                                          cmapvalkey1: cmapvalkey1value
-                                          cmapvalkey2: cmapvalkey2value
+  __generic_scenario__:
+    __generic_step__:
+      data3:
+        - cvalue1
+        - cvalue2
+        - cvalue3
+      data2:
+        - mapval1:
+            cmapvalkey1: cmapvalkey1value
+            cmapvalkey2: cmapvalkey2value
+        - mapval2:
+            cmapvalkey1: cmapvalkey1value
+            cmapvalkey2: cmapvalkey2value
+        - mapval3:
+            cmapvalkey1: cmapvalkey1value
+            cmapvalkey2: cmapvalkey2value

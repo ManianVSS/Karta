@@ -11,33 +11,27 @@ import org.apache.http.ssl.SSLContextBuilder;
 import javax.net.ssl.HostnameVerifier;
 
 @Log4j2
-public class ApacheHTTPClientUtils
-{
-   @Getter
-   private static final TrustStrategy trustStrategy = ( x509Certificates, s ) -> true;
+public class ApacheHTTPClientUtils {
+    @Getter
+    private static final TrustStrategy trustStrategy = (x509Certificates, s) -> true;
 
-   @Getter
-   private static final HostnameVerifier hostnameVerifier = ( s, sslSession ) -> true;
+    @Getter
+    private static final HostnameVerifier hostnameVerifier = (s, sslSession) -> true;
 
-   @Getter
-   private static SSLConnectionSocketFactory sslConnectionSocketFactory;
+    @Getter
+    private static SSLConnectionSocketFactory sslConnectionSocketFactory;
 
-   static
-   {
-      try
-      {
-         sslConnectionSocketFactory = new SSLConnectionSocketFactory( new SSLContextBuilder().loadTrustMaterial( trustStrategy ).build(),
-                  hostnameVerifier );
-      }
-      catch ( Exception e )
-      {
-         log.error( "", e );
-      }
-   }
+    static {
+        try {
+            sslConnectionSocketFactory = new SSLConnectionSocketFactory(new SSLContextBuilder().loadTrustMaterial(trustStrategy).build(),
+                    hostnameVerifier);
+        } catch (Exception e) {
+            log.error("", e);
+        }
+    }
 
-   public static CloseableHttpClient getInsecureHTTPSClient()
-   {
-      return HttpClients.custom().setSSLSocketFactory( sslConnectionSocketFactory ).build();
-   }
+    public static CloseableHttpClient getInsecureHTTPSClient() {
+        return HttpClients.custom().setSSLSocketFactory(sslConnectionSocketFactory).build();
+    }
 
 }

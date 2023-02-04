@@ -8,17 +8,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class UtilBeans
-{
-   @Bean
-   public ObjectMapper getObjectMapper()
-   {
-      return ParserUtils.getObjectMapper();
-   }
+public class UtilBeans {
+    @Bean
+    public ObjectMapper getObjectMapper() {
+        return ParserUtils.getObjectMapper();
+    }
 
-   @Bean
-   public BeanUtilsBean getBeanUtilsBean()
-   {
-      return new NullAwareBeanUtilsBean();
-   }
+    @Bean
+    public BeanUtilsBean getBeanUtilsBean() {
+        return new NullAwareBeanUtilsBean();
+    }
 }

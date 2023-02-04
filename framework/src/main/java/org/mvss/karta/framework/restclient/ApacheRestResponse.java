@@ -9,8 +9,8 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.mvss.karta.Constants;
 import org.mvss.karta.framework.enums.DataFormat;
-import org.mvss.karta.framework.runtime.Constants;
 import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.ParserUtils;
 
@@ -26,167 +26,144 @@ import java.util.HashMap;
  */
 @Getter
 @Log4j2
-public class ApacheRestResponse implements RestResponse
-{
-   private static final long serialVersionUID = 1L;
+public class ApacheRestResponse implements RestResponse {
+    private static final long serialVersionUID = 1L;
 
-   private final String                  protocolVersion;
-   private final int                     statusCode;
-   private final String                  reasonPhrase;
-   private final HashMap<String, String> headers;
-   private       ContentType             contentType;
+    private final String protocolVersion;
+    private final int statusCode;
+    private final String reasonPhrase;
+    private final HashMap<String, String> headers;
+    private ContentType contentType;
 
-   private InputStream contentStream;
+    private InputStream contentStream;
 
-   public ApacheRestResponse( CloseableHttpResponse response ) throws UnsupportedOperationException, IOException
-   {
-      StatusLine statusLine = response.getStatusLine();
-      this.protocolVersion = statusLine.getProtocolVersion().toString();
-      this.statusCode      = statusLine.getStatusCode();
-      this.reasonPhrase    = statusLine.getReasonPhrase();
+    public ApacheRestResponse(CloseableHttpResponse response) throws UnsupportedOperationException, IOException {
+        StatusLine statusLine = response.getStatusLine();
+        this.protocolVersion = statusLine.getProtocolVersion().toString();
+        this.statusCode = statusLine.getStatusCode();
+        this.reasonPhrase = statusLine.getReasonPhrase();
 
-      this.headers = new HashMap<>();
+        this.headers = new HashMap<>();
 
-      for ( Header header : response.getAllHeaders() )
-      {
-         this.headers.put( header.getName(), header.getValue() );
+        for (Header header : response.getAllHeaders()) {
+            this.headers.put(header.getName(), header.getValue());
 
-         if ( header.getName().equals( Constants.CONTENT_TYPE ) )
-         {
-            String contentTypeString = DataUtils.getContainedKey( header.getValue(), ContentType.getCONTENT_TYPE_MAP().keySet() );
+            if (header.getName().equals(Constants.CONTENT_TYPE)) {
+                String contentTypeString = DataUtils.getContainedKey(header.getValue(), ContentType.getCONTENT_TYPE_MAP().keySet());
 
-            if ( contentTypeString != null )
-            {
-               this.contentType = ContentType.getByMimeType( contentTypeString );
+                if (contentTypeString != null) {
+                    this.contentType = ContentType.getByMimeType(contentTypeString);
+                }
             }
-         }
-      }
+        }
 
-      if ( this.contentType == null )
-      {
-         this.contentType = ContentType.APPLICATION_JSON;
-      }
+        if (this.contentType == null) {
+            this.contentType = ContentType.APPLICATION_JSON;
+        }
 
-      HttpEntity entity = response.getEntity();
+        HttpEntity entity = response.getEntity();
 
-      if ( entity != null )
-      {
-         this.contentStream = entity.getContent();
-      }
-   }
+        if (entity != null) {
+            this.contentStream = entity.getContent();
+        }
+    }
 
-   @Override
-   @SuppressWarnings( "unchecked" )
-   public <T> T getBodyAs( Class<T> type ) throws IOException
-   {
-      if ( contentStream == null )
-      {
-         return null;
-      }
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T getBodyAs(Class<T> type) throws IOException {
+        if (contentStream == null) {
+            return null;
+        }
 
-      if ( type == InputStream.class )
-      {
-         return (T) contentStream;
-      }
+        if (type == InputStream.class) {
+            return (T) contentStream;
+        }
 
-      byte[] body = contentStream.readAllBytes();
+        byte[] body = contentStream.readAllBytes();
 
-      if ( type == byte[].class )
-      {
-         return (T) body;
-      }
+        if (type == byte[].class) {
+            return (T) body;
+        }
 
-      if ( type == String.class )
-      {
-         return (T) new String( body, StandardCharsets.UTF_8 );
-      }
+        if (type == String.class) {
+            return (T) new String(body, StandardCharsets.UTF_8);
+        }
 
-      try
-      {
-         switch ( contentType )
-         {
-            case APPLICATION_FORM_URLENCODED:
-            case APPLICATION_OCTET_STREAM:
-            case IMAGE_BMP:
-            case IMAGE_GIF:
-            case IMAGE_JPEG:
-            case IMAGE_PNG:
-            case IMAGE_SVG:
-            case IMAGE_TIFF:
-            case IMAGE_WEBP:
-            case MULTIPART_FORM_DATA:
-               return ParserUtils.convertValue( DataFormat.JSON, body, type );
+        try {
+            switch (contentType) {
+                case APPLICATION_FORM_URLENCODED:
+                case APPLICATION_OCTET_STREAM:
+                case IMAGE_BMP:
+                case IMAGE_GIF:
+                case IMAGE_JPEG:
+                case IMAGE_PNG:
+                case IMAGE_SVG:
+                case IMAGE_TIFF:
+                case IMAGE_WEBP:
+                case MULTIPART_FORM_DATA:
+                    return ParserUtils.convertValue(DataFormat.JSON, body, type);
 
-            case APPLICATION_XML:
-            case APPLICATION_ATOM_XML:
-            case APPLICATION_XHTML_XML:
-            case APPLICATION_SOAP_XML:
-            case APPLICATION_SVG_XML:
-               String bytesStr = new String( body );
-               return ParserUtils.readValue( DataFormat.XML, bytesStr, type );
+                case APPLICATION_XML:
+                case APPLICATION_ATOM_XML:
+                case APPLICATION_XHTML_XML:
+                case APPLICATION_SOAP_XML:
+                case APPLICATION_SVG_XML:
+                    String bytesStr = new String(body);
+                    return ParserUtils.readValue(DataFormat.XML, bytesStr, type);
 
-            case APPLICATION_YML:
-            case APPLICATION_YAML:
-            case APPLICATION_X_YAML:
-            case TEXT_YAML:
-               bytesStr = new String( body );
-               return ParserUtils.readValue( DataFormat.YAML, bytesStr, type );
+                case APPLICATION_YML:
+                case APPLICATION_YAML:
+                case APPLICATION_X_YAML:
+                case TEXT_YAML:
+                    bytesStr = new String(body);
+                    return ParserUtils.readValue(DataFormat.YAML, bytesStr, type);
 
-            case TEXT_HTML:
-            case TEXT_PLAIN:
-            case TEXT_XML:
-            case APPLICATION_JSON:
-            default:
-               bytesStr = new String( body );
-               return ParserUtils.readValue( DataFormat.JSON, bytesStr, type );
-         }
-      }
-      catch ( Exception exception )
-      {
-         log.error( "", exception );
-         return null;
-      }
-   }
+                case TEXT_HTML:
+                case TEXT_PLAIN:
+                case TEXT_XML:
+                case APPLICATION_JSON:
+                default:
+                    bytesStr = new String(body);
+                    return ParserUtils.readValue(DataFormat.JSON, bytesStr, type);
+            }
+        } catch (Exception exception) {
+            log.error("", exception);
+            return null;
+        }
+    }
 
-   @Override
-   @SuppressWarnings( "unchecked" )
-   public <T> T getBodyAs( TypeReference<T> type ) throws IOException
-   {
-      return (T) getBodyAs( TypeFactory.rawClass( type.getType() ) );
-   }
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T getBodyAs(TypeReference<T> type) throws IOException {
+        return (T) getBodyAs(TypeFactory.rawClass(type.getType()));
+    }
 
-   @Override
-   public void close() throws IOException
-   {
-      if ( contentStream != null )
-      {
-         contentStream.close();
-         contentStream = null;
-      }
-   }
+    @Override
+    public void close() throws IOException {
+        if (contentStream != null) {
+            contentStream.close();
+            contentStream = null;
+        }
+    }
 
-   @Override
-   public String getBody() throws IOException
-   {
-      return getBodyAs( String.class );
-   }
+    @Override
+    public String getBody() throws IOException {
+        return getBodyAs(String.class);
+    }
 
-   /**
-    * Get the response stream typically to save as file.
-    * The stream must be closed by consumers after use.
-    */
-   @Override
-   public InputStream getStream()
-   {
-      return contentStream;
-   }
+    /**
+     * Get the response stream typically to save as file.
+     * The stream must be closed by consumers after use.
+     */
+    @Override
+    public InputStream getStream() {
+        return contentStream;
+    }
 
-   @Override
-   public void downloadFile( File file ) throws IOException
-   {
-      try (FileOutputStream fileOutputStream = new FileOutputStream( file ))
-      {
-         IOUtils.copy( contentStream, fileOutputStream );
-      }
-   }
+    @Override
+    public void downloadFile(File file) throws IOException {
+        try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+            IOUtils.copy(contentStream, fileOutputStream);
+        }
+    }
 }

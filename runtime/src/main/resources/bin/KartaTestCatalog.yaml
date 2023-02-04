@@ -7,5 +7,5 @@ stepRunnerPlugin: Kriya
 testDataSourcePlugins:
   - DataFilesTestDataSource
   - ObjectGenTestDataSource
-tests: []
-subCategories: []
+tests: [ ]
+subCategories: [ ]

@@ -1,8 +1,8 @@
 package org.mvss.karta.framework.nodes.dto;
 
 import lombok.*;
-import org.mvss.karta.framework.core.TestJob;
-import org.mvss.karta.framework.runtime.RunInfo;
+import org.mvss.karta.framework.models.run.RunInfo;
+import org.mvss.karta.framework.models.test.TestJob;
 
 import java.io.Serializable;
 
@@ -11,13 +11,13 @@ import java.io.Serializable;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder( toBuilder = true )
-public class JobIterationRunInfo implements Serializable
-{
-   private static final long serialVersionUID = 1L;
+@Builder(toBuilder = true)
+public class JobIterationRunInfo implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-   private RunInfo runInfo;
-   private String  featureName;
-   private TestJob testJob;
-   private int     iterationIndex = -1;
+    private RunInfo runInfo;
+    private String featureName;
+    private TestJob testJob;
+    @Builder.Default
+    private int iterationIndex = -1;
 }

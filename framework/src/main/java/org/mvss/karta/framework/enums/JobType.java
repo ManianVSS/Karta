@@ -5,8 +5,7 @@ package org.mvss.karta.framework.enums;
  *
  * @author Manian
  */
-public enum JobType
-{
-   STEPS,
-   CHAOS
+public enum JobType {
+    STEPS,
+    CHAOS
 }

@@ -17,8 +17,8 @@ tests:
     tags:
       - cycle
       - UI
-    featureFileName: SampleFeatureFile.yaml    
+    featureFileName: SampleFeatureFile.yaml
     numberOfIterations: 10
     numberOfThreads: 5
 
-subCategories: []
+subCategories: [ ]

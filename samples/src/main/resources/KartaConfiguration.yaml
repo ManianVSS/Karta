@@ -1,24 +1,24 @@
 pluginConfigurations:
   - pluginName: Kriya
-    className: org.mvss.karta.framework.runtime.impl.KriyaPlugin
+    className: org.mvss.karta.framework.plugins.impl.kriya.KriyaPlugin
 
   - pluginName: DataFilesTestDataSource
-    className: org.mvss.karta.framework.runtime.impl.DataFilesTestDataSource
+    className: org.mvss.karta.framework.plugins.impl.DataFilesTestDataSource
 
   - pluginName: ObjectGenTestDataSource
-    className: org.mvss.karta.framework.runtime.impl.ObjectGenTestDataSource
+    className: org.mvss.karta.framework.plugins.impl.ObjectGenTestDataSource
 
   - pluginName: LoggingTestEventListener
-    className: org.mvss.karta.framework.runtime.impl.LoggingTestEventListener
+    className: org.mvss.karta.framework.plugins.impl.LoggingTestEventListener
 
   - pluginName: DumpToFileTestEventListener
-    className: org.mvss.karta.framework.runtime.impl.DumpToFileTestEventListener
+    className: org.mvss.karta.framework.plugins.impl.DumpToFileTestEventListener
 
   - pluginName: RabbitMQTestEventListener
-    className: org.mvss.karta.framework.runtime.impl.RabbitMQTestEventListener
+    className: org.mvss.karta.framework.plugins.impl.RabbitMQTestEventListener
 
   - pluginName: HTMLReportTestEventListener
-    className: org.mvss.karta.framework.runtime.impl.HTMLReportTestEventListener
+    className: org.mvss.karta.framework.plugins.impl.HTMLReportTestEventListener
 
 enabledPlugins:
   - Kriya
@@ -46,14 +46,14 @@ sslProperties:
 
 nodeName: local
 
-nodes: []
+nodes: [ ]
 
 minionsEnabled: true
 
 threadGroups:
   __default__: 1
 
-configurationScanPackages: []
+configurationScanPackages: [ ]
 
 properties:
   Karta:
@@ -65,8 +65,8 @@ properties:
       enableSSL: true
 
   Kriya:
-    stepDefinitionPackageNames: []
-    chaosActionDefinitionPackageNames: []
+    stepDefinitionPackageNames: [ ]
+    chaosActionDefinitionPackageNames: [ ]
 
   DumpToFileTestEventListener:
     fileName: KartaEventsRawDump.bin

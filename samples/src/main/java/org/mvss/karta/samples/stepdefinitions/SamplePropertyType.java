@@ -9,10 +9,9 @@ import java.io.Serializable;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class SamplePropertyType implements Serializable
-{
-   private static final long serialVersionUID = 1L;
+public class SamplePropertyType implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-   private String   v2v1;
-   private String[] v2v2;
+    private String v2v1;
+    private String[] v2v2;
 }
