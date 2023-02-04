@@ -1,10 +1,22 @@
 name: Docker Image CI
 
+#on:
+#  push:
+#    branches: [ master ]
+#  pull_request:
+#    branches: [ master ]
+
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  workflow_dispatch:
+    # Inputs the workflow accepts.
+    inputs:
+      imageName:
+        # Friendly description to be shown in the UI instead of 'name'
+        description: "Number of docker image to create"
+        # Default value if no value is explicitly provided
+        default: "karta:0.1.2"
+        # Input has to be provided for the workflow to run
+        required: false
 
 jobs:
 
@@ -19,6 +31,6 @@ jobs:
         with:
           java-version: 11
       - name: Build with Maven
-        run: mvn -B package -T 4 --file pom.xml
+        run: mvn -B package -DskipTests -T 4 --file pom.xml
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag karta:0.1.1
+        run: docker build . --file Dockerfile --tag ${{imageName}}

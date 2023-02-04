@@ -8,21 +8,21 @@ on:
   workflow_dispatch:
     # Inputs the workflow accepts.
     inputs:
-      packageName:
-        # Friendly description to be shown in the UI instead of 'name'
-        description: "Package to delete"
-        # Default value if no value is explicitly provided
-        default: "org.mvss.karta.runtime"
-        # Input has to be provided for the workflow to run
-        required: true
-
+      #      packageName:
+      #        # Friendly description to be shown in the UI instead of 'name'
+      #        description: "Package to delete"
+      #        # Default value if no value is explicitly provided
+      #        default: "org.mvss.karta.runtime"
+      #        # Input has to be provided for the workflow to run
+      #        required: true
+      #
       numberOfOldVersionsToDelete:
         # Friendly description to be shown in the UI instead of 'name'
         description: "Number of old package versions to delete"
         # Default value if no value is explicitly provided
         default: "1"
         # Input has to be provided for the workflow to run
-        required: true
+        required: false
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -33,31 +33,25 @@ jobs:
       - name: Delete packages
         uses: actions/delete-package-versions@v3
         with:
-          # Can be a single package version id, or a comma separated list of package version ids.
-          # Defaults to an empty string.
-          # package-version-ids:
-
-          # Owner of the repo hosting the package.
-          # Defaults to the owner of the repo executing the workflow.
-          # Required if deleting a version from a package hosted in a different repo than the one executing the workflow.
-          # owner:
-
-          # Repo hosting the package.
-          # Defaults to the repo executing the workflow.
-          # Required if deleting a version from a package hosted in a different repo than the one executing the workflow.
-          # repo:
-
-          # Name of the package.
-          # Defaults to an empty string.
-          # Required if `package-version-ids` input is not given.
-          package-name: ${{ github.event.inputs.packageName }}
-
-          # The number of old versions to delete starting from the oldest version.
-          # Defaults to 1.
-          num-old-versions-to-delete: ${{ github.event.inputs.numberOfOldVersionsToDelete }}
-          # The token used to authenticate with GitHub Packages.
-          # Defaults to github.token.
-          # Required if deleting a version from a package hosted in a different repo than the one executing the workflow.
-          #   If `package-version-ids` is given the token only needs the delete packages scope.
-          #   If `package-version-ids` is not given the token needs the delete packages scope and the read packages scope
-          # token:
+          package-name: org.mvss.karta.runtime
+          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+      - name: Delete packages
+        uses: actions/delete-package-versions@v3
+        with:
+          package-name: org.mvss.karta.samples
+          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+      - name: Delete packages
+        uses: actions/delete-package-versions@v3
+        with:
+          package-name: org.mvss.karta.server
+          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+      - name: Delete packages
+        uses: actions/delete-package-versions@v3
+        with:
+          package-name: org.mvss.karta.framework
+          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+      - name: Delete packages
+        uses: actions/delete-package-versions@v3
+        with:
+          package-name: org.mvss.karta
+          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
