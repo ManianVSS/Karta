@@ -53,7 +53,8 @@ public class KartaConfiguration implements Serializable {
     /**
      * The default step runner plug-in
      */
-    private String defaultStepRunner;
+    @Builder.Default
+    private HashSet<String> defaultStepRunners = new HashSet<>();//String defaultStepRunner;
 
     /**
      * The default set of test data source plug-ins
@@ -159,7 +160,7 @@ public class KartaConfiguration implements Serializable {
         kartaConfiguration.enabledPlugins.add(Constants.LOGGING_TEST_EVENT_LISTENER);
 
         kartaConfiguration.defaultFeatureSourceParser = Constants.KRIYA;
-        kartaConfiguration.defaultStepRunner = Constants.KRIYA;
+        kartaConfiguration.defaultStepRunners.add(Constants.KRIYA);
         kartaConfiguration.defaultTestDataSources.add(Constants.DATA_FILES_TEST_DATA_SOURCE);
 
         kartaConfiguration.propertyFiles.add(Constants.KARTA_PROPERTIES_YAML);
@@ -184,7 +185,7 @@ public class KartaConfiguration implements Serializable {
     public synchronized void expandSystemAndEnvProperties() {
         // TODO: Change to a generic utility for expanding env vars with annotations
         defaultFeatureSourceParser = PropertyUtils.expandEnvVars(defaultFeatureSourceParser);
-        defaultStepRunner = PropertyUtils.expandEnvVars(defaultStepRunner);
+        PropertyUtils.expandEnvVars(defaultStepRunners);
         PropertyUtils.expandEnvVars(defaultTestDataSources);
         PropertyUtils.expandEnvVars(enabledPlugins);
         PropertyUtils.expandEnvVars(propertyFiles);
@@ -197,7 +198,7 @@ public class KartaConfiguration implements Serializable {
         // TODO: Change to a generic utility to copy properties with an annotation for mapping
         DataUtils.addMissing(pluginConfigurations, override.pluginConfigurations);
         defaultFeatureSourceParser = NullAwareBeanUtilsBean.getOverriddenValue(defaultFeatureSourceParser, override.defaultFeatureSourceParser);
-        defaultStepRunner = NullAwareBeanUtilsBean.getOverriddenValue(defaultStepRunner, override.defaultStepRunner);
+        DataUtils.addMissing(defaultStepRunners, override.defaultStepRunners);
         DataUtils.addMissing(defaultTestDataSources, override.defaultTestDataSources);
         DataUtils.addMissing(enabledPlugins, override.enabledPlugins);
         DataUtils.addMissing(propertyFiles, override.propertyFiles);

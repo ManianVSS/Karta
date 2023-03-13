@@ -1,0 +1,3 @@
+print("Test Execution context is "+ __context);
+print ("I am in sample step 2  for bean shell step runner");
+true;

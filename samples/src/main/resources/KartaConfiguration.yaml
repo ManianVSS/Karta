@@ -20,14 +20,20 @@ pluginConfigurations:
   - pluginName: HTMLReportTestEventListener
     className: org.mvss.karta.framework.plugins.impl.HTMLReportTestEventListener
 
+  - pluginName: BeanShellStepRunner
+    className: org.mvss.karta.framework.plugins.impl.BeanShellStepRunner
+
 enabledPlugins:
   - Kriya
   - DataFilesTestDataSource
   - ObjectGenTestDataSource
   - LoggingTestEventListener
+  - BeanShellStepRunner
 
 defaultFeatureSourceParser: Kriya
-defaultStepRunner: Kriya
+defaultStepRunners:
+  - Kriya
+  - BeanShellStepRunner
 defaultTestDataSources:
   - DataFilesTestDataSource
 

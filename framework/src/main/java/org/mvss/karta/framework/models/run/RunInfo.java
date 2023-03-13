@@ -32,7 +32,7 @@ public class RunInfo implements Serializable {
 
     private String featureSourceParserPlugin;
 
-    private String stepRunnerPluginName;
+    private HashSet<String> stepRunnerPlugins;
 
     private HashSet<String> testDataSourcePlugins;
 
@@ -60,13 +60,15 @@ public class RunInfo implements Serializable {
     @Builder.Default
     private int numberOfIterationsInParallel = 1;
 
-    public void setDefaultPlugins(String featureSourceParserPlugin, String stepRunnerPluginName, HashSet<String> testDataSourcePlugins) {
+    public void setDefaultPlugins(String featureSourceParserPlugin, HashSet<String> stepRunnerPlugins, HashSet<String> testDataSourcePlugins) {
         if (StringUtils.isBlank(this.featureSourceParserPlugin) && StringUtils.isNotBlank(featureSourceParserPlugin)) {
             this.featureSourceParserPlugin = featureSourceParserPlugin;
         }
 
-        if (StringUtils.isBlank(this.stepRunnerPluginName) && StringUtils.isNotBlank(stepRunnerPluginName)) {
-            this.stepRunnerPluginName = stepRunnerPluginName;
+        if ((stepRunnerPlugins != null) && !stepRunnerPlugins.isEmpty()) {
+            if ((this.stepRunnerPlugins == null) || this.stepRunnerPlugins.isEmpty()) {
+                this.stepRunnerPlugins = stepRunnerPlugins;
+            }
         }
 
         if ((testDataSourcePlugins != null) && !testDataSourcePlugins.isEmpty()) {
@@ -82,9 +84,9 @@ public class RunInfo implements Serializable {
             this.featureSourceParserPlugin = featureSourceParserPlugin;
         }
 
-        String stepRunnerPluginName = test.getStepRunner();
-        if (StringUtils.isNotBlank(stepRunnerPluginName)) {
-            this.stepRunnerPluginName = stepRunnerPluginName;
+        HashSet<String> stepRunnerPlugins = test.getStepRunners();
+        if ((stepRunnerPlugins != null) && !stepRunnerPlugins.isEmpty()) {
+            this.stepRunnerPlugins = stepRunnerPlugins;
         }
 
         HashSet<String> testDataSourcePlugins = test.getTestDataSources();

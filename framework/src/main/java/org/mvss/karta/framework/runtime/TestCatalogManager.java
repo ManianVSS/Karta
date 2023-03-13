@@ -32,7 +32,7 @@ public class TestCatalogManager {
     private final TestCategory testCatalog = new TestCategory();
 
     public void mergeWithCatalog(TestCategory updatesToRootCategory) {
-        updatesToRootCategory.propagateAttributes(null, updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getFeatureSourceParser(),
+        updatesToRootCategory.propagateAttributes(null, updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getStepRunners(),
                 updatesToRootCategory.getTestDataSources(), updatesToRootCategory.getThreadGroup(), updatesToRootCategory.getTags());
         testCatalog.mergeWithTestCategory(updatesToRootCategory);
     }
@@ -57,7 +57,7 @@ public class TestCatalogManager {
 
         TestCategory updatesToRootCategory = yamlObjectMapper.readValue(IOUtils.toString(fileStream, Charset.defaultCharset()), TestCategory.class);
         updatesToRootCategory.propagateAttributes(sourceArchive, updatesToRootCategory.getFeatureSourceParser(),
-                updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getTestDataSources(), updatesToRootCategory.getThreadGroup(),
+                updatesToRootCategory.getStepRunners(), updatesToRootCategory.getTestDataSources(), updatesToRootCategory.getThreadGroup(),
                 updatesToRootCategory.getTags());
         testCatalog.mergeWithTestCategory(updatesToRootCategory);
     }

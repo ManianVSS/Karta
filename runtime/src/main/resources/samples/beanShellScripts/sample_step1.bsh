@@ -1,0 +1,6 @@
+import org.mvss.karta.framework.models.result.StepResult;
+
+result=new StepResult();
+print("Test Execution context is "+ __context);
+print ("I am in sample step 1  for bean shell step runner");
+result;

@@ -340,4 +340,13 @@ public class DataUtils {
         returnValue.removeIf(Objects::isNull);
         return returnValue.toArray();
     }
+
+    public static <T> T findFirst(List<T> list, Predicate<T> condition) {
+        for (T item : list) {
+            if (condition.test(item)) {
+                return item;
+            }
+        }
+        return null;
+    }
 }

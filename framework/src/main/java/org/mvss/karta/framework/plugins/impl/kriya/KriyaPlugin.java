@@ -374,6 +374,12 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     }
 
     @Override
+    public boolean stepImplemented(String identifier) {
+        return stepHandlerMap.containsKey(sanitizeStepIdentifier(identifier));
+    }
+
+
+    @Override
     public StepResult runStep(PreparedStep testStep) throws TestFailureException {
         StepResult result = new StepResult();
         TestExecutionContext testExecutionContext = testStep.getTestExecutionContext();
@@ -541,6 +547,11 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     }
 
     @Override
+    public boolean chaosActionImplemented(String name) {
+        return chaosActionHandlerMap.containsKey(name);
+    }
+
+    @Override
     public StepResult performChaosAction(PreparedChaosAction preparedChaosAction) {
         StepResult result = new StepResult();
 
@@ -627,6 +638,11 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     }
 
     @Override
+    public boolean conditionImplemented(String conditionIdentifier) {
+        return conditionDefinitionMap.containsKey(sanitizeStepIdentifier(conditionIdentifier));
+    }
+
+    @Override
     public boolean runCondition(TestExecutionContext testExecutionContext, String conditionIdentifier) {
         // TestExecutionContext testExecutionContext = testStep.getTestExecutionContext();
 
@@ -676,6 +692,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             return false;
         }
     }
+
 
     public boolean invokeTaggedMethods(HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooksList, HashSet<String> tags, Object... parameters) {
         HashSet<Method> alreadyInvokedMethods = new HashSet<>();

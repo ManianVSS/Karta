@@ -28,6 +28,7 @@ propertyFiles:
   - SampleRunProperties2.yaml
   - SampleRunProperties3.properties
   - WebAutomationProperties.yaml
+  - BeanShellStepRunnerProperties.yaml
 
 nodes:
   - name: Node1

@@ -38,7 +38,8 @@ public class PreparedStepRunner implements Callable<StepResult> {
 
             if ((nestedSteps == null) || nestedSteps.isEmpty()) {
                 // TODO:Handle null exceptions
-                StepRunner stepRunner = kartaRuntime.getStepRunner(runInfo);
+                ArrayList<StepRunner> stepRunners = kartaRuntime.getStepRunners(runInfo);
+                StepRunner stepRunner = kartaRuntime.getCapableStepRunnerForStep(stepRunners, step.getIdentifier());
                 stepResult = stepRunner.runStep(step);
             } else {
                 // TODO: Forward test data and test data set from parent step to nested steps

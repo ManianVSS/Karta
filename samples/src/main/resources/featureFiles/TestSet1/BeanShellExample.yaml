@@ -1,0 +1,10 @@
+---
+name: BeanShellExample
+description: This is a sample BeanShellExample
+
+testScenarios:
+  - name: Scenario1
+    executionSteps:
+      - step: When sample bean shell step1
+      - step: Then sample bean shell step2
+

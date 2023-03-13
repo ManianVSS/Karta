@@ -59,7 +59,7 @@ public class KartaRuntime implements AutoCloseable {
     private static final Object _syncLockObject = new Object();
     private static final List<Class<?>> configuredBeanClasses = Collections.synchronizedList(new ArrayList<>());
     private static final HashMap<String, FeatureSourceParser> featureSourceParserMap = new HashMap<>();
-    private static final HashMap<String, StepRunner> stepRunnerMap = new HashMap<>();
+    private static final HashMap<HashSet<String>, ArrayList<StepRunner>> stepRunnerMap = new HashMap<>();
     private static final HashMap<HashSet<String>, ArrayList<TestDataSource>> testDataSourcesMap = new HashMap<>();
     /**
      * This flag is used to run a custom Karta Minion server by disabling node initializing first and call addNodes later
@@ -342,7 +342,7 @@ public class KartaRuntime implements AutoCloseable {
         /*---------------------------------------------------------------------------------------------------------------------*/
         eventProcessor.start();
 
-        defaultRunInfo = RunInfo.builder().runName(Constants.UNNAMED).featureSourceParserPlugin(kartaConfiguration.getDefaultFeatureSourceParser()).stepRunnerPluginName(kartaConfiguration.getDefaultStepRunner()).testDataSourcePlugins(kartaConfiguration.getDefaultTestDataSources()).build();
+        defaultRunInfo = RunInfo.builder().runName(Constants.UNNAMED).featureSourceParserPlugin(kartaConfiguration.getDefaultFeatureSourceParser()).stepRunnerPlugins(kartaConfiguration.getDefaultStepRunners()).testDataSourcePlugins(kartaConfiguration.getDefaultTestDataSources()).build();
 
         return true;
     }
@@ -473,38 +473,57 @@ public class KartaRuntime implements AutoCloseable {
     }
 
     /**
-     * Returns the StepRunner based on the step runner plugin name provided.
+     * Returns the StepRunners based on the step runner plugin name provided.
      */
-    public StepRunner getStepRunner(String stepRunnerPluginName) {
+    public ArrayList<StepRunner> getStepRunners(HashSet<String> stepRunnerPluginNames) {
         synchronized (srMapLock) {
-            if (stepRunnerPluginName == null) {
+            if (stepRunnerPluginNames == null) {
                 return null;
             }
 
             try {
-                if (!stepRunnerMap.containsKey(stepRunnerPluginName)) {
-                    StepRunner stepRunner = (StepRunner) pnpRegistry.getEnabledPlugin(stepRunnerPluginName);
+                if (!stepRunnerMap.containsKey(stepRunnerPluginNames)) {
+                    ArrayList<StepRunner> testDataSources = new ArrayList<>();
 
-                    if (stepRunner == null) {
-                        return null;
+                    for (String stepRunnerPluginName : stepRunnerPluginNames) {
+                        StepRunner stepRunner = (StepRunner) pnpRegistry.getEnabledPlugin(stepRunnerPluginName);
+
+                        if (stepRunner == null) {
+                            return null;
+                        }
+
+                        testDataSources.add(stepRunner);
                     }
-                    stepRunnerMap.put(stepRunnerPluginName, stepRunner);
+                    stepRunnerMap.put(stepRunnerPluginNames, testDataSources);
                 }
             } catch (Throwable t) {
                 log.error("", t);
                 return null;
             }
 
-            return stepRunnerMap.get(stepRunnerPluginName);
+            return stepRunnerMap.get(stepRunnerPluginNames);
         }
     }
+
 
     /**
      * Returns the StepRunner based on the RunInfo
      */
-    public StepRunner getStepRunner(RunInfo runInfo) {
-        String stepRunnerPluginName = runInfo.getStepRunnerPluginName();
-        return getStepRunner(stepRunnerPluginName);
+    public ArrayList<StepRunner> getStepRunners(RunInfo runInfo) {
+        HashSet<String> stepRunnerPluginNames = runInfo.getStepRunnerPlugins();
+        return getStepRunners(stepRunnerPluginNames);
+    }
+
+    public StepRunner getCapableStepRunnerForCondition(ArrayList<StepRunner> stepRunners, String condition) {
+        return DataUtils.findFirst(stepRunners, stepRunner -> stepRunner.conditionImplemented(condition));
+    }
+
+    public StepRunner getCapableStepRunnerForStep(ArrayList<StepRunner> stepRunners, String stepIdentifier) {
+        return DataUtils.findFirst(stepRunners, stepRunner -> stepRunner.stepImplemented(stepIdentifier));
+    }
+
+    public StepRunner getCapableStepRunnerForChaosAction(ArrayList<StepRunner> stepRunners, String chaosAction) {
+        return DataUtils.findFirst(stepRunners, stepRunner -> stepRunner.chaosActionImplemented(chaosAction));
     }
 
     /**
@@ -554,7 +573,7 @@ public class KartaRuntime implements AutoCloseable {
     public RunResult runTestTarget(RunInfo runInfo, RunTarget runTarget) {
         RunResult runResult = new RunResult();
 
-        runInfo.setDefaultPlugins(kartaConfiguration.getDefaultFeatureSourceParser(), kartaConfiguration.getDefaultStepRunner(), kartaConfiguration.getDefaultTestDataSources());
+        runInfo.setDefaultPlugins(kartaConfiguration.getDefaultFeatureSourceParser(), kartaConfiguration.getDefaultStepRunners(), kartaConfiguration.getDefaultTestDataSources());
 
         try {
             String runName = runInfo.getRunName();
@@ -670,9 +689,9 @@ public class KartaRuntime implements AutoCloseable {
                         return result;
                     }
 
-                    StepRunner stepRunner = getStepRunner(runInfoForTest);
-                    if (stepRunner == null) {
-                        log.error("Failed to get a step runner for run: " + runInfo);
+                    ArrayList<StepRunner> stepRunners = getStepRunners(runInfoForTest);
+                    if (stepRunners == null) {
+                        log.error("Failed to get a step runners for run: " + runInfo);
                         result.setEndTime(new Date());
                         result.setSuccessful(false);
                         return result;
@@ -785,10 +804,10 @@ public class KartaRuntime implements AutoCloseable {
      * Runs a TestFeature locally (or remotely invoked) using the RunInfo provided and returns the FeatureResult
      */
     public FeatureResult runFeature(RunInfo runInfo, TestFeature feature) throws InterruptedException {
-        StepRunner stepRunner = getStepRunner(runInfo);
+        ArrayList<StepRunner> stepRunner = getStepRunners(runInfo);
 
         if (stepRunner == null) {
-            String errorMsg = "Failed to get a step runner for run: " + runInfo;
+            String errorMsg = "Failed to get a step runners for run: " + runInfo;
             log.error(errorMsg);
             return StandardFeatureResults.error(feature.getName(), errorMsg);
         }
@@ -903,7 +922,7 @@ public class KartaRuntime implements AutoCloseable {
      * Converts a TestStep into PreparedStep which is ready for execution with execution context and test data merged
      */
     public PreparedStep getPreparedStep(RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestStep step, BeanRegistry contextBeanRegistry) throws Throwable {
-        StepRunner stepRunner = getStepRunner(runInfo);
+        ArrayList<StepRunner> stepRunners = getStepRunners(runInfo);
         String stepIdentifier = step.getStep();
 
         ArrayList<TestStep> nestedSteps = step.getSteps();
@@ -913,6 +932,8 @@ public class KartaRuntime implements AutoCloseable {
                 log.error("Empty step definition identifier for step " + step);
             }
 
+            StepRunner stepRunner = getCapableStepRunnerForStep(stepRunners, stepIdentifier);
+            assert stepRunner != null;
             String sanitizedStepIdentifier = stepRunner.sanitizeStepIdentifier(stepIdentifier);
             TestExecutionContext testExecutionContext = new TestExecutionContext(runInfo.getRunName(), featureName, iterationIndex, scenarioName, sanitizedStepIdentifier, null, variables);
             testExecutionContext.setContextBeanRegistry(contextBeanRegistry);
@@ -1004,7 +1025,9 @@ public class KartaRuntime implements AutoCloseable {
     public boolean shouldStepNeedNotBeRun(RunInfo runInfo, PreparedStep step) throws InterruptedException {
         String condition = step.getCondition();
         if (StringUtils.isNotBlank(condition)) {
-            StepRunner stepRunner = getStepRunner(runInfo);
+            ArrayList<StepRunner> stepRunners = getStepRunners(runInfo);
+            StepRunner stepRunner = getCapableStepRunnerForCondition(stepRunners, condition);
+            assert stepRunner != null;
             return !stepRunner.runCondition(step.getTestExecutionContext(), condition);
         }
         return false;
@@ -1092,7 +1115,9 @@ public class KartaRuntime implements AutoCloseable {
 
             stepResult.processRemoteResults();
         } else {
-            StepRunner stepRunner = getStepRunner(runInfo);
+            ArrayList<StepRunner> stepRunners = getStepRunners(runInfo);
+            StepRunner stepRunner = getCapableStepRunnerForChaosAction(stepRunners, preparedChaosAction.getName());
+            assert stepRunner != null;
             stepResult = stepRunner.performChaosAction(preparedChaosAction);
         }
 

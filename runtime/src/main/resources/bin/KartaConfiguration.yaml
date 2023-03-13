@@ -11,11 +11,14 @@ enabledPlugins:
   - DataFilesTestDataSource
   - LoggingTestEventListener
   - HTMLReportTestEventListener
+  - BeanShellStepRunner
 
 ### The default feature source parser plugin name
 defaultFeatureSourceParserPlugin: Kriya
 ### The default step runner plugin name
-defaultStepRunnerPlugin: Kriya
+defaultStepRunnerPlugins:
+  - Kriya
+  - BeanShellStepRunner
 ### The default list of test data source plugin name
 defaultTestDataSourcePlugins:
   - DataFilesTestDataSource

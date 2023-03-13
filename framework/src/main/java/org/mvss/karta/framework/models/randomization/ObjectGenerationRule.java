@@ -25,10 +25,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class ObjectGenerationRule implements Serializable, ObjectWithChance {
-
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
 
     private static final long STRING_LENGTH_RANGE_DEFAULT_MAX = 100;

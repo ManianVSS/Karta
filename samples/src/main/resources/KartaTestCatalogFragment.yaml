@@ -6,7 +6,9 @@ tags:
   - sample
 
 featureSourceParser: Kriya
-stepRunner: Kriya
+stepRunners:
+  - Kriya
+  - BeanShellStepRunner
 testDataSources:
   - DataFilesTestDataSource
   - ObjectGenTestDataSource
@@ -14,6 +16,14 @@ testDataSources:
   - CSVTestDataSourcePlugin
 
 tests:
+  - name: BeanShellExample
+    description: BeanShellExample
+    tags:
+      - cycle
+      - BeanShellExample
+    featureFileName: featureFiles/TestSet1/BeanShellExample.yaml
+    numberOfIterations: 1
+
   - name: SampleFeatureFile
     description: sample feature file
     tags:

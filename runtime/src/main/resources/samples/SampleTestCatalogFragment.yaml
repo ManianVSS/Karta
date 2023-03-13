@@ -6,7 +6,9 @@ tags:
   - sample
 
 featureSourceParser: Kriya
-stepRunner: Kriya
+stepRunner:
+  - Kriya
+  - BeanShellStepRunner
 testDataSources:
   - DataFilesTestDataSource
   - ObjectGenTestDataSource

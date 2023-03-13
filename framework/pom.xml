@@ -147,6 +147,12 @@
             <version>2.7.3b1</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.apache-extras.beanshell/bsh -->
+        <dependency>
+            <groupId>org.apache-extras.beanshell</groupId>
+            <artifactId>bsh</artifactId>
+            <version>2.0b6</version>
+        </dependency>
 
     </dependencies>
 

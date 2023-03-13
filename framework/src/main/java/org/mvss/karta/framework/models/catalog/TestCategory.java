@@ -24,7 +24,8 @@ public class TestCategory implements Serializable {
     @Builder.Default
     private HashSet<String> tags = new HashSet<>();
     private String featureSourceParser;
-    private String stepRunner;
+    @Builder.Default
+    private HashSet<String> stepRunners = new HashSet<>();
     @Builder.Default
     private HashSet<String> testDataSources = new HashSet<>();
     @Builder.Default
@@ -95,14 +96,14 @@ public class TestCategory implements Serializable {
         return null;
     }
 
-    public void propagateAttributes(String sourceArchive, String inFeatureSourceParser, String srp, HashSet<String> inTestDataSources, String tg,
+    public void propagateAttributes(String sourceArchive, String inFeatureSourceParser, HashSet<String> srp, HashSet<String> inTestDataSources, String tg,
                                     HashSet<String> tags) {
         if (StringUtils.isEmpty(featureSourceParser) && StringUtils.isNotEmpty(inFeatureSourceParser)) {
             featureSourceParser = inFeatureSourceParser;
         }
 
-        if (StringUtils.isEmpty(stepRunner) && StringUtils.isNotEmpty(srp)) {
-            stepRunner = srp;
+        if (srp != null) {
+            stepRunners.addAll(srp);
         }
 
         if (inTestDataSources != null) {
@@ -118,11 +119,11 @@ public class TestCategory implements Serializable {
         }
 
         for (TestCategory testCategory : subCategories) {
-            testCategory.propagateAttributes(sourceArchive, featureSourceParser, stepRunner, testDataSources, threadGroup, tags);
+            testCategory.propagateAttributes(sourceArchive, featureSourceParser, stepRunners, testDataSources, threadGroup, tags);
         }
 
         for (Test test : tests) {
-            test.propagateAttributes(sourceArchive, featureSourceParser, stepRunner, testDataSources, threadGroup, tags);
+            test.propagateAttributes(sourceArchive, featureSourceParser, stepRunners, testDataSources, threadGroup, tags);
         }
     }
 
@@ -145,8 +146,8 @@ public class TestCategory implements Serializable {
             featureSourceParser = testCategory.featureSourceParser;
         }
 
-        if (StringUtils.isEmpty(stepRunner) && StringUtils.isNotEmpty(testCategory.stepRunner)) {
-            stepRunner = testCategory.stepRunner;
+        if (stepRunners.isEmpty() && !testCategory.stepRunners.isEmpty()) {
+            stepRunners.addAll(testCategory.stepRunners);
         }
 
         if (testDataSources.isEmpty() && !testCategory.testDataSources.isEmpty()) {

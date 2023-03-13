@@ -33,7 +33,8 @@ public class Test implements Serializable, Comparable<Test> {
     private String sourceArchive;
 
     private String featureSourceParser;
-    private String stepRunner;
+    @Builder.Default
+    private HashSet<String> stepRunners = new HashSet<>();
 
     @Builder.Default
     private HashSet<String> testDataSources = new HashSet<>();
@@ -68,8 +69,8 @@ public class Test implements Serializable, Comparable<Test> {
     @Builder.Default
     private int numberOfThreads = 1;
 
-    public void propagateAttributes(String sourceArchive, String featureSourceParser, String stepRunner, HashSet<String> testDataSources,
-                                    String threadGroup, HashSet<String> tags) {
+    public void propagateAttributes(String sourceArchive, String featureSourceParser, HashSet<String> stepRunners,
+                                    HashSet<String> testDataSources, String threadGroup, HashSet<String> tags) {
         if (StringUtils.isEmpty(this.sourceArchive) && StringUtils.isNotEmpty(sourceArchive)) {
             this.sourceArchive = sourceArchive;
         }
@@ -78,8 +79,8 @@ public class Test implements Serializable, Comparable<Test> {
             this.featureSourceParser = featureSourceParser;
         }
 
-        if (StringUtils.isEmpty(this.stepRunner) && StringUtils.isNotEmpty(stepRunner)) {
-            this.stepRunner = stepRunner;
+        if (stepRunners != null) {
+            this.stepRunners.addAll(stepRunners);
         }
 
         if (testDataSources != null) {
@@ -112,8 +113,8 @@ public class Test implements Serializable, Comparable<Test> {
             featureSourceParser = test.featureSourceParser;
         }
 
-        if (StringUtils.isEmpty(stepRunner) && StringUtils.isNotEmpty(test.stepRunner)) {
-            stepRunner = test.stepRunner;
+        if (stepRunners.isEmpty() && !test.stepRunners.isEmpty()) {
+            stepRunners.addAll(test.stepRunners);
         }
 
         if (testDataSources.isEmpty() && !test.testDataSources.isEmpty()) {
