@@ -20,12 +20,12 @@ import java.util.HashMap;
 public class CSVTestDataSourcePlugin implements TestDataSource {
     public static final String PLUGIN_NAME = "CSVTestDataSourcePlugin";
     private static final ObjectMapper objectMapper = ParserUtils.getYamlObjectMapper();
+    private final Object writeLock = new Object();
     @PropertyMapping(group = PLUGIN_NAME, value = "csvFileName")
     private String csvFileName = "TestData.csv";
     private boolean initialized = false;
     private CSVReader csvReader;
     private String[] headerRecord;
-    private final Object writeLock = new Object();
 
     @Override
     public String getPluginName() {

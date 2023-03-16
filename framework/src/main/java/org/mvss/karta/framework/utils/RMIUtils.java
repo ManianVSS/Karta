@@ -10,7 +10,7 @@ import java.rmi.server.RMIServerSocketFactory;
 import java.util.HashMap;
 
 /**
- * Utility class to create a connect with RMI registry
+ * Utility class to create and connect with RMI registry
  *
  * @author Manian
  */

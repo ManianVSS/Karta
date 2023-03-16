@@ -76,7 +76,7 @@ public class KartaConfiguration implements Serializable {
 
     /**
      * The list of test catalog fragment files to merge into the TestCatalog.</br>
-     * For schema of files refer to {@link TestCategory}
+     * For schema of file, refer to {@link TestCategory}
      */
     @Builder.Default
     private ArrayList<String> testCatalogFragmentFiles = new ArrayList<>();
