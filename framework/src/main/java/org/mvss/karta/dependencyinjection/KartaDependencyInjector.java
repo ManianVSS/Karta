@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 @Log4j2
 public class KartaDependencyInjector implements DependencyInjector {
 
-    private static final List<Class<?>> configuredBeanClasses = Collections.synchronizedList(new ArrayList<>());
+    private final List<Class<?>> configuredBeanClasses = Collections.synchronizedList(new ArrayList<>());
 
     public final Configurator configurator = new Configurator();
 

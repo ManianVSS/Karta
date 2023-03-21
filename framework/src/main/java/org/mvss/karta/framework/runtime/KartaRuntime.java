@@ -351,6 +351,11 @@ public class KartaRuntime implements AutoCloseable {
                 autoCloseable.close();
             }
             autoCloseables.clear();
+
+            if (kartaDependencyInjector != null) {
+                kartaDependencyInjector.close();
+                kartaDependencyInjector = null;
+            }
         } catch (Exception e) {
             log.error(e);
         }
