@@ -4,7 +4,9 @@ import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.Constants;
 import org.mvss.karta.dependencyinjection.Configurator;
+import org.mvss.karta.dependencyinjection.KartaDependencyInjector;
 import org.mvss.karta.dependencyinjection.annotations.KartaBean;
+import org.mvss.karta.dependencyinjection.interfaces.DependencyInjector;
 import org.mvss.karta.dependencyinjection.utils.DataUtils;
 import org.mvss.karta.dependencyinjection.utils.NullAwareBeanUtilsBean;
 import org.mvss.karta.dependencyinjection.utils.PropertyUtils;
@@ -37,6 +39,11 @@ import java.util.HashSet;
 public class KartaConfiguration implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    /**
+     * The dependency injector class name
+     */
+    private String dependencyInjector;
 
     /**
      * The list of plug-in details
@@ -146,6 +153,8 @@ public class KartaConfiguration implements Serializable {
     public static synchronized KartaConfiguration getDefaultConfiguration() {
         KartaConfiguration kartaConfiguration = new KartaConfiguration();
 
+        kartaConfiguration.dependencyInjector = KartaDependencyInjector.class.getName();
+
         kartaConfiguration.pluginConfigurations.add(new PluginConfig(Constants.KRIYA, KriyaPlugin.class.getName(), null));
         kartaConfiguration.pluginConfigurations.add(new PluginConfig(Constants.DATA_FILES_TEST_DATA_SOURCE, DataFilesTestDataSource.class.getName(), null));
         kartaConfiguration.pluginConfigurations.add(new PluginConfig(Constants.OBJECT_GEN_TEST_DATA_SOURCE, ObjectGenTestDataSource.class.getName(), null));
@@ -197,6 +206,7 @@ public class KartaConfiguration implements Serializable {
 
     public synchronized void overrideConfiguration(KartaConfiguration override) {
         // TODO: Change to a generic utility to copy properties with an annotation for mapping
+        dependencyInjector = NullAwareBeanUtilsBean.getOverriddenValue(dependencyInjector, override.dependencyInjector);
         DataUtils.addMissing(pluginConfigurations, override.pluginConfigurations);
         defaultFeatureSourceParser = NullAwareBeanUtilsBean.getOverriddenValue(defaultFeatureSourceParser, override.defaultFeatureSourceParser);
         DataUtils.addMissing(defaultStepRunners, override.defaultStepRunners);
@@ -215,9 +225,18 @@ public class KartaConfiguration implements Serializable {
         detailedReport = override.detailedReport;
     }
 
+    public DependencyInjector createDependencyInjector() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        if (StringUtils.isEmpty(dependencyInjector)) {
+            dependencyInjector = KartaDependencyInjector.class.getName();
+        }
+
+        Class<?> dependencyInjectorClass = Class.forName(dependencyInjector);
+        return (DependencyInjector) dependencyInjectorClass.getDeclaredConstructor().newInstance();
+    }
+
     public IKartaNodeRegistry createNodeRegistry() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        if (StringUtils.isEmpty(this.kartaNodeRegistry)) {
-            this.kartaNodeRegistry = KartaNodeRegistry.class.getName();
+        if (StringUtils.isEmpty(kartaNodeRegistry)) {
+            kartaNodeRegistry = KartaNodeRegistry.class.getName();
         }
 
         Class<?> nodeRegistryClass = Class.forName(kartaNodeRegistry);

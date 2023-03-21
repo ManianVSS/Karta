@@ -1,3 +1,5 @@
+dependencyInjector: org.mvss.karta.dependencyinjection.KartaDependencyInjector
+
 pluginConfigurations:
   - pluginName: Kriya
     className: org.mvss.karta.framework.plugins.impl.kriya.KriyaPlugin
