@@ -8,11 +8,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.utils.ClassPathLoaderUtils;
+import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 import org.mvss.karta.framework.models.catalog.Test;
 import org.mvss.karta.framework.models.catalog.TestCategory;
-import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
-import org.mvss.karta.framework.utils.ParserUtils;
 
 import java.io.File;
 import java.io.InputStream;

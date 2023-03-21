@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.utils;
 
 import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.utils.DataUtils;
 import org.mvss.karta.framework.models.chaos.Chaos;
 import org.mvss.karta.framework.models.randomization.ObjectWithChance;
 

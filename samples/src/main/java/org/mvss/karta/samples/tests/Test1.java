@@ -1,11 +1,11 @@
 package org.mvss.karta.samples.tests;
 
 import lombok.extern.log4j.Log4j2;
+import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
 import org.mvss.karta.framework.annotations.javatest.*;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.models.result.StepResult;
 import org.mvss.karta.framework.models.run.TestExecutionContext;
-import org.mvss.karta.framework.properties.PropertyMapping;
 import org.mvss.karta.samples.stepdefinitions.SamplePropertyType;
 
 @Log4j2

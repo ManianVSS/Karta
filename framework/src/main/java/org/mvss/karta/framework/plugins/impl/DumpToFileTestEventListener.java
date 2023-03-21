@@ -1,11 +1,11 @@
 package org.mvss.karta.framework.plugins.impl;
 
 import lombok.extern.log4j.Log4j2;
-import org.mvss.karta.framework.annotations.Initializer;
+import org.mvss.karta.dependencyinjection.annotations.Initializer;
+import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
+import org.mvss.karta.dependencyinjection.utils.PropertyUtils;
 import org.mvss.karta.framework.models.event.Event;
 import org.mvss.karta.framework.plugins.TestEventListener;
-import org.mvss.karta.framework.properties.PropertyMapping;
-import org.mvss.karta.framework.utils.PropertyUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;

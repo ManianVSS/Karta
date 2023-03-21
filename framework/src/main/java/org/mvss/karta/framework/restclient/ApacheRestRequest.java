@@ -11,8 +11,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.mvss.karta.Constants;
-import org.mvss.karta.framework.utils.DataUtils;
-import org.mvss.karta.framework.utils.ParserUtils;
+import org.mvss.karta.dependencyinjection.utils.DataUtils;
+import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 
 import java.io.File;
 import java.io.InputStream;

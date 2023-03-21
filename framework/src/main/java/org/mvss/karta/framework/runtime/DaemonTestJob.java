@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.mvss.karta.dependencyinjection.BeanRegistry;
 import org.mvss.karta.framework.models.run.RunInfo;
 import org.mvss.karta.framework.models.test.TestJob;
 

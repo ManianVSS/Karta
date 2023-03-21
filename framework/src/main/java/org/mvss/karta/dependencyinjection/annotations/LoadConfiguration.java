@@ -1,4 +1,4 @@
-package org.mvss.karta.framework.annotations;
+package org.mvss.karta.dependencyinjection.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

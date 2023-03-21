@@ -6,13 +6,13 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.Configurator;
+import org.mvss.karta.dependencyinjection.enums.DataFormat;
+import org.mvss.karta.dependencyinjection.utils.ClassPathLoaderUtils;
+import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 import org.mvss.karta.framework.configuration.PluginConfig;
-import org.mvss.karta.framework.enums.DataFormat;
 import org.mvss.karta.framework.plugins.Plugin;
-import org.mvss.karta.framework.properties.Configurator;
-import org.mvss.karta.framework.utils.ClassPathLoaderUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
-import org.mvss.karta.framework.utils.ParserUtils;
 
 import java.io.File;
 import java.io.IOException;

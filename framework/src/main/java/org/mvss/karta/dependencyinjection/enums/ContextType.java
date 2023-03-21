@@ -1,4 +1,4 @@
-package org.mvss.karta.framework.enums;
+package org.mvss.karta.dependencyinjection.enums;
 
 public enum ContextType {
     GLOBAL,

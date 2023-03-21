@@ -2,12 +2,13 @@ package org.mvss.karta.samples.stepdefinitions;
 
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.dependencyinjection.annotations.KartaAutoWired;
+import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
 import org.mvss.karta.framework.annotations.*;
 import org.mvss.karta.framework.enums.StepOutputType;
 import org.mvss.karta.framework.models.event.GenericTestEvent;
 import org.mvss.karta.framework.models.result.StepResult;
 import org.mvss.karta.framework.models.run.TestExecutionContext;
-import org.mvss.karta.framework.properties.PropertyMapping;
 import org.mvss.karta.framework.web.PageException;
 import org.mvss.karta.samples.pom.w3s.HTMLIntroductionPage;
 import org.mvss.karta.samples.pom.w3s.HomePage;

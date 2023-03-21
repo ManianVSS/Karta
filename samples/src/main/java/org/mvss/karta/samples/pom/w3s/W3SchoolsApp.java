@@ -1,6 +1,6 @@
 package org.mvss.karta.samples.pom.w3s;
 
-import org.mvss.karta.framework.properties.PropertyMapping;
+import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.web.PageException;
 import org.mvss.karta.framework.web.WebAUT;

@@ -1,8 +1,8 @@
 package org.mvss.karta.framework.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 import org.mvss.karta.framework.models.event.*;
-import org.mvss.karta.framework.utils.ParserUtils;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;

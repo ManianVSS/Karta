@@ -4,6 +4,8 @@ import lombok.*;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
+import org.mvss.karta.dependencyinjection.utils.DataUtils;
 import org.mvss.karta.framework.annotations.javatest.*;
 import org.mvss.karta.framework.models.event.*;
 import org.mvss.karta.framework.models.generic.SerializableKVP;
@@ -14,9 +16,7 @@ import org.mvss.karta.framework.models.result.StepResult;
 import org.mvss.karta.framework.models.run.RunInfo;
 import org.mvss.karta.framework.models.run.TestExecutionContext;
 import org.mvss.karta.framework.plugins.TestDataSource;
-import org.mvss.karta.framework.properties.PropertyMapping;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
-import org.mvss.karta.framework.utils.DataUtils;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
 import org.mvss.karta.framework.utils.RandomizationUtils;
 

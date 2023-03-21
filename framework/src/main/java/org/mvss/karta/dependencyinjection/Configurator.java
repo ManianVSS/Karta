@@ -1,12 +1,12 @@
-package org.mvss.karta.framework.properties;
+package org.mvss.karta.dependencyinjection;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
-import org.mvss.karta.Constants;
-import org.mvss.karta.framework.enums.DataFormat;
-import org.mvss.karta.framework.utils.*;
+import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
+import org.mvss.karta.dependencyinjection.enums.DataFormat;
+import org.mvss.karta.dependencyinjection.utils.*;
 
 import java.io.File;
 import java.io.IOException;

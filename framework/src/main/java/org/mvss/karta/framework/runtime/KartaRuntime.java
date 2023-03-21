@@ -8,14 +8,15 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.Constants;
-import org.mvss.karta.framework.annotations.Initializer;
-import org.mvss.karta.framework.annotations.KartaBean;
-import org.mvss.karta.framework.annotations.LoadConfiguration;
+import org.mvss.karta.dependencyinjection.BeanRegistry;
+import org.mvss.karta.dependencyinjection.KartaDependencyInjector;
+import org.mvss.karta.dependencyinjection.utils.ClassPathLoaderUtils;
+import org.mvss.karta.dependencyinjection.utils.DataUtils;
+import org.mvss.karta.dependencyinjection.utils.ParserUtils;
+import org.mvss.karta.dependencyinjection.utils.PropertyUtils;
 import org.mvss.karta.framework.configuration.KartaConfiguration;
 import org.mvss.karta.framework.core.StandardFeatureResults;
 import org.mvss.karta.framework.core.StandardStepResults;
-import org.mvss.karta.framework.interfaces.ClassMethodConsumer;
-import org.mvss.karta.framework.interfaces.ObjectMethodConsumer;
 import org.mvss.karta.framework.models.catalog.Test;
 import org.mvss.karta.framework.models.catalog.TestCategory;
 import org.mvss.karta.framework.models.chaos.ChaosAction;
@@ -34,14 +35,13 @@ import org.mvss.karta.framework.nodes.IKartaNodeRegistry;
 import org.mvss.karta.framework.nodes.KartaNode;
 import org.mvss.karta.framework.nodes.KartaNodeConfiguration;
 import org.mvss.karta.framework.plugins.*;
-import org.mvss.karta.framework.properties.Configurator;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
-import org.mvss.karta.framework.utils.*;
+import org.mvss.karta.framework.utils.DynamicClassLoader;
+import org.mvss.karta.framework.utils.SSLUtils;
 
 import java.io.File;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -50,14 +50,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 @Log4j2
 @AllArgsConstructor
 public class KartaRuntime implements AutoCloseable {
     private static final ObjectMapper yamlObjectMapper = ParserUtils.getYamlObjectMapper();
     private static final Object _syncLockObject = new Object();
-    private static final List<Class<?>> configuredBeanClasses = Collections.synchronizedList(new ArrayList<>());
     private static final HashMap<String, FeatureSourceParser> featureSourceParserMap = new HashMap<>();
     private static final HashMap<HashSet<String>, ArrayList<StepRunner>> stepRunnerMap = new HashMap<>();
     private static final HashMap<HashSet<String>, ArrayList<TestDataSource>> testDataSourcesMap = new HashMap<>();
@@ -68,21 +66,7 @@ public class KartaRuntime implements AutoCloseable {
     private static KartaRuntime instance = null;
     @Getter
     private final List<AutoCloseable> autoCloseables = Collections.synchronizedList(new ArrayList<>());
-    private final ObjectMethodConsumer callObjectInitializer = (object, method) -> {
-        try {
-            method.invoke(object);
-        } catch (Throwable t) {
-            log.error("Exception while parsing bean definition from method  " + method.getName(), t);
-        }
-    };
-    private final ClassMethodConsumer callClassInitializer = (classToWorkWith, beanDefinitionMethod) -> {
-        try {
-            beanDefinitionMethod.invoke(null);
-        } catch (Throwable t) {
-            log.error("Exception while calling initialization method for " + classToWorkWith.getName() + Constants.DOT + beanDefinitionMethod.getName(), t);
-        }
 
-    };
     private final Object fspMapLock = new Object();
     private final Object srMapLock = new Object();
     private final Object tdsMapLock = new Object();
@@ -93,57 +77,14 @@ public class KartaRuntime implements AutoCloseable {
     @Getter
     private PnPRegistry pnpRegistry;
     @Getter
-    private Configurator configurator;
+    private KartaDependencyInjector kartaDependencyInjector;
     @Getter
     private TestCatalogManager testCatalogManager;
     @Getter
     private EventProcessor eventProcessor;
     @Getter
     private IKartaNodeRegistry nodeRegistry;
-    @Getter
-    private BeanRegistry beanRegistry;
-    private final Consumer<Method> processBeanDefinition = new Consumer<>() {
-        @Override
-        public void accept(Method beanDefinitionMethod) {
-            try {
-                for (KartaBean kartaBean : beanDefinitionMethod.getAnnotationsByType(KartaBean.class)) {
-                    Class<?> beanDeclaringClass = beanDefinitionMethod.getDeclaringClass();
-                    initializeClass(beanDeclaringClass);
-                    String beanName = DataUtils.pickString(StringUtils::isNotEmpty, kartaBean.name(), kartaBean.value(), beanDefinitionMethod.getReturnType().getName());
-                    Class<?>[] paramTypes = beanDefinitionMethod.getParameterTypes();
 
-                    Object beanObj;
-
-                    if (paramTypes.length == 0) {
-                        beanObj = beanDefinitionMethod.invoke(null);
-                    } else {
-                        continue;
-                    }
-
-                    if (StringUtils.isAllBlank(beanName)) {
-                        beanName = beanObj.getClass().getName();
-                    }
-
-                    if (!beanRegistry.add(beanName, beanObj)) {
-                        log.error("Bean: " + beanName + " is already registered.");
-                    } else {
-                        log.info("Bean: " + beanName + " registered.");
-                    }
-                }
-            } catch (Throwable t) {
-                log.error("Exception while parsing bean definition from method  " + beanDefinitionMethod.getName(), t);
-            }
-
-        }
-    };
-    private final Consumer<Class<?>> processLoadPropertiesDefinition = classesToLoadPropertiesWith -> {
-        try {
-            initializeClass(classesToLoadPropertiesWith);
-        } catch (Throwable t) {
-            log.error("Exception while loading static fields from properties for class  " + classesToLoadPropertiesWith.getName(), t);
-        }
-
-    };
     @Getter
     private ExecutorServiceManager executorServiceManager;
     @Getter
@@ -223,6 +164,12 @@ public class KartaRuntime implements AutoCloseable {
         log.info("Karta configuration after override and expansion is: " + kartaConfiguration);
 
         /*---------------------------------------------------------------------------------------------------------------------*/
+        //Initialize Dependency Injector
+        /*---------------------------------------------------------------------------------------------------------------------*/
+        kartaDependencyInjector = new KartaDependencyInjector();
+
+
+        /*---------------------------------------------------------------------------------------------------------------------*/
         // Initialize random
         /*---------------------------------------------------------------------------------------------------------------------*/
         random = new Random();
@@ -235,8 +182,7 @@ public class KartaRuntime implements AutoCloseable {
         /*---------------------------------------------------------------------------------------------------------------------*/
         // Configurator should be setup before plug-in initialization
         /*---------------------------------------------------------------------------------------------------------------------*/
-        configurator = new Configurator();
-        configurator.mergeProperties(kartaConfiguration.getProperties());
+        kartaDependencyInjector.configurator.mergeProperties(kartaConfiguration.getProperties());
         ArrayList<String> propertiesFileList = kartaConfiguration.getPropertyFiles();
         if (propertiesFileList == null) {
             propertiesFileList = new ArrayList<>();
@@ -248,7 +194,7 @@ public class KartaRuntime implements AutoCloseable {
 
         String[] propertyFilesToLoad = new String[propertiesFileList.size()];
         propertiesFileList.toArray(propertyFilesToLoad);
-        if (!configurator.mergePropertiesFiles(propertyFilesToLoad)) {
+        if (!kartaDependencyInjector.configurator.mergePropertiesFiles(propertyFilesToLoad)) {
             log.error("Error while merging property files to configurator store.");
             return false;
         }
@@ -265,7 +211,7 @@ public class KartaRuntime implements AutoCloseable {
         // Initialize event processor
         /*---------------------------------------------------------------------------------------------------------------------*/
         eventProcessor = new EventProcessor();
-        configurator.loadProperties(eventProcessor);
+        kartaDependencyInjector.configurator.loadProperties(eventProcessor);
         for (Plugin plugin : pnpRegistry.getEnabledPluginsOfType(TestEventListener.class)) {
             if (!eventProcessor.addEventListener((TestEventListener) plugin)) {
                 return false;
@@ -316,19 +262,17 @@ public class KartaRuntime implements AutoCloseable {
         /*---------------------------------------------------------------------------------------------------------------------*/
         // Initialize bean registry
         /*---------------------------------------------------------------------------------------------------------------------*/
-        beanRegistry = new BeanRegistry();
-        beanRegistry.add(this);
-        beanRegistry.add(kartaConfiguration);
-        beanRegistry.add(configurator);
-        beanRegistry.add(testCatalogManager);
-        beanRegistry.add(eventProcessor);
-        beanRegistry.add(nodeRegistry);
-        beanRegistry.add(executorServiceManager);
-        beanRegistry.add(random);
+        kartaDependencyInjector.beanRegistry.add(this);
+        kartaDependencyInjector.beanRegistry.add(kartaConfiguration);
+        kartaDependencyInjector.beanRegistry.add(testCatalogManager);
+        kartaDependencyInjector.beanRegistry.add(eventProcessor);
+        kartaDependencyInjector.beanRegistry.add(nodeRegistry);
+        kartaDependencyInjector.beanRegistry.add(executorServiceManager);
+        kartaDependencyInjector.beanRegistry.add(random);
 
         ArrayList<String> packagesToScanBeans = kartaConfiguration.getConfigurationScanPackages();
         if (packagesToScanBeans != null) {
-            processConfigBeans(packagesToScanBeans);
+            kartaDependencyInjector.addBeansFromPackages(packagesToScanBeans);
         }
         /*---------------------------------------------------------------------------------------------------------------------*/
         // Initialize enabled plug-ins only after all other beans are initialized
@@ -347,42 +291,18 @@ public class KartaRuntime implements AutoCloseable {
         return true;
     }
 
-    public void processConfigBeans(Collection<String> configurationScanPackageNames) {
-        AnnotationScanner.forEachMethod(configurationScanPackageNames, KartaBean.class, AnnotationScanner.IS_PUBLIC_AND_STATIC, AnnotationScanner.IS_NON_VOID_TYPE, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, processBeanDefinition);
-        AnnotationScanner.forEachClass(configurationScanPackageNames, LoadConfiguration.class, AnnotationScanner.IS_PUBLIC, processLoadPropertiesDefinition);
-    }
-
     /**
      * Sets the properties and beans(static and non-static) for the object and calls any initializer methods
      */
     public void initializeObject(Object object) {
-        try {
-            Class<?> classOfObject = object.getClass();
-            initializeClass(classOfObject);
-            // Not checking one time initialization for object level here which can prevent garbage collection
-            configurator.loadProperties(object);
-            beanRegistry.loadBeans(object);
-            AnnotationScanner.forEachMethod(object, Initializer.class, AnnotationScanner.IS_NON_STATIC, null, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, callObjectInitializer);
-        } catch (Throwable t) {
-            log.error("Exception while initializing object", t);
-        }
+        kartaDependencyInjector.injectIntoObject(object);
     }
 
     /**
      * Sets the properties and beans (static) for the class of object and calls any initializer methods
      */
     public void initializeClass(Class<?> theClassOfObject) {
-        try {
-            if (!configuredBeanClasses.contains(theClassOfObject)) {
-                configurator.loadProperties(theClassOfObject);
-                beanRegistry.loadStaticBeans(theClassOfObject);
-
-                AnnotationScanner.forEachMethod(theClassOfObject, Initializer.class, AnnotationScanner.IS_STATIC, null, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, callClassInitializer);
-                configuredBeanClasses.add(theClassOfObject);
-            }
-        } catch (Throwable t) {
-            log.error("Exception while initializing object", t);
-        }
+        kartaDependencyInjector.injectIntoClass(theClassOfObject);
     }
 
     /**

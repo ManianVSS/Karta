@@ -3,7 +3,7 @@ package org.mvss.karta.framework.restclient;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.SerializationUtils;
 import org.mvss.karta.Constants;
-import org.mvss.karta.framework.utils.ParserUtils;
+import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 
 import java.io.Serializable;
 import java.util.Base64;

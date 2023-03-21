@@ -2,6 +2,7 @@ package org.mvss.karta.server.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 import org.mvss.karta.framework.core.StandardFeatureResults;
 import org.mvss.karta.framework.core.StandardScenarioResults;
 import org.mvss.karta.framework.core.StandardStepResults;
@@ -15,7 +16,6 @@ import org.mvss.karta.framework.nodes.dto.*;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.TestFailureException;
 import org.mvss.karta.framework.runtime.TestJobRunner;
-import org.mvss.karta.framework.utils.ParserUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;

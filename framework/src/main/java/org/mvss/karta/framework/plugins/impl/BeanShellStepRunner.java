@@ -6,15 +6,15 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.mvss.karta.Constants;
-import org.mvss.karta.framework.annotations.Initializer;
-import org.mvss.karta.framework.annotations.KartaAutoWired;
+import org.mvss.karta.dependencyinjection.annotations.Initializer;
+import org.mvss.karta.dependencyinjection.annotations.KartaAutoWired;
+import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.models.result.StepResult;
 import org.mvss.karta.framework.models.run.TestExecutionContext;
 import org.mvss.karta.framework.models.test.PreparedChaosAction;
 import org.mvss.karta.framework.models.test.PreparedStep;
 import org.mvss.karta.framework.plugins.StepRunner;
-import org.mvss.karta.framework.properties.PropertyMapping;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.TestFailureException;
 
@@ -64,8 +64,8 @@ public class BeanShellStepRunner implements StepRunner {
         }
         log.info("Initializing " + PLUGIN_NAME + " plugin");
         interpreter.set("__kartaRuntime", kartaRuntime);
-        interpreter.set("__beanRegistry", kartaRuntime.getBeanRegistry());
-        interpreter.set("__configurator", kartaRuntime.getConfigurator());
+        interpreter.set("__beanRegistry", kartaRuntime.getKartaDependencyInjector().beanRegistry);
+        interpreter.set("__configurator", kartaRuntime.getKartaDependencyInjector().configurator);
 
         initialized = true;
         return true;

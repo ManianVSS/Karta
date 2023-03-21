@@ -1,7 +1,7 @@
 package org.mvss.karta.framework.models.chaos;
 
 import lombok.*;
-import org.mvss.karta.framework.utils.DataUtils;
+import org.mvss.karta.dependencyinjection.utils.DataUtils;
 
 import java.io.Serializable;
 

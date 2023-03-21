@@ -6,10 +6,10 @@ import com.rabbitmq.client.ConnectionFactory;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.SerializationUtils;
 import org.mvss.karta.Constants;
-import org.mvss.karta.framework.annotations.Initializer;
+import org.mvss.karta.dependencyinjection.annotations.Initializer;
+import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
 import org.mvss.karta.framework.models.event.Event;
 import org.mvss.karta.framework.plugins.TestEventListener;
-import org.mvss.karta.framework.properties.PropertyMapping;
 
 @Log4j2
 public class RabbitMQTestEventListener implements TestEventListener {

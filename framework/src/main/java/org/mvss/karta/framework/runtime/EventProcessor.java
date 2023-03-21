@@ -3,6 +3,7 @@ package org.mvss.karta.framework.runtime;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
+import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
 import org.mvss.karta.framework.models.event.Event;
 import org.mvss.karta.framework.models.event.TestIncidentOccurrenceEvent;
 import org.mvss.karta.framework.models.result.ScenarioResult;
@@ -11,7 +12,6 @@ import org.mvss.karta.framework.models.test.TestFeature;
 import org.mvss.karta.framework.models.test.TestIncident;
 import org.mvss.karta.framework.plugins.TestEventListener;
 import org.mvss.karta.framework.plugins.TestLifeCycleHook;
-import org.mvss.karta.framework.properties.PropertyMapping;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.WaitUtil;
 

@@ -2,9 +2,9 @@ package org.mvss.karta.framework.models.test;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import org.mvss.karta.dependencyinjection.BeanRegistry;
+import org.mvss.karta.dependencyinjection.utils.DataUtils;
 import org.mvss.karta.framework.models.run.TestExecutionContext;
-import org.mvss.karta.framework.runtime.BeanRegistry;
-import org.mvss.karta.framework.utils.DataUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;

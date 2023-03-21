@@ -2,14 +2,14 @@ package org.mvss.karta.samples.stepdefinitions;
 
 import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.Constants;
-import org.mvss.karta.framework.annotations.KartaAutoWired;
+import org.mvss.karta.dependencyinjection.Configurator;
+import org.mvss.karta.dependencyinjection.annotations.KartaAutoWired;
+import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
 import org.mvss.karta.framework.annotations.ScenarioFailed;
 import org.mvss.karta.framework.models.result.ScenarioResult;
 import org.mvss.karta.framework.models.test.PreparedScenario;
 import org.mvss.karta.framework.models.test.TestFeature;
 import org.mvss.karta.framework.plugins.impl.kriya.*;
-import org.mvss.karta.framework.properties.Configurator;
-import org.mvss.karta.framework.properties.PropertyMapping;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.web.WebDriverOptions;
 import org.mvss.karta.framework.web.WebDriverWrapper;

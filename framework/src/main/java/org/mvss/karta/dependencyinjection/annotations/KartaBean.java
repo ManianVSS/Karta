@@ -1,6 +1,6 @@
-package org.mvss.karta.framework.annotations;
+package org.mvss.karta.dependencyinjection.annotations;
 
-import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.Constants;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;

@@ -3,10 +3,10 @@ package org.mvss.karta.framework.models.event;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.mvss.karta.Constants;
-import org.mvss.karta.framework.enums.DataFormat;
+import org.mvss.karta.dependencyinjection.enums.DataFormat;
+import org.mvss.karta.dependencyinjection.utils.DataUtils;
+import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 import org.mvss.karta.framework.models.test.TestScenario;
-import org.mvss.karta.framework.utils.DataUtils;
-import org.mvss.karta.framework.utils.ParserUtils;
 
 @Getter
 @Setter

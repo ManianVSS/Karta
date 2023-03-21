@@ -2,6 +2,7 @@ package org.mvss.karta.framework.runtime;
 
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
+import org.mvss.karta.dependencyinjection.utils.DataUtils;
 import org.mvss.karta.framework.models.event.ScenarioCompleteEvent;
 import org.mvss.karta.framework.models.event.ScenarioStartEvent;
 import org.mvss.karta.framework.models.result.ScenarioResult;
@@ -11,7 +12,6 @@ import org.mvss.karta.framework.models.test.TestScenario;
 import org.mvss.karta.framework.models.test.TestStep;
 import org.mvss.karta.framework.nodes.KartaNode;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
-import org.mvss.karta.framework.utils.DataUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;

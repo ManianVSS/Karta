@@ -2,7 +2,7 @@ package org.mvss.karta.framework.nodes;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
-import org.mvss.karta.framework.properties.PropertyMapping;
+import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.utils.RMIUtils;
 

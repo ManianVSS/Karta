@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.utils;
 
 import lombok.Getter;
+import org.mvss.karta.dependencyinjection.utils.ClassPathLoaderUtils;
 
 import java.io.File;
 import java.io.InputStream;

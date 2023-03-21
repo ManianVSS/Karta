@@ -1,7 +1,8 @@
-package org.mvss.karta.framework.annotations;
+package org.mvss.karta.dependencyinjection.annotations;
 
-import org.mvss.karta.Constants;
-import org.mvss.karta.framework.enums.ContextType;
+import org.mvss.karta.dependencyinjection.BeanRegistry;
+import org.mvss.karta.dependencyinjection.Constants;
+import org.mvss.karta.dependencyinjection.enums.ContextType;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -15,8 +16,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * Bean definitions are annotated with {@link KartaBean} annotation.
  *
  * @author Manian
- * @see org.mvss.karta.framework.runtime.BeanRegistry
- * @see org.mvss.karta.framework.annotations.KartaBean
+ * @see BeanRegistry
+ * @see KartaBean
  */
 @Retention(RUNTIME)
 @Target(FIELD)

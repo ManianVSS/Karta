@@ -3,6 +3,11 @@ package org.mvss.karta.framework.configuration;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.Configurator;
+import org.mvss.karta.dependencyinjection.annotations.KartaBean;
+import org.mvss.karta.dependencyinjection.utils.DataUtils;
+import org.mvss.karta.dependencyinjection.utils.NullAwareBeanUtilsBean;
+import org.mvss.karta.dependencyinjection.utils.PropertyUtils;
 import org.mvss.karta.framework.models.catalog.Test;
 import org.mvss.karta.framework.models.catalog.TestCategory;
 import org.mvss.karta.framework.nodes.IKartaNodeRegistry;
@@ -10,10 +15,6 @@ import org.mvss.karta.framework.nodes.KartaNodeConfiguration;
 import org.mvss.karta.framework.nodes.KartaNodeRegistry;
 import org.mvss.karta.framework.plugins.impl.*;
 import org.mvss.karta.framework.plugins.impl.kriya.KriyaPlugin;
-import org.mvss.karta.framework.properties.Configurator;
-import org.mvss.karta.framework.utils.DataUtils;
-import org.mvss.karta.framework.utils.NullAwareBeanUtilsBean;
-import org.mvss.karta.framework.utils.PropertyUtils;
 import org.mvss.karta.framework.utils.SSLProperties;
 
 import java.io.Serializable;
@@ -125,7 +126,7 @@ public class KartaConfiguration implements Serializable {
     private HashMap<String, Integer> threadGroups = new HashMap<>();
 
     /**
-     * The list of Java package names to scan for {@link org.mvss.karta.framework.annotations.KartaBean} annotations on public and static methods. </br>
+     * The list of Java package names to scan for {@link KartaBean} annotations on public and static methods. </br>
      */
     @Builder.Default
     private ArrayList<String> configurationScanPackages = new ArrayList<>();
@@ -180,7 +181,7 @@ public class KartaConfiguration implements Serializable {
 
     /**
      * Expands system and environmental variables into keys configuration value. </br>
-     * Refer {@link org.mvss.karta.framework.utils.PropertyUtils#propertyPattern}.
+     * Refer {@link PropertyUtils#propertyPattern}.
      */
     public synchronized void expandSystemAndEnvProperties() {
         // TODO: Change to a generic utility for expanding env vars with annotations

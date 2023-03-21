@@ -1,7 +1,7 @@
 package org.mvss.karta.framework.plugins.impl;
 
 import lombok.extern.log4j.Log4j2;
-import org.mvss.karta.framework.annotations.Initializer;
+import org.mvss.karta.dependencyinjection.annotations.Initializer;
 import org.mvss.karta.framework.core.StandardEventsTypes;
 import org.mvss.karta.framework.models.event.*;
 import org.mvss.karta.framework.models.result.FeatureResult;

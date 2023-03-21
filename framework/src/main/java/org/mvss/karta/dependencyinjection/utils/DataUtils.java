@@ -1,7 +1,7 @@
-package org.mvss.karta.framework.utils;
+package org.mvss.karta.dependencyinjection.utils;
 
 import org.apache.commons.lang3.StringUtils;
-import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.Constants;
 
 import java.io.Serializable;
 import java.util.*;

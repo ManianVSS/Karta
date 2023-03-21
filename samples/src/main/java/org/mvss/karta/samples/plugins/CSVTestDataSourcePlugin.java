@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
 import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.Constants;
-import org.mvss.karta.framework.annotations.Initializer;
+import org.mvss.karta.dependencyinjection.annotations.Initializer;
+import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
+import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 import org.mvss.karta.framework.models.run.TestExecutionContext;
 import org.mvss.karta.framework.plugins.TestDataSource;
-import org.mvss.karta.framework.properties.PropertyMapping;
-import org.mvss.karta.framework.utils.ParserUtils;
 
 import java.io.File;
 import java.io.FileReader;

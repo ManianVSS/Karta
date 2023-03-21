@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.utils;
 
 import lombok.*;
+import org.mvss.karta.dependencyinjection.utils.PropertyUtils;
 
 import java.io.Serializable;
 

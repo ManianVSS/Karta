@@ -1,4 +1,4 @@
-package org.mvss.karta.framework.interfaces;
+package org.mvss.karta.dependencyinjection.interfaces;
 
 import java.lang.reflect.Method;
 

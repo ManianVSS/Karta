@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.runtime;
 
 import lombok.extern.log4j.Log4j2;
+import org.mvss.karta.dependencyinjection.BeanRegistry;
 import org.mvss.karta.framework.models.chaos.ChaosAction;
 import org.mvss.karta.framework.models.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.models.event.ChaosActionJobCompleteEvent;

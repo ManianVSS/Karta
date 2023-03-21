@@ -2,10 +2,10 @@ package randomization;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
+import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 import org.mvss.karta.framework.models.randomization.ObjectGenerationRule;
 import org.mvss.karta.framework.models.randomization.ObjectGenerationRuleType;
 import org.mvss.karta.framework.models.randomization.Range;
-import org.mvss.karta.framework.utils.ParserUtils;
 
 import java.io.File;
 import java.io.Serializable;

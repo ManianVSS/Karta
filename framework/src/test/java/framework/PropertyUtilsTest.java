@@ -1,6 +1,6 @@
 package framework;
 
-import org.mvss.karta.framework.utils.PropertyUtils;
+import org.mvss.karta.dependencyinjection.utils.PropertyUtils;
 
 public class PropertyUtilsTest {
 

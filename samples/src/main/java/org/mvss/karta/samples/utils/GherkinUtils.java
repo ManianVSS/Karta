@@ -2,10 +2,10 @@ package org.mvss.karta.samples.utils;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.utils.DataUtils;
 import org.mvss.karta.framework.models.test.TestFeature;
 import org.mvss.karta.framework.models.test.TestScenario;
 import org.mvss.karta.framework.models.test.TestStep;
-import org.mvss.karta.framework.utils.DataUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;

@@ -3,6 +3,7 @@ package org.mvss.karta.framework.utils;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.utils.PropertyUtils;
 
 import javax.net.ssl.*;
 import java.io.File;

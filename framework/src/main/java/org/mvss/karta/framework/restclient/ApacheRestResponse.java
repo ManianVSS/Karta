@@ -10,9 +10,9 @@ import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.mvss.karta.Constants;
-import org.mvss.karta.framework.enums.DataFormat;
-import org.mvss.karta.framework.utils.DataUtils;
-import org.mvss.karta.framework.utils.ParserUtils;
+import org.mvss.karta.dependencyinjection.enums.DataFormat;
+import org.mvss.karta.dependencyinjection.utils.DataUtils;
+import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;

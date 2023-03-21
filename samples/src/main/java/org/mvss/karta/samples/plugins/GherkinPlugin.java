@@ -1,7 +1,7 @@
 package org.mvss.karta.samples.plugins;
 
 import lombok.extern.log4j.Log4j2;
-import org.mvss.karta.framework.annotations.Initializer;
+import org.mvss.karta.dependencyinjection.annotations.Initializer;
 import org.mvss.karta.framework.models.test.TestFeature;
 import org.mvss.karta.framework.plugins.FeatureSourceParser;
 import org.mvss.karta.samples.utils.GherkinUtils;

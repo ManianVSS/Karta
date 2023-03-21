@@ -3,6 +3,7 @@ package org.mvss.karta.framework.runtime;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.BeanRegistry;
 import org.mvss.karta.framework.interfaces.TestJobIterationResultProcessor;
 import org.mvss.karta.framework.models.result.TestJobResult;
 import org.mvss.karta.framework.models.run.RunInfo;

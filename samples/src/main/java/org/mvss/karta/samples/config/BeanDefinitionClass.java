@@ -1,9 +1,9 @@
 package org.mvss.karta.samples.config;
 
 import lombok.extern.log4j.Log4j2;
-import org.mvss.karta.framework.annotations.KartaAutoWired;
-import org.mvss.karta.framework.annotations.KartaBean;
-import org.mvss.karta.framework.properties.Configurator;
+import org.mvss.karta.dependencyinjection.Configurator;
+import org.mvss.karta.dependencyinjection.annotations.KartaAutoWired;
+import org.mvss.karta.dependencyinjection.annotations.KartaBean;
 import org.mvss.karta.samples.stepdefinitions.Employee;
 
 @Log4j2
