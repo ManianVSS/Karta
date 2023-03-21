@@ -11,11 +11,9 @@ import org.mvss.karta.dependencyinjection.interfaces.ObjectMethodConsumer;
 import org.mvss.karta.dependencyinjection.utils.AnnotationScanner;
 import org.mvss.karta.dependencyinjection.utils.DataUtils;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 @Log4j2
@@ -66,9 +64,32 @@ public class KartaDependencyInjector implements DependencyInjector {
 
     };
 
-    public void addBeansFromPackages(Collection<String> configurationScanPackageNames) {
-        AnnotationScanner.forEachMethod(configurationScanPackageNames, KartaBean.class, AnnotationScanner.IS_PUBLIC_AND_STATIC, AnnotationScanner.IS_NON_VOID_TYPE, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, processBeanDefinition);
-        AnnotationScanner.forEachClass(configurationScanPackageNames, LoadConfiguration.class, AnnotationScanner.IS_PUBLIC, this::injectIntoClass);
+    @Override
+    public void mergeProperties(HashMap<String, HashMap<String, Serializable>> propertiesToMerge) {
+        configurator.mergeProperties(propertiesToMerge);
+    }
+
+    @Override
+    public void mergePropertiesFiles(String... propertyFiles) {
+        configurator.mergePropertiesFiles(propertyFiles);
+    }
+
+    @Override
+    public void addBean(String name, Object bean) {
+        beanRegistry.put(name, bean);
+    }
+
+    @Override
+    public void addBeans(Object... beans) {
+        for (Object bean : beans) {
+            beanRegistry.put(bean);
+        }
+    }
+
+    @Override
+    public void addBeansFromPackages(Collection<String> packageNames) {
+        AnnotationScanner.forEachMethod(packageNames, KartaBean.class, AnnotationScanner.IS_PUBLIC_AND_STATIC, AnnotationScanner.IS_NON_VOID_TYPE, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, processBeanDefinition);
+        AnnotationScanner.forEachClass(packageNames, LoadConfiguration.class, AnnotationScanner.IS_PUBLIC, this::injectIntoClass);
     }
 
 

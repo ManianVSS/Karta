@@ -9,7 +9,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.Constants;
 import org.mvss.karta.dependencyinjection.BeanRegistry;
-import org.mvss.karta.dependencyinjection.KartaDependencyInjector;
+import org.mvss.karta.dependencyinjection.interfaces.DependencyInjector;
 import org.mvss.karta.dependencyinjection.utils.ClassPathLoaderUtils;
 import org.mvss.karta.dependencyinjection.utils.DataUtils;
 import org.mvss.karta.dependencyinjection.utils.ParserUtils;
@@ -77,7 +77,7 @@ public class KartaRuntime implements AutoCloseable {
     @Getter
     private PnPRegistry pnpRegistry;
     @Getter
-    private KartaDependencyInjector kartaDependencyInjector;
+    private DependencyInjector dependencyInjector;
     @Getter
     private TestCatalogManager testCatalogManager;
     @Getter
@@ -166,7 +166,7 @@ public class KartaRuntime implements AutoCloseable {
         /*---------------------------------------------------------------------------------------------------------------------*/
         //Initialize Dependency Injector
         /*---------------------------------------------------------------------------------------------------------------------*/
-        kartaDependencyInjector = new KartaDependencyInjector();
+        dependencyInjector = kartaConfiguration.createDependencyInjector();
 
 
         /*---------------------------------------------------------------------------------------------------------------------*/
@@ -182,7 +182,7 @@ public class KartaRuntime implements AutoCloseable {
         /*---------------------------------------------------------------------------------------------------------------------*/
         // Configurator should be setup before plug-in initialization
         /*---------------------------------------------------------------------------------------------------------------------*/
-        kartaDependencyInjector.configurator.mergeProperties(kartaConfiguration.getProperties());
+        dependencyInjector.mergeProperties(kartaConfiguration.getProperties());
         ArrayList<String> propertiesFileList = kartaConfiguration.getPropertyFiles();
         if (propertiesFileList == null) {
             propertiesFileList = new ArrayList<>();
@@ -194,10 +194,7 @@ public class KartaRuntime implements AutoCloseable {
 
         String[] propertyFilesToLoad = new String[propertiesFileList.size()];
         propertiesFileList.toArray(propertyFilesToLoad);
-        if (!kartaDependencyInjector.configurator.mergePropertiesFiles(propertyFilesToLoad)) {
-            log.error("Error while merging property files to configurator store.");
-            return false;
-        }
+        dependencyInjector.mergePropertiesFiles(propertyFilesToLoad);
 
         /*---------------------------------------------------------------------------------------------------------------------*/
         // Load and enable plug-ins
@@ -211,7 +208,7 @@ public class KartaRuntime implements AutoCloseable {
         // Initialize event processor
         /*---------------------------------------------------------------------------------------------------------------------*/
         eventProcessor = new EventProcessor();
-        kartaDependencyInjector.configurator.loadProperties(eventProcessor);
+        dependencyInjector.injectIntoObject(eventProcessor);
         for (Plugin plugin : pnpRegistry.getEnabledPluginsOfType(TestEventListener.class)) {
             if (!eventProcessor.addEventListener((TestEventListener) plugin)) {
                 return false;
@@ -262,17 +259,11 @@ public class KartaRuntime implements AutoCloseable {
         /*---------------------------------------------------------------------------------------------------------------------*/
         // Initialize bean registry
         /*---------------------------------------------------------------------------------------------------------------------*/
-        kartaDependencyInjector.beanRegistry.add(this);
-        kartaDependencyInjector.beanRegistry.add(kartaConfiguration);
-        kartaDependencyInjector.beanRegistry.add(testCatalogManager);
-        kartaDependencyInjector.beanRegistry.add(eventProcessor);
-        kartaDependencyInjector.beanRegistry.add(nodeRegistry);
-        kartaDependencyInjector.beanRegistry.add(executorServiceManager);
-        kartaDependencyInjector.beanRegistry.add(random);
+        dependencyInjector.addBeans(this, kartaConfiguration, testCatalogManager, eventProcessor, nodeRegistry, executorServiceManager, random);
 
         ArrayList<String> packagesToScanBeans = kartaConfiguration.getConfigurationScanPackages();
         if (packagesToScanBeans != null) {
-            kartaDependencyInjector.addBeansFromPackages(packagesToScanBeans);
+            dependencyInjector.addBeansFromPackages(packagesToScanBeans);
         }
         /*---------------------------------------------------------------------------------------------------------------------*/
         // Initialize enabled plug-ins only after all other beans are initialized
@@ -291,18 +282,19 @@ public class KartaRuntime implements AutoCloseable {
         return true;
     }
 
+
     /**
      * Sets the properties and beans(static and non-static) for the object and calls any initializer methods
      */
     public void initializeObject(Object object) {
-        kartaDependencyInjector.injectIntoObject(object);
+        dependencyInjector.injectIntoObject(object);
     }
 
     /**
      * Sets the properties and beans (static) for the class of object and calls any initializer methods
      */
     public void initializeClass(Class<?> theClassOfObject) {
-        kartaDependencyInjector.injectIntoClass(theClassOfObject);
+        dependencyInjector.injectIntoClass(theClassOfObject);
     }
 
     /**
@@ -352,9 +344,9 @@ public class KartaRuntime implements AutoCloseable {
             }
             autoCloseables.clear();
 
-            if (kartaDependencyInjector != null) {
-                kartaDependencyInjector.close();
-                kartaDependencyInjector = null;
+            if (dependencyInjector != null) {
+                dependencyInjector.close();
+                dependencyInjector = null;
             }
         } catch (Exception e) {
             log.error(e);

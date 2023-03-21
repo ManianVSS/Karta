@@ -64,8 +64,7 @@ public class BeanShellStepRunner implements StepRunner {
         }
         log.info("Initializing " + PLUGIN_NAME + " plugin");
         interpreter.set("__kartaRuntime", kartaRuntime);
-        interpreter.set("__beanRegistry", kartaRuntime.getKartaDependencyInjector().beanRegistry);
-        interpreter.set("__configurator", kartaRuntime.getKartaDependencyInjector().configurator);
+        interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
 
         initialized = true;
         return true;
