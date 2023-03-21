@@ -31,44 +31,33 @@ public class PreparedStepRunner implements Callable<StepResult> {
     private Consumer<StepResult> resultConsumer;
 
     public StepResult execute() throws InterruptedException {
-        StepResult stepResult;
+        StepResult stepResult = new StepResult();
 
         try {
             ArrayList<PreparedStep> nestedSteps = step.getSteps();
 
-            if ((nestedSteps == null) || nestedSteps.isEmpty()) {
-                // TODO:Handle null exceptions
-                ArrayList<StepRunner> stepRunners = kartaRuntime.getStepRunners(runInfo);
-                StepRunner stepRunner = kartaRuntime.getCapableStepRunnerForStep(stepRunners, step.getIdentifier());
+            ArrayList<StepRunner> stepRunners = kartaRuntime.getStepRunners(runInfo);
+            StepRunner stepRunner = kartaRuntime.getCapableStepRunnerForStep(stepRunners, step.getIdentifier());
+
+            if (stepRunner != null) {
                 stepResult = stepRunner.runStep(step);
-            } else {
+            }
+
+            if ((nestedSteps != null) && !nestedSteps.isEmpty()) {
                 // TODO: Forward test data and test data set from parent step to nested steps
                 boolean runInParallel = (step.getRunStepsInParallel() != null) && step.getRunStepsInParallel();
 
-                StepResult cumulativeStepResult = new StepResult();
-                List<Callable<StepResult>> preparedStepRunners = nestedSteps.stream()
-                        .map(nestedStep -> PreparedStepRunner.builder().kartaRuntime(kartaRuntime).runInfo(runInfo).step(nestedStep).build())
-                        .collect(Collectors.toList());
-                if (!ThreadUtils.runCallables(preparedStepRunners, cumulativeStepResult::mergeResults, runInParallel, nestedSteps.size())) {
+                List<Callable<StepResult>> preparedStepRunners = nestedSteps.stream().map(nestedStep -> PreparedStepRunner.builder().kartaRuntime(kartaRuntime).runInfo(runInfo).step(nestedStep).build()).collect(Collectors.toList());
+                if (!ThreadUtils.runCallables(preparedStepRunners, stepResult::mergeResults, runInParallel, nestedSteps.size())) {
                     if (runInParallel) {
                         log.error("Failed awaiting termination of step executor service");
                     }
                 }
-                stepResult = cumulativeStepResult;
             }
         } catch (TestFailureException t) {
-            stepResult = StandardStepResults.failure(t);
+            stepResult.fail(t);
         } catch (ParallelCausesException parallelCausesException) {
-            boolean allAreTestFailures = true;
-            for (Throwable throwable : parallelCausesException.causeList) {
-                if (!(throwable instanceof TestFailureException)) {
-                    allAreTestFailures = false;
-                    break;
-                }
-            }
-            stepResult = allAreTestFailures ?
-                    StandardStepResults.failure(parallelCausesException) :
-                    StandardStepResults.error(parallelCausesException);
+            stepResult.fail(parallelCausesException.getCauseList());
         } catch (Throwable t) {
             stepResult = StandardStepResults.error(t);
         }

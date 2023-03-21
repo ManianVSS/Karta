@@ -22,6 +22,11 @@ public class TestStep implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
+     * The actual conjunction used in the step example "Given / When/ Then ... "
+     */
+    private String gwtConjunction;
+
+    /**
      * The step identifier which is used to map the step in feature files to step definitions of step runner.
      */
     private String step;

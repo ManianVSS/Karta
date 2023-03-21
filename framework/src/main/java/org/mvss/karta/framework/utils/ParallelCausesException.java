@@ -1,11 +1,14 @@
 package org.mvss.karta.framework.utils;
 
+import lombok.Getter;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ParallelCausesException extends Exception {
     private static final long serialVersionUID = 1L;
 
+    @Getter
     public final List<Throwable> causeList = new ArrayList<>();
 
     public ParallelCausesException(List<Throwable> throwableList) {

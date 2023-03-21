@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * The execution results for a step.
@@ -179,5 +180,24 @@ public class StepResult implements Serializable {
         events.forEach((event) -> newEvents.add(StandardEventsTypes.castToAppropriateEvent(event)));
         events.clear();
         events = newEvents;
+    }
+
+    public void fail(Throwable... throwables) {
+        for (Throwable throwable : throwables) {
+            incidents.add(TestIncident.builder().thrownCause(throwable).build());
+        }
+        successful = false;
+    }
+
+    public void fail(List<Throwable> throwables) {
+        for (Throwable throwable : throwables) {
+            incidents.add(TestIncident.builder().thrownCause(throwable).build());
+        }
+        successful = false;
+    }
+
+    public void error(Throwable t) {
+        incidents.add(TestIncident.builder().thrownCause(t).build());
+        error = false;
     }
 }

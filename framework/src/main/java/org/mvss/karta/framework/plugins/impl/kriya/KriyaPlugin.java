@@ -14,10 +14,7 @@ import org.mvss.karta.framework.models.generic.Pair;
 import org.mvss.karta.framework.models.result.ScenarioResult;
 import org.mvss.karta.framework.models.result.StepResult;
 import org.mvss.karta.framework.models.run.TestExecutionContext;
-import org.mvss.karta.framework.models.test.PreparedChaosAction;
-import org.mvss.karta.framework.models.test.PreparedScenario;
-import org.mvss.karta.framework.models.test.PreparedStep;
-import org.mvss.karta.framework.models.test.TestFeature;
+import org.mvss.karta.framework.models.test.*;
 import org.mvss.karta.framework.plugins.FeatureSourceParser;
 import org.mvss.karta.framework.plugins.StepRunner;
 import org.mvss.karta.framework.plugins.TestLifeCycleHook;
@@ -349,10 +346,50 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
         return true;
     }
 
+    public String getConjunctionUsed(String stepIdentifier) {
+        // Handle null stepIdentifier
+        if (StringUtils.isBlank(stepIdentifier)) {
+            return Constants.EMPTY_STRING;
+        }
+
+        stepIdentifier = stepIdentifier.trim();
+        String[] words = stepIdentifier.split(WORD_FETCH_REGEX);
+        String conjunctionUsed;
+        if (conjunctions.contains(words[0])) {
+            return words[0];
+        }
+        return Constants.EMPTY_STRING;
+    }
+
+    public void setConjunctions(List<TestStep> steps) {
+        for (TestStep step : steps) {
+            step.setGwtConjunction(getConjunctionUsed(step.getStep()));
+
+            ArrayList<TestStep> nestedSteps = step.getSteps();
+            if (nestedSteps != null) {
+                setConjunctions(nestedSteps);
+            }
+        }
+    }
+
     @Override
     public TestFeature parseFeatureSource(String sourceString) throws Throwable {
-        return ParserUtils.getYamlObjectMapper().readValue(sourceString, TestFeature.class);
+        TestFeature parsedFeature = ParserUtils.getYamlObjectMapper().readValue(sourceString, TestFeature.class);
+
+        setConjunctions(parsedFeature.getSetupSteps());
+        setConjunctions(parsedFeature.getScenarioSetupSteps());
+
+        for (TestScenario testScenario : parsedFeature.getTestScenarios()) {
+            setConjunctions(testScenario.getSetupSteps());
+            setConjunctions(testScenario.getExecutionSteps());
+            setConjunctions(testScenario.getTearDownSteps());
+        }
+
+        setConjunctions(parsedFeature.getScenarioTearDownSteps());
+        setConjunctions(parsedFeature.getTearDownSteps());
+        return parsedFeature;
     }
+
 
     @Override
     public String sanitizeStepIdentifier(String stepIdentifier) {

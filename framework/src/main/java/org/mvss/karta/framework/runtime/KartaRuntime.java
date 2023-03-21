@@ -160,8 +160,8 @@ public class KartaRuntime implements AutoCloseable {
      * Gets the default KartaRuntime singleton instance.
      */
     public static KartaRuntime getInstance() throws Throwable {
-        if (instance == null) {
-            synchronized (_syncLockObject) {
+        synchronized (_syncLockObject) {
+            if (instance == null) {
                 instance = new KartaRuntime();
 
                 if (!instance.initializeRuntime()) {
@@ -941,14 +941,14 @@ public class KartaRuntime implements AutoCloseable {
             HashMap<String, Serializable> mergedTestData = getMergedTestData(step);
             testExecutionContext.mergeTestData(mergedTestData, DataUtils.mergeMaps(commonTestDataSet, step.getTestDataSet()), getTestDataSources(runInfo));
 
-            return PreparedStep.builder().identifier(stepIdentifier).testExecutionContext(testExecutionContext).node(step.getNode()).numberOfThreads(step.getNumberOfThreads()).maxRetries(step.getMaxRetries()).condition(step.getCondition()).build();
+            return PreparedStep.builder().gwtConjunction(step.getGwtConjunction()).identifier(stepIdentifier).testExecutionContext(testExecutionContext).node(step.getNode()).numberOfThreads(step.getNumberOfThreads()).maxRetries(step.getMaxRetries()).condition(step.getCondition()).build();
         } else {
             HashMap<String, Serializable> mergedTestData = getMergedTestData(step);
             TestExecutionContext testExecutionContext = new TestExecutionContext(runInfo.getRunName(), featureName, iterationIndex, scenarioName, stepIdentifier, null, variables);
             testExecutionContext.mergeTestData(mergedTestData, DataUtils.mergeMaps(commonTestDataSet, step.getTestDataSet()), getTestDataSources(runInfo));
             testExecutionContext.setContextBeanRegistry(contextBeanRegistry);
 
-            PreparedStep preparedStepGroup = PreparedStep.builder().identifier(stepIdentifier).testExecutionContext(testExecutionContext).node(step.getNode()).numberOfThreads(step.getNumberOfThreads()).maxRetries(step.getMaxRetries()).build();
+            PreparedStep preparedStepGroup = PreparedStep.builder().gwtConjunction(step.getGwtConjunction()).identifier(stepIdentifier).testExecutionContext(testExecutionContext).node(step.getNode()).numberOfThreads(step.getNumberOfThreads()).maxRetries(step.getMaxRetries()).build();
             ArrayList<PreparedStep> nestedPreparedSteps = new ArrayList<>();
 
             for (TestStep nestedStep : nestedSteps) {
