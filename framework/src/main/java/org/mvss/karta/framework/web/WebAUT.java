@@ -2,7 +2,8 @@ package org.mvss.karta.framework.web;
 
 import lombok.Getter;
 import lombok.ToString;
-import org.mvss.karta.framework.runtime.KartaRuntime;
+
+import java.util.function.Consumer;
 
 @Getter
 @ToString
@@ -14,17 +15,17 @@ public abstract class WebAUT implements AutoCloseable {
 
     protected boolean initialized = false;
 
-    protected KartaRuntime kartaRuntime;
+    protected Consumer<Object> dependencyInjector;
 
-    public WebAUT(KartaRuntime kartaRuntime, String name, WebDriverOptions webDriverOptions) {
-        this.kartaRuntime = kartaRuntime;
+    public WebAUT(Consumer<Object> dependencyInjector, String name, WebDriverOptions webDriverOptions) {
+        this.dependencyInjector = dependencyInjector;
         this.name = name;
         this.webDriverOptions = webDriverOptions;
-        kartaRuntime.initializeObject(this);
+        dependencyInjector.accept(this);
     }
 
-    public WebAUT(KartaRuntime kartaRuntime, String name, WebDriverOptions webDriverOptions, WebDriverWrapper driver) {
-        this(kartaRuntime, name, webDriverOptions);
+    public WebAUT(Consumer<Object> dependencyInjector, String name, WebDriverOptions webDriverOptions, WebDriverWrapper driver) {
+        this(dependencyInjector, name, webDriverOptions);
         this.driver = driver;
     }
 

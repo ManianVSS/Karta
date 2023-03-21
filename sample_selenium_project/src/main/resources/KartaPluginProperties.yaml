@@ -1,6 +1,0 @@
-Kriya:
-  stepDefinitionPackageNames:
-    - mysample.stepdefinitions
-
-HTMLReportTestEventListener:
-  runReportsBaseFolderName: sampleReports
