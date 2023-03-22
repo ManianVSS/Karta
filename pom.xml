@@ -25,6 +25,7 @@
     </properties>
 
     <modules>
+        <module>dependencyinjection</module>
         <module>framework</module>
         <module>server</module>
         <module>samples</module>
