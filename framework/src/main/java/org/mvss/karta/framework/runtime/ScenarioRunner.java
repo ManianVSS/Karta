@@ -17,8 +17,8 @@ import org.mvss.karta.framework.models.test.TestIncident;
 import org.mvss.karta.framework.nodes.KartaNode;
 
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 
@@ -70,7 +70,7 @@ public class ScenarioRunner implements Callable<ScenarioResult> {
             // This should run at scenario runner since this need to run on the node where scenario is to be run
             testScenario.propagateContextBeanRegistry();
 
-            HashSet<String> tags = runInfo.getTags();
+            ArrayList<String> tags = runInfo.getTags();
             if (tags != null) {
                 if (!eventProcessor.scenarioStart(runName, featureName, testScenario, tags)) {
                     eventProcessor.scenarioStop(runName, featureName, testScenario, tags);

@@ -3,7 +3,7 @@ package org.mvss.karta.framework.models.run;
 import lombok.*;
 
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.ArrayList;
 
 @Getter
 @Setter
@@ -19,5 +19,5 @@ public class RunTarget implements Serializable {
     private String javaTest;
     private String javaTestJarFile;
 
-    private HashSet<String> runTags;
+    private ArrayList<String> runTags;
 }

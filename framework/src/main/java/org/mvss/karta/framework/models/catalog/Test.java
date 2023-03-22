@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.time.Duration;
-import java.util.HashSet;
+import java.util.ArrayList;
 
 @Getter
 @Setter
@@ -28,16 +28,17 @@ public class Test implements Serializable, Comparable<Test> {
     private Integer priority = Integer.MAX_VALUE;
 
     @Builder.Default
-    private HashSet<String> tags = new HashSet<>();
+    private ArrayList<String> tags = new ArrayList<>();
 
     private String sourceArchive;
 
-    private String featureSourceParser;
     @Builder.Default
-    private HashSet<String> stepRunners = new HashSet<>();
+    private ArrayList<String> featureSourceParsers = new ArrayList<>();
+    @Builder.Default
+    private ArrayList<String> stepRunners = new ArrayList<>();
 
     @Builder.Default
-    private HashSet<String> testDataSources = new HashSet<>();
+    private ArrayList<String> testDataSources = new ArrayList<>();
 
     private String featureFileName;
 
@@ -69,22 +70,27 @@ public class Test implements Serializable, Comparable<Test> {
     @Builder.Default
     private int numberOfThreads = 1;
 
-    public void propagateAttributes(String sourceArchive, String featureSourceParser, HashSet<String> stepRunners,
-                                    HashSet<String> testDataSources, String threadGroup, HashSet<String> tags) {
+    public void propagateAttributes(String sourceArchive, ArrayList<String> featureSourceParsers, ArrayList<String> stepRunners, ArrayList<String> testDataSources, String threadGroup, ArrayList<String> tags) {
         if (StringUtils.isEmpty(this.sourceArchive) && StringUtils.isNotEmpty(sourceArchive)) {
             this.sourceArchive = sourceArchive;
         }
 
-        if (StringUtils.isEmpty(this.featureSourceParser) && StringUtils.isNotEmpty(featureSourceParser)) {
-            this.featureSourceParser = featureSourceParser;
+        if (featureSourceParsers != null) {
+            featureSourceParsers.forEach(item -> {
+                if (!this.featureSourceParsers.contains(item)) this.featureSourceParsers.add(item);
+            });
         }
 
         if (stepRunners != null) {
-            this.stepRunners.addAll(stepRunners);
+            stepRunners.forEach(item -> {
+                if (!this.stepRunners.contains(item)) this.stepRunners.add(item);
+            });
         }
 
         if (testDataSources != null) {
-            this.testDataSources.addAll(testDataSources);
+            testDataSources.forEach(item -> {
+                if (!this.testDataSources.contains(item)) this.testDataSources.add(item);
+            });
         }
 
         if (StringUtils.isEmpty(this.threadGroup) && StringUtils.isNotEmpty(threadGroup)) {
@@ -92,7 +98,9 @@ public class Test implements Serializable, Comparable<Test> {
         }
 
         if (tags != null) {
-            this.tags.addAll(tags);
+            tags.forEach(item -> {
+                if (!this.tags.contains(item)) this.tags.add(item);
+            });
         }
     }
 
@@ -109,16 +117,23 @@ public class Test implements Serializable, Comparable<Test> {
             sourceArchive = test.sourceArchive;
         }
 
-        if (StringUtils.isEmpty(featureSourceParser) && StringUtils.isNotEmpty(test.featureSourceParser)) {
-            featureSourceParser = test.featureSourceParser;
+        if (featureSourceParsers.isEmpty() && !test.featureSourceParsers.isEmpty()) {
+            test.featureSourceParsers.forEach(item -> {
+                if (!this.featureSourceParsers.contains(item)) this.featureSourceParsers.add(item);
+            });
         }
 
         if (stepRunners.isEmpty() && !test.stepRunners.isEmpty()) {
-            stepRunners.addAll(test.stepRunners);
+            test.stepRunners.forEach(item -> {
+                if (!this.stepRunners.contains(item)) this.stepRunners.add(item);
+            });
         }
 
         if (testDataSources.isEmpty() && !test.testDataSources.isEmpty()) {
-            testDataSources.addAll(test.testDataSources);
+            test.testDataSources.forEach(item -> {
+                if (!this.testDataSources.contains(item)) this.testDataSources.add(item);
+            });
+
         }
 
         if (StringUtils.isEmpty(threadGroup) && StringUtils.isNotEmpty(test.threadGroup)) {

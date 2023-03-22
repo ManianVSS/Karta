@@ -2,6 +2,7 @@ package org.mvss.karta.dependencyinjection.utils;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.dependencyinjection.Constants;
+import org.mvss.karta.dependencyinjection.interfaces.Lookup;
 
 import java.io.Serializable;
 import java.util.*;
@@ -348,5 +349,35 @@ public class DataUtils {
             }
         }
         return null;
+    }
+
+
+    /**
+     * Looks up for items names in a cache map and if not found queries the item using the mentioned lookup and adds to lookup
+     * Returns the looked up items as a list
+     *
+     * @param itemMap The item cache map mapped by item name as string
+     * @param names   The names of items to lookup
+     * @param lookup  The lookup function to query to if cache does not have the item
+     * @param <T>     The cache item class
+     * @return An arraylist of items found
+     */
+    public static <T> ArrayList<T> getCachedItemsOrFetch(Map<String, T> itemMap, ArrayList<String> names, Lookup<T> lookup) {
+        ArrayList<T> mappedItems = new ArrayList<>();
+
+        if (names != null) {
+            for (String name : names) {
+                if (itemMap.containsKey(name)) {
+                    mappedItems.add(itemMap.get(name));
+                } else {
+                    T item = lookup.lookup(name);
+                    if (item != null) {
+                        itemMap.put(name, item);
+                        mappedItems.add(item);
+                    }
+                }
+            }
+        }
+        return mappedItems;
     }
 }

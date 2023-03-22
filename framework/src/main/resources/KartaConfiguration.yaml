@@ -32,7 +32,8 @@ enabledPlugins:
   - LoggingTestEventListener
   - BeanShellStepRunner
 
-defaultFeatureSourceParser: Kriya
+defaultFeatureSourceParsers:
+  - Kriya
 defaultStepRunners:
   - Kriya
   - BeanShellStepRunner

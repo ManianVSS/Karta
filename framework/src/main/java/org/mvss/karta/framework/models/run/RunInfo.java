@@ -3,12 +3,11 @@ package org.mvss.karta.framework.models.run;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonFormat.Shape;
 import lombok.*;
-import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.models.catalog.Test;
 
 import java.io.Serializable;
 import java.time.Duration;
-import java.util.HashSet;
+import java.util.ArrayList;
 
 @Getter
 @Setter
@@ -25,16 +24,16 @@ public class RunInfo implements Serializable {
 
     private String build;
 
-    private HashSet<String> tags;
+    private ArrayList<String> tags;
 
     @Builder.Default
     private boolean remotelyCalled = false;
 
-    private String featureSourceParserPlugin;
+    private ArrayList<String> featureSourceParserPlugins;
 
-    private HashSet<String> stepRunnerPlugins;
+    private ArrayList<String> stepRunnerPlugins;
 
-    private HashSet<String> testDataSourcePlugins;
+    private ArrayList<String> testDataSourcePlugins;
 
     @Builder.Default
     private boolean runAllScenarioParallely = false;
@@ -60,10 +59,14 @@ public class RunInfo implements Serializable {
     @Builder.Default
     private int numberOfIterationsInParallel = 1;
 
-    public void setDefaultPlugins(String featureSourceParserPlugin, HashSet<String> stepRunnerPlugins, HashSet<String> testDataSourcePlugins) {
-        if (StringUtils.isBlank(this.featureSourceParserPlugin) && StringUtils.isNotBlank(featureSourceParserPlugin)) {
-            this.featureSourceParserPlugin = featureSourceParserPlugin;
+    public void setDefaultPlugins(ArrayList<String> featureSourceParserPlugins, ArrayList<String> stepRunnerPlugins, ArrayList<String> testDataSourcePlugins) {
+
+        if ((featureSourceParserPlugins != null) && !featureSourceParserPlugins.isEmpty()) {
+            if ((this.featureSourceParserPlugins == null) || this.featureSourceParserPlugins.isEmpty()) {
+                this.featureSourceParserPlugins = featureSourceParserPlugins;
+            }
         }
+
 
         if ((stepRunnerPlugins != null) && !stepRunnerPlugins.isEmpty()) {
             if ((this.stepRunnerPlugins == null) || this.stepRunnerPlugins.isEmpty()) {
@@ -79,29 +82,25 @@ public class RunInfo implements Serializable {
     }
 
     public void addPluginsFromTest(Test test) {
-        String featureSourceParserPlugin = test.getFeatureSourceParser();
-        if (StringUtils.isNotBlank(featureSourceParserPlugin)) {
-            this.featureSourceParserPlugin = featureSourceParserPlugin;
+
+        ArrayList<String> featureSourceParserPlugins = test.getFeatureSourceParsers();
+        if ((featureSourceParserPlugins != null) && !featureSourceParserPlugins.isEmpty()) {
+            this.featureSourceParserPlugins = featureSourceParserPlugins;
         }
 
-        HashSet<String> stepRunnerPlugins = test.getStepRunners();
+        ArrayList<String> stepRunnerPlugins = test.getStepRunners();
         if ((stepRunnerPlugins != null) && !stepRunnerPlugins.isEmpty()) {
             this.stepRunnerPlugins = stepRunnerPlugins;
         }
 
-        HashSet<String> testDataSourcePlugins = test.getTestDataSources();
+        ArrayList<String> testDataSourcePlugins = test.getTestDataSources();
         if ((testDataSourcePlugins != null) && !testDataSourcePlugins.isEmpty()) {
             this.testDataSourcePlugins = testDataSourcePlugins;
         }
     }
 
     public RunInfo getRunInfoForTest(Test test) {
-        RunInfo runInfo = this.toBuilder().tags(test.getTags()).runAllScenarioParallely(test.getRunAllScenarioParallely())
-                .chanceBasedScenarioExecution(test.getChanceBasedScenarioExecution())
-                .exclusiveScenarioPerIteration(test.getExclusiveScenarioPerIteration()).numberOfIterations(test.getNumberOfIterations())
-                .runDuration(test.getRunDuration()).coolDownBetweenIterations(test.getCoolDownBetweenIterations())
-                .iterationsPerCoolDownPeriod(test.getIterationsPerCoolDownPeriod()).numberOfIterationsInParallel(test.getNumberOfThreads())
-                .build();
+        RunInfo runInfo = this.toBuilder().tags(test.getTags()).featureSourceParserPlugins(test.getFeatureSourceParsers()).stepRunnerPlugins(test.getStepRunners()).testDataSourcePlugins(test.getTestDataSources()).runAllScenarioParallely(test.getRunAllScenarioParallely()).chanceBasedScenarioExecution(test.getChanceBasedScenarioExecution()).exclusiveScenarioPerIteration(test.getExclusiveScenarioPerIteration()).numberOfIterations(test.getNumberOfIterations()).runDuration(test.getRunDuration()).coolDownBetweenIterations(test.getCoolDownBetweenIterations()).iterationsPerCoolDownPeriod(test.getIterationsPerCoolDownPeriod()).numberOfIterationsInParallel(test.getNumberOfThreads()).build();
 
         runInfo.addPluginsFromTest(test);
 

@@ -159,8 +159,8 @@ public class ParserUtils {
      * Get data format for file by name based on the file extension
      */
     public static DataFormat getFileDataFormat(String fileName) {
-        String fileExtension = FilenameUtils.getExtension(
-                fileName);// ( fileName.contains( Constants.DOT ) && !fileName.endsWith( Constants.DOT ) ) ? fileName.toLowerCase().substring( fileName.lastIndexOf( Constants.DOT ) + 1 ) : Constants.EMPTY_STRING;
+        String fileExtension = FilenameUtils.getExtension(fileName);
+        // ( fileName.contains( Constants.DOT ) && !fileName.endsWith( Constants.DOT ) ) ? fileName.toLowerCase().substring( fileName.lastIndexOf( Constants.DOT ) + 1 ) : Constants.EMPTY_STRING;
         if (fileExtension.equals(Constants.JSON)) {
             return DataFormat.JSON;
         } else if (fileExtension.equals(Constants.XML)) {

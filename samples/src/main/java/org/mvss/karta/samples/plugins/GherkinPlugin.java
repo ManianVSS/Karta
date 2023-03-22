@@ -1,6 +1,7 @@
 package org.mvss.karta.samples.plugins;
 
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.FilenameUtils;
 import org.mvss.karta.dependencyinjection.annotations.Initializer;
 import org.mvss.karta.framework.models.test.TestFeature;
 import org.mvss.karta.framework.plugins.FeatureSourceParser;
@@ -30,6 +31,12 @@ public class GherkinPlugin implements FeatureSourceParser {
         log.info("Initializing " + PLUGIN_NAME + " plugin");
         initialized = true;
         return true;
+    }
+
+    @Override
+    public boolean isValidFeatureFile(String fileName) {
+        String fileExtension = FilenameUtils.getExtension(fileName).toLowerCase();
+        return fileExtension.endsWith("feature");
     }
 
     @Override

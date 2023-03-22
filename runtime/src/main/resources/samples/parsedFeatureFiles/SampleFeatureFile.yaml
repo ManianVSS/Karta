@@ -1,0 +1,106 @@
+---
+name: CalculatorTestParsedTest1
+description: This is a sample YAML format feature file parsed into test catalog automatically.
+tags:
+  - ParsedFeature
+  - AdditionalTag2
+setupSteps:
+  # - step: Then the missing step definition "123" and "465"
+  - step: Given the calculator is powered on
+
+scenarioSetupSteps:
+  - step: When the all clear button is pressed
+  - step: Then the calculator should display "0"
+
+testScenarios:
+  - name: Scenario1
+    executionSteps:
+      - step: When the button "1" is pressed
+      - step: And the button "+" is pressed
+      - step: And the button "2" is pressed
+      - step: And the button "=" is pressed
+      - step: And the calculator should display "3"
+      # - step: Then the missing step definition "xyz" should display accept another parameter "abc"
+
+  - name: Scenario2
+    executionSteps:
+      - step: When a binary operation is perfomed on the calculator
+        testData:
+          operand1: 100
+          operation: "/"
+          operand2: 200
+          operand3: [ 1, 2, 3 ]
+      - step: And the calculator should display "0.5"
+
+  - name: Scenario3
+    executionSteps:
+      - step: When the button "2" is pressed
+      - step: And the button "+" is pressed
+      - step: And the button "3" is pressed
+      - step: And the button "=" is pressed
+      - step: And the calculator should display "5"
+      # - step: Then the missing step definition "xyz" should display accept another parameter "abc"
+
+  - name: VariableTestDataExample
+    executionSteps:
+      - step: When a binary operation is perfomed on the calculator
+        testData:
+          operand1: 0
+          operation: "*"
+        variableTestDataRules:
+          operand2:
+            ruleType: INTEGER_RANGE
+            range:
+              min: 1
+              max: 100000
+          operand3:
+            ruleType: BINARY_DATA_RANGE
+            range:
+              min: 1024
+              max: 2048
+      - step: And the calculator should display "0"
+
+  - name: ConditionalStepExecution
+    setupSteps:
+      - step: Given the calculator is powered on
+    executionSteps:
+      - step: When Testing group of steps if calculator is On
+        steps:
+          - step: When the button "2" is pressed
+            testData:
+              someData1: dataValue1
+              someData2: dataValue2
+          - step: And the button "+" is pressed
+          - step: And the button "3" is pressed
+          - step: And the button "=" is pressed
+          - step: And the calculator should display "5"
+          - step: Given the calculator is powered off
+        condition: When the calculator is powered "On"
+        testData:
+          someData1: dataValue1
+          someData2: dataValue2
+      - step: When Testing group of steps in parallel
+        runStepsInParallel: true
+        steps:
+          - step: When the button "2" is pressed
+            testData:
+              someData1: dataValue1
+              someData2: dataValue2
+          - step: And the button "+" is pressed
+          - step: And the button "3" is pressed
+          - step: And the button "=" is pressed
+          - step: And the calculator should display "5"
+          - step: Given the calculator is powered off
+        testData:
+          someData1: dataValue1
+          someData2: dataValue2
+      - step: Given the calculator is powered on
+        condition: When the calculator is powered "Off"
+      - step: Given the calculator is powered off
+        condition: When the calculator is powered "On"
+scenarioTearDownSteps:
+  - step: Then dummy teardown step
+
+tearDownSteps:
+  - step: Then the calculator is powered off
+    condition: When the calculator is powered "On"

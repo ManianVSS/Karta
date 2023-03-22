@@ -21,7 +21,10 @@ import org.mvss.karta.framework.utils.RandomizationUtils;
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -100,7 +103,7 @@ public class FeatureRunner implements Callable<FeatureResult> {
     public FeatureResult call() throws InterruptedException {
         try {
             String runName = runInfo.getRunName();
-            HashSet<String> tags = runInfo.getTags();
+            ArrayList<String> tags = runInfo.getTags();
 
             result = new FeatureResult();
             result.setFeatureName(testFeature.getName());
@@ -131,8 +134,7 @@ public class FeatureRunner implements Callable<FeatureResult> {
                     int repeatCount = job.getIterationCount();
 
                     if (job.isDaemonProcess()) {
-                        DaemonTestJob daemonTestJob = DaemonTestJob.builder().kartaRuntime(kartaRuntime).runInfo(runInfo)
-                                .featureName(testFeature.getName()).testJob(job).contextBeanRegistry(contextBeanRegistry).build();
+                        DaemonTestJob daemonTestJob = DaemonTestJob.builder().kartaRuntime(kartaRuntime).runInfo(runInfo).featureName(testFeature.getName()).testJob(job).contextBeanRegistry(contextBeanRegistry).build();
                         Thread daemonJobThread = new Thread(daemonTestJob);
                         daemonJobThread.start();
                         daemonJobThreads.add(daemonJobThread);
@@ -168,8 +170,7 @@ public class FeatureRunner implements Callable<FeatureResult> {
                 stepResult.setStepIndex(setupStepIndex);
                 stepResult.setSuccessful(true);
 
-                PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__,
-                        variables, testFeature.getTestDataSet(), step, contextBeanRegistry);
+                PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry);
 
                 if (kartaRuntime.shouldStepNeedNotBeRun(runInfo, preparedStep)) {
                     continue;
@@ -232,8 +233,7 @@ public class FeatureRunner implements Callable<FeatureResult> {
             ExecutorService iterationExecutionService = null;
 
             if (numberOfIterationsInParallel > 1) {
-                iterationExecutionService = new ThreadPoolExecutor(numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS,
-                        new BlockingRunnableQueue(numberOfIterationsInParallel));
+                iterationExecutionService = new ThreadPoolExecutor(numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue(numberOfIterationsInParallel));
             }
 
             Instant startTime = Instant.now();
@@ -264,12 +264,7 @@ public class FeatureRunner implements Callable<FeatureResult> {
                     scenariosToRun = testFeature.getTestScenarios();
                 }
 
-                IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime(kartaRuntime).runInfo(runInfo)
-                        .featureName(testFeature.getName()).commonTestDataSet(testFeature.getTestDataSet())
-                        .scenarioSetupSteps(testFeature.getScenarioSetupSteps()).scenariosToRun(scenariosToRun)
-                        .scenarioTearDownSteps(testFeature.getScenarioTearDownSteps()).iterationIndex(iterationIndex)
-                        .scenarioIterationIndexMap(scenarioIterationIndexMap).variables(DataUtils.cloneMap(variables))
-                        .resultConsumer(this::accumulateIterationResult).build();
+                IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime(kartaRuntime).runInfo(runInfo).featureName(testFeature.getName()).commonTestDataSet(testFeature.getTestDataSet()).scenarioSetupSteps(testFeature.getScenarioSetupSteps()).scenariosToRun(scenariosToRun).scenarioTearDownSteps(testFeature.getScenarioTearDownSteps()).iterationIndex(iterationIndex).scenarioIterationIndexMap(scenarioIterationIndexMap).variables(DataUtils.cloneMap(variables)).resultConsumer(this::accumulateIterationResult).build();
 
                 if (useMinions) {
                     KartaNode minion = nodeRegistry.getNextMinion();
@@ -310,8 +305,7 @@ public class FeatureRunner implements Callable<FeatureResult> {
                 teardownStepIndex++;
                 StepResult stepResult = new StepResult();
                 stepResult.setStepIndex(teardownStepIndex);
-                PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__,
-                        variables, testFeature.getTestDataSet(), step, contextBeanRegistry);
+                PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry);
 
                 if (kartaRuntime.shouldStepNeedNotBeRun(runInfo, preparedStep)) {
                     continue;

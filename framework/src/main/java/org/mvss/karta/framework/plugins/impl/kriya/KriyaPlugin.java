@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.mvss.karta.Constants;
@@ -375,6 +376,12 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     }
 
     @Override
+    public boolean isValidFeatureFile(String fileName) {
+        String fileExtension = FilenameUtils.getExtension(fileName).toLowerCase();
+        return fileExtension.endsWith(Constants.YAML) || fileExtension.endsWith(Constants.YML);
+    }
+
+    @Override
     public TestFeature parseFeatureSource(String sourceString) throws Throwable {
         TestFeature parsedFeature = ParserUtils.getYamlObjectMapper().readValue(sourceString, TestFeature.class);
 
@@ -391,7 +398,6 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
         setConjunctions(parsedFeature.getTearDownSteps());
         return parsedFeature;
     }
-
 
     @Override
     public String sanitizeStepIdentifier(String stepIdentifier) {
@@ -733,7 +739,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     }
 
 
-    public boolean invokeTaggedMethods(HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooksList, HashSet<String> tags, Object... parameters) {
+    public boolean invokeTaggedMethods(HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedHooksList, ArrayList<String> tags, Object... parameters) {
         HashSet<Method> alreadyInvokedMethods = new HashSet<>();
 
         for (String tag : tags) {
@@ -767,7 +773,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     }
 
     @Override
-    public boolean runStart(String runName, HashSet<String> tags) {
+    public boolean runStart(String runName, ArrayList<String> tags) {
         if (tags != null) {
             return invokeTaggedMethods(taggedRunStartHooks, tags, runName);
         }
@@ -775,7 +781,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     }
 
     @Override
-    public boolean runStop(String runName, HashSet<String> tags) {
+    public boolean runStop(String runName, ArrayList<String> tags) {
         if (tags != null) {
             return invokeTaggedMethods(taggedRunStopHooks, tags, runName);
         }
@@ -783,7 +789,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     }
 
     @Override
-    public boolean featureStart(String runName, TestFeature feature, HashSet<String> tags) {
+    public boolean featureStart(String runName, TestFeature feature, ArrayList<String> tags) {
         if (tags != null) {
             return invokeTaggedMethods(taggedFeatureStartHooks, tags, runName, feature);
         }
@@ -791,7 +797,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     }
 
     @Override
-    public boolean scenarioStart(String runName, String featureName, PreparedScenario scenario, HashSet<String> tags) {
+    public boolean scenarioStart(String runName, String featureName, PreparedScenario scenario, ArrayList<String> tags) {
         if (tags != null) {
             return invokeTaggedMethods(taggedScenarioStartHooks, tags, runName, featureName, scenario);
         }
@@ -799,7 +805,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     }
 
     @Override
-    public boolean scenarioStop(String runName, String featureName, PreparedScenario scenario, HashSet<String> tags) {
+    public boolean scenarioStop(String runName, String featureName, PreparedScenario scenario, ArrayList<String> tags) {
         if (tags != null) {
             return invokeTaggedMethods(taggedScenarioStopHooks, tags, runName, featureName, scenario);
         }
@@ -807,7 +813,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     }
 
     @Override
-    public boolean scenarioFailed(String runName, String featureName, PreparedScenario scenario, HashSet<String> tags, ScenarioResult scenarioResult) {
+    public boolean scenarioFailed(String runName, String featureName, PreparedScenario scenario, ArrayList<String> tags, ScenarioResult scenarioResult) {
         if (tags != null) {
             return invokeTaggedMethods(taggedScenarioFailureHooks, tags, runName, featureName, scenario, scenarioResult);
         }
@@ -815,7 +821,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     }
 
     @Override
-    public boolean featureStop(String runName, TestFeature feature, HashSet<String> tags) {
+    public boolean featureStop(String runName, TestFeature feature, ArrayList<String> tags) {
         if (tags != null) {
             return invokeTaggedMethods(taggedFeatureStopHooks, tags, runName, feature);
         }

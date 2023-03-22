@@ -5,7 +5,9 @@ description: sample tests category
 tags:
   - sample
 
-featureSourceParser: Kriya
+featureSourceParsers:
+  - Kriya
+  - Gherkin
 stepRunner:
   - Kriya
   - BeanShellStepRunner
@@ -19,7 +21,6 @@ tests:
   - name: SampleGherkinFile5
     priority: 2
     description: sample Gherkin feature file4
-    featureSourceParser: Gherkin
     tags:
       - Gherkin
     featureFileName: featureFiles/GherkinTestSet/SampleFeatureFile5.feature
@@ -58,4 +59,11 @@ tests:
 #    numberOfThreads: 100
 
 
-subCategories: [ ]
+subCategories:
+  - name: SampleImportedTests
+    description: sample tests category
+    featureSourceParsers:
+      - Kriya
+      - Gherkin
+    featureFiles:
+      - parsedFeatureFiles

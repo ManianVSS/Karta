@@ -1,9 +1,17 @@
 package org.mvss.karta.framework.models.catalog;
 
 import lombok.*;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.framework.interfaces.FeatureSourceParserLookup;
+import org.mvss.karta.framework.models.test.TestFeature;
+import org.mvss.karta.framework.plugins.FeatureSourceParser;
 
+import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,17 +30,72 @@ public class TestCategory implements Serializable {
     private String name;
     private String description;
     @Builder.Default
-    private HashSet<String> tags = new HashSet<>();
-    private String featureSourceParser;
+    private ArrayList<String> tags = new ArrayList<>();
     @Builder.Default
-    private HashSet<String> stepRunners = new HashSet<>();
+    private ArrayList<String> featureSourceParsers = new ArrayList<>();
     @Builder.Default
-    private HashSet<String> testDataSources = new HashSet<>();
+    private ArrayList<String> stepRunners = new ArrayList<>();
+    @Builder.Default
+    private ArrayList<String> testDataSources = new ArrayList<>();
     @Builder.Default
     private ArrayList<TestCategory> subCategories = new ArrayList<>();
     @Builder.Default
     private ArrayList<Test> tests = new ArrayList<>();
     private String threadGroup;
+
+    @Builder.Default
+    private ArrayList<String> featureFiles = new ArrayList<>();
+
+    public void mergeFeatureFiles(FeatureSourceParserLookup featureSourceParserLookup) throws Throwable {
+
+        for (String featureFile : featureFiles) {
+            mergeFeatureFile(featureSourceParserLookup, featureFile);
+        }
+        for (TestCategory testCategory : subCategories) {
+            testCategory.mergeFeatureFiles(featureSourceParserLookup);
+        }
+    }
+
+    public void mergeFeatureFile(FeatureSourceParserLookup featureSourceParserLookup, String featureFileName) throws Throwable {
+
+        if (featureSourceParserLookup == null) {
+            return;
+        }
+
+        ArrayList<FeatureSourceParser> featureSourceParserObjects = featureSourceParserLookup.lookup(this.featureSourceParsers);
+        if ((featureSourceParserObjects == null) || featureSourceParserObjects.isEmpty()) {
+            return;
+        }
+
+        Path featureFilePath = Paths.get(featureFileName);
+
+        if (!Files.exists(featureFilePath)) {
+            return;
+        }
+
+        if (Files.isDirectory(featureFilePath)) {
+            for (File featureFileInDirectory : FileUtils.listFiles(featureFilePath.toFile(), null, true)) {
+                mergeFeatureFile(featureSourceParserLookup, featureFileInDirectory.getAbsolutePath());
+            }
+            return;
+        }
+
+        for (FeatureSourceParser featureSourceParserObject : featureSourceParserObjects) {
+            if (!featureSourceParserObject.isValidFeatureFile(featureFileName)) {
+                continue;
+            }
+
+            TestFeature testFeature = featureSourceParserObject.parseFeatureFile(featureFileName);
+            Test test = new Test();
+            test.setName(testFeature.getName());
+            test.setDescription(testFeature.getDescription());
+            test.setFeatureFileName(featureFileName);
+            test.setTestType(TestType.FEATURE);
+            test.setTags(testFeature.getTags());
+            mergeTest(test);
+            break;
+        }
+    }
 
     public Test findTestByName(String name) {
         for (Test test : tests) {
@@ -96,18 +159,24 @@ public class TestCategory implements Serializable {
         return null;
     }
 
-    public void propagateAttributes(String sourceArchive, String inFeatureSourceParser, HashSet<String> srp, HashSet<String> inTestDataSources, String tg,
-                                    HashSet<String> tags) {
-        if (StringUtils.isEmpty(featureSourceParser) && StringUtils.isNotEmpty(inFeatureSourceParser)) {
-            featureSourceParser = inFeatureSourceParser;
+    public void propagateAttributes(String sourceArchive, ArrayList<String> inFeatureSourceParsers, ArrayList<String> srp, ArrayList<String> inTestDataSources, String tg, ArrayList<String> tags) {
+
+        if (inFeatureSourceParsers != null) {
+            inFeatureSourceParsers.forEach(item -> {
+                if (!featureSourceParsers.contains(item)) featureSourceParsers.add(item);
+            });
         }
 
         if (srp != null) {
-            stepRunners.addAll(srp);
+            srp.forEach(item -> {
+                if (!stepRunners.contains(item)) stepRunners.add(item);
+            });
         }
 
         if (inTestDataSources != null) {
-            testDataSources.addAll(inTestDataSources);
+            inTestDataSources.forEach(item -> {
+                if (!testDataSources.contains(item)) testDataSources.add(item);
+            });
         }
 
         if (StringUtils.isEmpty(threadGroup) && StringUtils.isNotEmpty(tg)) {
@@ -115,15 +184,17 @@ public class TestCategory implements Serializable {
         }
 
         if (tags != null) {
-            this.tags.addAll(tags);
+            tags.forEach(item -> {
+                if (!this.tags.contains(item)) this.tags.add(item);
+            });
         }
 
         for (TestCategory testCategory : subCategories) {
-            testCategory.propagateAttributes(sourceArchive, featureSourceParser, stepRunners, testDataSources, threadGroup, tags);
+            testCategory.propagateAttributes(sourceArchive, featureSourceParsers, stepRunners, testDataSources, threadGroup, tags);
         }
 
         for (Test test : tests) {
-            test.propagateAttributes(sourceArchive, featureSourceParser, stepRunners, testDataSources, threadGroup, tags);
+            test.propagateAttributes(sourceArchive, featureSourceParsers, stepRunners, testDataSources, threadGroup, tags);
         }
     }
 
@@ -140,18 +211,26 @@ public class TestCategory implements Serializable {
             description = testCategory.description;
         }
 
-        tags.addAll(testCategory.tags);
+        testCategory.tags.forEach(item -> {
+            if (!this.tags.contains(item)) this.tags.add(item);
+        });
 
-        if (StringUtils.isEmpty(featureSourceParser) && StringUtils.isNotEmpty(testCategory.featureSourceParser)) {
-            featureSourceParser = testCategory.featureSourceParser;
+        if (featureSourceParsers.isEmpty() && !testCategory.featureSourceParsers.isEmpty()) {
+            testCategory.featureSourceParsers.forEach(item -> {
+                if (!featureSourceParsers.contains(item)) featureSourceParsers.add(item);
+            });
         }
 
         if (stepRunners.isEmpty() && !testCategory.stepRunners.isEmpty()) {
-            stepRunners.addAll(testCategory.stepRunners);
+            testCategory.stepRunners.forEach(item -> {
+                if (!stepRunners.contains(item)) stepRunners.add(item);
+            });
         }
 
         if (testDataSources.isEmpty() && !testCategory.testDataSources.isEmpty()) {
-            testDataSources.addAll(testCategory.testDataSources);
+            testCategory.testDataSources.forEach(item -> {
+                if (!testDataSources.contains(item)) testDataSources.add(item);
+            });
         }
 
         for (TestCategory testSubCatToAdd : testCategory.getSubCategories()) {

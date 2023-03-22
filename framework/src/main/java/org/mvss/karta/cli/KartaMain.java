@@ -13,7 +13,6 @@ import org.mvss.karta.framework.runtime.KartaRuntime;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -106,7 +105,7 @@ public class KartaMain {
 
                 if (cmd.hasOption(Constants.TAGS)) {
                     optionMissing = false;
-                    HashSet<String> tags = new HashSet<>();
+                    ArrayList<String> tags = new ArrayList<>();
                     Collections.addAll(tags, cmd.getOptionValue(Constants.TAGS).split(Constants.COMMA));
                     runTarget.setRunTags(tags);
                 }

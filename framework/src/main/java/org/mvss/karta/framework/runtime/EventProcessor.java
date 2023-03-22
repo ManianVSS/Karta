@@ -15,6 +15,7 @@ import org.mvss.karta.framework.plugins.TestLifeCycleHook;
 import org.mvss.karta.framework.threading.BlockingRunnableQueue;
 import org.mvss.karta.framework.utils.WaitUtil;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -106,7 +107,7 @@ public class EventProcessor implements AutoCloseable {
         }
     }
 
-    public boolean runStart(String runName, HashSet<String> tags) {
+    public boolean runStart(String runName, ArrayList<String> tags) {
         boolean success = true;
 
         for (TestLifeCycleHook lifeCycleHook : lifeCycleHooks) {
@@ -116,7 +117,7 @@ public class EventProcessor implements AutoCloseable {
         return success;
     }
 
-    public boolean featureStart(String runName, TestFeature feature, HashSet<String> tags) {
+    public boolean featureStart(String runName, TestFeature feature, ArrayList<String> tags) {
         boolean success = true;
 
         if (tags != null) {
@@ -128,7 +129,7 @@ public class EventProcessor implements AutoCloseable {
         return success;
     }
 
-    public boolean scenarioStart(String runName, String featureName, PreparedScenario scenario, HashSet<String> tags) {
+    public boolean scenarioStart(String runName, String featureName, PreparedScenario scenario, ArrayList<String> tags) {
         boolean success = true;
 
         if (tags != null) {
@@ -140,7 +141,7 @@ public class EventProcessor implements AutoCloseable {
         return success;
     }
 
-    public boolean scenarioStop(String runName, String featureName, PreparedScenario scenario, HashSet<String> tags) {
+    public boolean scenarioStop(String runName, String featureName, PreparedScenario scenario, ArrayList<String> tags) {
         boolean success = true;
 
         if (tags != null) {
@@ -152,7 +153,7 @@ public class EventProcessor implements AutoCloseable {
         return success;
     }
 
-    public boolean scenarioFailed(String runName, String featureName, PreparedScenario scenario, HashSet<String> tags, ScenarioResult scenarioResult) {
+    public boolean scenarioFailed(String runName, String featureName, PreparedScenario scenario, ArrayList<String> tags, ScenarioResult scenarioResult) {
         boolean success = true;
 
         if (tags != null) {
@@ -164,7 +165,7 @@ public class EventProcessor implements AutoCloseable {
         return success;
     }
 
-    public boolean featureStop(String runName, TestFeature feature, HashSet<String> tags) {
+    public boolean featureStop(String runName, TestFeature feature, ArrayList<String> tags) {
         boolean success = true;
 
         if (tags != null) {
@@ -176,7 +177,7 @@ public class EventProcessor implements AutoCloseable {
         return success;
     }
 
-    public boolean runStop(String runName, HashSet<String> tags) {
+    public boolean runStop(String runName, ArrayList<String> tags) {
         boolean success = true;
 
         for (TestLifeCycleHook lifeCycleHook : lifeCycleHooks) {

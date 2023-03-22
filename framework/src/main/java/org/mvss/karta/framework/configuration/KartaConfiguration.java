@@ -56,24 +56,26 @@ public class KartaConfiguration implements Serializable {
     /**
      * The default feature source parser plug-in
      */
-    private String defaultFeatureSourceParser;
+    @Builder.Default
+    private ArrayList<String> defaultFeatureSourceParsers = new ArrayList<>();
 
     /**
      * The default step runner plug-in
      */
     @Builder.Default
-    private HashSet<String> defaultStepRunners = new HashSet<>();//String defaultStepRunner;
+    private ArrayList<String> defaultStepRunners = new ArrayList<>();
 
     /**
      * The default set of test data source plug-ins
      */
     @Builder.Default
-    private HashSet<String> defaultTestDataSources = new HashSet<>();
+    private ArrayList<String> defaultTestDataSources = new ArrayList<>();
 
     /**
      * The set of plug-in which are enabled that are to be initialized and closed with Karta Runtime
      */
-    private HashSet<String> enabledPlugins;
+    @Builder.Default
+    private ArrayList<String> enabledPlugins = new ArrayList<>();
 
     /**
      * The list of property files to be merged into the Configurator.</br>
@@ -163,13 +165,12 @@ public class KartaConfiguration implements Serializable {
         kartaConfiguration.pluginConfigurations.add(new PluginConfig(Constants.RABBIT_MQ_TEST_EVENT_LISTENER, RabbitMQTestEventListener.class.getName(), null));
         kartaConfiguration.pluginConfigurations.add(new PluginConfig(Constants.HTML_REPORT_TEST_EVENT_LISTENER, HTMLReportTestEventListener.class.getName(), null));
 
-        kartaConfiguration.enabledPlugins = new HashSet<>();
         kartaConfiguration.enabledPlugins.add(Constants.KRIYA);
         kartaConfiguration.enabledPlugins.add(Constants.DATA_FILES_TEST_DATA_SOURCE);
         kartaConfiguration.enabledPlugins.add(Constants.OBJECT_GEN_TEST_DATA_SOURCE);
         kartaConfiguration.enabledPlugins.add(Constants.LOGGING_TEST_EVENT_LISTENER);
 
-        kartaConfiguration.defaultFeatureSourceParser = Constants.KRIYA;
+        kartaConfiguration.defaultFeatureSourceParsers.add(Constants.KRIYA);
         kartaConfiguration.defaultStepRunners.add(Constants.KRIYA);
         kartaConfiguration.defaultTestDataSources.add(Constants.DATA_FILES_TEST_DATA_SOURCE);
 
@@ -194,7 +195,7 @@ public class KartaConfiguration implements Serializable {
      */
     public synchronized void expandSystemAndEnvProperties() {
         // TODO: Change to a generic utility for expanding env vars with annotations
-        defaultFeatureSourceParser = PropertyUtils.expandEnvVars(defaultFeatureSourceParser);
+        PropertyUtils.expandEnvVars(defaultFeatureSourceParsers);
         PropertyUtils.expandEnvVars(defaultStepRunners);
         PropertyUtils.expandEnvVars(defaultTestDataSources);
         PropertyUtils.expandEnvVars(enabledPlugins);
@@ -208,7 +209,7 @@ public class KartaConfiguration implements Serializable {
         // TODO: Change to a generic utility to copy properties with an annotation for mapping
         dependencyInjector = NullAwareBeanUtilsBean.getOverriddenValue(dependencyInjector, override.dependencyInjector);
         DataUtils.addMissing(pluginConfigurations, override.pluginConfigurations);
-        defaultFeatureSourceParser = NullAwareBeanUtilsBean.getOverriddenValue(defaultFeatureSourceParser, override.defaultFeatureSourceParser);
+        DataUtils.addMissing(defaultFeatureSourceParsers, override.defaultFeatureSourceParsers);
         DataUtils.addMissing(defaultStepRunners, override.defaultStepRunners);
         DataUtils.addMissing(defaultTestDataSources, override.defaultTestDataSources);
         DataUtils.addMissing(enabledPlugins, override.enabledPlugins);

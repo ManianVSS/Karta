@@ -5,7 +5,9 @@ description: sample tests category
 tags:
   - sample
 
-featureSourceParser: Kriya
+featureSourceParsers:
+  - Kriya
+  - Gherkin
 stepRunners:
   - Kriya
   - BeanShellStepRunner

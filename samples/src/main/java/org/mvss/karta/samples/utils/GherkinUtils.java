@@ -24,7 +24,7 @@ public class GherkinUtils {
 
         boolean featureFound = false;
 
-        while (linePointer < lines.length) {
+        while (!featureFound && (linePointer < lines.length)) {
             String line = lines[linePointer++];
             line = line.trim();
 
@@ -34,18 +34,22 @@ public class GherkinUtils {
                 featureFound = true;
                 break;
             } else {
-                if (featureTagList != null) {
-                    for (String word : line.split(Constants.REGEX_WHITESPACE)) {
-                        word = word.trim();
 
-                        if (StringUtils.isBlank(word)) {
-                            continue;
-                        }
+                for (String word : line.split(Constants.REGEX_WHITESPACE)) {
+                    word = word.trim();
 
-                        if (word.startsWith("@") && (word.length() > 1)) {
-                            featureTagList.add(word.substring(1).trim());
-                        }
+                    if (StringUtils.isBlank(word)) {
+                        continue;
                     }
+
+                    if (word.startsWith("@") && (word.length() > 1)) {
+                        String tag = word.substring(1).trim();
+                        if (featureTagList != null) {
+                            featureTagList.add(tag);
+                        }
+                        feature.getTags().add(tag);
+                    }
+                    
                 }
             }
         }
@@ -162,10 +166,10 @@ public class GherkinUtils {
             }
 
             boolean stepFound = false;
-            for (String conjuction : conjunctions) {
-                if (line.startsWith(conjuction)) {
+            for (String conjunction : conjunctions) {
+                if (line.startsWith(conjunction)) {
                     stepFound = true;
-                    currentStep = TestStep.builder().step(line.substring(conjuction.length()).trim()).build();
+                    currentStep = TestStep.builder().step(line.substring(conjunction.length()).trim()).build();
                     stepsContainer.add(currentStep);
                     inStepScope = true;
                     isScenarioOutline = false;

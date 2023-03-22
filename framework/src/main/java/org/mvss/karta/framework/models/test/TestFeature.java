@@ -30,6 +30,9 @@ public class TestFeature implements Serializable {
      */
     private String description;
 
+    @Builder.Default
+    private ArrayList<String> tags = new ArrayList<>();
+
     /**
      * The list of jobs to run in background while running the scenarios.
      */

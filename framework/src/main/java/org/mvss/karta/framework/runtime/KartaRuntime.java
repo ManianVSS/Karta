@@ -57,8 +57,8 @@ public class KartaRuntime implements AutoCloseable {
     private static final ObjectMapper yamlObjectMapper = ParserUtils.getYamlObjectMapper();
     private static final Object _syncLockObject = new Object();
     private static final HashMap<String, FeatureSourceParser> featureSourceParserMap = new HashMap<>();
-    private static final HashMap<HashSet<String>, ArrayList<StepRunner>> stepRunnerMap = new HashMap<>();
-    private static final HashMap<HashSet<String>, ArrayList<TestDataSource>> testDataSourcesMap = new HashMap<>();
+    private static final HashMap<String, StepRunner> stepRunnerMap = new HashMap<>();
+    private static final HashMap<String, TestDataSource> testDataSourcesMap = new HashMap<>();
     /**
      * This flag is used to run a custom Karta Minion server by disabling node initializing first and call addNodes later
      */
@@ -117,7 +117,7 @@ public class KartaRuntime implements AutoCloseable {
     /**
      * Initializes the runtime with the default settings
      */
-    public boolean initializeRuntime() throws Exception {
+    public boolean initializeRuntime() throws Throwable {
         /*---------------------------------------------------------------------------------------------------------------------*/
         // Initialize karta configuration
         /*---------------------------------------------------------------------------------------------------------------------*/
@@ -252,6 +252,7 @@ public class KartaRuntime implements AutoCloseable {
 
         testCatalogManager.mergeRepositoryDirectoryIntoCatalog(new File(Constants.DOT));
 
+
         executorServiceManager = new ExecutorServiceManager();
         executorServiceManager.addExecutorServiceForGroups(kartaConfiguration.getThreadGroups());
         executorServiceManager.getOrAddExecutorServiceForGroup(Constants.__DEFAULT__, 1);
@@ -277,11 +278,31 @@ public class KartaRuntime implements AutoCloseable {
         /*---------------------------------------------------------------------------------------------------------------------*/
         eventProcessor.start();
 
-        defaultRunInfo = RunInfo.builder().runName(Constants.UNNAMED).featureSourceParserPlugin(kartaConfiguration.getDefaultFeatureSourceParser()).stepRunnerPlugins(kartaConfiguration.getDefaultStepRunners()).testDataSourcePlugins(kartaConfiguration.getDefaultTestDataSources()).build();
+        defaultRunInfo = RunInfo.builder().runName(Constants.UNNAMED).featureSourceParserPlugins(kartaConfiguration.getDefaultFeatureSourceParsers()).stepRunnerPlugins(kartaConfiguration.getDefaultStepRunners()).testDataSourcePlugins(kartaConfiguration.getDefaultTestDataSources()).build();
 
+        //Initialize the plugin cache map
+        kartaConfiguration.getDefaultFeatureSourceParsers().forEach(featureSourceParserName -> featureSourceParserMap.put(featureSourceParserName, (FeatureSourceParser) pnpRegistry.getEnabledPlugin(featureSourceParserName)));
+        kartaConfiguration.getDefaultStepRunners().forEach(stepRunnerName -> stepRunnerMap.put(stepRunnerName, (StepRunner) pnpRegistry.getEnabledPlugin(stepRunnerName)));
+        kartaConfiguration.getDefaultTestDataSources().forEach(testDataSourceName -> testDataSourcesMap.put(testDataSourceName, (TestDataSource) pnpRegistry.getEnabledPlugin(testDataSourceName)));
+
+        // Wait for Plugin registry and cache lookup creation
+        testCatalogManager.mergeFeatureFiles(this::featureSourceParserLookup);
         return true;
     }
 
+    public ArrayList<FeatureSourceParser> featureSourceParserLookup(ArrayList<String> featureSourceParserNames) {
+        ArrayList<FeatureSourceParser> filteredList = new ArrayList<>();
+        for (String featureSourceParserName : featureSourceParserNames) {
+            if (featureSourceParserMap.containsKey(featureSourceParserName)) {
+                filteredList.add(featureSourceParserMap.get(featureSourceParserName));
+            } else {
+                FeatureSourceParser featureSourceParser = (FeatureSourceParser) pnpRegistry.getEnabledPlugin(featureSourceParserName);
+                featureSourceParserMap.put(featureSourceParserName, featureSourceParser);
+                filteredList.add(featureSourceParser);
+            }
+        }
+        return filteredList;
+    }
 
     /**
      * Sets the properties and beans(static and non-static) for the object and calls any initializer methods
@@ -356,69 +377,31 @@ public class KartaRuntime implements AutoCloseable {
     /**
      * Returns the FeatureSourceParser based on the feature source parser plugin name provided.
      */
-    public FeatureSourceParser getFeatureSourceParser(String featureSourceParserName) {
+    public ArrayList<FeatureSourceParser> getFeatureSourceParser(ArrayList<String> featureSourceParserNames) {
         synchronized (fspMapLock) {
-
-            if (featureSourceParserName == null) {
-                return null;
-            }
-
-            try {
-                if (!featureSourceParserMap.containsKey(featureSourceParserName)) {
-                    FeatureSourceParser featureSourceParser = (FeatureSourceParser) pnpRegistry.getEnabledPlugin(featureSourceParserName);
-
-                    if (featureSourceParser == null) {
-                        return null;
-                    }
-                    featureSourceParserMap.put(featureSourceParserName, featureSourceParser);
-                }
-            } catch (Throwable t) {
-                log.error("", t);
-                return null;
-            }
-
-            return featureSourceParserMap.get(featureSourceParserName);
+            return DataUtils.getCachedItemsOrFetch(featureSourceParserMap, featureSourceParserNames, (featureSourceParserName) -> (FeatureSourceParser) pnpRegistry.getEnabledPlugin(featureSourceParserName));
         }
     }
 
     /**
      * Returns the FeatureSourceParser based on the RunInfo
      */
-    public FeatureSourceParser getFeatureSourceParser(RunInfo runInfo) {
-        String featureSourceParserName = runInfo.getFeatureSourceParserPlugin();
-        return getFeatureSourceParser(featureSourceParserName);
+    public ArrayList<FeatureSourceParser> getFeatureSourceParser(RunInfo runInfo) {
+        ArrayList<String> featureSourceParserNames = runInfo.getFeatureSourceParserPlugins();
+        return getFeatureSourceParser(featureSourceParserNames);
     }
+
+    public FeatureSourceParser getCapableFeatureSourceParser(ArrayList<FeatureSourceParser> featureSourceParsers, String featureFileName) {
+        return DataUtils.findFirst(featureSourceParsers, stepRunner -> stepRunner.isValidFeatureFile(featureFileName));
+    }
+
 
     /**
      * Returns the StepRunners based on the step runner plugin name provided.
      */
-    public ArrayList<StepRunner> getStepRunners(HashSet<String> stepRunnerPluginNames) {
+    public ArrayList<StepRunner> getStepRunners(ArrayList<String> stepRunnerPluginNames) {
         synchronized (srMapLock) {
-            if (stepRunnerPluginNames == null) {
-                return null;
-            }
-
-            try {
-                if (!stepRunnerMap.containsKey(stepRunnerPluginNames)) {
-                    ArrayList<StepRunner> testDataSources = new ArrayList<>();
-
-                    for (String stepRunnerPluginName : stepRunnerPluginNames) {
-                        StepRunner stepRunner = (StepRunner) pnpRegistry.getEnabledPlugin(stepRunnerPluginName);
-
-                        if (stepRunner == null) {
-                            return null;
-                        }
-
-                        testDataSources.add(stepRunner);
-                    }
-                    stepRunnerMap.put(stepRunnerPluginNames, testDataSources);
-                }
-            } catch (Throwable t) {
-                log.error("", t);
-                return null;
-            }
-
-            return stepRunnerMap.get(stepRunnerPluginNames);
+            return DataUtils.getCachedItemsOrFetch(stepRunnerMap, stepRunnerPluginNames, (stepRunnerPluginName) -> (StepRunner) pnpRegistry.getEnabledPlugin(stepRunnerPluginName));
         }
     }
 
@@ -427,7 +410,7 @@ public class KartaRuntime implements AutoCloseable {
      * Returns the StepRunner based on the RunInfo
      */
     public ArrayList<StepRunner> getStepRunners(RunInfo runInfo) {
-        HashSet<String> stepRunnerPluginNames = runInfo.getStepRunnerPlugins();
+        ArrayList<String> stepRunnerPluginNames = runInfo.getStepRunnerPlugins();
         return getStepRunners(stepRunnerPluginNames);
     }
 
@@ -446,33 +429,9 @@ public class KartaRuntime implements AutoCloseable {
     /**
      * Returns a list of TestDataSources based on the set of test data source plugin names provided
      */
-    public ArrayList<TestDataSource> getTestDataSources(HashSet<String> testDataSourcesPluginNames) {
+    public ArrayList<TestDataSource> getTestDataSources(ArrayList<String> testDataSourcesPluginNames) {
         synchronized (tdsMapLock) {
-            if (testDataSourcesPluginNames == null) {
-                return null;
-            }
-
-            try {
-                if (!testDataSourcesMap.containsKey(testDataSourcesPluginNames)) {
-                    ArrayList<TestDataSource> testDataSources = new ArrayList<>();
-
-                    for (String testDataSourcePlugin : testDataSourcesPluginNames) {
-                        TestDataSource testDataSource = (TestDataSource) pnpRegistry.getEnabledPlugin(testDataSourcePlugin);
-
-                        if (testDataSource == null) {
-                            return null;
-                        }
-
-                        testDataSources.add(testDataSource);
-                    }
-                    testDataSourcesMap.put(testDataSourcesPluginNames, testDataSources);
-                }
-            } catch (Throwable t) {
-                log.error("", t);
-                return null;
-            }
-
-            return testDataSourcesMap.get(testDataSourcesPluginNames);
+            return DataUtils.getCachedItemsOrFetch(testDataSourcesMap, testDataSourcesPluginNames, (testDataSourcesPluginName) -> (TestDataSource) pnpRegistry.getEnabledPlugin(testDataSourcesPluginName));
         }
     }
 
@@ -480,7 +439,7 @@ public class KartaRuntime implements AutoCloseable {
      * Returns a list of TestDataSources based on the RunInfo
      */
     public ArrayList<TestDataSource> getTestDataSources(RunInfo runInfo) {
-        HashSet<String> testDataSourcesPluginNames = runInfo.getTestDataSourcePlugins();
+        ArrayList<String> testDataSourcesPluginNames = runInfo.getTestDataSourcePlugins();
         return getTestDataSources(testDataSourcesPluginNames);
     }
 
@@ -490,12 +449,12 @@ public class KartaRuntime implements AutoCloseable {
     public RunResult runTestTarget(RunInfo runInfo, RunTarget runTarget) {
         RunResult runResult = new RunResult();
 
-        runInfo.setDefaultPlugins(kartaConfiguration.getDefaultFeatureSourceParser(), kartaConfiguration.getDefaultStepRunners(), kartaConfiguration.getDefaultTestDataSources());
+        runInfo.setDefaultPlugins(kartaConfiguration.getDefaultFeatureSourceParsers(), kartaConfiguration.getDefaultStepRunners(), kartaConfiguration.getDefaultTestDataSources());
 
         try {
             String runName = runInfo.getRunName();
 
-            HashSet<String> individualTestTags = new HashSet<>();
+            ArrayList<String> individualTestTags = new ArrayList<>();
             individualTestTags.add(Constants.__ALL__);
 
             if (StringUtils.isNotBlank(runTarget.getFeatureFile())) {
@@ -560,7 +519,7 @@ public class KartaRuntime implements AutoCloseable {
     /**
      * Runs tests filtered from the TestCatalog using the set of tags provided, uses minions if configured and returns if all the tests passed.
      */
-    public RunResult runTestsWithTags(RunInfo runInfo, HashSet<String> tags) throws Throwable {
+    public RunResult runTestsWithTags(RunInfo runInfo, ArrayList<String> tags) throws Throwable {
         RunResult runResult = new RunResult();
 
         String runName = runInfo.getRunName();
@@ -597,10 +556,12 @@ public class KartaRuntime implements AutoCloseable {
             switch (test.getTestType()) {
                 case FEATURE:
                     RunInfo runInfoForTest = runInfo.getRunInfoForTest(test);
-                    FeatureSourceParser featureParser = getFeatureSourceParser(runInfoForTest);
+                    ArrayList<FeatureSourceParser> featureParsers = getFeatureSourceParser(runInfoForTest);
+                    String featureFileName = test.getFeatureFileName();
+                    FeatureSourceParser featureParser = getCapableFeatureSourceParser(featureParsers, featureFileName);
 
                     if (featureParser == null) {
-                        log.error("Failed to get a feature source parser of type: " + runInfoForTest.getFeatureSourceParserPlugin());
+                        log.error("Failed to get a feature source parser of type: " + runInfoForTest.getFeatureSourceParserPlugins());
                         result.setEndTime(new Date());
                         result.setSuccessful(false);
                         return result;
@@ -623,7 +584,7 @@ public class KartaRuntime implements AutoCloseable {
                     }
 
                     String sourceArchive = test.getSourceArchive();
-                    String featureFileName = test.getFeatureFileName();
+
 
                     if (featureFileName == null) {
                         log.error("Feature file missing for test: " + test);
@@ -651,6 +612,7 @@ public class KartaRuntime implements AutoCloseable {
                         log.error("Could not load feature file for test " + test);
                         continue;
                     }
+
 
                     TestFeature testFeature = featureParser.parseFeatureSource(featureSourceCode);
 
@@ -701,14 +663,14 @@ public class KartaRuntime implements AutoCloseable {
      */
     public FeatureResult runFeatureSource(RunInfo runInfo, String featureFileSourceString) {
         try {
-            FeatureSourceParser featureParser = getFeatureSourceParser(runInfo);
+            ArrayList<FeatureSourceParser> featureParsers = getFeatureSourceParser(runInfo);
 
-            if (featureParser == null) {
-                String errorMsg = "Failed to get a feature source parser of type: " + runInfo.getFeatureSourceParserPlugin();
+            if ((featureParsers == null) || featureParsers.isEmpty()) {
+                String errorMsg = "Failed to get a feature source parser of type: " + runInfo.getFeatureSourceParserPlugins();
                 log.error(errorMsg);
                 return StandardFeatureResults.error(Constants.UNNAMED, errorMsg);
             }
-            TestFeature testFeature = featureParser.parseFeatureSource(featureFileSourceString);
+            TestFeature testFeature = featureParsers.get(0).parseFeatureSource(featureFileSourceString);
 
             return runFeature(runInfo, testFeature);
         } catch (Throwable t) {

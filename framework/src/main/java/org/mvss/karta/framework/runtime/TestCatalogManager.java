@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.Constants;
 import org.mvss.karta.dependencyinjection.utils.ClassPathLoaderUtils;
 import org.mvss.karta.dependencyinjection.utils.ParserUtils;
+import org.mvss.karta.framework.interfaces.FeatureSourceParserLookup;
 import org.mvss.karta.framework.models.catalog.Test;
 import org.mvss.karta.framework.models.catalog.TestCategory;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
@@ -31,9 +32,13 @@ public class TestCatalogManager {
     private static final ConcurrentHashMap<String, Pattern> patternsMap = new ConcurrentHashMap<>();
     private final TestCategory testCatalog = new TestCategory();
 
+    public void mergeFeatureFiles(FeatureSourceParserLookup featureSourceParserLookup) throws Throwable {
+        testCatalog.mergeFeatureFiles(featureSourceParserLookup);
+        testCatalog.propagateAttributes(null, testCatalog.getFeatureSourceParsers(), testCatalog.getStepRunners(), testCatalog.getTestDataSources(), null, testCatalog.getTags());
+    }
+
     public void mergeWithCatalog(TestCategory updatesToRootCategory) {
-        updatesToRootCategory.propagateAttributes(null, updatesToRootCategory.getFeatureSourceParser(), updatesToRootCategory.getStepRunners(),
-                updatesToRootCategory.getTestDataSources(), updatesToRootCategory.getThreadGroup(), updatesToRootCategory.getTags());
+        updatesToRootCategory.propagateAttributes(null, updatesToRootCategory.getFeatureSourceParsers(), updatesToRootCategory.getStepRunners(), updatesToRootCategory.getTestDataSources(), updatesToRootCategory.getThreadGroup(), updatesToRootCategory.getTags());
         testCatalog.mergeWithTestCategory(updatesToRootCategory);
     }
 
@@ -56,9 +61,7 @@ public class TestCatalogManager {
         }
 
         TestCategory updatesToRootCategory = yamlObjectMapper.readValue(IOUtils.toString(fileStream, Charset.defaultCharset()), TestCategory.class);
-        updatesToRootCategory.propagateAttributes(sourceArchive, updatesToRootCategory.getFeatureSourceParser(),
-                updatesToRootCategory.getStepRunners(), updatesToRootCategory.getTestDataSources(), updatesToRootCategory.getThreadGroup(),
-                updatesToRootCategory.getTags());
+        updatesToRootCategory.propagateAttributes(sourceArchive, updatesToRootCategory.getFeatureSourceParsers(), updatesToRootCategory.getStepRunners(), updatesToRootCategory.getTestDataSources(), updatesToRootCategory.getThreadGroup(), updatesToRootCategory.getTags());
         testCatalog.mergeWithTestCategory(updatesToRootCategory);
     }
 
@@ -90,7 +93,7 @@ public class TestCatalogManager {
         testCatalog.mergeTest(testToMerge);
     }
 
-    public synchronized ArrayList<Test> filterTestsByTag(HashSet<String> tags) {
+    public synchronized ArrayList<Test> filterTestsByTag(ArrayList<String> tags) {
         ArrayList<Test> outputFilteredTests = new ArrayList<>();
         HashSet<Pattern> tagPatterns = new HashSet<>();
 
