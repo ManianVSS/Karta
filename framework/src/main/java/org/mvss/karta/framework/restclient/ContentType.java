@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum ContentType {
-    APPLICATION_ATOM_XML(MimeTypes.APPLICATION_ATOM_XML),
+   ALL(MimeTypes.ALL), APPLICATION_ATOM_XML(MimeTypes.APPLICATION_ATOM_XML),
     APPLICATION_FORM_URLENCODED(MimeTypes.APPLICATION_FORM_URLENCODED),
     APPLICATION_JSON(MimeTypes.APPLICATION_JSON),
     APPLICATION_OCTET_STREAM(MimeTypes.APPLICATION_OCTET_STREAM),
@@ -68,6 +68,7 @@ public enum ContentType {
     }
 
     public static class MimeTypes {
+public static String ALL = "*/*";
         public static String APPLICATION_ATOM_XML = "application/atom+xml";
         public static String APPLICATION_FORM_URLENCODED = "application/x-www-form-urlencoded";
         public static String APPLICATION_JSON = "application/json";
