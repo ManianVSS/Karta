@@ -1,7 +1,6 @@
 package org.mvss.karta.framework.plugins.impl;
 
 import bsh.Interpreter;
-import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -39,15 +38,9 @@ public class BeanShellStepRunner implements StepRunner {
     private HashMap<String, String> stepHandlerMap = new HashMap<>();
     @PropertyMapping(group = PLUGIN_NAME, value = "chaosActionHandlerMap")
     private HashMap<String, String> chaosActionHandlerMap = new HashMap<>();
-
     @PropertyMapping(group = PLUGIN_NAME, value = "conditionDefinitionMap")
     private HashMap<String, String> conditionDefinitionMap = new HashMap<>();
-
     private boolean initialized = false;
-
-    @Getter
-    private final Interpreter interpreter = new Interpreter();
-
     @KartaAutoWired
     private KartaRuntime kartaRuntime;
 
@@ -63,8 +56,7 @@ public class BeanShellStepRunner implements StepRunner {
             return true;
         }
         log.info("Initializing " + PLUGIN_NAME + " plugin");
-        interpreter.set("__kartaRuntime", kartaRuntime);
-        interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
+
 
         initialized = true;
         return true;
@@ -118,7 +110,9 @@ public class BeanShellStepRunner implements StepRunner {
 
         try {
             String stepMapping = stepHandlerMap.get(stepIdentifier);
-
+            Interpreter interpreter = new Interpreter();
+            interpreter.set("__kartaRuntime", kartaRuntime);
+            interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
             interpreter.set("__context", testExecutionContext);
             interpreter.set("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
             Object resultObject = interpreter.source(stepMapping);
@@ -171,7 +165,9 @@ public class BeanShellStepRunner implements StepRunner {
             }
 
             String chaosActionMapping = chaosActionHandlerMap.get(chaosActionName);
-
+            Interpreter interpreter = new Interpreter();
+            interpreter.set("__kartaRuntime", kartaRuntime);
+            interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
             interpreter.set("__chaosAction", preparedChaosAction);
             interpreter.set("__context", testExecutionContext);
             interpreter.set("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
@@ -219,6 +215,9 @@ public class BeanShellStepRunner implements StepRunner {
 
         try {
             String conditionMapping = conditionDefinitionMap.get(conditionIdentifier);
+            Interpreter interpreter = new Interpreter();
+            interpreter.set("__kartaRuntime", kartaRuntime);
+            interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
             interpreter.set("__context", testExecutionContext);
             interpreter.set("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
             Object resultObject = interpreter.source(conditionMapping);

@@ -336,12 +336,6 @@ public class DataUtils {
         return null;
     }
 
-    public Object[] getMergedNonNullValues(Object... values) {
-        List<Object> returnValue = Arrays.asList(values);
-        returnValue.removeIf(Objects::isNull);
-        return returnValue.toArray();
-    }
-
     public static <T> T findFirst(List<T> list, Predicate<T> condition) {
         for (T item : list) {
             if (condition.test(item)) {
@@ -350,7 +344,6 @@ public class DataUtils {
         }
         return null;
     }
-
 
     /**
      * Looks up for items names in a cache map and if not found queries the item using the mentioned lookup and adds to lookup
@@ -379,5 +372,11 @@ public class DataUtils {
             }
         }
         return mappedItems;
+    }
+
+    public Object[] getMergedNonNullValues(Object... values) {
+        List<Object> returnValue = Arrays.asList(values);
+        returnValue.removeIf(Objects::isNull);
+        return returnValue.toArray();
     }
 }

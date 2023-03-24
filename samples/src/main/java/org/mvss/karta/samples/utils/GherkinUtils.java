@@ -49,7 +49,7 @@ public class GherkinUtils {
                         }
                         feature.getTags().add(tag);
                     }
-                    
+
                 }
             }
         }

@@ -21,7 +21,7 @@ public class PreparedStep implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String gwtConjunction;
-    
+
     /**
      * The step identifier.
      */

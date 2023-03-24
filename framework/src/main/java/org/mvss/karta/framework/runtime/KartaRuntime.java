@@ -554,7 +554,7 @@ public class KartaRuntime implements AutoCloseable {
 
         for (Test test : tests) {
             switch (test.getTestType()) {
-                case FEATURE:
+                case FEATURE: {
                     RunInfo runInfoForTest = runInfo.getRunInfoForTest(test);
                     ArrayList<FeatureSourceParser> featureParsers = getFeatureSourceParser(runInfoForTest);
                     String featureFileName = test.getFeatureFileName();
@@ -621,13 +621,15 @@ public class KartaRuntime implements AutoCloseable {
                     FeatureRunner featureRunner = FeatureRunner.builder().kartaRuntime(this).runInfo(runInfoForTest).testFeature(testFeature).resultConsumer(result::addTestResult).build();
 
                     futures.add(testExecutorService.submit(featureRunner));
-                    break;
+                }
+                break;
 
-                case JAVA_TEST:
+                case JAVA_TEST: {
                     JavaFeatureRunner testRunner = JavaFeatureRunner.builder().kartaRuntime(this).runInfo(runInfo).javaTest(test.getJavaTestClass()).javaTestJarFile(test.getSourceArchive()).resultConsumer(result::addTestResult).build();
-                    testExecutorService = executorServiceManager.getExecutorServiceForGroup(test.getThreadGroup());
+                    ExecutorService testExecutorService = executorServiceManager.getExecutorServiceForGroup(test.getThreadGroup());
                     futures.add(testExecutorService.submit(testRunner));
                     break;
+                }
             }
         }
 

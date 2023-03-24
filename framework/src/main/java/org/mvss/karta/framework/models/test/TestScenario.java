@@ -32,6 +32,9 @@ public class TestScenario implements Serializable, ObjectWithChance {
      */
     private String description;
 
+    @Builder.Default
+    private ArrayList<String> tags = new ArrayList<>();
+
     /**
      * The probability that this test scenario should be run for an iteration of the feature run.
      * This value is used when the run configuration for the feature is to run exclusive scenario per iteration or probability based selection of scenarios for feature run iteration.
