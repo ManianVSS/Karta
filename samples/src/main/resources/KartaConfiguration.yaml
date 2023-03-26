@@ -25,18 +25,33 @@ pluginConfigurations:
   - pluginName: BeanShellStepRunner
     className: org.mvss.karta.framework.plugins.impl.BeanShellStepRunner
 
+  - pluginName: JythonStepRunner
+    className: org.mvss.karta.framework.plugins.impl.JythonStepRunner
+
+  - pluginName: Gherkin
+    className: org.mvss.karta.framework.plugins.impl.GherkinPlugin
+
+  - pluginName: CSVTestDataSourcePlugin
+    className: org.mvss.karta.framework.plugins.impl.CSVTestDataSourcePlugin
+
+
 enabledPlugins:
   - Kriya
   - DataFilesTestDataSource
   - ObjectGenTestDataSource
   - LoggingTestEventListener
   - BeanShellStepRunner
+  - JythonStepRunner
+  - Gherkin
+  - CSVTestDataSourcePlugin
 
 defaultFeatureSourceParsers:
   - Kriya
+  - Gherkin
 defaultStepRunners:
   - Kriya
   - BeanShellStepRunner
+  - JythonStepRunner
 defaultTestDataSources:
   - DataFilesTestDataSource
 
@@ -63,6 +78,8 @@ threadGroups:
   __default__: 1
 
 configurationScanPackages: [ ]
+
+detailedReport: true
 
 properties:
   Karta:

@@ -1,0 +1,10 @@
+---
+name: JythonStepRunnerExample
+description: This is a sample JythonStepRunnerExample
+
+testScenarios:
+  - name: Scenario1
+    executionSteps:
+      - step: When sample python step1
+      - step: Then sample python step2
+

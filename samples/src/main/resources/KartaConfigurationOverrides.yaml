@@ -7,20 +7,11 @@ pluginConfigurations:
     className: org.mvss.karta.samples.plugins.RandomTestDataSource
     jarFile: samples.jar
 
-  - pluginName: CSVTestDataSourcePlugin
-    className: org.mvss.karta.samples.plugins.CSVTestDataSourcePlugin
-    jarFile: samples.jar
-
-  - pluginName: Gherkin
-    className: org.mvss.karta.samples.plugins.GherkinPlugin
-    jarFile: samples.jar
-
 enabledPlugins:
-  # - HTMLReportTestEventListener
+  - HTMLReportTestEventListener
   - ObjectGenTestDataSource
   - RandomTestDataSource
   - DumpToFileTestEventListener
-  - Gherkin
   - CSVTestDataSourcePlugin
 
 propertyFiles:
@@ -29,6 +20,7 @@ propertyFiles:
   - SampleRunProperties3.properties
   - WebAutomationProperties.yaml
   - BeanShellStepRunnerProperties.yaml
+  - JythonStepRunnerProperties.yaml
 
 ### Thread group name map to the number of threads to use to run tests with for the thread group. __default__ is the name of the default thread group
 threadGroups:
@@ -43,7 +35,7 @@ testCatalogFragmentFiles:
 
 properties:
   Karta:
-    detailedResults: false
+    detailedResults: true
     EventProcessor.numberOfThread: 10
 
   Kriya:

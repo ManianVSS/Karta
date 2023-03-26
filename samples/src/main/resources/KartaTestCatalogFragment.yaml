@@ -11,6 +11,7 @@ featureSourceParsers:
 stepRunners:
   - Kriya
   - BeanShellStepRunner
+  - JythonStepRunner
 testDataSources:
   - DataFilesTestDataSource
   - ObjectGenTestDataSource
@@ -21,10 +22,18 @@ tests:
   - name: BeanShellExample
     description: BeanShellExample
     tags:
-      - cycle
       - BeanShellExample
     featureFileName: featureFiles/TestSet1/BeanShellExample.yaml
-    numberOfIterations: 1
+    numberOfIterations: 10
+    numberOfThreads: 5
+
+  - name: JythonStepRunnerExample
+    description: JythonStepRunnerExample
+    tags:
+      - JythonStepRunnerExample
+    featureFileName: featureFiles/TestSet1/JythonStepRunnerExample.yaml
+    numberOfIterations: 10
+    numberOfThreads: 5
 
   - name: SampleFeatureFile
     description: sample feature file
@@ -55,7 +64,6 @@ tests:
     tags:
       - remote
     featureFileName: featureFiles/TestSet1/SampleFeatureFile3.yaml
-    numberOfIterations: 1
     threadGroup: calculator
 
   - name: SampleFeatureFile4
@@ -65,7 +73,6 @@ tests:
       - remote
       - chaos
     featureFileName: featureFiles/TestSet1/SampleFeatureFile4.yaml
-    numberOfIterations: 1
     threadGroup: calcChaos
 
   - name: SampleGherkinFile5

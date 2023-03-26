@@ -1,5 +1,5 @@
 ---
-  BeanShellStepRunner:
-    stepHandlerMap:
-      sample bean shell step1: beanShellScripts/sample_step1.bsh
-      sample bean shell step2: beanShellScripts/sample_step2.bsh
+BeanShellStepRunner:
+  stepHandlerMap:
+    sample bean shell step1: beanShellScripts/sample_step1.bsh
+    sample bean shell step2: beanShellScripts/sample_step2.bsh

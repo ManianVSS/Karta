@@ -814,7 +814,7 @@ public class KartaRuntime implements AutoCloseable {
             }
 
             StepRunner stepRunner = getCapableStepRunnerForStep(stepRunners, stepIdentifier);
-            assert stepRunner != null;
+            assert (stepRunner != null);
             String sanitizedStepIdentifier = stepRunner.sanitizeStepIdentifier(stepIdentifier);
             TestExecutionContext testExecutionContext = new TestExecutionContext(runInfo.getRunName(), featureName, iterationIndex, scenarioName, sanitizedStepIdentifier, null, variables);
             testExecutionContext.setContextBeanRegistry(contextBeanRegistry);

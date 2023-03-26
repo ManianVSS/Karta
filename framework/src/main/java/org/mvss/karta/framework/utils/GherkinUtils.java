@@ -1,4 +1,4 @@
-package org.mvss.karta.samples.utils;
+package org.mvss.karta.framework.utils;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.Constants;
