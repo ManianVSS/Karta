@@ -70,6 +70,7 @@ public class KartaDependencyInjector implements DependencyInjector {
 
     public KartaDependencyInjector() {
         beanRegistry.add(this);
+        beanRegistry.add(DependencyInjector.class.getName(), this);
         beanRegistry.add(beanRegistry);
         beanRegistry.add(configurator);
     }
