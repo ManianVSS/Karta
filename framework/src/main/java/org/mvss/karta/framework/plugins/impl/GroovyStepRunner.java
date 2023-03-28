@@ -1,6 +1,6 @@
 package org.mvss.karta.framework.plugins.impl;
 
-import bsh.Interpreter;
+import groovy.lang.GroovyClassLoader;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -16,16 +16,16 @@ import org.mvss.karta.framework.models.test.PreparedStep;
 import org.mvss.karta.framework.plugins.StepRunner;
 import org.mvss.karta.framework.runtime.KartaRuntime;
 import org.mvss.karta.framework.runtime.TestFailureException;
+import org.python.core.PySyntaxError;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.io.File;
+import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Log4j2
-public class BeanShellStepRunner implements StepRunner {
-    public static final String PLUGIN_NAME = "BeanShellStepRunner";
+public class GroovyStepRunner implements StepRunner {
+    public static final String PLUGIN_NAME = "GroovyStepRunner";
 
     public static final String INLINE_STEP_DEF_PARAM_INDICATOR_STRING = "\"\"";
     public static final String WORD_FETCH_REGEX = "\\W+";
@@ -108,24 +108,27 @@ public class BeanShellStepRunner implements StepRunner {
             return StandardStepResults.error(errorMessage);
         }
 
+        // Fetch the positional argument names
+        ArrayList<String> inlineStepDefinitionTestData = new ArrayList<>();
+        Matcher matcher = testDataPattern.matcher(testStep.getIdentifier().trim());
+        while (matcher.find()) {
+            inlineStepDefinitionTestData.add(matcher.group());
+        }
+
         try {
             String stepMapping = stepHandlerMap.get(stepIdentifier);
-            Interpreter interpreter = new Interpreter();
-            interpreter.set("__kartaRuntime", kartaRuntime);
-            interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
-            interpreter.set("__context", testExecutionContext);
-            interpreter.set("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
-            interpreter.set("__testStep", testStep);
-            Object resultObject = interpreter.source(stepMapping);
-            if (resultObject != null) {
-                if (resultObject instanceof Boolean) {
-                    result.setSuccessful((boolean) resultObject);
-                } else if (resultObject instanceof StepResult) {
-                    result = (StepResult) resultObject;
-                } else {
-                    log.error("Unknown result type " + resultObject.getClass());
-                    result.setError(true);
-                }
+            try (GroovyClassLoader groovyClassLoader = new GroovyClassLoader()) {
+                Class<?> scriptClass = groovyClassLoader.parseClass(new File(stepMapping));
+                Object scriptInstance = scriptClass.getDeclaredConstructor().newInstance();
+                kartaRuntime.initializeObject(scriptInstance);
+                testExecutionContext.getContextBeanRegistry().loadBeans(scriptInstance);
+                String[] args = new String[inlineStepDefinitionTestData.size()];
+                inlineStepDefinitionTestData.toArray(args);
+                result = (StepResult) scriptClass.getDeclaredMethod("run", new Class[]{PreparedStep.class, Object[].class}).invoke(scriptInstance, testStep, args);
+            } catch (PySyntaxError pySyntaxError) {
+                String errorMessage = "Check jython script syntax for file  " + stepMapping;
+                log.error(errorMessage, pySyntaxError);
+                result = StandardStepResults.error(errorMessage, pySyntaxError);
             }
         } catch (Throwable t) {
             String errorMessage = "Exception occurred while running step definition " + testStep;
@@ -166,22 +169,16 @@ public class BeanShellStepRunner implements StepRunner {
             }
 
             String chaosActionMapping = chaosActionHandlerMap.get(chaosActionName);
-            Interpreter interpreter = new Interpreter();
-            interpreter.set("__kartaRuntime", kartaRuntime);
-            interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
-            interpreter.set("__chaosAction", preparedChaosAction);
-            interpreter.set("__context", testExecutionContext);
-            interpreter.set("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
-            Object resultObject = interpreter.source(chaosActionMapping);
-            if (resultObject != null) {
-                if (resultObject instanceof Boolean) {
-                    result.setSuccessful((boolean) resultObject);
-                } else if (resultObject instanceof StepResult) {
-                    result = (StepResult) resultObject;
-                } else {
-                    log.error("Unknown result type " + resultObject.getClass());
-                    result.setError(true);
-                }
+            try (GroovyClassLoader groovyClassLoader = new GroovyClassLoader()) {
+                Class<?> scriptClass = groovyClassLoader.parseClass(new File(chaosActionMapping));
+                Object scriptInstance = scriptClass.getDeclaredConstructor().newInstance();
+                kartaRuntime.initializeObject(scriptInstance);
+                testExecutionContext.getContextBeanRegistry().loadBeans(scriptInstance);
+                result = (StepResult) scriptClass.getDeclaredMethod("run", new Class[]{PreparedChaosAction.class}).invoke(scriptInstance, preparedChaosAction);
+            } catch (PySyntaxError pySyntaxError) {
+                String errorMessage = "Check jython script syntax for file  " + chaosActionMapping;
+                log.error(errorMessage, pySyntaxError);
+                result = StandardStepResults.error(errorMessage, pySyntaxError);
             }
         } catch (Throwable t) {
             String errorMessage = "Exception occurred while running chaos action " + preparedChaosAction;
@@ -216,28 +213,22 @@ public class BeanShellStepRunner implements StepRunner {
 
         try {
             String conditionMapping = conditionDefinitionMap.get(conditionIdentifier);
-            Interpreter interpreter = new Interpreter();
-            interpreter.set("__kartaRuntime", kartaRuntime);
-            interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
-            interpreter.set("__context", testExecutionContext);
-            interpreter.set("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
-            Object resultObject = interpreter.source(conditionMapping);
-            if (resultObject != null) {
-                if (resultObject instanceof Boolean) {
-                    return (boolean) resultObject;
-                } else if (resultObject instanceof StepResult) {
-                    return ((StepResult) resultObject).isSuccessful();
-                } else {
-                    log.error("Unknown result type " + resultObject.getClass());
-                    return false;
-                }
+            try (GroovyClassLoader groovyClassLoader = new GroovyClassLoader()) {
+                Class<?> scriptClass = groovyClassLoader.parseClass(new File(conditionMapping));
+                Object scriptInstance = scriptClass.getDeclaredConstructor().newInstance();
+                kartaRuntime.initializeObject(scriptInstance);
+                testExecutionContext.getContextBeanRegistry().loadBeans(scriptInstance);
+                return (Boolean) scriptClass.getDeclaredMethod("run", new Class[]{TestExecutionContext.class}).invoke(scriptInstance, testExecutionContext);
+            } catch (PySyntaxError pySyntaxError) {
+                String errorMessage = "Check jython script syntax for file  " + conditionMapping;
+                log.error(errorMessage, pySyntaxError);
+                return false;
             }
         } catch (Throwable t) {
             String errorMessage = "Exception occurred while running step definition " + conditionIdentifier;
             log.error(errorMessage, t);
             return false;
         }
-        return true;
     }
 
 }

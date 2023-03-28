@@ -11,6 +11,8 @@ featureSourceParsers:
 stepRunner:
   - Kriya
   - BeanShellStepRunner
+  - JythonStepRunner
+  - GroovyStepRunner
 testDataSources:
   - DataFilesTestDataSource
   - ObjectGenTestDataSource

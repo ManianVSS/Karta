@@ -12,6 +12,7 @@ stepRunners:
   - Kriya
   - BeanShellStepRunner
   - JythonStepRunner
+  - GroovyStepRunner
 testDataSources:
   - DataFilesTestDataSource
   - ObjectGenTestDataSource
@@ -32,6 +33,14 @@ tests:
     tags:
       - JythonStepRunnerExample
     featureFileName: featureFiles/TestSet1/JythonStepRunnerExample.yaml
+    numberOfIterations: 10
+    numberOfThreads: 5
+
+  - name: GroovyStepRunnerExample
+    description: GroovyStepRunnerExample
+    tags:
+      - GroovyStepRunnerExample
+    featureFileName: featureFiles/TestSet1/GroovyStepRunnerExample.yaml
     numberOfIterations: 10
     numberOfThreads: 5
 

@@ -21,6 +21,7 @@ propertyFiles:
   - WebAutomationProperties.yaml
   - BeanShellStepRunnerProperties.yaml
   - JythonStepRunnerProperties.yaml
+  - GroovyStepRunnerProperties.yaml
 
 nodes:
   - name: Node1

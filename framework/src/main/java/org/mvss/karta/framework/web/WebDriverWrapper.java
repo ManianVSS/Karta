@@ -18,9 +18,9 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 @Getter
 @Log4j2
@@ -33,9 +33,9 @@ public class WebDriverWrapper implements AutoCloseable {
 
     public WebDriverWrapper(WebDriver driver, Duration objectTimeout, Duration longerObjectTimeout) {
         this.driver = driver;
-        wait = new WebDriverWait(driver, objectTimeout.getSeconds());
-        waitLonger = new WebDriverWait(driver, longerObjectTimeout.getSeconds());
-        negativeWait = new WebDriverWait(driver, 0);
+        wait = new WebDriverWait(driver, objectTimeout);
+        waitLonger = new WebDriverWait(driver, longerObjectTimeout);
+        negativeWait = new WebDriverWait(driver, Duration.of(0, ChronoUnit.SECONDS));
     }
 
     public static byte[] getScreenShot(WebDriver driver) {
@@ -44,8 +44,7 @@ public class WebDriverWrapper implements AutoCloseable {
 
     public static void captureScreenShot(WebDriver driver, String prefix) throws IOException {
         if (driver != null) {
-            FileUtils.writeByteArrayToFile(new File(prefix + Constants.UNDERSCORE + System.currentTimeMillis() + Constants.PNG),
-                    WebDriverWrapper.getScreenShot(driver));
+            FileUtils.writeByteArrayToFile(new File(prefix + Constants.UNDERSCORE + System.currentTimeMillis() + Constants.PNG), WebDriverWrapper.getScreenShot(driver));
         }
     }
 
@@ -74,8 +73,7 @@ public class WebDriverWrapper implements AutoCloseable {
 
         if (rootBys != null) {
             for (By rootBy : rootBys) {
-                shadowRootElement = expandRootElement(
-                        (shadowRootElement == null) ? driver.findElement(rootBy) : shadowRootElement.findElement(rootBy));
+                shadowRootElement = expandRootElement((shadowRootElement == null) ? driver.findElement(rootBy) : shadowRootElement.findElement(rootBy));
             }
         }
 
@@ -525,8 +523,8 @@ public class WebDriverWrapper implements AutoCloseable {
         return new ArrayList<>(driver.getWindowHandles());
     }
 
-    public void implicitWaitWrapper(int time) {
-        driver.manage().timeouts().implicitlyWait(time, TimeUnit.SECONDS);
+    public void implicitWaitWrapper(Duration time) {
+        driver.manage().timeouts().implicitlyWait(time);
     }
 
     public void switchToFrameByIndex(int index) {

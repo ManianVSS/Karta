@@ -439,10 +439,10 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
         String stepIdentifier = testStep.getIdentifier();
 
         // Fetch the positional argument names
-        ArrayList<String> inlineStepDefinitionParameterNames = new ArrayList<>();
+        ArrayList<String> inlineStepDefinitionParameters = new ArrayList<>();
         Matcher matcher = testDataPattern.matcher(testStep.getIdentifier().trim());
         while (matcher.find()) {
-            inlineStepDefinitionParameterNames.add(matcher.group());
+            inlineStepDefinitionParameters.add(matcher.group());
         }
 
         stepIdentifier = sanitizeStepIdentifier(stepIdentifier);
@@ -453,7 +453,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             StringBuilder positionalParameters = new StringBuilder();
 
             int i = 0;
-            for (String inlineStepDefinitionParameterName : inlineStepDefinitionParameterNames) {
+            for (String inlineStepDefinitionParameterName : inlineStepDefinitionParameters) {
                 positionalParameters.append(", Serializable posArg").append(i++).append(" /*= ").append(inlineStepDefinitionParameterName).append("*/");
             }
             log.error("Suggestion:\r\n   @StepDefinition( \"" + StringEscapeUtils.escapeJava(stepIdentifier) + "\" )\r\n" + "   public StepResult " + stepIdentifier.replaceAll(Constants.REGEX_WHITESPACE, Constants.UNDERSCORE) + "( TestExecutionContext context " + positionalParameters + ") throws Throwable\r\n" + "   {\r\n...\r\n   }");
@@ -466,7 +466,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             Method stepDefMethodToInvoke = stepDefHandlerObjectMethodPair.getRight();
             BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
 
-            Object returnValue = runStepDefMethodWithParameters(testExecutionContext, inlineStepDefinitionParameterNames, stepDefMethodToInvoke, stepDefObject);
+            Object returnValue = runStepDefMethodWithParameters(testExecutionContext, inlineStepDefinitionParameters, stepDefMethodToInvoke, stepDefObject);
 
             Class<?> returnType = stepDefMethodToInvoke.getReturnType();
 
@@ -490,7 +490,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
         return result;
     }
 
-    public Object runStepDefMethodWithParameters(TestExecutionContext testExecutionContext, ArrayList<String> inlineParameterNames, Method methodToInvoke, Object methodDefiningClassObject) throws JsonProcessingException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    public Object runStepDefMethodWithParameters(TestExecutionContext testExecutionContext, ArrayList<String> inlineParameters, Method methodToInvoke, Object methodDefiningClassObject) throws JsonProcessingException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         HashMap<String, Serializable> testData = testExecutionContext.getData();
         HashMap<String, Serializable> variables = testExecutionContext.getVariables();
 
@@ -524,7 +524,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             } else if (contextVariableAnnotation != null) {
                 values.add(objectMapper.convertValue(variables.get(contextVariableAnnotation.value()), typeToConvertTo));
             } else {
-                values.add(objectMapper.readValue(inlineParameterNames.get(positionalArg++), typeToConvertTo));
+                values.add(objectMapper.readValue(inlineParameters.get(positionalArg++), typeToConvertTo));
             }
         }
 
@@ -699,10 +699,10 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
         }
 
         // Fetch the positional argument names
-        ArrayList<String> inlineStepDefinitionParameterNames = new ArrayList<>();
+        ArrayList<String> inlineStepDefinitionParameters = new ArrayList<>();
         Matcher matcher = testDataPattern.matcher(conditionIdentifier.trim());
         while (matcher.find()) {
-            inlineStepDefinitionParameterNames.add(matcher.group());
+            inlineStepDefinitionParameters.add(matcher.group());
         }
 
         conditionIdentifier = sanitizeStepIdentifier(conditionIdentifier);
@@ -713,7 +713,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
             StringBuilder positionalParameters = new StringBuilder();
 
             int i = 0;
-            for (String inlineConditionDefinitionParameterName : inlineStepDefinitionParameterNames) {
+            for (String inlineConditionDefinitionParameterName : inlineStepDefinitionParameters) {
                 positionalParameters.append(", Serializable posArg").append(i++).append(" /*= ").append(inlineConditionDefinitionParameterName).append("*/");
             }
             log.error("Suggestion:\r\n   @ConditionDefinition( \"" + StringEscapeUtils.escapeJava(conditionIdentifier) + "\" )\r\n" + "   public boolean " + conditionIdentifier.replaceAll(Constants.REGEX_WHITESPACE, Constants.UNDERSCORE) + "(  " + positionalParameters + ") throws Throwable\r\n" + "   {\r\n...\r\n   }");
@@ -730,7 +730,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                 return false;
             }
 
-            return (boolean) (Boolean) runStepDefMethodWithParameters(testExecutionContext, inlineStepDefinitionParameterNames, conditionDefMethodToInvoke, conditionDefObject);
+            return (boolean) (Boolean) runStepDefMethodWithParameters(testExecutionContext, inlineStepDefinitionParameters, conditionDefMethodToInvoke, conditionDefObject);
         } catch (Throwable t) {
             String errorMessage = "Exception occurred while running step definition " + conditionIdentifier;
             log.error(errorMessage, t);

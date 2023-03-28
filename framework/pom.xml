@@ -32,6 +32,13 @@
             <version>${log4j2.version}</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.4.0-b180830.0359</version>
+        </dependency>
+
 
         <!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
         <dependency>
@@ -118,6 +125,7 @@
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
+            <!--            <version>5.3.0</version>-->
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.jcraft/jsch -->
@@ -159,6 +167,14 @@
             <artifactId>bsh</artifactId>
             <version>2.0b6</version>
         </dependency>
+
+        <!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.groovy/groovy-all &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.groovy</groupId>-->
+        <!--            <artifactId>groovy-all</artifactId>-->
+        <!--            <version>4.0.10</version>-->
+        <!--            <type>pom</type>-->
+        <!--        </dependency>-->
 
     </dependencies>
 

@@ -1,0 +1,10 @@
+---
+name: GroovyStepRunnerExample
+description: This is a sample GroovyStepRunnerExample
+
+testScenarios:
+  - name: Scenario1
+    executionSteps:
+      - step: When sample groovy step1
+      - step: Then sample groovy step2
+

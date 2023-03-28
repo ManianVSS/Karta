@@ -15,7 +15,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <project.version>0.1.2</project.version>
-        <spring.boot.version>2.6.2</spring.boot.version>
+        <spring.boot.version>2.7.10</spring.boot.version>
         <log4j2.version>2.17.1</log4j2.version>
 
         <!-- While building can overwrite with -Ddistmgmt.repo.id=myrepoid -Ddistmgmt.repo.url=http://mynexus.url/path -->
@@ -40,6 +40,20 @@
                 <version>${spring.boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+                <!--                <exclusions>&lt;!&ndash; https://www.baeldung.com/maven-version-collision &ndash;&gt;-->
+                <!--                    <exclusion>-->
+                <!--                        <groupId>org.apache.groovy</groupId>-->
+                <!--                        <artifactId>groovy</artifactId>-->
+                <!--                    </exclusion>-->
+                <!--                    <exclusion>-->
+                <!--                        <groupId>org.apache.groovy</groupId>-->
+                <!--                        <artifactId>groovy-xml</artifactId>-->
+                <!--                    </exclusion>-->
+                <!--                    <exclusion>-->
+                <!--                        <groupId>io.rest-assured</groupId>-->
+                <!--                        <artifactId>rest-assured</artifactId>-->
+                <!--                    </exclusion>-->
+                <!--                </exclusions>-->
             </dependency>
         </dependencies>
     </dependencyManagement>

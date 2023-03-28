@@ -1,0 +1,5 @@
+---
+GroovyStepRunner:
+  stepHandlerMap:
+    sample groovy step1: groovyScripts/sample_step1.groovy
+    sample groovy step2: groovyScripts/sample_step2.groovy

@@ -34,6 +34,10 @@ pluginConfigurations:
   - pluginName: CSVTestDataSourcePlugin
     className: org.mvss.karta.framework.plugins.impl.CSVTestDataSourcePlugin
 
+  - pluginName: GroovyStepRunner
+    className: org.mvss.karta.framework.plugins.impl.GroovyStepRunner
+
+
 
 enabledPlugins:
   - Kriya
@@ -44,6 +48,7 @@ enabledPlugins:
   - JythonStepRunner
   - Gherkin
   - CSVTestDataSourcePlugin
+  - GroovyStepRunner
 
 defaultFeatureSourceParsers:
   - Kriya
@@ -52,6 +57,7 @@ defaultStepRunners:
   - Kriya
   - BeanShellStepRunner
   - JythonStepRunner
+  - GroovyStepRunner
 defaultTestDataSources:
   - DataFilesTestDataSource
 

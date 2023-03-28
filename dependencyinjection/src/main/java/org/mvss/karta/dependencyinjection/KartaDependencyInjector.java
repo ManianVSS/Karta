@@ -103,7 +103,7 @@ public class KartaDependencyInjector implements DependencyInjector {
     }
 
     @Override
-    public void injectIntoClass(Class<?> classToInject) {
+    public synchronized void injectIntoClass(Class<?> classToInject) {
         try {
             if (!configuredBeanClasses.contains(classToInject)) {
                 configurator.loadProperties(classToInject);

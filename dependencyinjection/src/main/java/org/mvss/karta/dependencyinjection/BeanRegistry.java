@@ -37,6 +37,17 @@ public class BeanRegistry {
         initThreadContextRegistry();
     }
 
+    public BeanRegistry(BeanRegistry fromBeanRegistry) {
+        if (fromBeanRegistry != null) {
+            globalBeans.putAll(fromBeanRegistry.globalBeans);
+            threadContextBeanMap.putAll(fromBeanRegistry.threadContextBeanMap);
+            namedContextBeanMap.putAll(fromBeanRegistry.namedContextBeanMap);
+        } else {
+            globalBeans.put(BeanRegistry.class.getName(), this);
+            initThreadContextRegistry();
+        }
+    }
+
     /**
      * Initialize the thread specific registry for calling thread
      */
