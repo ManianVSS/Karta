@@ -1,0 +1,3 @@
+KartaDependencyInjector:
+  configurationScanPackages:
+    - org.mvss.cucumber

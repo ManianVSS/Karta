@@ -1,0 +1,9 @@
+MyTest:
+  myEmployeeObject:
+    employeeId: 1001
+    name: employeeLoadedFromProperties
+    gender: not specified
+    married: false
+    role: unknown
+    salary: 100000
+    address: secret

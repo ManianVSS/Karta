@@ -39,21 +39,7 @@
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>${spring.boot.version}</version>
                 <type>pom</type>
-                <scope>import</scope>
-                <!--                <exclusions>&lt;!&ndash; https://www.baeldung.com/maven-version-collision &ndash;&gt;-->
-                <!--                    <exclusion>-->
-                <!--                        <groupId>org.apache.groovy</groupId>-->
-                <!--                        <artifactId>groovy</artifactId>-->
-                <!--                    </exclusion>-->
-                <!--                    <exclusion>-->
-                <!--                        <groupId>org.apache.groovy</groupId>-->
-                <!--                        <artifactId>groovy-xml</artifactId>-->
-                <!--                    </exclusion>-->
-                <!--                    <exclusion>-->
-                <!--                        <groupId>io.rest-assured</groupId>-->
-                <!--                        <artifactId>rest-assured</artifactId>-->
-                <!--                    </exclusion>-->
-                <!--                </exclusions>-->
+                <scope>import</scope>              
             </dependency>
         </dependencies>
     </dependencyManagement>
