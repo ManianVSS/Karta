@@ -4,8 +4,10 @@ This is an example project to show how Karta Dependency injection be used in exi
 
 Usage Steps:
 
-- To run the code from IntelliJ IDE a run configuration similar to below can be created.
-  ![CucumberRunnerExample.png](..%2F..%2F..%2FPictures%2FScreenshots%2FCucumberRunnerExample.png)
+- To run the code as IntelliJ IDE run configuration run io.cucumber.core.cli.Main similar to runTests.bat from
+  target/classes.
+  <br> or create junit Test run configuration with TestRunner and run with environment variable
+  PROPERTIES_FOLDER=../classes/properties from the target/test-classes folder.
 
 - To run without IDE, do maven build from karta and sample-cucumber-project.
   <br> Then run from target/packages/sample-cucumber-project <br>
