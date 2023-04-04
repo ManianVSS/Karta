@@ -42,4 +42,7 @@ public class WebDriverOptions implements Serializable {
     private Duration longWaitTimeout = Duration.ofMinutes(3);
 
     private ArrayList<String> additionalArguments;
+
+    @Builder.Default
+    private String webDriverWrapperClass = "org.mvss.karta.framework.web.WebDriverWrapper";
 }

@@ -16,9 +16,10 @@ import org.openqa.selenium.safari.SafariOptions;
 
 import java.io.File;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 
 @Log4j2
 public class SimpleWebDriverFactory {
@@ -38,7 +39,9 @@ public class SimpleWebDriverFactory {
 
     public static WebDriverOptions DEFAULT_WEB_DRIVER_OPTIONS = new WebDriverOptions();
 
-    public static void setupWebDriver(Browser browser, String driverFileName) {
+    public static void setupWebDriver(WebDriverOptions webDriverOptions) {
+        Browser browser = webDriverOptions.getBrowser();
+        String driverFileName = webDriverOptions.getWebDriverLocation();
         String webDriverProperty;
 
         switch (browser) {
@@ -75,7 +78,25 @@ public class SimpleWebDriverFactory {
     }
 
     public static WebDriverWrapper createWebDriverWrapper(WebDriverOptions webDriverOptions) {
-        return new WebDriverWrapper(createWebDriver(webDriverOptions), webDriverOptions.getWaitTimeout(), webDriverOptions.getLongWaitTimeout());
+        if (webDriverOptions == null) {
+            webDriverOptions = DEFAULT_WEB_DRIVER_OPTIONS;
+        }
+        String webDriverWrapperClass = webDriverOptions.getWebDriverWrapperClass();
+        if (webDriverWrapperClass.equals(WebDriverWrapper.class.getName())) {
+            return new WebDriverWrapper(createWebDriver(webDriverOptions), webDriverOptions.getWaitTimeout(), webDriverOptions.getLongWaitTimeout());
+        } else {
+            try {
+                Class<?> webDriverOptionsClass = Class.forName(webDriverWrapperClass);
+                if (WebDriverWrapper.class.isAssignableFrom(webDriverOptionsClass)) {
+                    return (WebDriverWrapper) webDriverOptionsClass.getDeclaredConstructor(WebDriver.class, Duration.class, Duration.class).newInstance(createWebDriver(webDriverOptions), webDriverOptions.getWaitTimeout(), webDriverOptions.getLongWaitTimeout());
+                } else {
+                    throw new RuntimeException("Not a valid WebDriverWrapper implementation class: " + webDriverWrapperClass);
+                }
+            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException |
+                     InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public static WebDriverWrapper createWebDriverWrapper() {
@@ -83,10 +104,10 @@ public class SimpleWebDriverFactory {
     }
 
     public static WebDriver createWebDriver(WebDriverOptions webDriverOptions) {
-        setupWebDriver(webDriverOptions.getBrowser(), webDriverOptions.getWebDriverLocation());
+        setupWebDriver(webDriverOptions);
 
         HashMap<String, Serializable> proxyConfig = webDriverOptions.getProxyConfiguration();
-        Proxy proxy = proxyConfig == null ? null : new Proxy(proxyConfig);
+        Proxy proxy = (proxyConfig == null) ? null : new Proxy(proxyConfig);
 
         WebDriver webDriver = null;
         switch (webDriverOptions.getBrowser()) {
@@ -175,7 +196,7 @@ public class SimpleWebDriverFactory {
                 webDriver.manage().window().maximize();
             }
         }
-        webDriver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+        webDriver.manage().timeouts().implicitlyWait(webDriverOptions.getImplicitWaitTime());
 
         return webDriver;
     }
