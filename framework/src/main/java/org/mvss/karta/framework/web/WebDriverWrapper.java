@@ -26,9 +26,9 @@ import java.util.Map.Entry;
 @Log4j2
 @SuppressWarnings("unused")
 public class WebDriverWrapper implements AutoCloseable {
-    private final WebDriverWait wait;
-    private final WebDriverWait waitLonger;
-    private final WebDriverWait negativeWait;
+    protected final WebDriverWait wait;
+    protected final WebDriverWait waitLonger;
+    protected final WebDriverWait negativeWait;
     protected WebDriver driver;
 
     public WebDriverWrapper(WebDriver driver, Duration objectTimeout, Duration longerObjectTimeout) {
@@ -294,9 +294,26 @@ public class WebDriverWrapper implements AutoCloseable {
                 return driver.findElement(By.className(locator));
             case "link text":
                 return driver.findElement(By.linkText(locator));
+            case "css":
+                return driver.findElement(By.cssSelector(locator));
         }
         return null;
+    }
 
+    public List<WebElement> getElementsBy(String locatorType, String locator) {
+        switch (locatorType) {
+            case "xpath":
+                return driver.findElements(By.xpath(locator));
+            case "id":
+                return driver.findElements(By.id(locator));
+            case "class name":
+                return driver.findElements(By.className(locator));
+            case "link text":
+                return driver.findElements(By.linkText(locator));
+            case "css":
+                return driver.findElements(By.cssSelector(locator));
+        }
+        return null;
     }
 
     public WebElement findElementByLocatorString(String locatorString, String locatorType, HashMap<String, String> replaceValuesMap) {
@@ -325,6 +342,9 @@ public class WebDriverWrapper implements AutoCloseable {
                 break;
             case "tagName":
                 locator = By.tagName(locatorString);
+                break;
+            case "css":
+                locator = By.cssSelector(locatorString);
                 break;
             default:
                 return null;
@@ -537,5 +557,13 @@ public class WebDriverWrapper implements AutoCloseable {
 
     public List<WebElement> findElementsByXpath(By xPathValue) {
         return driver.findElements(xPathValue);
+    }
+
+    public Set<Cookie> getCookies() {
+        return driver.manage().getCookies();
+    }
+
+    public String getCookie(String name) {
+        return driver.manage().getCookieNamed(name).getValue();
     }
 }

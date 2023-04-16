@@ -6,6 +6,7 @@ import io.restassured.http.Header;
 import io.restassured.response.Response;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 import org.apache.commons.io.IOUtils;
 import org.mvss.karta.Constants;
 
@@ -17,6 +18,7 @@ import java.util.HashMap;
 
 @Getter
 @AllArgsConstructor
+@ToString
 public class RARestResponse implements RestResponse {
     private static final long serialVersionUID = 1L;
 

@@ -115,4 +115,8 @@ public class FileUtils {
             }
         }
     }
+
+    public static void removeContentsFromFile(String fileName) throws IOException {
+        org.apache.commons.io.FileUtils.writeByteArrayToFile(new File(fileName), new byte[0]);
+    }
 }

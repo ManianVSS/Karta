@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 @Getter
 @Setter
-@ToString
+@ToString(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -70,37 +70,92 @@ public class Test implements Serializable, Comparable<Test> {
     @Builder.Default
     private int numberOfThreads = 1;
 
+    public Test addFeatureSourceParser(String featureSourceParser) {
+        if (this.featureSourceParsers == null) {
+            this.featureSourceParsers = new ArrayList<>();
+        }
+        if (featureSourceParser != null) {
+            if (!this.featureSourceParsers.contains(featureSourceParser)) {
+                this.featureSourceParsers.add(featureSourceParser);
+            }
+        }
+        return this;
+    }
+
+    public Test addFeatureSourceParser(ArrayList<String> featureSourceParsers) {
+        if (featureSourceParsers != null) {
+            featureSourceParsers.forEach(this::addFeatureSourceParser);
+        }
+        return this;
+    }
+
+    public Test addStepRunner(String stepRunner) {
+        if (this.stepRunners == null) {
+            this.stepRunners = new ArrayList<>();
+        }
+        if (stepRunner != null) {
+            if (!this.stepRunners.contains(stepRunner)) {
+                this.stepRunners.add(stepRunner);
+            }
+        }
+        return this;
+    }
+
+    public Test addStepRunner(ArrayList<String> stepRunners) {
+        if (stepRunners != null) {
+            stepRunners.forEach(this::addStepRunner);
+        }
+        return this;
+    }
+
+    public Test addTestDataSources(String testDataSources) {
+        if (this.testDataSources == null) {
+            this.testDataSources = new ArrayList<>();
+        }
+        if (testDataSources != null) {
+            if (!this.testDataSources.contains(testDataSources)) {
+                this.testDataSources.add(testDataSources);
+            }
+        }
+        return this;
+    }
+
+    public Test addTestDataSources(ArrayList<String> testDataSources) {
+        if (testDataSources != null) {
+            testDataSources.forEach(this::addTestDataSources);
+        }
+        return this;
+    }
+
+    public Test addTags(String tag) {
+        if (this.tags == null) {
+            this.tags = new ArrayList<>();
+        }
+        if (tag != null) {
+            if (!this.tags.contains(tag)) {
+                this.tags.add(tag);
+            }
+        }
+        return this;
+    }
+
+    public Test addTags(ArrayList<String> tags) {
+        if (tags != null) {
+            tags.forEach(this::addTags);
+        }
+        return this;
+    }
+
+
     public void propagateAttributes(String sourceArchive, ArrayList<String> featureSourceParsers, ArrayList<String> stepRunners, ArrayList<String> testDataSources, String threadGroup, ArrayList<String> tags) {
         if (StringUtils.isEmpty(this.sourceArchive) && StringUtils.isNotEmpty(sourceArchive)) {
             this.sourceArchive = sourceArchive;
         }
 
-        if (featureSourceParsers != null) {
-            featureSourceParsers.forEach(item -> {
-                if (!this.featureSourceParsers.contains(item)) this.featureSourceParsers.add(item);
-            });
-        }
-
-        if (stepRunners != null) {
-            stepRunners.forEach(item -> {
-                if (!this.stepRunners.contains(item)) this.stepRunners.add(item);
-            });
-        }
-
-        if (testDataSources != null) {
-            testDataSources.forEach(item -> {
-                if (!this.testDataSources.contains(item)) this.testDataSources.add(item);
-            });
-        }
+        addFeatureSourceParser(featureSourceParsers).addStepRunner(stepRunners).addTestDataSources(testDataSources).addTags(tags);
 
         if (StringUtils.isEmpty(this.threadGroup) && StringUtils.isNotEmpty(threadGroup)) {
             this.threadGroup = threadGroup;
-        }
-
-        if (tags != null) {
-            tags.forEach(item -> {
-                if (!this.tags.contains(item)) this.tags.add(item);
-            });
         }
     }
 
@@ -109,31 +164,10 @@ public class Test implements Serializable, Comparable<Test> {
             return;
         }
 
-        if (tags.isEmpty() && !test.tags.isEmpty()) {
-            tags.addAll(test.tags);
-        }
+        addTags(test.tags).addFeatureSourceParser(test.featureSourceParsers).addStepRunner(test.stepRunners).addTestDataSources(test.testDataSources);
 
         if (StringUtils.isEmpty(sourceArchive) && StringUtils.isNotEmpty(test.sourceArchive)) {
             sourceArchive = test.sourceArchive;
-        }
-
-        if (featureSourceParsers.isEmpty() && !test.featureSourceParsers.isEmpty()) {
-            test.featureSourceParsers.forEach(item -> {
-                if (!this.featureSourceParsers.contains(item)) this.featureSourceParsers.add(item);
-            });
-        }
-
-        if (stepRunners.isEmpty() && !test.stepRunners.isEmpty()) {
-            test.stepRunners.forEach(item -> {
-                if (!this.stepRunners.contains(item)) this.stepRunners.add(item);
-            });
-        }
-
-        if (testDataSources.isEmpty() && !test.testDataSources.isEmpty()) {
-            test.testDataSources.forEach(item -> {
-                if (!this.testDataSources.contains(item)) this.testDataSources.add(item);
-            });
-
         }
 
         if (StringUtils.isEmpty(threadGroup) && StringUtils.isNotEmpty(test.threadGroup)) {

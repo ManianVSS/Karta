@@ -3,6 +3,7 @@ package org.mvss.karta.framework.restclient;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -26,6 +27,7 @@ import java.util.HashMap;
  */
 @Getter
 @Log4j2
+@ToString
 public class ApacheRestResponse implements RestResponse {
     private static final long serialVersionUID = 1L;
 

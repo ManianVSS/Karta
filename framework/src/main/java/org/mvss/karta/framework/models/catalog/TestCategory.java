@@ -159,34 +159,88 @@ public class TestCategory implements Serializable {
         return null;
     }
 
-    public void propagateAttributes(String sourceArchive, ArrayList<String> inFeatureSourceParsers, ArrayList<String> srp, ArrayList<String> inTestDataSources, String tg, ArrayList<String> tags) {
-
-        if (inFeatureSourceParsers != null) {
-            inFeatureSourceParsers.forEach(item -> {
-                if (!featureSourceParsers.contains(item)) featureSourceParsers.add(item);
-            });
+    public TestCategory addFeatureSourceParser(String featureSourceParser) {
+        if (this.featureSourceParsers == null) {
+            this.featureSourceParsers = new ArrayList<>();
         }
-
-        if (srp != null) {
-            srp.forEach(item -> {
-                if (!stepRunners.contains(item)) stepRunners.add(item);
-            });
+        if (featureSourceParser != null) {
+            if (!this.featureSourceParsers.contains(featureSourceParser)) {
+                this.featureSourceParsers.add(featureSourceParser);
+            }
         }
+        return this;
+    }
 
-        if (inTestDataSources != null) {
-            inTestDataSources.forEach(item -> {
-                if (!testDataSources.contains(item)) testDataSources.add(item);
-            });
+    public TestCategory addFeatureSourceParser(ArrayList<String> featureSourceParsers) {
+        if (featureSourceParsers != null) {
+            featureSourceParsers.forEach(this::addFeatureSourceParser);
         }
+        return this;
+    }
 
-        if (StringUtils.isEmpty(threadGroup) && StringUtils.isNotEmpty(tg)) {
-            threadGroup = tg;
+    public TestCategory addStepRunner(String stepRunner) {
+        if (this.stepRunners == null) {
+            this.stepRunners = new ArrayList<>();
         }
+        if (stepRunner != null) {
+            if (!this.stepRunners.contains(stepRunner)) {
+                this.stepRunners.add(stepRunner);
+            }
+        }
+        return this;
+    }
 
+    public TestCategory addStepRunner(ArrayList<String> stepRunners) {
+        if (stepRunners != null) {
+            stepRunners.forEach(this::addStepRunner);
+        }
+        return this;
+    }
+
+    public TestCategory addTestDataSources(String testDataSources) {
+        if (this.testDataSources == null) {
+            this.testDataSources = new ArrayList<>();
+        }
+        if (testDataSources != null) {
+            if (!this.testDataSources.contains(testDataSources)) {
+                this.testDataSources.add(testDataSources);
+            }
+        }
+        return this;
+    }
+
+    public TestCategory addTestDataSources(ArrayList<String> testDataSources) {
+        if (testDataSources != null) {
+            testDataSources.forEach(this::addTestDataSources);
+        }
+        return this;
+    }
+
+    public TestCategory addTags(String tag) {
+        if (this.tags == null) {
+            this.tags = new ArrayList<>();
+        }
+        if (tag != null) {
+            if (!this.tags.contains(tag)) {
+                this.tags.add(tag);
+            }
+        }
+        return this;
+    }
+
+    public TestCategory addTags(ArrayList<String> tags) {
         if (tags != null) {
-            tags.forEach(item -> {
-                if (!this.tags.contains(item)) this.tags.add(item);
-            });
+            tags.forEach(this::addTags);
+        }
+        return this;
+    }
+
+    public void propagateAttributes(String sourceArchive, ArrayList<String> featureSourceParsers, ArrayList<String> stepRunners, ArrayList<String> testDataSources, String threadGroup, ArrayList<String> tags) {
+
+        addFeatureSourceParser(featureSourceParsers).addStepRunner(stepRunners).addTestDataSources(testDataSources).addTags(tags);
+
+        if (StringUtils.isEmpty(this.threadGroup) && StringUtils.isNotEmpty(threadGroup)) {
+            this.threadGroup = threadGroup;
         }
 
         for (TestCategory testCategory : subCategories) {
@@ -211,27 +265,11 @@ public class TestCategory implements Serializable {
             description = testCategory.description;
         }
 
-        testCategory.tags.forEach(item -> {
-            if (!this.tags.contains(item)) this.tags.add(item);
-        });
-
-        if (featureSourceParsers.isEmpty() && !testCategory.featureSourceParsers.isEmpty()) {
-            testCategory.featureSourceParsers.forEach(item -> {
-                if (!featureSourceParsers.contains(item)) featureSourceParsers.add(item);
-            });
+        if (StringUtils.isEmpty(threadGroup) && StringUtils.isNotEmpty(testCategory.threadGroup)) {
+            threadGroup = testCategory.threadGroup;
         }
 
-        if (stepRunners.isEmpty() && !testCategory.stepRunners.isEmpty()) {
-            testCategory.stepRunners.forEach(item -> {
-                if (!stepRunners.contains(item)) stepRunners.add(item);
-            });
-        }
-
-        if (testDataSources.isEmpty() && !testCategory.testDataSources.isEmpty()) {
-            testCategory.testDataSources.forEach(item -> {
-                if (!testDataSources.contains(item)) testDataSources.add(item);
-            });
-        }
+        addTags(testCategory.tags).addFeatureSourceParser(testCategory.featureSourceParsers).addStepRunner(testCategory.stepRunners).addTestDataSources(testCategory.testDataSources);
 
         for (TestCategory testSubCatToAdd : testCategory.getSubCategories()) {
             mergeTestCategory(testSubCatToAdd);
@@ -241,9 +279,7 @@ public class TestCategory implements Serializable {
             mergeTest(test);
         }
 
-        if (StringUtils.isEmpty(threadGroup) && StringUtils.isNotEmpty(testCategory.threadGroup)) {
-            threadGroup = testCategory.threadGroup;
-        }
+
     }
 
     public void mergeTestCategory(TestCategory testCategory) {
