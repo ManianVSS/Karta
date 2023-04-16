@@ -13,7 +13,8 @@ import org.junit.runner.RunWith;
         plugin = {"json:cucumber-json-report.json",
                 "html:cucumber-html-report.html",
                 "pretty:cucumber-pretty-report.txt",
-                "junit:cucumber-junit-report.xml"},
+                "junit:cucumber-junit-report.xml",
+                "org.mvss.cucumber.extensions.ShaniDashboardPlugin:../classes/properties"},
         glue = {"org.mvss.cucumber.tests.stepdefs"},
         features = {"../classes/features/"}
 )

@@ -314,15 +314,18 @@ public class DataUtils {
     public static String constructURL(String... urlPieces) {
         String fullURL = Constants.EMPTY_STRING;
 
-        if (urlPieces == null) {
+        if ((urlPieces == null) || (urlPieces.length == 0)) {
             return null;
         }
 
-        for (String urlPiece : urlPieces) {
-            if (StringUtils.isNotBlank(urlPiece)) {
-                fullURL = StringUtils.strip(fullURL + Constants.SLASH + StringUtils.strip(urlPiece, Constants.SLASH), Constants.SLASH);
+        for (int i = 0; i < urlPieces.length - 1; i++) {
+            if (StringUtils.isNotBlank(urlPieces[i])) {
+
+                fullURL = StringUtils.strip(fullURL + Constants.SLASH + StringUtils.strip(urlPieces[i], Constants.SLASH), Constants.SLASH);
+
             }
         }
+        fullURL = fullURL + Constants.SLASH + StringUtils.stripStart(urlPieces[urlPieces.length - 1], Constants.SLASH);
 
         return fullURL;
     }

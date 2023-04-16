@@ -1,0 +1,7 @@
+ShaniDashboardPlugin:
+  releaseName: MyCucumberTestRelease1
+  build: MyCucumberTestBuild1
+  runName: MyCucumberTestRun1
+  dashboardBaseURL: http://localhost:8000
+  dashboardUserName: admin
+  dashboardUserPassword: password

@@ -232,6 +232,10 @@ public class KartaConfiguration implements Serializable {
         }
 
         Class<?> dependencyInjectorClass = Class.forName(dependencyInjector);
+
+        if (dependencyInjectorClass == KartaDependencyInjector.class) {
+            return KartaDependencyInjector.getInstance();
+        }
         return (DependencyInjector) dependencyInjectorClass.getDeclaredConstructor().newInstance();
     }
 

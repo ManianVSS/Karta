@@ -36,7 +36,7 @@ public class KartaCucumberObjectFactory implements ObjectFactory {
     @Override
     public synchronized void start() {
         if (kartaDependencyInjector == null) {
-            kartaDependencyInjector = new KartaDependencyInjector();
+            kartaDependencyInjector = KartaDependencyInjector.getInstance();
             kartaDependencyInjector.mergePropertiesFiles(PropertyUtils.getSystemOrEnvProperty("PROPERTIES_FOLDER", PROPERTIES_FOLDER));
             ArrayList<String> scanPackages = ParserUtils.convertValue(DataFormat.YAML, kartaDependencyInjector.configurator.getPropertyValue("KartaDependencyInjector", "configurationScanPackages"), arrayListOfStringType);
             if (scanPackages != null) {

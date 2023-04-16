@@ -19,9 +19,9 @@ import java.util.function.Consumer;
 @Log4j2
 public class KartaDependencyInjector implements DependencyInjector {
 
-    public final Configurator configurator = new Configurator();
-    public final BeanRegistry beanRegistry = new BeanRegistry();
-    private final List<Class<?>> configuredBeanClasses = Collections.synchronizedList(new ArrayList<>());
+    public Configurator configurator;
+    public BeanRegistry beanRegistry;
+    private List<Class<?>> configuredBeanClasses;
     private final ObjectMethodConsumer callObjectInitializer = (object, method) -> {
         try {
             method.invoke(object);
@@ -68,11 +68,29 @@ public class KartaDependencyInjector implements DependencyInjector {
 
     };
 
+    public static KartaDependencyInjector instance;
+
+    public synchronized static KartaDependencyInjector getInstance() {
+        if (instance == null) {
+            instance = new KartaDependencyInjector();
+        }
+        return instance;
+    }
+
     public KartaDependencyInjector() {
-        beanRegistry.add(this);
-        beanRegistry.add(DependencyInjector.class.getName(), this);
-        beanRegistry.add(beanRegistry);
-        beanRegistry.add(configurator);
+        if (instance == null) {
+            beanRegistry = new BeanRegistry();
+            configurator = new Configurator();
+            configuredBeanClasses = Collections.synchronizedList(new ArrayList<>());
+            beanRegistry.add(this);
+            beanRegistry.add(DependencyInjector.class.getName(), this);
+            beanRegistry.add(beanRegistry);
+            beanRegistry.add(configurator);
+        } else {
+            beanRegistry = instance.beanRegistry;
+            configurator = instance.configurator;
+            configuredBeanClasses = instance.configuredBeanClasses;
+        }
     }
 
     @Override
