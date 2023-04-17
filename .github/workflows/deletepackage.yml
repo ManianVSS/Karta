@@ -1,4 +1,4 @@
-# This is the delete old package workflow that is manually triggered
+# This is the "delete old package" workflow that is manually triggered
 
 name: Delete old package
 
@@ -8,14 +8,6 @@ on:
   workflow_dispatch:
     # Inputs the workflow accepts.
     inputs:
-      #      packageName:
-      #        # Friendly description to be shown in the UI instead of 'name'
-      #        description: "Package to delete"
-      #        # Default value if no value is explicitly provided
-      #        default: "org.mvss.karta.runtime"
-      #        # Input has to be provided for the workflow to run
-      #        required: true
-      #
       numberOfOldVersionsToDelete:
         # Friendly description to be shown in the UI instead of 'name'
         description: "Number of old package versions to delete"
@@ -34,29 +26,29 @@ jobs:
         uses: actions/delete-package-versions@v3
         with:
           package-name: org.mvss.karta.runtime
-          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+          num-old-versions-to-delete: ${{ github.event.inputs.numberOfOldVersionsToDelete }}
       - name: Delete packages
         uses: actions/delete-package-versions@v3
         with:
           package-name: org.mvss.karta.samples
-          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+          num-old-versions-to-delete: ${{ github.event.inputs.numberOfOldVersionsToDelete }}
       - name: Delete packages
         uses: actions/delete-package-versions@v3
         with:
           package-name: org.mvss.karta.server
-          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+          num-old-versions-to-delete: ${{ github.event.inputs.numberOfOldVersionsToDelete }}
       - name: Delete packages
         uses: actions/delete-package-versions@v3
         with:
           package-name: org.mvss.karta.framework
-          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+          num-old-versions-to-delete: ${{ github.event.inputs.numberOfOldVersionsToDelete }}
       - name: Delete packages
         uses: actions/delete-package-versions@v3
         with:
           package-name: org.mvss.karta.dependencyinjection
-          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+          num-old-versions-to-delete: ${{ github.event.inputs.numberOfOldVersionsToDelete }}
       - name: Delete packages
         uses: actions/delete-package-versions@v3
         with:
           package-name: org.mvss.karta
-          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+          num-old-versions-to-delete: ${{ github.event.inputs.numberOfOldVersionsToDelete }}

@@ -27,32 +27,32 @@ jobs:
         uses: actions/delete-package-versions@v3
         with:
           package-name: org.mvss.karta.runtime
-          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+          num-old-versions-to-delete: ${{ github.event.inputs.numberOfOldVersionsToDelete }}
       - name: Delete packages
         uses: actions/delete-package-versions@v3
         with:
           package-name: org.mvss.karta.samples
-          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+          num-old-versions-to-delete: ${{ github.event.inputs.numberOfOldVersionsToDelete }}
       - name: Delete packages
         uses: actions/delete-package-versions@v3
         with:
           package-name: org.mvss.karta.server
-          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+          num-old-versions-to-delete: ${{ github.event.inputs.numberOfOldVersionsToDelete }}
       - name: Delete packages
         uses: actions/delete-package-versions@v3
         with:
           package-name: org.mvss.karta.framework
-          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+          num-old-versions-to-delete: ${{ github.event.inputs.numberOfOldVersionsToDelete }}
       - name: Delete packages
         uses: actions/delete-package-versions@v3
         with:
           package-name: org.mvss.karta.dependencyinjection
-          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+          num-old-versions-to-delete: ${{ github.event.inputs.numberOfOldVersionsToDelete }}
       - name: Delete packages
         uses: actions/delete-package-versions@v3
         with:
           package-name: org.mvss.karta
-          num-old-versions-to-delete: ${{ github.event.inputs.packageName }}
+          num-old-versions-to-delete: ${{ github.event.inputs.numberOfOldVersionsToDelete }}
 
   build:
     runs-on: ubuntu-latest
