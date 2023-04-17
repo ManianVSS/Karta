@@ -1,8 +1,10 @@
 package org.mvss.karta.framework.utils;
 
 import com.jcraft.jsch.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.framework.configuration.ProxyOptions;
 
@@ -14,6 +16,9 @@ import java.util.concurrent.Future;
 
 @Log4j2
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @SuppressWarnings("unused")
 public class SSHUtil implements AutoCloseable {
     public static final String EXEC = "exec";
@@ -24,75 +29,57 @@ public class SSHUtil implements AutoCloseable {
     public static final String SCP_F = "scp -f ";
     public static final String STRICT_HOST_KEY_CHECKING = "StrictHostKeyChecking";
     public static final String NO = "no";
+    public static final String LOCALHOST = "127.0.0.1";
+
 
     protected transient JSch jsch = new JSch();
     protected transient Session session = null;
 
+    protected SSHUtil jumpSSHUtil;
+    protected int currentLocalJumpSSHPort;
+
     protected String user;
     protected String pass;
-    protected String host;
-    protected int port;
+
+    @Builder.Default
+    protected String host = LOCALHOST;
+
+    @Builder.Default
+    protected int port = 22;
 
     protected ProxyOptions proxyOptions;
 
-    public SSHUtil() {
-
-    }
-
-    public SSHUtil(String user, String pass, String host) throws JSchException {
-        this(user, pass, host, 22);
-    }
-
-    public SSHUtil(String user, String pass, String host, int port) throws JSchException {
-        init(user, pass, host, port, null);
-    }
-
-    @Builder
-    public SSHUtil(String user, String pass, String host, int port, ProxyOptions proxyOptions) throws JSchException {
-        init(user, pass, host, port, proxyOptions);
-    }
-
-    /**
-     * Internal method for checking acknowledgement
-     */
-    private static int checkAck(InputStream in) throws Exception {
-        int b = in.read();
-
-        if (b == 1 || b == 2) {
-            StringBuilder sb = new StringBuilder();
-            int c;
-            do {
-                c = in.read();
-                sb.append((char) c);
-            }
-            while (c != '\n');
-
-            throw new Exception("Scp error: " + sb);
-        }
-
-        return b;
-    }
-
     public void connect() throws JSchException {
-        if ((session == null) || !session.isConnected()) {
-            session = jsch.getSession(user, host, port);
-            UserInfo ui = new ByPassUserInfo(pass);
-            session.setUserInfo(ui);
 
-            Properties config = new Properties();
-            config.setProperty(STRICT_HOST_KEY_CHECKING, NO);
-            session.setConfig(config);
-
-            if (proxyOptions != null) {
-                ProxyHTTP proxyHTTP = new ProxyHTTP(proxyOptions.getHost(), proxyOptions.getPort());
-                if (proxyOptions.isProxyAuthentication()) {
-                    proxyHTTP.setUserPasswd(proxyOptions.getUsername(), proxyOptions.getPassword());
-                }
-                session.setProxy(proxyHTTP);
+        if ((session == null) || (!session.isConnected())) {
+            if (jumpSSHUtil != null) {
+                jumpSSHUtil.connect();
+                currentLocalJumpSSHPort = jumpSSHUtil.session.setPortForwardingL(0, this.host, this.port);
+                session = jsch.getSession(user, LOCALHOST, currentLocalJumpSSHPort);
+            } else {
+                session = jsch.getSession(user, host, port);
             }
-
-            session.connect();
+            if ((session == null) || (!session.isConnected())) {
+                throw new JSchException("Session is null or not connected even after initialization");
+            }
         }
+
+        UserInfo ui = new ByPassUserInfo(pass);
+        session.setUserInfo(ui);
+
+        Properties config = new Properties();
+        config.setProperty(STRICT_HOST_KEY_CHECKING, NO);
+        session.setConfig(config);
+
+        if (proxyOptions != null) {
+            ProxyHTTP proxyHTTP = new ProxyHTTP(proxyOptions.getHost(), proxyOptions.getPort());
+            if (proxyOptions.isProxyAuthentication()) {
+                proxyHTTP.setUserPasswd(proxyOptions.getUsername(), proxyOptions.getPassword());
+            }
+            session.setProxy(proxyHTTP);
+        }
+
+        session.connect();
     }
 
     protected void init(String user, String pass, String host, int port, ProxyOptions proxyOptions) throws JSchException {
@@ -111,6 +98,26 @@ public class SSHUtil implements AutoCloseable {
             session.disconnect();
             session = null;
         }
+    }
+
+    /**
+     * Internal method for checking acknowledgement
+     */
+    private static int checkAck(InputStream in) throws Exception {
+        int b = in.read();
+
+        if (b == 1 || b == 2) {
+            StringBuilder sb = new StringBuilder();
+            int c;
+            do {
+                c = in.read();
+                sb.append((char) c);
+            } while (c != '\n');
+
+            throw new Exception("Scp error: " + sb);
+        }
+
+        return b;
     }
 
     public int executeCommand(String command) throws Exception {
@@ -312,8 +319,7 @@ public class SSHUtil implements AutoCloseable {
                         // error
                         break;
                     }
-                    if (buf[0] == ' ')
-                        break;
+                    if (buf[0] == ' ') break;
                     fileSize = fileSize * 10L + buf[0] - '0';
                 }
 
@@ -334,10 +340,8 @@ public class SSHUtil implements AutoCloseable {
                 fos = new FileOutputStream(prefix == null ? localFile : prefix + file);
                 int foo;
                 while (true) {
-                    if (buf.length < fileSize)
-                        foo = buf.length;
-                    else
-                        foo = (int) fileSize;
+                    if (buf.length < fileSize) foo = buf.length;
+                    else foo = (int) fileSize;
                     foo = in.read(buf, 0, foo);
                     if (foo < 0) {
                         // error
@@ -345,8 +349,7 @@ public class SSHUtil implements AutoCloseable {
                     }
                     fos.write(buf, 0, foo);
                     fileSize -= foo;
-                    if (fileSize == 0L)
-                        break;
+                    if (fileSize == 0L) break;
                 }
                 fos.close();
                 fos = null;
@@ -450,8 +453,7 @@ public class SSHUtil implements AutoCloseable {
         byte[] buf = new byte[1024];
         while (true) {
             int len = fis.read(buf, 0, buf.length);
-            if (len <= 0)
-                break;
+            if (len <= 0) break;
             out.write(buf, 0, len); // out.flush();
         }
         fis.close();
@@ -523,8 +525,7 @@ public class SSHUtil implements AutoCloseable {
             byte[] buf = new byte[1024];
             while (true) {
                 int len = fis.read(buf, 0, buf.length);
-                if (len <= 0)
-                    break;
+                if (len <= 0) break;
                 out.write(buf, 0, len); // out.flush();
             }
             fis.close();
@@ -541,8 +542,7 @@ public class SSHUtil implements AutoCloseable {
         } catch (Exception e) {
             log.info(e);
             try {
-                if (fis != null)
-                    fis.close();
+                if (fis != null) fis.close();
             } catch (Exception ignored) {
             }
         }
@@ -589,8 +589,7 @@ public class SSHUtil implements AutoCloseable {
             byte[] buf = new byte[1024];
             while (true) {
                 int len = is.read(buf, 0, buf.length);
-                if (len <= 0)
-                    break;
+                if (len <= 0) break;
                 out.write(buf, 0, len); // out.flush();
             }
             is.close();
@@ -607,8 +606,7 @@ public class SSHUtil implements AutoCloseable {
         } catch (Exception e) {
             log.info(e);
             try {
-                if (is != null)
-                    is.close();
+                if (is != null) is.close();
             } catch (Exception ignored) {
             }
         }
