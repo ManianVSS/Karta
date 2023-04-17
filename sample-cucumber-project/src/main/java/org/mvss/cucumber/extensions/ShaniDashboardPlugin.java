@@ -10,6 +10,7 @@ import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 import org.mvss.karta.framework.restclient.*;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +32,8 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     public static final String STATUS = "status";
     public static final String PASS = "PASS";
     public static final String FAILED = "FAILED";
+    public static final String START_TIME = "start_time";
+    public static final String END_TIME = "end_time";
 
     @PropertyMapping(group = PLUGIN_NAME)
     private String releaseName;
@@ -62,7 +65,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
         apacheRestClient = new ApacheRestClient(dashboardBaseURL, true);
     }
 
-    private ApacheRestClient apacheRestClient;
+    private final ApacheRestClient apacheRestClient;
 
     @Override
     public void setEventPublisher(EventPublisher publisher) {
@@ -74,6 +77,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
         publisher.registerHandlerFor(TestCaseFinished.class, this::handleTestCaseFinished);
     }
 
+    @SuppressWarnings("unchecked")
     private HashMap<String, Serializable> findEntity(String subUrl, HashMap<String, Serializable> params) {
         try (RestResponse restResponse = apacheRestClient.get(ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).basicAuth(dashboardUserName, dashboardUserPassword).params(params).build(), subUrl)) {
             if (restResponse.getStatusCode() != 200) {
@@ -112,7 +116,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     }
 
     private HashMap<String, Serializable> updateEntity(String subUrl, HashMap<String, Serializable> entity) {
-        try (RestResponse restResponse = apacheRestClient.put(ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).basicAuth(dashboardUserName, dashboardUserPassword).body(entity).build(), subUrl)) {
+        try (RestResponse restResponse = apacheRestClient.patch(ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).basicAuth(dashboardUserName, dashboardUserPassword).body(entity).build(), subUrl)) {
             if (restResponse.getStatusCode() != 200) {
                 return null;
             }
@@ -130,6 +134,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
         return (Integer) createdEntity.get("id");
     }
 
+    @SuppressWarnings("SameParameterValue")
     private HashMap<String, Serializable> getExistingOrCreateNewEntity(String subUrl, HashMap<String, Serializable> params, HashMap<String, Serializable> entity) {
         HashMap<String, Serializable> foundEntityId = findEntity(subUrl, params);
         return (foundEntityId == null) ? createEntity(subUrl, entity) : foundEntityId;
@@ -159,7 +164,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
         }});
     }
 
-    private HashMap<String, Serializable> getOrCreateTestCase(TestCase testCase) {
+    private HashMap<String, Serializable> getOrCreateTestCase(TestCase testCase, Instant startTime) {
         String name = testCase.getName();
         return getExistingOrCreateNewEntity(EXECUTION_API_EXECUTION_RECORDS, new HashMap<>() {{
             put(RUN, runId);
@@ -167,18 +172,19 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
         }}, new HashMap<>() {{
             put(RUN, runId);
             put(NAME, name);
+            put(START_TIME, startTime);
         }});
     }
 
-    private Integer getOrCreateTestCaseId(TestCase testCase) {
-        return (Integer) getOrCreateTestCase(testCase).get("id");
+    private Integer getOrCreateTestCaseId(TestCase testCase, Instant startTime) {
+        return (Integer) getOrCreateTestCase(testCase, startTime).get("id");
     }
 
     private final ConcurrentHashMap<TestCase, Integer> testCaseMap = new ConcurrentHashMap<>();
 
     private void handleTestCaseStarted(TestCaseStarted testCaseStarted) {
         TestCase testCase = testCaseStarted.getTestCase();
-        Integer executionRecordId = getOrCreateTestCaseId(testCase);
+        Integer executionRecordId = getOrCreateTestCaseId(testCase, testCaseStarted.getInstant());
         testCaseMap.put(testCase, executionRecordId);
         log.info("Execution record created " + executionRecordId + " for test case " + testCase.getName());
     }
@@ -186,8 +192,9 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     private void handleTestCaseFinished(TestCaseFinished testCaseFinished) {
         TestCase testCase = testCaseFinished.getTestCase();
         Integer executionRecordId = testCaseMap.get(testCase);
-        HashMap<String, Serializable> executionRecord = getOrCreateTestCase(testCase);
+        HashMap<String, Serializable> executionRecord = getOrCreateTestCase(testCase, testCaseFinished.getInstant());
         executionRecord.put(STATUS, testCaseFinished.getResult().getStatus() == Status.PASSED ? PASS : FAILED);
+        executionRecord.put(END_TIME, testCaseFinished.getInstant());
         testCaseMap.put(testCase, executionRecordId);
         executionRecord = updateEntity(EXECUTION_API_EXECUTION_RECORDS + executionRecordId + "/", executionRecord);
         log.info("Execution record updated " + executionRecord);

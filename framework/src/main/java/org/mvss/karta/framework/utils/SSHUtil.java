@@ -1,10 +1,8 @@
 package org.mvss.karta.framework.utils;
 
 import com.jcraft.jsch.*;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.framework.configuration.ProxyOptions;
 
@@ -16,9 +14,6 @@ import java.util.concurrent.Future;
 
 @Log4j2
 @Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @SuppressWarnings("unused")
 public class SSHUtil implements AutoCloseable {
     public static final String EXEC = "exec";
@@ -49,9 +44,30 @@ public class SSHUtil implements AutoCloseable {
 
     protected ProxyOptions proxyOptions;
 
+    public SSHUtil() {
+
+    }
+
+    public SSHUtil(String user, String pass, String host) throws JSchException {
+        this(user, pass, host, 22);
+    }
+
+    public SSHUtil(String user, String pass, String host, int port) throws JSchException {
+        init(user, pass, host, port);
+    }
+
+    public SSHUtil(String user, String pass, String host, int port, SSHUtil jumpSSHUtil) throws JSchException {
+        init(user, pass, host, port, jumpSSHUtil);
+    }
+
+    @Builder
+    public SSHUtil(String user, String pass, String host, int port, SSHUtil jumpSSHUtil, ProxyOptions proxyOptions) throws JSchException {
+        init(user, pass, host, port, jumpSSHUtil, proxyOptions);
+    }
+
     public void connect() throws JSchException {
 
-        if ((session == null) || (!session.isConnected())) {
+        if (session == null) {
             if (jumpSSHUtil != null) {
                 jumpSSHUtil.connect();
                 currentLocalJumpSSHPort = jumpSSHUtil.session.setPortForwardingL(0, this.host, this.port);
@@ -64,38 +80,56 @@ public class SSHUtil implements AutoCloseable {
             }
         }
 
-        UserInfo ui = new ByPassUserInfo(pass);
-        session.setUserInfo(ui);
+        if (!session.isConnected()) {
+            UserInfo ui = new ByPassUserInfo(pass);
+            session.setUserInfo(ui);
 
-        Properties config = new Properties();
-        config.setProperty(STRICT_HOST_KEY_CHECKING, NO);
-        session.setConfig(config);
+            Properties config = new Properties();
+            config.setProperty(STRICT_HOST_KEY_CHECKING, NO);
+            session.setConfig(config);
 
-        if (proxyOptions != null) {
-            ProxyHTTP proxyHTTP = new ProxyHTTP(proxyOptions.getHost(), proxyOptions.getPort());
-            if (proxyOptions.isProxyAuthentication()) {
-                proxyHTTP.setUserPasswd(proxyOptions.getUsername(), proxyOptions.getPassword());
+            if (proxyOptions != null) {
+                ProxyHTTP proxyHTTP = new ProxyHTTP(proxyOptions.getHost(), proxyOptions.getPort());
+                if (proxyOptions.isProxyAuthentication()) {
+                    proxyHTTP.setUserPasswd(proxyOptions.getUsername(), proxyOptions.getPassword());
+                }
+                session.setProxy(proxyHTTP);
             }
-            session.setProxy(proxyHTTP);
-        }
 
-        session.connect();
+            session.connect();
+        }
     }
 
-    protected void init(String user, String pass, String host, int port, ProxyOptions proxyOptions) throws JSchException {
+    public synchronized void reconnect() throws JSchException {
+        jumpSSHUtil.reconnect();
+        session = null;
+        connect();
+    }
+
+    protected void init(String user, String pass, String host, int port, SSHUtil jumpSSHUtil, ProxyOptions proxyOptions) throws JSchException {
         this.user = user;
         this.pass = pass;
         this.host = host;
         this.port = port;
+        this.jumpSSHUtil = jumpSSHUtil;
         this.proxyOptions = proxyOptions;
+        // Lazy connect: Need not connect at init connect();
+    }
 
-        connect();
+    protected void init(String user, String pass, String host, int port, SSHUtil jumpSSHUtil) throws JSchException {
+        init(user, pass, host, port, jumpSSHUtil, null);
+    }
+
+    protected void init(String user, String pass, String host, int port) throws JSchException {
+        init(user, pass, host, port, null, null);
     }
 
     @Override
     public void close() {
-        if ((session != null) && (session.isConnected())) {
-            session.disconnect();
+        if (session != null) {
+            if (session.isConnected()) {
+                session.disconnect();
+            }
             session = null;
         }
     }
@@ -130,6 +164,7 @@ public class SSHUtil implements AutoCloseable {
     }
 
     public int executeCommand(String command, PrintStream outputStream) throws Exception {
+        connect();
         int exitCode;
         Channel channel = session.openChannel(EXEC);
         ((ChannelExec) channel).setCommand(command);
@@ -204,6 +239,7 @@ public class SSHUtil implements AutoCloseable {
     }
 
     public int executeSudoCommand(String command, PrintStream outputStream) throws Exception {
+        connect();
         int exitCode;
         Channel channel = session.openChannel(EXEC);
         ((ChannelExec) channel).setCommand(SUDO_S_P + command);
