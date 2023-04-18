@@ -2,6 +2,7 @@ package org.mvss.karta.framework.restclient;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.http.HttpEntity;
@@ -24,6 +25,7 @@ import java.util.Map.Entry;
 @Log4j2
 @Getter
 @Setter
+@ToString
 public class ApacheRestRequest implements RestRequest {
     private static final long serialVersionUID = 1L;
 
