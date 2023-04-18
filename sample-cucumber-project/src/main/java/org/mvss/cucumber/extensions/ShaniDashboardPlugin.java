@@ -75,13 +75,16 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
 
         publisher.registerHandlerFor(TestCaseStarted.class, this::handleTestCaseStarted);
         publisher.registerHandlerFor(TestCaseFinished.class, this::handleTestCaseFinished);
+
+        publisher.registerHandlerFor(TestRunFinished.class, this::handleTestRunFinished);
     }
 
     @SuppressWarnings("unchecked")
-    private HashMap<String, Serializable> findEntity(String subUrl, HashMap<String, Serializable> params) {
-        try (RestResponse restResponse = apacheRestClient.get(ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).basicAuth(dashboardUserName, dashboardUserPassword).params(params).build(), subUrl)) {
+    private HashMap<String, Serializable> findEntity(String subUrl, HashMap<String, Serializable> params) throws Exception {
+        RestRequest request = ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).basicAuth(dashboardUserName, dashboardUserPassword).params(params).build();
+        try (RestResponse restResponse = apacheRestClient.get(request, subUrl)) {
             if (restResponse.getStatusCode() != 200) {
-                return null;
+                throw new Exception("API Request GET failed: " + subUrl + " with params " + params + "\nResponse is: " + restResponse);
             }
             HashMap<String, Serializable> responseBody = restResponse.getBodyAs(ParserUtils.genericHashMapObjectType);
             int count = (int) responseBody.get("count");
@@ -90,12 +93,10 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
             } else {
                 return ParserUtils.getObjectMapper().convertValue(((ArrayList<Serializable>) responseBody.get("results")).get(0), ParserUtils.genericHashMapObjectType);
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 
-    private Integer findEntityId(String subUrl, HashMap<String, Serializable> params) {
+    private Integer findEntityId(String subUrl, HashMap<String, Serializable> params) throws Exception {
         HashMap<String, Serializable> entity = findEntity(subUrl, params);
         if (entity == null) {
             return null;
@@ -103,30 +104,27 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
         return (Integer) entity.get("id");
     }
 
-    private HashMap<String, Serializable> createEntity(String subUrl, HashMap<String, Serializable> entity) {
+    private HashMap<String, Serializable> createEntity(String subUrl, HashMap<String, Serializable> entity) throws Exception {
         RestRequest request = ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).basicAuth(dashboardUserName, dashboardUserPassword).body(entity).build();
         try (RestResponse restResponse = apacheRestClient.post(request, subUrl)) {
             if (restResponse.getStatusCode() != 201) {
-                return null;
+                throw new Exception("API Request POST failed: " + subUrl + " with entity " + entity + "\nResponse is: " + restResponse);
             }
             return restResponse.getBodyAs(ParserUtils.genericHashMapObjectType);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 
-    private HashMap<String, Serializable> updateEntity(String subUrl, HashMap<String, Serializable> entity) {
-        try (RestResponse restResponse = apacheRestClient.patch(ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).basicAuth(dashboardUserName, dashboardUserPassword).body(entity).build(), subUrl)) {
+    private HashMap<String, Serializable> updateEntity(String subUrl, HashMap<String, Serializable> entity) throws Exception {
+        RestRequest request = ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).basicAuth(dashboardUserName, dashboardUserPassword).body(entity).build();
+        try (RestResponse restResponse = apacheRestClient.patch(request, subUrl)) {
             if (restResponse.getStatusCode() != 200) {
-                return null;
+                throw new Exception("API Request PATCH failed: " + subUrl + " with entity " + entity + "\nResponse is: " + restResponse);
             }
             return restResponse.getBodyAs(ParserUtils.genericHashMapObjectType);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 
-    private Integer createEntityAndGetId(String subUrl, HashMap<String, Serializable> entity) {
+    private Integer createEntityAndGetId(String subUrl, HashMap<String, Serializable> entity) throws Exception {
         HashMap<String, Serializable> createdEntity = createEntity(subUrl, entity);
         if (createdEntity == null) {
             return null;
@@ -135,26 +133,37 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private HashMap<String, Serializable> getExistingOrCreateNewEntity(String subUrl, HashMap<String, Serializable> params, HashMap<String, Serializable> entity) {
+    private HashMap<String, Serializable> getExistingOrCreateNewEntity(String subUrl, HashMap<String, Serializable> params, HashMap<String, Serializable> entity) throws Exception {
         HashMap<String, Serializable> foundEntityId = findEntity(subUrl, params);
         return (foundEntityId == null) ? createEntity(subUrl, entity) : foundEntityId;
     }
 
-    private Integer getExistingOrCreateNewEntityId(String subUrl, HashMap<String, Serializable> params, HashMap<String, Serializable> entity) {
+    private Integer getExistingOrCreateNewEntityId(String subUrl, HashMap<String, Serializable> params, HashMap<String, Serializable> entity) throws Exception {
         Integer foundEntityId = findEntityId(subUrl, params);
         return (foundEntityId == null) ? createEntityAndGetId(subUrl, entity) : foundEntityId;
     }
 
     private synchronized void handleTestRunStarted(TestRunStarted testRunStarted) {
-        releaseId = getExistingOrCreateNewEntityId(EXECUTION_API_RELEASES, new HashMap<>() {{
-            put(NAME, runName);
-        }}, new HashMap<>() {{
-            put(NAME, runName);
-            put(SUMMARY, runName);
-            put(DESCRIPTION, runName);
-        }});
+        try {
+            releaseId = (Integer) createReleaseIfMissing().get("id");
+            runId = (Integer) createRunIfMissing().get("id");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        runId = getExistingOrCreateNewEntityId(EXECUTION_API_RUNS, new HashMap<>() {{
+    private HashMap<String, Serializable> createReleaseIfMissing() throws Exception {
+        return getExistingOrCreateNewEntity(EXECUTION_API_RELEASES, new HashMap<>() {{
+            put(NAME, releaseName);
+        }}, new HashMap<>() {{
+            put(NAME, releaseName);
+            put(SUMMARY, releaseName);
+            put(DESCRIPTION, releaseName);
+        }});
+    }
+
+    private HashMap<String, Serializable> createRunIfMissing() throws Exception {
+        return getExistingOrCreateNewEntity(EXECUTION_API_RUNS, new HashMap<>() {{
             put(RELEASE, releaseId);
             put(NAME, runName);
         }}, new HashMap<>() {{
@@ -164,7 +173,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
         }});
     }
 
-    private HashMap<String, Serializable> getOrCreateTestCase(TestCase testCase, Instant startTime) {
+    private HashMap<String, Serializable> getOrCreateTestCase(TestCase testCase, Instant startTime) throws Exception {
         String name = testCase.getName();
         return getExistingOrCreateNewEntity(EXECUTION_API_EXECUTION_RECORDS, new HashMap<>() {{
             put(RUN, runId);
@@ -172,31 +181,54 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
         }}, new HashMap<>() {{
             put(RUN, runId);
             put(NAME, name);
-            put(START_TIME, startTime);
+            put(START_TIME, startTime.toString());
         }});
     }
 
-    private Integer getOrCreateTestCaseId(TestCase testCase, Instant startTime) {
+    private Integer getOrCreateTestCaseId(TestCase testCase, Instant startTime) throws Exception {
         return (Integer) getOrCreateTestCase(testCase, startTime).get("id");
     }
 
     private final ConcurrentHashMap<TestCase, Integer> testCaseMap = new ConcurrentHashMap<>();
 
     private void handleTestCaseStarted(TestCaseStarted testCaseStarted) {
-        TestCase testCase = testCaseStarted.getTestCase();
-        Integer executionRecordId = getOrCreateTestCaseId(testCase, testCaseStarted.getInstant());
-        testCaseMap.put(testCase, executionRecordId);
-        log.info("Execution record created " + executionRecordId + " for test case " + testCase.getName());
+        try {
+            TestCase testCase = testCaseStarted.getTestCase();
+            Integer executionRecordId = getOrCreateTestCaseId(testCase, testCaseStarted.getInstant());
+            testCaseMap.put(testCase, executionRecordId);
+            log.info("Execution record created " + executionRecordId + " for test case " + testCase.getName());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void handleTestCaseFinished(TestCaseFinished testCaseFinished) {
-        TestCase testCase = testCaseFinished.getTestCase();
-        Integer executionRecordId = testCaseMap.get(testCase);
-        HashMap<String, Serializable> executionRecord = getOrCreateTestCase(testCase, testCaseFinished.getInstant());
-        executionRecord.put(STATUS, testCaseFinished.getResult().getStatus() == Status.PASSED ? PASS : FAILED);
-        executionRecord.put(END_TIME, testCaseFinished.getInstant());
-        testCaseMap.put(testCase, executionRecordId);
-        executionRecord = updateEntity(EXECUTION_API_EXECUTION_RECORDS + executionRecordId + "/", executionRecord);
-        log.info("Execution record updated " + executionRecord);
+        try {
+            TestCase testCase = testCaseFinished.getTestCase();
+            Integer executionRecordId = testCaseMap.containsKey(testCase) ? testCaseMap.get(testCase) : getOrCreateTestCaseId(testCase, testCaseFinished.getInstant());
+            HashMap<String, Serializable> executionRecord = getOrCreateTestCase(testCase, testCaseFinished.getInstant());
+            executionRecord.put(STATUS, testCaseFinished.getResult().getStatus() == Status.PASSED ? PASS : FAILED);
+            executionRecord.put(END_TIME, testCaseFinished.getInstant().toString());
+            testCaseMap.put(testCase, executionRecordId);
+            executionRecord = updateEntity(EXECUTION_API_EXECUTION_RECORDS + executionRecordId + "/", executionRecord);
+            log.info("Execution record updated " + executionRecord);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public synchronized void handleTestRunFinished(TestRunFinished testRunFinished) {
+        try {
+            releaseId = (Integer) createReleaseIfMissing().get("id");
+            HashMap<String, Serializable> run = createRunIfMissing();
+            runId = (Integer) run.get("id");
+
+            run.put(END_TIME, testRunFinished.getInstant().toString());
+            run = updateEntity(EXECUTION_API_RUNS + runId + "/", run);
+            log.info("Run record updated " + run);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
