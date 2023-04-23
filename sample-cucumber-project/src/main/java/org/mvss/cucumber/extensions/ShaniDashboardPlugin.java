@@ -148,7 +148,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
             releaseId = (Integer) createReleaseIfMissing().get("id");
             runId = (Integer) createRunIfMissing().get("id");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("Exception occurred: ", e);
         }
     }
 
@@ -198,7 +198,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
             testCaseMap.put(testCase, executionRecordId);
             log.info("Execution record created " + executionRecordId + " for test case " + testCase.getName());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("Exception occurred: ", e);
         }
     }
 
@@ -213,7 +213,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
             executionRecord = updateEntity(EXECUTION_API_EXECUTION_RECORDS + executionRecordId + "/", executionRecord);
             log.info("Execution record updated " + executionRecord);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("Exception occurred: ", e);
         }
     }
 
@@ -228,7 +228,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
             log.info("Run record updated " + run);
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("Exception occurred: ", e);
         }
     }
 }
