@@ -34,6 +34,9 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     public static final String FAILED = "FAILED";
     public static final String START_TIME = "start_time";
     public static final String END_TIME = "end_time";
+    public static final String ID = "id";
+    public static final String SLASH = "/";
+    public static final String EXCEPTION_OCCURRED = "Exception occurred: ";
 
     @PropertyMapping(group = PLUGIN_NAME)
     private String releaseName;
@@ -101,7 +104,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
         if (entity == null) {
             return null;
         }
-        return (Integer) entity.get("id");
+        return (Integer) entity.get(ID);
     }
 
     private HashMap<String, Serializable> createEntity(String subUrl, HashMap<String, Serializable> entity) throws Exception {
@@ -129,7 +132,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
         if (createdEntity == null) {
             return null;
         }
-        return (Integer) createdEntity.get("id");
+        return (Integer) createdEntity.get(ID);
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -145,10 +148,10 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
 
     private synchronized void handleTestRunStarted(TestRunStarted testRunStarted) {
         try {
-            releaseId = (Integer) createReleaseIfMissing().get("id");
-            runId = (Integer) createRunIfMissing().get("id");
+            releaseId = (Integer) createReleaseIfMissing().get(ID);
+            runId = (Integer) createRunIfMissing().get(ID);
         } catch (Exception e) {
-            log.error("Exception occurred: ", e);
+            log.error(EXCEPTION_OCCURRED, e);
         }
     }
 
@@ -186,7 +189,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     }
 
     private Integer getOrCreateTestCaseId(TestCase testCase, Instant startTime) throws Exception {
-        return (Integer) getOrCreateTestCase(testCase, startTime).get("id");
+        return (Integer) getOrCreateTestCase(testCase, startTime).get(ID);
     }
 
     private final ConcurrentHashMap<TestCase, Integer> testCaseMap = new ConcurrentHashMap<>();
@@ -198,7 +201,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
             testCaseMap.put(testCase, executionRecordId);
             log.info("Execution record created " + executionRecordId + " for test case " + testCase.getName());
         } catch (Exception e) {
-            log.error("Exception occurred: ", e);
+            log.error(EXCEPTION_OCCURRED, e);
         }
     }
 
@@ -210,25 +213,25 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
             executionRecord.put(STATUS, testCaseFinished.getResult().getStatus() == Status.PASSED ? PASS : FAILED);
             executionRecord.put(END_TIME, testCaseFinished.getInstant().toString());
             testCaseMap.put(testCase, executionRecordId);
-            executionRecord = updateEntity(EXECUTION_API_EXECUTION_RECORDS + executionRecordId + "/", executionRecord);
+            executionRecord = updateEntity(EXECUTION_API_EXECUTION_RECORDS + executionRecordId + SLASH, executionRecord);
             log.info("Execution record updated " + executionRecord);
         } catch (Exception e) {
-            log.error("Exception occurred: ", e);
+            log.error(EXCEPTION_OCCURRED, e);
         }
     }
 
     public synchronized void handleTestRunFinished(TestRunFinished testRunFinished) {
         try {
-            releaseId = (Integer) createReleaseIfMissing().get("id");
+            releaseId = (Integer) createReleaseIfMissing().get(ID);
             HashMap<String, Serializable> run = createRunIfMissing();
-            runId = (Integer) run.get("id");
+            runId = (Integer) run.get(ID);
 
             run.put(END_TIME, testRunFinished.getInstant().toString());
-            run = updateEntity(EXECUTION_API_RUNS + runId + "/", run);
+            run = updateEntity(EXECUTION_API_RUNS + runId + SLASH, run);
             log.info("Run record updated " + run);
 
         } catch (Exception e) {
-            log.error("Exception occurred: ", e);
+            log.error(EXCEPTION_OCCURRED, e);
         }
     }
 }

@@ -9,18 +9,28 @@ pluginsDirectories:
 enabledPlugins:
   - Kriya
   - DataFilesTestDataSource
+  - ObjectGenTestDataSource
   - LoggingTestEventListener
-  - HTMLReportTestEventListener
   - BeanShellStepRunner
+  - JythonStepRunner
+  - Gherkin
+  - CSVTestDataSourcePlugin
+  - GroovyStepRunner
+  - XlangStepRunner
 
 ### The default feature source parser plugin name
-defaultFeatureSourceParserPlugin: Kriya
+defaultFeatureSourceParsers:
+  - Kriya
+  - Gherkin
 ### The default step runner plugin name
-defaultStepRunnerPlugins:
+defaultStepRunners:
   - Kriya
   - BeanShellStepRunner
+  - JythonStepRunner
+  - GroovyStepRunner
+  - XlangStepRunner
 ### The default list of test data source plugin name
-defaultTestDataSourcePlugins:
+defaultTestDataSources:
   - DataFilesTestDataSource
 
 ### The list of property files to load properties from (YAML/JSON/XML based on file extention)

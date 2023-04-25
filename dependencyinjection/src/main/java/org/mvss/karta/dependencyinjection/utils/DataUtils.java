@@ -6,6 +6,7 @@ import org.mvss.karta.dependencyinjection.interfaces.Lookup;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 /**
@@ -381,5 +382,17 @@ public class DataUtils {
         List<Object> returnValue = Arrays.asList(values);
         returnValue.removeIf(Objects::isNull);
         return returnValue.toArray();
+    }
+
+    /**
+     * Create a shallow clone of a ConcurrentHashMap
+     */
+    public static <K, V> ConcurrentHashMap<K, V> cloneConcurrentMap(Map<K, V> source) {
+        ConcurrentHashMap<K, V> clone = new ConcurrentHashMap<>();
+
+        if (source != null) {
+            clone.putAll(source);
+        }
+        return clone;
     }
 }

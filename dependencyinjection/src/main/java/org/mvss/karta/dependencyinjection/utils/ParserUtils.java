@@ -10,6 +10,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.Getter;
 import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.dependencyinjection.Constants;
 import org.mvss.karta.dependencyinjection.enums.DataFormat;
 
@@ -43,6 +44,8 @@ public class ParserUtils {
 
     @Getter
     private static final BeanUtilsBean nullAwareBeanUtils = new NullAwareBeanUtilsBean();
+
+    public static final String[] YAML_STR_TO_ESCAPE = {",", ":", "&", "*", "?", "|", ">", "%", "@"};
 
     static {
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
@@ -185,4 +188,15 @@ public class ParserUtils {
         }
     }
 
+    public static <T> T readValue(String content, Class<T> valueType) throws JsonProcessingException {
+
+        String contentTrim = content.trim();
+
+        if (StringUtils.startsWithAny(contentTrim, YAML_STR_TO_ESCAPE)
+                || (contentTrim.startsWith("-") && !RegexUtil.isNumeric(contentTrim))) {
+            return yamlObjectMapper.readValue("\"" + content + "\"", valueType);
+        }
+
+        return yamlObjectMapper.readValue(content, valueType);
+    }
 }
