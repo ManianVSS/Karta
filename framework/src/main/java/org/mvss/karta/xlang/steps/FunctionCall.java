@@ -24,8 +24,6 @@ public class FunctionCall extends Step {
 
     @Override
     public Object execute(Runner runner, Scope scope) throws Throwable {
-        System.out.println("Function call: " + this);
-
         if (!scope.getFunctions().containsKey(name)) {
             throw new RuntimeException("Could not find function named: " + name);
         }

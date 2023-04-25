@@ -27,17 +27,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Runner implements AutoCloseable {
 
-    public static final String STEP_MAPPING_XML = "StepMapping.xml";
-
     public static final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
 
     static {
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     }
 
+    @Getter
     private final HashMap<String, Class<? extends Step>> stepDefMapping = new HashMap<>();
 
-    public static final ConcurrentHashMap<String, Class<?>> typeMapping = new ConcurrentHashMap<>();
+    @Getter
+    public final ConcurrentHashMap<String, Class<?>> typeMapping = new ConcurrentHashMap<>();
 
     @Getter
     private final Scope scope;
@@ -48,6 +48,8 @@ public class Runner implements AutoCloseable {
     public Runner() {
 
         //Built-ins
+        stepDefMapping.put("stepDef", StepDefinition.class);
+        stepDefMapping.put("typeDef", TypeDefinition.class);
         stepDefMapping.put("var", VariableDefinition.class);
         stepDefMapping.put("func", FunctionDefinition.class);
         stepDefMapping.put("call", FunctionCall.class);
@@ -91,23 +93,42 @@ public class Runner implements AutoCloseable {
         typeMapping.put("string array", String[].class);
 
         try {
-            String mappingFileContents = ClassPathLoaderUtils.readAllText(STEP_MAPPING_XML);
-            //noinspection unchecked
-            HashMap<String, Serializable> stepDefImplNameMapping = (HashMap<String, Serializable>) XMLParser.readObject(mappingFileContents);
-
-            for (String key : stepDefImplNameMapping.keySet()) {
-
-                if (stepDefMapping.containsKey(key)) {
-                    throw new RuntimeException("Step definition already mapped for: " + key + " to " + stepDefMapping.get(key).getCanonicalName());
-                }
-
-                String value = (String) stepDefImplNameMapping.get(key);
-                //noinspection unchecked
-                stepDefMapping.put(key, (Class<? extends Step>) Class.forName(value));
-            }
             scope = new Scope();
         } catch (Throwable e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void importStepDefMappingFromFile(String stepDefinitionMappingFileName) throws Exception {
+        String mappingFileContents = ClassPathLoaderUtils.readAllText(stepDefinitionMappingFileName);
+        //noinspection unchecked
+        HashMap<String, Serializable> stepDefImplNameMapping = (HashMap<String, Serializable>) XMLParser.readObject(mappingFileContents);
+
+        for (String key : stepDefImplNameMapping.keySet()) {
+
+            if (stepDefMapping.containsKey(key)) {
+                throw new RuntimeException("Step definition already mapped for: " + key + " to " + stepDefMapping.get(key).getCanonicalName());
+            }
+
+            String value = (String) stepDefImplNameMapping.get(key);
+            //noinspection unchecked
+            stepDefMapping.put(key, (Class<? extends Step>) Class.forName(value));
+        }
+    }
+
+    public void importTypeDefMappingFromFile(String typeDefinitionMappingFileName) throws Exception {
+        String mappingFileContents = ClassPathLoaderUtils.readAllText(typeDefinitionMappingFileName);
+        //noinspection unchecked
+        HashMap<String, Serializable> typeDefImplNameMapping = (HashMap<String, Serializable>) XMLParser.readObject(mappingFileContents);
+
+        for (String key : typeDefImplNameMapping.keySet()) {
+
+            if (typeMapping.containsKey(key)) {
+                throw new RuntimeException("Type definition already mapped for: " + key + " to " + typeMapping.get(key).getCanonicalName());
+            }
+
+            String value = (String) typeDefImplNameMapping.get(key);
+            typeMapping.put(key, Class.forName(value));
         }
     }
 
@@ -180,20 +201,22 @@ public class Runner implements AutoCloseable {
     }
 
     public Object run(List<Step> steps, Scope scope) throws Throwable {
-        ArrayList<Object> listOfObjects = new ArrayList<>();
+        Object returnValue = null;
         try {
 
             for (Step step : steps) {
-                listOfObjects.add(step.execute(this, scope));
+                Object stepReturnObject = step.execute(this, scope);
+                if (stepReturnObject != null) {
+                    returnValue = stepReturnObject;
+                }
             }
 
         } catch (FunctionCallReturnException functionCallReturnException) {
-            Object returnValue = functionCallReturnException.getReturnValue();
-            if (returnValue != null) {
-                return returnValue;
+            if (functionCallReturnException.getReturnValue() != null) {
+                return functionCallReturnException.getReturnValue();
             }
         }
-        return listOfObjects.size() == 1 ? listOfObjects.get(0) : listOfObjects;
+        return returnValue;
     }
 
     public Object importFile(String xmlFileName, Scope scope) throws Throwable {

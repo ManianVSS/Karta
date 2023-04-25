@@ -1,0 +1,88 @@
+<XLangExampleProgram>
+    <echo message="A sample XML language program"/>
+
+    <var name="myVar1" value="10"/>
+    <var name="mySimpleVar" value="True"/>
+    <var name="mySimpleVar" value="{'a':10, 'b':True}"/>
+
+    <func name="myFunction1">
+        <echo message="myFunction1 A sample function"/>
+        <var name="myVar1" value="20"/>
+        <var name="myFunVar1" value="10"/>
+        <echo message="myFunction1 Variables are ${myVar1}, ${mySimpleVar}, ${myFunVar1}, ${mySimpleFunVar}"/>
+        <var name="mySimpleFunVar" value="True"/>
+
+        <return/>
+        <echo message="*** This message should not get printed"/>
+        <echo message="&amp; This message should not get printed"/>
+        <echo message=": This message should not get printed"/>
+        <echo message="-This message should not get printed"/>
+        <echo message="% This message should not get printed"/>
+        <echo message="@ This message should not get printed"/>
+    </func>
+
+    <echo
+        message="Before myVar1=${myVar1} mySimpleVar=${mySimpleVar} myFunVar1=${myFunVar1} mySimpleFunVar=${mySimpleFunVar}"/>
+    <call name="myFunction1" outputParameters="[myFunVar1, mySimpleFunVar]"/>
+    <echo
+        message="After myVar1=${myVar1} mySimpleVar=${mySimpleVar} myFunVar1=${myFunVar1} mySimpleFunVar=${mySimpleFunVar}"/>
+
+    <var name="pointer" value="myVar1"/>
+    <echo message="Value of object at pointer is ${${pointer}}"/>
+
+    <import fileName="SampleIncludeXMLFile.xml"/>
+
+    <echo
+        message="Before myVar2=${myVar2} mySimpleVar2=${mySimpleVar2} myFunVar2=${myFunVar2} mySimpleFunVar2=${mySimpleFunVar2}"/>
+    <call name="myFunction2" outputParameters="[myFunVar2, mySimpleFunVar2]"/>
+    <echo
+        message="After myVar2=${myVar2} mySimpleVar2=${mySimpleVar2} myFunVar2=${myFunVar2} mySimpleFunVar2=${mySimpleFunVar2}"/>
+
+    <var name="pointer2" value="myVar2"/>
+    <echo message="Value of object at pointer is ${${pointer2}}"/>
+
+    <if>
+        <equals operand1="${myVar2}" operand2="200"/>
+        <then>
+            <echo message="Then statement line 1"/>
+            <echo message="Then statement line 2"/>
+        </then>
+        <elseif>
+            <equals operand1="${myVar2}" operand2="210"/>
+            <echo message="ElseIf1 statement line 1"/>
+            <echo message="ElseIf1 statement line 2"/>
+        </elseif>
+        <elseif>
+            <equals operand1="${myVar2}" operand2="220"/>
+            <echo message="ElseIf2 statement line 1"/>
+            <echo message="ElseIf2 statement line 2"/>
+        </elseif>
+        <elseif>
+            <equals operand1="${myVar2}" operand2="230"/>
+            <echo message="ElseIf3 statement line 1"/>
+            <echo message="ElseIf3 statement line 2"/>
+        </elseif>
+        <elseif>
+            <equals operand1="${myVar2}" operand2="100"/>
+            <echo message="ElseIf4 statement line 1"/>
+            <echo message="ElseIf4 statement line 2"/>
+        </elseif>
+        <else>
+            <echo message="Else statement line 1"/>
+            <echo message="Else statement line 2"/>
+        </else>
+    </if>
+
+    <for>
+        <init>
+            <var name="myIterVar" value="10"/>
+        </init>
+        <notequals operand1="${myIterVar}" operand2="20"/>
+        <update>
+            <increment resultVar="myIterVar"/>
+        </update>
+        <do>
+            <echo message="${myIterVar}"/>
+        </do>
+    </for>
+</XLangExampleProgram>

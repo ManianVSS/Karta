@@ -1,0 +1,3 @@
+<typedefs>
+    <StepResult>org.mvss.karta.framework.models.result.StepResult</StepResult>
+</typedefs>

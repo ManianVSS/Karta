@@ -1,0 +1,14 @@
+<XLangExampleProgram>
+    <echo message="A sample imported XML language program"/>
+
+    <var name="myVar2" value="100"/>
+    <var name="mySimpleVar2" value="False"/>
+
+    <func name="myFunction2">
+        <echo message="A sample function2"/>
+        <var name="myVar2" value="200"/>
+        <var name="myFunVar2" value="100"/>
+        <var name="mySimpleFunVar2" value="False"/>
+        <echo message="Variables are ${myVar2}, ${mySimpleVar2}, ${myFunVar2}, ${mySimpleFunVar2}"/>
+    </func>
+</XLangExampleProgram>

@@ -114,6 +114,8 @@ public class XlangStepRunner implements StepRunner {
         try {
             String stepMapping = stepHandlerMap.get(stepIdentifier);
             try (Runner runner = new Runner()) {
+                runner.importStepDefMappingFromFile("XLangStepDefinitions.xml");
+                runner.importTypeDefMappingFromFile("XLangTypeDefinitions.xml");
                 runner.setDependencyInjector(kartaRuntime.getDependencyInjector());
                 Scope scope = runner.getScope();
                 ConcurrentHashMap<String, Object> variables = scope.getVariables();
@@ -123,7 +125,15 @@ public class XlangStepRunner implements StepRunner {
                 variables.put("__context", testExecutionContext);
                 variables.put("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
                 variables.put("log", log);
-                result = (StepResult) runner.run(stepMapping);
+                Object returnValue = runner.run(stepMapping);
+                if (returnValue != null) {
+                    if (returnValue instanceof StepResult) {
+                        result = (StepResult) returnValue;
+                    } else if (returnValue instanceof Boolean) {
+                        result = (Boolean) returnValue ? StandardStepResults.passed() : StandardStepResults.failed();
+                    }
+                }
+
             } catch (PySyntaxError pySyntaxError) {
                 String errorMessage = "Check jython script syntax for file  " + stepMapping;
                 log.error(errorMessage, pySyntaxError);
@@ -169,6 +179,8 @@ public class XlangStepRunner implements StepRunner {
 
             String chaosActionMapping = chaosActionHandlerMap.get(chaosActionName);
             try (Runner runner = new Runner()) {
+                runner.importStepDefMappingFromFile("XLangStepDefinitions.xml");
+                runner.importTypeDefMappingFromFile("XLangTypeDefinitions.xml");
                 runner.setDependencyInjector(kartaRuntime.getDependencyInjector());
                 Scope scope = runner.getScope();
                 ConcurrentHashMap<String, Object> variables = scope.getVariables();
@@ -179,7 +191,14 @@ public class XlangStepRunner implements StepRunner {
                 variables.put("__context", testExecutionContext);
                 variables.put("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
                 variables.put("log", log);
-                result = (StepResult) runner.run(chaosActionMapping);
+                Object returnValue = runner.run(chaosActionMapping);
+                if (returnValue != null) {
+                    if (returnValue instanceof StepResult) {
+                        result = (StepResult) returnValue;
+                    } else if (returnValue instanceof Boolean) {
+                        result = (Boolean) returnValue ? StandardStepResults.passed() : StandardStepResults.failed();
+                    }
+                }
             } catch (PySyntaxError pySyntaxError) {
                 String errorMessage = "Check jython script syntax for file  " + chaosActionMapping;
                 log.error(errorMessage, pySyntaxError);
@@ -219,6 +238,8 @@ public class XlangStepRunner implements StepRunner {
         try {
             String conditionMapping = conditionDefinitionMap.get(conditionIdentifier);
             try (Runner runner = new Runner()) {
+                runner.importStepDefMappingFromFile("XLangStepDefinitions.xml");
+                runner.importTypeDefMappingFromFile("XLangTypeDefinitions.xml");
                 runner.setDependencyInjector(kartaRuntime.getDependencyInjector());
                 Scope scope = runner.getScope();
                 ConcurrentHashMap<String, Object> variables = scope.getVariables();
@@ -228,7 +249,13 @@ public class XlangStepRunner implements StepRunner {
                 variables.put("__context", testExecutionContext);
                 variables.put("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
                 variables.put("log", log);
-                return (boolean) runner.run(conditionMapping);
+                Object returnValue = runner.run(conditionMapping);
+                if (returnValue != null) {
+                    if (returnValue instanceof Boolean) {
+                        return (Boolean) returnValue;
+                    }
+                }
+                return true;
             } catch (PySyntaxError pySyntaxError) {
                 String errorMessage = "Check jython script syntax for file  " + conditionMapping;
                 log.error(errorMessage, pySyntaxError);

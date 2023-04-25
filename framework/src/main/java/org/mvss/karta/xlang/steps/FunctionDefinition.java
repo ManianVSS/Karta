@@ -21,7 +21,6 @@ public class FunctionDefinition extends Step {
 
     @Override
     public Object execute(Runner runner, Scope scope) {
-        System.out.println("Function definition: " + this);
 
         if (scope.getFunctions().containsKey(name)) {
             throw new RuntimeException("Function already defined " + name);

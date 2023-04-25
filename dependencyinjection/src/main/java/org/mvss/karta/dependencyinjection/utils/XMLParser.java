@@ -20,6 +20,7 @@ import java.util.Map;
 public class XMLParser {
 
     public static final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+    public static final String __TEXT__ = "__text__";
 
     public static Document readDocumentFromFile(String xmlFileName) throws ParserConfigurationException, IOException, SAXException {
         File file = new File(xmlFileName);
@@ -95,7 +96,7 @@ public class XMLParser {
                                 return objectToMerge;
                             } else {
                                 //Assume
-                                parsedObject.put("__text__", objectToMerge);
+                                parsedObject.put(__TEXT__, objectToMerge);
                             }
                         }
                     }
