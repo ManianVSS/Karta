@@ -1,0 +1,10 @@
+---
+name: XlangStepRunnerExample
+description: This is a sample XlangStepRunnerExample
+
+testScenarios:
+  - name: Scenario1
+    executionSteps:
+      - step: When sample xlang step1
+      - step: Then sample xlang step2
+

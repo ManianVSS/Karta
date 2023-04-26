@@ -22,6 +22,7 @@ propertyFiles:
   - BeanShellStepRunnerProperties.yaml
   - JythonStepRunnerProperties.yaml
   - GroovyStepRunnerProperties.yaml
+  - XlangStepRunnerProperties.yaml
 
 nodes:
   - name: Node1

@@ -13,6 +13,7 @@ stepRunners:
   - BeanShellStepRunner
   - JythonStepRunner
   - GroovyStepRunner
+  - XlangStepRunner
 testDataSources:
   - DataFilesTestDataSource
   - ObjectGenTestDataSource
@@ -41,6 +42,14 @@ tests:
     tags:
       - GroovyStepRunnerExample
     featureFileName: featureFiles/TestSet1/GroovyStepRunnerExample.yaml
+    numberOfIterations: 10
+    numberOfThreads: 5
+
+  - name: XlangStepRunnerExample
+    description: XlangStepRunnerExample
+    tags:
+      - XlangStepRunnerExample
+    featureFileName: featureFiles/TestSet1/XlangStepRunnerExample.yaml
     numberOfIterations: 10
     numberOfThreads: 5
 

@@ -22,6 +22,7 @@ propertyFiles:
   - BeanShellStepRunnerProperties.yaml
   - JythonStepRunnerProperties.yaml
   - GroovyStepRunnerProperties.yaml
+  - XlangStepRunnerProperties.yaml
 
 ### Thread group name map to the number of threads to use to run tests with for the thread group. __default__ is the name of the default thread group
 threadGroups:

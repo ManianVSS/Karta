@@ -1,0 +1,5 @@
+---
+XlangStepRunner:
+  stepHandlerMap:
+    sample xlang step1: xlangScripts/sample_step1.xml
+    sample xlang step2: xlangScripts/sample_step2.xml

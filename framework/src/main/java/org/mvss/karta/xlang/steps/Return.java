@@ -3,6 +3,7 @@ package org.mvss.karta.xlang.steps;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.xlang.dto.Scope;
 import org.mvss.karta.xlang.runtime.Runner;
 
@@ -15,7 +16,7 @@ public class Return extends Step {
 
     @Override
     public Object execute(Runner runner, Scope scope) throws Throwable {
-        Object existingVariable = scope.getVariable(result);
+        Object existingVariable = StringUtils.isNotBlank(result) ? scope.getVariable(result) : null;
         throw new FunctionCallReturnException(existingVariable);
     }
 }

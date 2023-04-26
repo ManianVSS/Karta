@@ -1,5 +1,5 @@
 <XLangExampleProgram>
-    <echo message="A sample XML language program 1"/>
+    <echo message="A sample XML language program 2"/>
 
     <var name="myVar1" value="10"/>
     <var name="mySimpleVar" value="True"/>

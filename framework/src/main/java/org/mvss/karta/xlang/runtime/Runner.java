@@ -19,7 +19,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,10 +44,14 @@ public class Runner implements AutoCloseable {
     @Getter
     private final Scope scope;
 
+    @Getter
+    private String baseDirectory;
+
     @Setter
     private DependencyInjector dependencyInjector;
 
     public Runner() {
+        baseDirectory = System.getProperty("user.dir");
 
         //Built-ins
         stepDefMapping.put("stepDef", StepDefinition.class);
@@ -182,6 +188,10 @@ public class Runner implements AutoCloseable {
     }
 
     public Object run(String xmlFileName, Scope scope) throws Throwable {
+        File parentFile = new File(xmlFileName).getParentFile();
+        if (parentFile != null) {
+            baseDirectory = parentFile.getAbsolutePath();
+        }
         Document doc = XMLParser.readDocumentFromFile(xmlFileName);
         Element rootElement = doc.getDocumentElement();
         rootElement.normalize();
@@ -220,6 +230,10 @@ public class Runner implements AutoCloseable {
     }
 
     public Object importFile(String xmlFileName, Scope scope) throws Throwable {
+        if (Path.of(baseDirectory, xmlFileName).toFile().exists()) {
+            xmlFileName = Path.of(baseDirectory, xmlFileName).toString();
+        }
+
         Document doc = XMLParser.readDocumentFromFile(xmlFileName);
         Element rootElement = doc.getDocumentElement();
         rootElement.normalize();

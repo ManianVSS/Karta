@@ -1,5 +1,5 @@
 ---
 JythonStepRunner:
   stepHandlerMap:
-    sample python step1: jythonScripts/sample_step1.xml
+    sample python step1: jythonScripts/sample_step1.py
     sample python step2: jythonScripts/sample_step2.py
