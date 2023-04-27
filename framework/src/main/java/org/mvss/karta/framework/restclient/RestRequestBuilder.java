@@ -123,6 +123,11 @@ public abstract class RestRequestBuilder implements Serializable {
         return this;
     }
 
+    public RestRequestBuilder tokenAuth(String tokenPrefix, String token) {
+        headers.put(Constants.AUTHORIZATION, tokenPrefix + " " + token);
+        return this;
+    }
+
     public RestRequestBuilder bearerTokenAuth(String bearerToken) {
         headers.put(Constants.AUTHORIZATION, Constants.BEARER + bearerToken);
         return this;

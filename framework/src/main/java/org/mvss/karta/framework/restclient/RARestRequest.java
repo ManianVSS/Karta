@@ -5,7 +5,6 @@ import io.restassured.specification.RequestSpecification;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
-import org.mvss.karta.Constants;
 import org.mvss.karta.dependencyinjection.utils.DataUtils;
 import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 
@@ -71,15 +70,5 @@ public class RARestRequest implements RestRequest {
         requestSpecification.baseUri(DataUtils.constructURL(restClient.getBaseUrl(), this.url));
 
         return requestSpecification;
-    }
-
-    @Override
-    public void basicAuth(String userName, String password) {
-        headers.put(Constants.AUTHORIZATION, Constants.BASIC + encoder.encodeToString((userName + Constants.COLON + password).getBytes()));
-    }
-
-    @Override
-    public void bearerTokenAuth(String bearerToken) {
-        headers.put(Constants.AUTHORIZATION, Constants.BEARER + bearerToken);
     }
 }

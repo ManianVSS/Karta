@@ -3,5 +3,4 @@ ShaniDashboardPlugin:
   build: 1
   runName: TestRun1
   dashboardBaseURL: http://localhost:8000
-  dashboardUserName: user
-  dashboardUserPassword: password
+  dashboardUserToken: <token>

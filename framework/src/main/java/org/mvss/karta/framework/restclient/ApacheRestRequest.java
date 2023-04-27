@@ -11,7 +11,6 @@ import org.apache.http.entity.SerializableEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.mvss.karta.Constants;
 import org.mvss.karta.dependencyinjection.utils.DataUtils;
 import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 
@@ -101,15 +100,5 @@ public class ApacheRestRequest implements RestRequest {
         }
 
         return requestBuilder;
-    }
-
-    @Override
-    public void basicAuth(String userName, String password) {
-        headers.put(Constants.AUTHORIZATION, Constants.BASIC + encoder.encodeToString((userName + Constants.COLON + password).getBytes()));
-    }
-
-    @Override
-    public void bearerTokenAuth(String bearerToken) {
-        headers.put(Constants.AUTHORIZATION, Constants.BEARER + bearerToken);
     }
 }

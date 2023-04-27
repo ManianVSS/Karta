@@ -37,6 +37,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     public static final String ID = "id";
     public static final String SLASH = "/";
     public static final String EXCEPTION_OCCURRED = "Exception occurred: ";
+    public static final String TOKEN = "Token";
 
     @PropertyMapping(group = PLUGIN_NAME)
     private String releaseName;
@@ -51,10 +52,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     private String dashboardBaseURL;
 
     @PropertyMapping(group = PLUGIN_NAME)
-    private String dashboardUserName;
-
-    @PropertyMapping(group = PLUGIN_NAME)
-    private String dashboardUserPassword;
+    private String dashboardUserToken;
 
     private Integer releaseId;
     private Integer runId;
@@ -84,7 +82,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
 
     @SuppressWarnings("unchecked")
     private HashMap<String, Serializable> findEntity(String subUrl, HashMap<String, Serializable> params) throws Exception {
-        RestRequest request = ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).basicAuth(dashboardUserName, dashboardUserPassword).params(params).build();
+        RestRequest request = ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).tokenAuth(TOKEN, dashboardUserToken).params(params).build();
         try (RestResponse restResponse = apacheRestClient.get(request, subUrl)) {
             if (restResponse.getStatusCode() != 200) {
                 throw new Exception("API Request GET failed: " + subUrl + " with params " + params + "\nResponse is: " + restResponse);
@@ -108,7 +106,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     }
 
     private HashMap<String, Serializable> createEntity(String subUrl, HashMap<String, Serializable> entity) throws Exception {
-        RestRequest request = ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).basicAuth(dashboardUserName, dashboardUserPassword).body(entity).build();
+        RestRequest request = ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).tokenAuth(TOKEN, dashboardUserToken).body(entity).build();
         try (RestResponse restResponse = apacheRestClient.post(request, subUrl)) {
             if (restResponse.getStatusCode() != 201) {
                 throw new Exception("API Request POST failed: " + subUrl + " with entity " + entity + "\nResponse is: " + restResponse);
@@ -118,7 +116,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     }
 
     private HashMap<String, Serializable> updateEntity(String subUrl, HashMap<String, Serializable> entity) throws Exception {
-        RestRequest request = ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).basicAuth(dashboardUserName, dashboardUserPassword).body(entity).build();
+        RestRequest request = ApacheRestRequest.requestBuilder().contentType(ContentType.APPLICATION_JSON).accept(ContentType.ALL).tokenAuth(TOKEN, dashboardUserToken).body(entity).build();
         try (RestResponse restResponse = apacheRestClient.patch(request, subUrl)) {
             if (restResponse.getStatusCode() != 200) {
                 throw new Exception("API Request PATCH failed: " + subUrl + " with entity " + entity + "\nResponse is: " + restResponse);
