@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.Getter;
 import lombok.Setter;
-import org.mvss.karta.dependencyinjection.interfaces.DependencyInjector;
 import org.mvss.karta.dependencyinjection.utils.ClassPathLoaderUtils;
 import org.mvss.karta.dependencyinjection.utils.XMLParser;
 import org.mvss.karta.xlang.dto.Scope;
@@ -26,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 public class Runner implements AutoCloseable {
 
@@ -48,7 +48,7 @@ public class Runner implements AutoCloseable {
     private String baseDirectory;
 
     @Setter
-    private DependencyInjector dependencyInjector;
+    protected Consumer<Object> dependencyInjector;
 
     public Runner() {
         baseDirectory = System.getProperty("user.dir");
@@ -175,7 +175,7 @@ public class Runner implements AutoCloseable {
                 Step stepObjectRead = objectMapper.convertValue(objectRead, stepDefClass);
                 stepObjectRead.setSteps(getSteps(stepElement));
                 if (dependencyInjector != null) {
-                    dependencyInjector.injectIntoObject(stepObjectRead);
+                    dependencyInjector.accept(stepObjectRead);
                 }
                 steps.add(stepObjectRead);
             }

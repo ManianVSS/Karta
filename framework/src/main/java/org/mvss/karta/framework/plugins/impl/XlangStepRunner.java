@@ -116,7 +116,7 @@ public class XlangStepRunner implements StepRunner {
             try (Runner runner = new Runner()) {
                 runner.importStepDefMappingFromFile("XLangStepDefinitions.xml");
                 runner.importTypeDefMappingFromFile("XLangTypeDefinitions.xml");
-                runner.setDependencyInjector(kartaRuntime.getDependencyInjector());
+                runner.setDependencyInjector(kartaRuntime.getDependencyInjector()::injectIntoObject);
                 Scope scope = runner.getScope();
                 ConcurrentHashMap<String, Object> variables = scope.getVariables();
                 variables.putAll(testExecutionContext.getContextBeanRegistry().getGlobalBeans());
@@ -181,7 +181,7 @@ public class XlangStepRunner implements StepRunner {
             try (Runner runner = new Runner()) {
                 runner.importStepDefMappingFromFile("XLangStepDefinitions.xml");
                 runner.importTypeDefMappingFromFile("XLangTypeDefinitions.xml");
-                runner.setDependencyInjector(kartaRuntime.getDependencyInjector());
+                runner.setDependencyInjector(kartaRuntime.getDependencyInjector()::injectIntoObject);
                 Scope scope = runner.getScope();
                 ConcurrentHashMap<String, Object> variables = scope.getVariables();
                 variables.putAll(testExecutionContext.getContextBeanRegistry().getGlobalBeans());
@@ -240,7 +240,7 @@ public class XlangStepRunner implements StepRunner {
             try (Runner runner = new Runner()) {
                 runner.importStepDefMappingFromFile("XLangStepDefinitions.xml");
                 runner.importTypeDefMappingFromFile("XLangTypeDefinitions.xml");
-                runner.setDependencyInjector(kartaRuntime.getDependencyInjector());
+                runner.setDependencyInjector(kartaRuntime.getDependencyInjector()::injectIntoObject);
                 Scope scope = runner.getScope();
                 ConcurrentHashMap<String, Object> variables = scope.getVariables();
                 variables.putAll(testExecutionContext.getContextBeanRegistry().getGlobalBeans());
