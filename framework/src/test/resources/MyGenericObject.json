@@ -1,0 +1,22 @@
+{
+  "step1": [
+    {
+      "data": 1,
+      "next": {
+        "data": 2,
+        "next": {
+          "data": 3
+        }
+      }
+    },
+    {
+      "data": 2,
+      "next": {
+        "data": 5,
+        "next": {
+          "data": 7
+        }
+      }
+    }
+  ]
+}
