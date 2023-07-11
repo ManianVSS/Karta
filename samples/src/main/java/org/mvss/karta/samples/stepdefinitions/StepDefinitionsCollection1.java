@@ -45,7 +45,7 @@ public class StepDefinitionsCollection1 {
 
     @StepDefinition(value = "the calculator is powered on", outputName = "CalculatorState", outputType = StepOutputType.VARIABLE)
     public String the_calculator_is_powered_on(TestExecutionContext context, @TestData("employee") Employee employee) {
-        log.info("the calculator is powered on by " + username + " employee:" + employee + " and test data=" + context.getData());
+        log.info("the calculator is powered on by " + username + " employee:" + employee + " and test data=" + context.getTestData());
         return ON;
     }
 
@@ -59,7 +59,7 @@ public class StepDefinitionsCollection1 {
 
     @StepDefinition("the calculator should display \"\"")
     public void the_calculator_should_display(double displayNumber, TestExecutionContext context) {
-        log.info("the calculator should display \"" + displayNumber + "\" with testdata " + context.getData());
+        log.info("the calculator should display \"" + displayNumber + "\" with testdata " + context.getTestData());
     }
 
     @StepDefinition("the W3Schools site is launched in the browser") //
@@ -115,7 +115,7 @@ public class StepDefinitionsCollection1 {
 
     @StepDefinition("the button \"\" is pressed")
     public void the_button_is_pressed(TestExecutionContext context, String button) {
-        log.info("the button \"" + button + "\" is pressed with testData" + context.getData());
+        log.info("the button \"" + button + "\" is pressed with testData" + context.getTestData());
     }
 
     @StepDefinition("dummy teardown step")
@@ -125,7 +125,7 @@ public class StepDefinitionsCollection1 {
 
     @StepDefinition(value = "the calculator is powered off", outputName = "CalculatorState", outputType = StepOutputType.VARIABLE)
     public String the_calculator_is_powered_off(TestExecutionContext context) {
-        log.info("the calculator is powered off by " + username + " and test data=" + context.getData());
+        log.info("the calculator is powered off by " + username + " and test data=" + context.getTestData());
         return OFF;
     }
 

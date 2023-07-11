@@ -21,7 +21,7 @@ class SampleStepDefClass2 {
     BeanRegistry beanRegistry
 
     @KartaAutoWired
-    Configurator configurator
+    Configurator propertiesData
 
     StepResult run(PreparedStep preparedStep, Object[] params) {
         StepResult stepResult = new StepResult()
@@ -31,7 +31,7 @@ class SampleStepDefClass2 {
         println("kartaRuntime=" + kartaRuntime)
         println("dependencyInjector=" + dependencyInjector)
         println("beanRegistry=" + beanRegistry)
-        println("configurator=" + configurator)
+        println("configurator=" + propertiesData)
         return stepResult
     }
 }

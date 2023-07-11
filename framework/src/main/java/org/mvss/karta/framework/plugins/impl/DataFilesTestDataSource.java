@@ -91,7 +91,7 @@ public class DataFilesTestDataSource implements TestDataSource {
         }
 
         log.info("Initializing " + PLUGIN_NAME + " plugin");
-        PropertyUtils.expandEnvVars(dataPath);
+        PropertyUtils.systemProperties.expandEnvVars(dataPath);
 
         for (String dataPathEntry : dataPath) {
             File pathFile = new File(dataPathEntry);

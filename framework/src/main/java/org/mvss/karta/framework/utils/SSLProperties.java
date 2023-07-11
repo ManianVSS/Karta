@@ -36,11 +36,11 @@ public class SSLProperties implements Serializable {
     private String keyStorePassword = "changeit";
 
     public synchronized void expandSystemAndEnvProperties() {
-        trustStoreType = PropertyUtils.expandEnvVars(trustStoreType);
-        trustStore = PropertyUtils.expandEnvVars(trustStore);
-        trustStorePassword = PropertyUtils.expandEnvVars(trustStorePassword);
-        keyStoreType = PropertyUtils.expandEnvVars(keyStoreType);
-        keyStore = PropertyUtils.expandEnvVars(keyStore);
-        keyStorePassword = PropertyUtils.expandEnvVars(keyStorePassword);
+        trustStoreType = PropertyUtils.systemProperties.expandPropertiesIntoText(trustStoreType);
+        trustStore = PropertyUtils.systemProperties.expandPropertiesIntoText(trustStore);
+        trustStorePassword = PropertyUtils.systemProperties.expandPropertiesIntoText(trustStorePassword);
+        keyStoreType = PropertyUtils.systemProperties.expandPropertiesIntoText(keyStoreType);
+        keyStore = PropertyUtils.systemProperties.expandPropertiesIntoText(keyStore);
+        keyStorePassword = PropertyUtils.systemProperties.expandPropertiesIntoText(keyStorePassword);
     }
 }

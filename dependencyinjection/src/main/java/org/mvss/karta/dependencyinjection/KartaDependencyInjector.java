@@ -125,7 +125,7 @@ public class KartaDependencyInjector implements DependencyInjector {
     public synchronized void injectIntoClass(Class<?> classToInject) {
         try {
             if (!configuredBeanClasses.contains(classToInject)) {
-                configurator.loadProperties(classToInject);
+                configurator.loadPropertiesIntoClasses(classToInject);
                 beanRegistry.loadStaticBeans(classToInject);
 
                 AnnotationScanner.forEachMethod(classToInject, Initializer.class, AnnotationScanner.IS_STATIC, null, AnnotationScanner.DOES_NOT_HAVE_PARAMETERS, callClassInitializer);

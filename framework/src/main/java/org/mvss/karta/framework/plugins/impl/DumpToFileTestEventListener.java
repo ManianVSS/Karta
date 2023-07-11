@@ -34,7 +34,7 @@ public class DumpToFileTestEventListener implements TestEventListener {
 
         log.info("Initializing " + PLUGIN_NAME + " plugin");
 
-        fileName = PropertyUtils.expandEnvVars(fileName);
+        fileName = PropertyUtils.systemProperties.expandPropertiesIntoText(fileName);
 
         File eventDumpFile = new File(fileName);
 

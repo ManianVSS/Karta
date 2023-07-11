@@ -191,18 +191,18 @@ public class KartaConfiguration implements Serializable {
 
     /**
      * Expands system and environmental variables into keys configuration value. </br>
-     * Refer {@link PropertyUtils#propertyPattern}.
+     * Refer {@link org.mvss.karta.dependencyinjection.utils.SystemProperties#propertyPattern}.
      */
     public synchronized void expandSystemAndEnvProperties() {
         // TODO: Change to a generic utility for expanding env vars with annotations
-        PropertyUtils.expandEnvVars(defaultFeatureSourceParsers);
-        PropertyUtils.expandEnvVars(defaultStepRunners);
-        PropertyUtils.expandEnvVars(defaultTestDataSources);
-        PropertyUtils.expandEnvVars(enabledPlugins);
-        PropertyUtils.expandEnvVars(propertyFiles);
-        PropertyUtils.expandEnvVars(testCatalogFragmentFiles);
+        PropertyUtils.systemProperties.expandEnvVars(defaultFeatureSourceParsers);
+        PropertyUtils.systemProperties.expandEnvVars(defaultStepRunners);
+        PropertyUtils.systemProperties.expandEnvVars(defaultTestDataSources);
+        PropertyUtils.systemProperties.expandEnvVars(enabledPlugins);
+        PropertyUtils.systemProperties.expandEnvVars(propertyFiles);
+        PropertyUtils.systemProperties.expandEnvVars(testCatalogFragmentFiles);
         sslProperties.expandSystemAndEnvProperties();
-        PropertyUtils.expandEnvVars(configurationScanPackages);
+        PropertyUtils.systemProperties.expandEnvVars(configurationScanPackages);
     }
 
     public synchronized void overrideConfiguration(KartaConfiguration override) {

@@ -124,9 +124,9 @@ public class KartaRuntime implements AutoCloseable {
         String configString = ClassPathLoaderUtils.readAllText(Constants.KARTA_CONFIGURATION_YAML);
 
         if (configString == null) {
-            if (PropertyUtils.systemPropertyMap.containsKey(Constants.KARTA_HOME)) {
+            if (PropertyUtils.systemProperties.containsKey(Constants.KARTA_HOME)) {
                 // TODO: Move all configuration file to user directory
-                File kartaHomeConfigFile = Paths.get(PropertyUtils.systemPropertyMap.get(Constants.KARTA_HOME), Constants.BIN, Constants.KARTA_CONFIGURATION_YAML).toFile();
+                File kartaHomeConfigFile = Paths.get(PropertyUtils.systemProperties.get(Constants.KARTA_HOME), Constants.BIN, Constants.KARTA_CONFIGURATION_YAML).toFile();
                 if (kartaHomeConfigFile.exists()) {
                     configString = FileUtils.readFileToString(kartaHomeConfigFile, Charset.defaultCharset());
                 }
@@ -770,7 +770,7 @@ public class KartaRuntime implements AutoCloseable {
             eventProcessor.raiseEvent(event);
         }
 
-        DataUtils.mergeMapInto(stepResult.getResults(), testExecutionContext.getVariables());
+        DataUtils.mergeMapInto(stepResult.getResults(), testExecutionContext.getContextData());
     }
 
     /**

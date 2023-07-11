@@ -109,26 +109,26 @@ public class PreparedScenario implements Serializable {
 
         for (PreparedStep step : tearDownSteps) {
             TestExecutionContext testExecutionContext = step.getTestExecutionContext();
-            DataUtils.mergeMapInto(testExecutionContext.getVariables(), variables);
-            testExecutionContext.setVariables(variables);
+            DataUtils.mergeMapInto(testExecutionContext.getContextData(), variables);
+            testExecutionContext.setContextData(variables);
         }
 
         for (PreparedStep step : executionSteps) {
             TestExecutionContext testExecutionContext = step.getTestExecutionContext();
-            DataUtils.mergeMapInto(testExecutionContext.getVariables(), variables);
-            testExecutionContext.setVariables(variables);
+            DataUtils.mergeMapInto(testExecutionContext.getContextData(), variables);
+            testExecutionContext.setContextData(variables);
         }
 
         for (PreparedChaosAction chaosAction : chaosActions) {
             TestExecutionContext testExecutionContext = chaosAction.getTestExecutionContext();
-            DataUtils.mergeMapInto(testExecutionContext.getVariables(), variables);
-            testExecutionContext.setVariables(variables);
+            DataUtils.mergeMapInto(testExecutionContext.getContextData(), variables);
+            testExecutionContext.setContextData(variables);
         }
 
         for (PreparedStep step : setupSteps) {
             TestExecutionContext testExecutionContext = step.getTestExecutionContext();
-            DataUtils.mergeMapInto(testExecutionContext.getVariables(), variables);
-            testExecutionContext.setVariables(variables);
+            DataUtils.mergeMapInto(testExecutionContext.getContextData(), variables);
+            testExecutionContext.setContextData(variables);
         }
 
     }

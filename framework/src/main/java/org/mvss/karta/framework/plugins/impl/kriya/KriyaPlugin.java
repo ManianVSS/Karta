@@ -491,8 +491,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     }
 
     public Object runStepDefMethodWithParameters(TestExecutionContext testExecutionContext, ArrayList<String> inlineParameters, Method methodToInvoke, Object methodDefiningClassObject) throws JsonProcessingException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        HashMap<String, Serializable> testData = testExecutionContext.getData();
-        HashMap<String, Serializable> variables = testExecutionContext.getVariables();
+        HashMap<String, Serializable> testData = testExecutionContext.getTestData();
+        HashMap<String, Serializable> variables = testExecutionContext.getContextData();
 
         Parameter[] parametersObj = methodToInvoke.getParameters();
 
@@ -601,8 +601,8 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
         StepResult result = new StepResult();
 
         TestExecutionContext testExecutionContext = preparedChaosAction.getTestExecutionContext();
-        HashMap<String, Serializable> testData = testExecutionContext.getData();
-        HashMap<String, Serializable> variables = testExecutionContext.getVariables();
+        HashMap<String, Serializable> testData = testExecutionContext.getTestData();
+        HashMap<String, Serializable> variables = testExecutionContext.getContextData();
 
         log.debug("Chaos actions run" + preparedChaosAction);
 

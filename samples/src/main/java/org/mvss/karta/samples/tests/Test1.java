@@ -22,13 +22,13 @@ public class Test1 {
 
     @FeatureSetup("My feature setup")
     public StepResult myFeatureSetup(TestExecutionContext testExecutionContext) {
-        log.info("testData " + testExecutionContext.getData());
+        log.info("testData " + testExecutionContext.getTestData());
         return StandardStepResults.passed();
     }
 
     @ScenarioSetup("My scenario setup")
     public StepResult myScenarioSetupMethod(TestExecutionContext testExecutionContext) {
-        log.info("testData " + testExecutionContext.getData());
+        log.info("testData " + testExecutionContext.getTestData());
         return StandardStepResults.passed();
     }
 
@@ -60,13 +60,13 @@ public class Test1 {
 
     @ScenarioTearDown("My scenario teardown")
     public StepResult myScenarioTearDownMethod(TestExecutionContext testExecutionContext) {
-        log.info("testData " + testExecutionContext.getData());
+        log.info("testData " + testExecutionContext.getTestData());
         return StandardStepResults.passed();
     }
 
     @FeatureTearDown("My feature teardown")
     public StepResult myFeatureTearDownMethod(TestExecutionContext testExecutionContext) {
-        log.info("testData " + testExecutionContext.getData());
+        log.info("testData " + testExecutionContext.getTestData());
         return StandardStepResults.passed();
     }
 }

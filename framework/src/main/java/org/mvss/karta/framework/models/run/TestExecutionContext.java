@@ -28,34 +28,32 @@ public class TestExecutionContext implements Serializable {
     private String scenarioName;
     private String stepIdentifier;
 
-    private HashMap<String, Serializable> data;
+    private HashMap<String, Serializable> testData;
 
     @Builder.Default
-    private HashMap<String, Serializable> variables = new HashMap<>();
+    private HashMap<String, Serializable> contextData = new HashMap<>();
 
     @JsonIgnore
     private transient BeanRegistry contextBeanRegistry;
 
-    public TestExecutionContext(String runName, String featureName, int iterationIndex, String scenarioName, String stepIdentifier,
-                                HashMap<String, Serializable> data, HashMap<String, Serializable> variables) {
+    public TestExecutionContext(String runName, String featureName, int iterationIndex, String scenarioName, String stepIdentifier, HashMap<String, Serializable> testData, HashMap<String, Serializable> contextData) {
         super();
         this.runName = runName;
         this.featureName = featureName;
         this.iterationIndex = iterationIndex;
         this.scenarioName = scenarioName;
         this.stepIdentifier = stepIdentifier;
-        this.data = data;
-        this.variables = variables;
+        this.testData = testData;
+        this.contextData = contextData;
     }
 
-    public void mergeTestData(HashMap<String, Serializable> stepTestData, HashMap<String, ArrayList<Serializable>> testDataSet,
-                              ArrayList<TestDataSource> testDataSources) throws Throwable {
-        data = new HashMap<>();
+    public void mergeTestData(HashMap<String, Serializable> stepTestData, HashMap<String, ArrayList<Serializable>> testDataSet, ArrayList<TestDataSource> testDataSources) throws Throwable {
+        this.testData = new HashMap<>();
 
         if (testDataSources != null) {
             for (TestDataSource tds : testDataSources) {
                 HashMap<String, Serializable> testData = tds.getData(this);
-                data.putAll(testData);
+                this.testData.putAll(testData);
             }
         }
 
@@ -66,13 +64,13 @@ public class TestExecutionContext implements Serializable {
                 ArrayList<Serializable> possibleValues = testDataSet.get(dataKey);
                 if ((possibleValues != null) && !possibleValues.isEmpty()) {
                     int valueIndex = (int) (iterationIndexForData % possibleValues.size());
-                    data.put(dataKey, possibleValues.get(valueIndex));
+                    this.testData.put(dataKey, possibleValues.get(valueIndex));
                 }
             }
         }
 
         if (stepTestData != null) {
-            data.putAll(stepTestData);
+            this.testData.putAll(stepTestData);
         }
     }
 }

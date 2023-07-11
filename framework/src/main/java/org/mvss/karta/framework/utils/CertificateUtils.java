@@ -94,7 +94,7 @@ public class CertificateUtils {
 
     public static boolean installCertificate(String jreHome, String hostname, int port, char[] passphrase, String alias) {
         if (StringUtils.isBlank(jreHome)) {
-            jreHome = PropertyUtils.getSystemOrEnvProperty(JAVA_HOME, System.getProperty(JAVA_HOME1));
+            jreHome = PropertyUtils.systemProperties.getOrDefault(JAVA_HOME, System.getProperty(JAVA_HOME1));
         }
 
         File jreSecurityDirectory = new File(jreHome + File.separator + "lib" + File.separator + "security");
