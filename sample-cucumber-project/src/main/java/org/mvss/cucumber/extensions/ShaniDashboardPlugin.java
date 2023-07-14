@@ -3,8 +3,8 @@ package org.mvss.cucumber.extensions;
 import io.cucumber.plugin.ConcurrentEventListener;
 import io.cucumber.plugin.event.*;
 import lombok.extern.log4j.Log4j2;
-import org.mvss.karta.dependencyinjection.Configurator;
 import org.mvss.karta.dependencyinjection.KartaDependencyInjector;
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
 import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 import org.mvss.karta.framework.restclient.*;
@@ -59,9 +59,9 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
 
     public ShaniDashboardPlugin(String parameter) {
         log.info("Plugin parameter passed is " + parameter);
-        Configurator configurator = new Configurator();
-        configurator.mergePropertiesFiles(parameter);
-        configurator.loadProperties(this);
+        TestProperties testProperties = new TestProperties();
+        testProperties.mergePropertiesFiles(parameter);
+        testProperties.loadProperties(this);
         log.info("Initializing " + PLUGIN_NAME + "plugin");
         apacheRestClient = new ApacheRestClient(dashboardBaseURL, true);
     }
@@ -71,7 +71,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     @Override
     public void setEventPublisher(EventPublisher publisher) {
         KartaDependencyInjector kartaDependencyInjector = KartaDependencyInjector.getInstance();
-        kartaDependencyInjector.injectIntoObject(this);
+        kartaDependencyInjector.inject(this);
         publisher.registerHandlerFor(TestRunStarted.class, this::handleTestRunStarted);
 
         publisher.registerHandlerFor(TestCaseStarted.class, this::handleTestCaseStarted);

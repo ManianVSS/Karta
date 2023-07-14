@@ -76,7 +76,7 @@ public class PreparedScenario implements Serializable {
     private transient BeanRegistry contextBeanRegistry = null;
 
     /**
-     * Creates a context bean registry with the Configurator provided and propagates
+     * Creates a context bean registry with the configuration provided and propagates
      * the bean registry to all the test execution contexts of prepared steps and chaos
      * actions. This method is to be called before running a scenario iteration at the
      * possibly remote node (after before scenario hooks are called) to initialize

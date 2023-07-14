@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
  */
 @Log4j2
 @SuppressWarnings("unused")
-public class Configurator implements PropertiesInterface {
+public class TestProperties implements PropertiesInterface {
     public static final TypeReference<HashMap<String, HashMap<String, Serializable>>> propertiesType = new TypeReference<>() {
     };
 
@@ -156,7 +156,7 @@ public class Configurator implements PropertiesInterface {
 
 
     /**
-     * Merges a property store into the configurator's property store.
+     * Merges a property store into the TestProperties' property store.
      */
     public void mergeProperties(HashMap<String, HashMap<String, Serializable>> propertiesToMerge) {
         mergeProperties(propertiesStore, propertiesToMerge);

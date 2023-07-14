@@ -116,12 +116,12 @@ public class XlangStepRunner implements StepRunner {
             try (Runner runner = new Runner()) {
                 runner.importStepDefMappingFromFile("XLangStepDefinitions.xml");
                 runner.importTypeDefMappingFromFile("XLangTypeDefinitions.xml");
-                runner.setDependencyInjector(kartaRuntime.getDependencyInjector()::injectIntoObject);
+                runner.setDependencyInjector(kartaRuntime.getKartaDependencyInjector()::inject);
                 Scope scope = runner.getScope();
                 ConcurrentHashMap<String, Object> variables = scope.getVariables();
                 variables.putAll(testExecutionContext.getContextBeanRegistry().getGlobalBeans());
                 variables.put("__kartaRuntime", kartaRuntime);
-                variables.put("__dependencyInjector", kartaRuntime.getDependencyInjector());
+                variables.put("__dependencyInjector", kartaRuntime.getKartaDependencyInjector());
                 variables.put("__context", testExecutionContext);
                 variables.put("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
                 variables.put("log", log);
@@ -181,12 +181,12 @@ public class XlangStepRunner implements StepRunner {
             try (Runner runner = new Runner()) {
                 runner.importStepDefMappingFromFile("XLangStepDefinitions.xml");
                 runner.importTypeDefMappingFromFile("XLangTypeDefinitions.xml");
-                runner.setDependencyInjector(kartaRuntime.getDependencyInjector()::injectIntoObject);
+                runner.setDependencyInjector(kartaRuntime.getKartaDependencyInjector()::inject);
                 Scope scope = runner.getScope();
                 ConcurrentHashMap<String, Object> variables = scope.getVariables();
                 variables.putAll(testExecutionContext.getContextBeanRegistry().getGlobalBeans());
                 variables.put("__kartaRuntime", kartaRuntime);
-                variables.put("__dependencyInjector", kartaRuntime.getDependencyInjector());
+                variables.put("__dependencyInjector", kartaRuntime.getKartaDependencyInjector());
                 variables.put("__chaosAction", preparedChaosAction);
                 variables.put("__context", testExecutionContext);
                 variables.put("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
@@ -240,12 +240,12 @@ public class XlangStepRunner implements StepRunner {
             try (Runner runner = new Runner()) {
                 runner.importStepDefMappingFromFile("XLangStepDefinitions.xml");
                 runner.importTypeDefMappingFromFile("XLangTypeDefinitions.xml");
-                runner.setDependencyInjector(kartaRuntime.getDependencyInjector()::injectIntoObject);
+                runner.setDependencyInjector(kartaRuntime.getKartaDependencyInjector()::inject);
                 Scope scope = runner.getScope();
                 ConcurrentHashMap<String, Object> variables = scope.getVariables();
                 variables.putAll(testExecutionContext.getContextBeanRegistry().getGlobalBeans());
                 variables.put("__kartaRuntime", kartaRuntime);
-                variables.put("__dependencyInjector", kartaRuntime.getDependencyInjector());
+                variables.put("__dependencyInjector", kartaRuntime.getKartaDependencyInjector());
                 variables.put("__context", testExecutionContext);
                 variables.put("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
                 variables.put("log", log);

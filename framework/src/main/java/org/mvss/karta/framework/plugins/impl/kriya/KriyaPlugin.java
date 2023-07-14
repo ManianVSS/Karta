@@ -57,9 +57,9 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
     private final HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStartHooks = new HashMap<>();
     private final HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioStopHooks = new HashMap<>();
     private final HashMap<Pattern, ArrayList<Pair<Object, Method>>> taggedScenarioFailureHooks = new HashMap<>();
-    private final HashMap<String, Pair<Object, Method>> stepHandlerMap = new HashMap<>();
-    private final HashMap<String, Pair<Object, Method>> chaosActionHandlerMap = new HashMap<>();
-    private final HashMap<String, Pair<Object, Method>> conditionDefinitionMap = new HashMap<>();
+    private final HashMap<String, Method> stepHandlerMap = new HashMap<>();
+    private final HashMap<String, Method> chaosActionHandlerMap = new HashMap<>();
+    private final HashMap<String, Method> conditionDefinitionMap = new HashMap<>();
     private final BeanRegistry initializedClassesRegistry = new BeanRegistry();
     private boolean initialized = false;
     @PropertyMapping(group = PLUGIN_NAME, value = "stepDefinitionPackageNames")
@@ -170,14 +170,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                 log.debug("Mapping step definition " + stepDefString + " to " + methodDescription);
 
                 Class<?> stepDefinitionClass = candidateStepDefinitionMethod.getDeclaringClass();
-
-                Object stepDefClassObj = initializedClassesRegistry.get(stepDefinitionClass.getName());
-                if (stepDefClassObj == null) {
-                    stepDefClassObj = stepDefinitionClass.getDeclaredConstructor().newInstance();
-                    kartaRuntime.initializeObject(stepDefClassObj);
-                    initializedClassesRegistry.add(stepDefClassObj);
-                }
-                stepHandlerMap.put(stepDefString, new Pair<>(stepDefClassObj, candidateStepDefinitionMethod));
+                stepHandlerMap.put(stepDefString, candidateStepDefinitionMethod);
             }
         } catch (Throwable t) {
             log.error("Exception while parsing step definition from method  " + candidateStepDefinitionMethod.getName(), t);
@@ -216,15 +209,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                 log.debug("Mapping condition definition " + conditionDefString + " to " + methodDescription);
 
                 Class<?> conditionDefinitionClass = candidateConditionMethod.getDeclaringClass();
-
-                Object conditionDefClassObj = initializedClassesRegistry.get(conditionDefinitionClass.getName());
-                if (conditionDefClassObj == null) {
-                    conditionDefClassObj = conditionDefinitionClass.getDeclaredConstructor().newInstance();
-                    kartaRuntime.initializeObject(conditionDefClassObj);
-                    initializedClassesRegistry.add(conditionDefClassObj);
-                }
-
-                conditionDefinitionMap.put(conditionDefString, new Pair<>(conditionDefClassObj, candidateConditionMethod));
+                conditionDefinitionMap.put(conditionDefString, candidateConditionMethod);
             }
         } catch (Throwable t) {
             log.error("Exception while parsing condition definition from method  " + candidateConditionMethod.getName(), t);
@@ -262,15 +247,7 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                 log.debug("Mapping chaos action definition " + chaosActionName + " to " + methodDescription);
 
                 Class<?> chaosActionDefinitionClass = candidateChaosActionMethod.getDeclaringClass();
-
-                Object chaosActionDefClassObj = initializedClassesRegistry.get(chaosActionDefinitionClass.getName());
-                if (chaosActionDefClassObj == null) {
-                    chaosActionDefClassObj = chaosActionDefinitionClass.getDeclaredConstructor().newInstance();
-                    kartaRuntime.initializeObject(chaosActionDefClassObj);
-                    initializedClassesRegistry.add(chaosActionDefClassObj);
-                }
-
-                chaosActionHandlerMap.put(chaosActionName, new Pair<>(chaosActionDefClassObj, candidateChaosActionMethod));
+                chaosActionHandlerMap.put(chaosActionName, candidateChaosActionMethod);
             }
         } catch (Throwable t) {
             log.error("Exception while parsing chaos action definition from method  " + candidateChaosActionMethod.getName(), t);
@@ -461,9 +438,16 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
         }
 
         try {
-            Pair<Object, Method> stepDefHandlerObjectMethodPair = stepHandlerMap.get(stepIdentifier);
-            Object stepDefObject = stepDefHandlerObjectMethodPair.getLeft();
-            Method stepDefMethodToInvoke = stepDefHandlerObjectMethodPair.getRight();
+            Method stepDefMethodToInvoke = stepHandlerMap.get(stepIdentifier);
+
+            if (stepDefMethodToInvoke == null) {
+                log.fatal("Step definition mapping not found for {}", stepIdentifier);
+                System.exit(-2);
+            }
+
+            Object stepDefObject = stepDefMethodToInvoke.getDeclaringClass().getDeclaredConstructor().newInstance();
+            kartaRuntime.initializeObject(testStep.getTestExecutionContext().getTestProperties(), stepDefObject);
+
             BeanRegistry beanRegistry = testExecutionContext.getContextBeanRegistry();
 
             Object returnValue = runStepDefMethodWithParameters(testExecutionContext, inlineStepDefinitionParameters, stepDefMethodToInvoke, stepDefObject);
@@ -622,10 +606,15 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
                 return StandardStepResults.error(errorMessage);
             }
 
-            Pair<Object, Method> chaosActionHandlerObjectMethodPair = chaosActionHandlerMap.get(chaosActionName);
+            Method chaosActionHandlerMethodToInvoke = chaosActionHandlerMap.get(chaosActionName);
 
-            Object chaosActionHandlerObject = chaosActionHandlerObjectMethodPair.getLeft();
-            Method chaosActionHandlerMethodToInvoke = chaosActionHandlerObjectMethodPair.getRight();
+            if (chaosActionHandlerMethodToInvoke == null) {
+                log.fatal("Chaos action definition mapping not found for {}", chaosActionName);
+                System.exit(-2);
+            }
+
+            Object chaosActionHandlerObject = chaosActionHandlerMethodToInvoke.getDeclaringClass().getDeclaredConstructor().newInstance();
+            kartaRuntime.initializeObject(preparedChaosAction.getTestExecutionContext().getTestProperties(), chaosActionHandlerObject);
 
             Parameter[] parametersObj = chaosActionHandlerMethodToInvoke.getParameters();
             ArrayList<Object> values = new ArrayList<>();
@@ -721,9 +710,16 @@ public class KriyaPlugin implements FeatureSourceParser, StepRunner, TestLifeCyc
         }
 
         try {
-            Pair<Object, Method> conditionHandlerObjectMethodPair = conditionDefinitionMap.get(conditionIdentifier);
-            Object conditionDefObject = conditionHandlerObjectMethodPair.getLeft();
-            Method conditionDefMethodToInvoke = conditionHandlerObjectMethodPair.getRight();
+            Method conditionDefMethodToInvoke = conditionDefinitionMap.get(conditionIdentifier);
+
+            if (conditionDefMethodToInvoke == null) {
+                log.fatal("Condition definition mapping not found for {}", conditionIdentifier);
+                System.exit(-2);
+            }
+
+            Object conditionDefObject = conditionDefMethodToInvoke.getDeclaringClass().getDeclaredConstructor().newInstance();
+            kartaRuntime.initializeObject(testExecutionContext.getTestProperties(), conditionDefObject);
+
             Class<?> returnType = conditionDefMethodToInvoke.getReturnType();
 
             if ((returnType != boolean.class) && (returnType != Boolean.class)) {

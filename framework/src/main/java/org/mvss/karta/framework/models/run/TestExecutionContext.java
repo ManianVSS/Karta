@@ -3,6 +3,7 @@ package org.mvss.karta.framework.models.run;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.mvss.karta.dependencyinjection.BeanRegistry;
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.framework.plugins.TestDataSource;
 
 import java.io.Serializable;
@@ -28,6 +29,8 @@ public class TestExecutionContext implements Serializable {
     private String scenarioName;
     private String stepIdentifier;
 
+    private TestProperties testProperties;
+
     private HashMap<String, Serializable> testData;
 
     @Builder.Default
@@ -36,13 +39,14 @@ public class TestExecutionContext implements Serializable {
     @JsonIgnore
     private transient BeanRegistry contextBeanRegistry;
 
-    public TestExecutionContext(String runName, String featureName, int iterationIndex, String scenarioName, String stepIdentifier, HashMap<String, Serializable> testData, HashMap<String, Serializable> contextData) {
+    public TestExecutionContext(String runName, String featureName, int iterationIndex, String scenarioName, String stepIdentifier, TestProperties testProperties, HashMap<String, Serializable> testData, HashMap<String, Serializable> contextData) {
         super();
         this.runName = runName;
         this.featureName = featureName;
         this.iterationIndex = iterationIndex;
         this.scenarioName = scenarioName;
         this.stepIdentifier = stepIdentifier;
+        this.testProperties = testProperties;
         this.testData = testData;
         this.contextData = contextData;
     }

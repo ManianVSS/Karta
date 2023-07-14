@@ -113,7 +113,7 @@ public class JythonStepRunner implements StepRunner {
             String stepMapping = stepHandlerMap.get(stepIdentifier);
             try (PythonInterpreter interpreter = new PythonInterpreter()) {
                 interpreter.set("__kartaRuntime", kartaRuntime);
-                interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
+                interpreter.set("__dependencyInjector", kartaRuntime.getKartaDependencyInjector());
                 interpreter.set("__context", testExecutionContext);
                 interpreter.set("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
                 interpreter.set("log", log);
@@ -165,7 +165,7 @@ public class JythonStepRunner implements StepRunner {
             String chaosActionMapping = chaosActionHandlerMap.get(chaosActionName);
             try (PythonInterpreter interpreter = new PythonInterpreter()) {
                 interpreter.set("__kartaRuntime", kartaRuntime);
-                interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
+                interpreter.set("__dependencyInjector", kartaRuntime.getKartaDependencyInjector());
                 interpreter.set("__chaosAction", preparedChaosAction);
                 interpreter.set("__context", testExecutionContext);
                 interpreter.set("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
@@ -212,7 +212,7 @@ public class JythonStepRunner implements StepRunner {
             String conditionMapping = conditionDefinitionMap.get(conditionIdentifier);
             try (PythonInterpreter interpreter = new PythonInterpreter()) {
                 interpreter.set("__kartaRuntime", kartaRuntime);
-                interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
+                interpreter.set("__dependencyInjector", kartaRuntime.getKartaDependencyInjector());
                 interpreter.set("__context", testExecutionContext);
                 interpreter.set("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
                 interpreter.set("log", log);

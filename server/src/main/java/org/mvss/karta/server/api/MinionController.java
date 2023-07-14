@@ -2,6 +2,7 @@ package org.mvss.karta.server.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 import org.mvss.karta.framework.core.StandardFeatureResults;
 import org.mvss.karta.framework.core.StandardScenarioResults;
@@ -122,13 +123,14 @@ public class MinionController {
         }
         String featureName = jobIterationRunInfo.getFeatureName();
         TestJob job = jobIterationRunInfo.getTestJob();
+        TestProperties testProperties = jobIterationRunInfo.getTestProperties();
         int iterationIndex = jobIterationRunInfo.getIterationIndex();
 
         if (job == null) {
             throw new Exception("Missing job to run in JobIterationRunInfo");
         }
 
-        return TestJobRunner.run(kartaRuntime, runInfo, featureName, job, iterationIndex, null);
+        return TestJobRunner.run(kartaRuntime, runInfo, featureName, testProperties, job, iterationIndex, null);
     }
 
     @ResponseStatus(HttpStatus.OK)
@@ -150,7 +152,7 @@ public class MinionController {
                 return StandardFeatureResults.error(featureName, "Feature to run missing in FeatureRunInfo");
             }
 
-            return kartaRuntime.runFeature(runInfo, feature);
+            return kartaRuntime.runFeature(runInfo, null, feature);
         } catch (Throwable t) {
             return StandardFeatureResults.error(featureName, t);
         }

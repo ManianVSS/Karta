@@ -11,7 +11,7 @@
     <parent>
         <groupId>org.mvss</groupId>
         <artifactId>karta</artifactId>
-        <version>0.1.3</version>
+        <version>0.1.4</version>
     </parent>
 
     <dependencies>
@@ -78,7 +78,7 @@
         <dependency>
             <groupId>org.mvss.karta</groupId>
             <artifactId>framework</artifactId>
-            <version>0.1.3</version>
+            <version>0.1.4</version>
         </dependency>
 
         <dependency>

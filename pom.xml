@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mvss</groupId>
     <artifactId>karta</artifactId>
-    <version>0.1.3</version>
+    <version>0.1.4</version>
     <name>Karta</name>
     <description>Karta Test Automation Framework</description>
     <packaging>pom</packaging>
@@ -14,7 +14,7 @@
         <java.version>11</java.version>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.source>${java.version}</maven.compiler.source>
-        <project.version>0.1.3</project.version>
+        <project.version>0.1.4</project.version>
         <spring.boot.version>2.7.10</spring.boot.version>
         <log4j2.version>2.17.1</log4j2.version>
 

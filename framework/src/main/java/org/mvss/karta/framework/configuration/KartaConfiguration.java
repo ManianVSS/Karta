@@ -3,10 +3,9 @@ package org.mvss.karta.framework.configuration;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.Constants;
-import org.mvss.karta.dependencyinjection.Configurator;
 import org.mvss.karta.dependencyinjection.KartaDependencyInjector;
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.dependencyinjection.annotations.KartaBean;
-import org.mvss.karta.dependencyinjection.interfaces.DependencyInjector;
 import org.mvss.karta.dependencyinjection.utils.DataUtils;
 import org.mvss.karta.dependencyinjection.utils.NullAwareBeanUtilsBean;
 import org.mvss.karta.dependencyinjection.utils.PropertyUtils;
@@ -78,7 +77,7 @@ public class KartaConfiguration implements Serializable {
     private ArrayList<String> enabledPlugins = new ArrayList<>();
 
     /**
-     * The list of property files to be merged into the Configurator.</br>
+     * The list of property files to be merged into the TestProperties.</br>
      * The latter ones in sequence override duplicate properties during merge </br>
      */
     @Builder.Default
@@ -222,11 +221,11 @@ public class KartaConfiguration implements Serializable {
         minionsEnabled = override.minionsEnabled;
         DataUtils.mergeMapInto(override.threadGroups, threadGroups);
         DataUtils.addMissing(configurationScanPackages, override.configurationScanPackages);
-        Configurator.mergeProperties(properties, override.properties);
+        TestProperties.mergeProperties(properties, override.properties);
         detailedReport = override.detailedReport;
     }
 
-    public DependencyInjector createDependencyInjector() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public KartaDependencyInjector createDependencyInjector() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         if (StringUtils.isEmpty(dependencyInjector)) {
             dependencyInjector = KartaDependencyInjector.class.getName();
         }
@@ -236,7 +235,11 @@ public class KartaConfiguration implements Serializable {
         if (dependencyInjectorClass == KartaDependencyInjector.class) {
             return KartaDependencyInjector.getInstance();
         }
-        return (DependencyInjector) dependencyInjectorClass.getDeclaredConstructor().newInstance();
+
+        if (KartaDependencyInjector.class.isAssignableFrom(dependencyInjectorClass)) {
+            return null;
+        }
+        return (KartaDependencyInjector) dependencyInjectorClass.getDeclaredConstructor().newInstance();
     }
 
     public IKartaNodeRegistry createNodeRegistry() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {

@@ -20,6 +20,7 @@ public class Constants {
     public static final String KARTA_RUNTIME = "kartaRuntime";
     public static final String STEP_RUNNER = "stepRunner";
     public static final String TEST_DATA_SOURCES = "testDataSources";
+    public static final String TEST_PROPERTIES = "testProperties";
     public static final String TEST_JOB = "testJob";
     public static final String ITERATION_COUNTER = "iterationCounter";
     public static final String TEST_JOB_ITERATION_RESULT_PROCESSOR = "testJobIterationResultProcessor";

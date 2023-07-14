@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.nodes.dto;
 
 import lombok.*;
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.framework.models.run.RunInfo;
 import org.mvss.karta.framework.models.test.TestFeature;
 
@@ -16,5 +17,6 @@ public class FeatureRunInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private RunInfo runInfo;
+    private TestProperties testProperties;
     private TestFeature testFeature;
 }

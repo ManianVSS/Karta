@@ -1,6 +1,7 @@
 package org.mvss.karta.framework.nodes;
 
 import lombok.extern.log4j.Log4j2;
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.framework.core.StandardStepResults;
 import org.mvss.karta.framework.models.result.FeatureResult;
 import org.mvss.karta.framework.models.result.ScenarioResult;
@@ -39,22 +40,21 @@ public class KartaNodeImpl extends UnicastRemoteObject implements KartaNode, Ser
     }
 
     @Override
-    public FeatureResult runFeature(RunInfo runInfo, TestFeature feature) throws RemoteException, InterruptedException {
-        return kartaRuntime.runFeature(runInfo, feature);
+    public FeatureResult runFeature(RunInfo runInfo, TestProperties testProperties, TestFeature feature) throws RemoteException, InterruptedException {
+        return kartaRuntime.runFeature(runInfo, testProperties, feature);
     }
 
     @Override
-    public TestJobResult runJobIteration(RunInfo runInfo, String featureName, TestJob job, int iterationIndex) throws RemoteException {
+    public TestJobResult runJobIteration(RunInfo runInfo, String featureName, TestProperties testProperties, TestJob job, int iterationIndex) throws RemoteException {
         try {
-            return TestJobRunner.run(kartaRuntime, runInfo, featureName, job, iterationIndex, null);
+            return TestJobRunner.run(kartaRuntime, runInfo, featureName, testProperties, job, iterationIndex, null);
         } catch (Throwable e) {
             throw new RemoteException("Exception while running job iteration", e);
         }
     }
 
     @Override
-    public ScenarioResult runTestScenario(RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario,
-                                          long scenarioIterationNumber) throws RemoteException, InterruptedException {
+    public ScenarioResult runTestScenario(RunInfo runInfo, String featureName, int iterationIndex, PreparedScenario testScenario, long scenarioIterationNumber) throws RemoteException, InterruptedException {
         return kartaRuntime.runTestScenario(runInfo, featureName, iterationIndex, testScenario, scenarioIterationNumber);
     }
 

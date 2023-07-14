@@ -28,8 +28,7 @@ public class ExecutionController {
 
     @ResponseStatus(HttpStatus.OK)
     @RequestMapping(method = RequestMethod.POST, value = Constants.PATH_RUN_FEATURE_SOURCE)
-    public FeatureResult startFeatureSourceRun(@RequestParam(defaultValue = Constants.UNNAMED) String runName,
-                                               @RequestBody String featureSourceString) {
+    public FeatureResult startFeatureSourceRun(@RequestParam(defaultValue = Constants.UNNAMED) String runName, @RequestBody String featureSourceString) {
         if (runName.equals(Constants.UNNAMED)) {
             runName = runName + Constants.HYPHEN + System.currentTimeMillis();
         }

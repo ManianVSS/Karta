@@ -5,6 +5,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mvss.karta.Constants;
 import org.mvss.karta.dependencyinjection.BeanRegistry;
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.dependencyinjection.utils.DataUtils;
 import org.mvss.karta.framework.models.event.*;
 import org.mvss.karta.framework.models.generic.SerializableKVP;
@@ -47,6 +48,8 @@ public class FeatureRunner implements Callable<FeatureResult> {
     private KartaRuntime kartaRuntime;
 
     private RunInfo runInfo;
+
+    private TestProperties testProperties;
 
     private TestFeature testFeature;
 
@@ -110,6 +113,7 @@ public class FeatureRunner implements Callable<FeatureResult> {
             EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
             IKartaNodeRegistry nodeRegistry = kartaRuntime.getNodeRegistry();
             BeanRegistry contextBeanRegistry = new BeanRegistry();
+            contextBeanRegistry.put(testProperties);
 
             Random random = kartaRuntime.getRandom();
 
@@ -134,7 +138,7 @@ public class FeatureRunner implements Callable<FeatureResult> {
                     int repeatCount = job.getIterationCount();
 
                     if (job.isDaemonProcess()) {
-                        DaemonTestJob daemonTestJob = DaemonTestJob.builder().kartaRuntime(kartaRuntime).runInfo(runInfo).featureName(testFeature.getName()).testJob(job).contextBeanRegistry(contextBeanRegistry).build();
+                        DaemonTestJob daemonTestJob = DaemonTestJob.builder().kartaRuntime(kartaRuntime).runInfo(runInfo).featureName(testFeature.getName()).testProperties(testProperties).testJob(job).contextBeanRegistry(contextBeanRegistry).build();
                         Thread daemonJobThread = new Thread(daemonTestJob);
                         daemonJobThread.start();
                         daemonJobThreads.add(daemonJobThread);
@@ -143,13 +147,14 @@ public class FeatureRunner implements Callable<FeatureResult> {
                         jobData.put(Constants.KARTA_RUNTIME, kartaRuntime);
                         jobData.put(Constants.RUN_INFO, runInfo);
                         jobData.put(Constants.FEATURE_NAME, testFeature.getName());
+                        jobData.put(Constants.TEST_PROPERTIES, testProperties);
                         jobData.put(Constants.TEST_JOB, job);
                         jobData.put(Constants.ITERATION_COUNTER, new AtomicInteger());
                         jobData.put(Constants.BEAN_REGISTRY, contextBeanRegistry);
                         long jobId = QuartzJobScheduler.scheduleJob(QuartzTestJob.class, jobInterval, repeatCount, jobData);
                         runningJobs.add(jobId);
                     } else {
-                        TestJobRunner.run(kartaRuntime, runInfo, testFeature.getName(), job, 0, contextBeanRegistry);
+                        TestJobRunner.run(kartaRuntime, runInfo, testFeature.getName(), testProperties, job, 0, contextBeanRegistry);
                     }
                 } catch (Throwable t) {
                     log.error("Exception occurred while scheduling jobs ", t);
@@ -170,7 +175,7 @@ public class FeatureRunner implements Callable<FeatureResult> {
                 stepResult.setStepIndex(setupStepIndex);
                 stepResult.setSuccessful(true);
 
-                PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry);
+                PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, testFeature.getTestDataSet(), testProperties, step, contextBeanRegistry);
 
                 if (kartaRuntime.shouldStepNeedNotBeRun(runInfo, preparedStep)) {
                     continue;
@@ -264,7 +269,7 @@ public class FeatureRunner implements Callable<FeatureResult> {
                     scenariosToRun = testFeature.getTestScenarios();
                 }
 
-                IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime(kartaRuntime).runInfo(runInfo).featureName(testFeature.getName()).commonTestDataSet(testFeature.getTestDataSet()).scenarioSetupSteps(testFeature.getScenarioSetupSteps()).scenariosToRun(scenariosToRun).scenarioTearDownSteps(testFeature.getScenarioTearDownSteps()).iterationIndex(iterationIndex).scenarioIterationIndexMap(scenarioIterationIndexMap).variables(DataUtils.cloneMap(variables)).resultConsumer(this::accumulateIterationResult).build();
+                IterationRunner iterationRunner = IterationRunner.builder().kartaRuntime(kartaRuntime).runInfo(runInfo).featureName(testFeature.getName()).testProperties(testProperties).commonTestDataSet(testFeature.getTestDataSet()).scenarioSetupSteps(testFeature.getScenarioSetupSteps()).scenariosToRun(scenariosToRun).scenarioTearDownSteps(testFeature.getScenarioTearDownSteps()).iterationIndex(iterationIndex).scenarioIterationIndexMap(scenarioIterationIndexMap).variables(DataUtils.cloneMap(variables)).resultConsumer(this::accumulateIterationResult).build();
 
                 if (useMinions) {
                     KartaNode minion = nodeRegistry.getNextMinion();
@@ -305,7 +310,7 @@ public class FeatureRunner implements Callable<FeatureResult> {
                 teardownStepIndex++;
                 StepResult stepResult = new StepResult();
                 stepResult.setStepIndex(teardownStepIndex);
-                PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, testFeature.getTestDataSet(), step, contextBeanRegistry);
+                PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, testFeature.getTestDataSet(), testProperties, step, contextBeanRegistry);
 
                 if (kartaRuntime.shouldStepNeedNotBeRun(runInfo, preparedStep)) {
                     continue;

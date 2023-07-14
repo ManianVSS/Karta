@@ -1,5 +1,6 @@
 package org.mvss.karta.framework.nodes;
 
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.framework.models.result.FeatureResult;
 import org.mvss.karta.framework.models.result.ScenarioResult;
 import org.mvss.karta.framework.models.result.StepResult;
@@ -22,12 +23,12 @@ public interface KartaNode extends Remote, AutoCloseable {
     /**
      * Run a test feature
      */
-    FeatureResult runFeature(RunInfo runInfo, TestFeature feature) throws RemoteException, InterruptedException;
+    FeatureResult runFeature(RunInfo runInfo, TestProperties testProperties, TestFeature feature) throws RemoteException, InterruptedException;
 
     /**
      * Run a test job iteration
      */
-    TestJobResult runJobIteration(RunInfo runInfo, String featureName, TestJob job, int iterationIndex) throws RemoteException;
+    TestJobResult runJobIteration(RunInfo runInfo, String featureName, TestProperties testProperties, TestJob job, int iterationIndex) throws RemoteException;
 
     /**
      * Run a scenario iteration

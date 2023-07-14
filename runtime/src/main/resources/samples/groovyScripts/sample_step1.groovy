@@ -2,9 +2,9 @@
 package org.mvss.karta.samples.stepdefinitions.groovy
 
 import org.mvss.karta.dependencyinjection.BeanRegistry
-import org.mvss.karta.dependencyinjection.Configurator
+import org.mvss.karta.dependencyinjection.KartaDependencyInjector
+import org.mvss.karta.dependencyinjection.TestProperties
 import org.mvss.karta.dependencyinjection.annotations.KartaAutoWired
-import org.mvss.karta.dependencyinjection.interfaces.DependencyInjector
 import org.mvss.karta.framework.models.result.StepResult
 import org.mvss.karta.framework.models.test.PreparedStep
 import org.mvss.karta.framework.runtime.KartaRuntime
@@ -15,13 +15,13 @@ class SampleStepDefClass11 {
     KartaRuntime kartaRuntime
 
     @KartaAutoWired
-    DependencyInjector dependencyInjector
+    KartaDependencyInjector kartaDependencyInjector
 
     @KartaAutoWired
     BeanRegistry beanRegistry
 
     @KartaAutoWired
-    Configurator configurator
+    TestProperties testProperties
 
     StepResult run(PreparedStep preparedStep, Object[] params) {
         StepResult stepResult = new StepResult()
@@ -29,9 +29,9 @@ class SampleStepDefClass11 {
         println("preparedStep=" + preparedStep)
         println("params=" + params)
         println("kartaRuntime=" + kartaRuntime)
-        println("dependencyInjector=" + dependencyInjector)
+        println("kartaDependencyInjector=" + kartaDependencyInjector)
         println("beanRegistry=" + beanRegistry)
-        println("configurator=" + configurator)
+        println("testProperties=" + testProperties)
         return stepResult
     }
 }

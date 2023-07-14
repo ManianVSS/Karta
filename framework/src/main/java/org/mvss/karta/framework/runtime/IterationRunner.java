@@ -2,6 +2,7 @@ package org.mvss.karta.framework.runtime;
 
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.dependencyinjection.utils.DataUtils;
 import org.mvss.karta.framework.models.event.ScenarioCompleteEvent;
 import org.mvss.karta.framework.models.event.ScenarioStartEvent;
@@ -36,6 +37,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
 
     private int iterationIndex;
 
+    private TestProperties testProperties;
     private HashMap<String, ArrayList<Serializable>> commonTestDataSet;
     private ArrayList<TestStep> scenarioSetupSteps;
     private ArrayList<TestScenario> scenariosToRun;
@@ -62,8 +64,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
     private synchronized void accumulateScenarioResult(PreparedScenario scenario, ScenarioResult scenarioResult) {
         result.put(scenario.getName(), kartaRuntime.getKartaConfiguration().getDetailedReport() ? scenarioResult : scenarioResult.trimForReport());
 
-        kartaRuntime.getEventProcessor().raiseEvent(
-                new ScenarioCompleteEvent(runInfo.getRunName(), featureName, iterationIndex, scenarioMapping.get(scenario), scenarioResult));
+        kartaRuntime.getEventProcessor().raiseEvent(new ScenarioCompleteEvent(runInfo.getRunName(), featureName, iterationIndex, scenarioMapping.get(scenario), scenarioResult));
     }
 
     @Override
@@ -80,25 +81,19 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
 
             if (runScenarioParallely) {
                 int numberOfScenarios = scenariosToRun.size();
-                scenarioExecutionService = new ThreadPoolExecutor(numberOfScenarios, numberOfScenarios, 0L, TimeUnit.MILLISECONDS,
-                        new BlockingRunnableQueue(numberOfScenarios));
+                scenarioExecutionService = new ThreadPoolExecutor(numberOfScenarios, numberOfScenarios, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue(numberOfScenarios));
             }
 
             for (TestScenario testScenario : scenariosToRun) {
-                int scenarioIterationNumber = ((scenarioIterationIndexMap != null) && (scenarioIterationIndexMap.containsKey(testScenario))) ?
-                        scenarioIterationIndexMap.get(testScenario).getAndIncrement() :
-                        0;
+                int scenarioIterationNumber = ((scenarioIterationIndexMap != null) && (scenarioIterationIndexMap.containsKey(testScenario))) ? scenarioIterationIndexMap.get(testScenario).getAndIncrement() : 0;
                 log.debug("Running Scenario: " + testScenario.getName() + "[" + scenarioIterationNumber + "]:");
 
-                PreparedScenario preparedScenario = kartaRuntime.getPreparedScenario(runInfo, featureName, scenarioIterationNumber,
-                        DataUtils.cloneMap(variables), commonTestDataSet, scenarioSetupSteps, testScenario, scenarioTearDownSteps);
+                PreparedScenario preparedScenario = kartaRuntime.getPreparedScenario(runInfo, featureName, scenarioIterationNumber, DataUtils.cloneMap(variables), commonTestDataSet, scenarioSetupSteps, testProperties, testScenario, scenarioTearDownSteps);
                 scenarioMapping.put(preparedScenario, testScenario);
 
                 eventProcessor.raiseEvent(new ScenarioStartEvent(runName, featureName, iterationIndex, testScenario));
 
-                ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime(kartaRuntime).runInfo(runInfo).featureName(featureName)
-                        .iterationIndex(iterationIndex).testScenario(preparedScenario).scenarioIterationNumber(scenarioIterationNumber)
-                        .minionToUse(minionToUse).resultConsumer(this::accumulateScenarioResult).build();
+                ScenarioRunner scenarioRunner = ScenarioRunner.builder().kartaRuntime(kartaRuntime).runInfo(runInfo).featureName(featureName).iterationIndex(iterationIndex).testScenario(preparedScenario).scenarioIterationNumber(scenarioIterationNumber).minionToUse(minionToUse).resultConsumer(this::accumulateScenarioResult).build();
 
                 if (runScenarioParallely) {
                     scenarioExecutionService.submit(scenarioRunner);

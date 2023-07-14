@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.dependencyinjection.BeanRegistry;
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.framework.models.run.RunInfo;
 import org.mvss.karta.framework.models.test.TestJob;
 
@@ -16,6 +17,7 @@ public class DaemonTestJob implements Runnable {
     private KartaRuntime kartaRuntime;
     private RunInfo runInfo;
     private String featureName;
+    private TestProperties testProperties;
     private TestJob testJob;
     private BeanRegistry contextBeanRegistry;
 
@@ -24,7 +26,7 @@ public class DaemonTestJob implements Runnable {
         try {
             log.info("Starting daemon test job " + testJob.getName());
             // Run the job iteration on a remote node or local node using utility method
-            kartaRuntime.runJobIteration(runInfo, featureName, testJob, -1, contextBeanRegistry);
+            kartaRuntime.runJobIteration(runInfo, featureName, testProperties, testJob, -1, contextBeanRegistry);
         } catch (InterruptedException e) {
             log.info("Stopping daemon test job " + testJob.getName());
         } catch (Throwable e) {

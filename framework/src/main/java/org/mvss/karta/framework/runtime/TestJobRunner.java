@@ -2,6 +2,7 @@ package org.mvss.karta.framework.runtime;
 
 import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.dependencyinjection.BeanRegistry;
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.framework.models.chaos.ChaosAction;
 import org.mvss.karta.framework.models.chaos.ChaosActionTreeNode;
 import org.mvss.karta.framework.models.event.ChaosActionJobCompleteEvent;
@@ -23,8 +24,7 @@ import java.util.HashMap;
 
 @Log4j2
 public class TestJobRunner {
-    public static TestJobResult run(KartaRuntime kartaRuntime, RunInfo runInfo, String featureName, TestJob job, int iterationIndex,
-                                    BeanRegistry contextBeanRegistry) throws Throwable {
+    public static TestJobResult run(KartaRuntime kartaRuntime, RunInfo runInfo, String featureName, TestProperties testProperties, TestJob job, int iterationIndex, BeanRegistry contextBeanRegistry) throws Throwable {
         EventProcessor eventProcessor = kartaRuntime.getEventProcessor();
         String runName = runInfo.getRunName();
         log.debug("Running job: " + job);
@@ -48,8 +48,7 @@ public class TestJobRunner {
                     // TODO: Handle chaos action being empty
                     for (ChaosAction chaosAction : chaosActionsToPerform) {
                         eventProcessor.raiseEvent(new ChaosActionJobStartEvent(runName, featureName, job, iterationIndex, chaosAction));
-                        StepResult result = kartaRuntime.runChaosAction(runInfo, featureName, iterationIndex, job.getName(), variables,
-                                job.getTestDataSet(), chaosAction, contextBeanRegistry);
+                        StepResult result = kartaRuntime.runChaosAction(runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), testProperties, chaosAction, contextBeanRegistry);
                         eventProcessor.raiseEvent(new ChaosActionJobCompleteEvent(runName, featureName, job, iterationIndex, chaosAction, result));
                     }
                 }
@@ -63,8 +62,7 @@ public class TestJobRunner {
                 } else {
                     long stepIndex = 0;
                     for (TestStep step : steps) {
-                        PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, featureName, iterationIndex, job.getName(), variables,
-                                job.getTestDataSet(), step, contextBeanRegistry);
+                        PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), testProperties, step, contextBeanRegistry);
                         if (kartaRuntime.shouldStepNeedNotBeRun(runInfo, preparedStep)) {
                             continue;
                         }

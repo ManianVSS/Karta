@@ -37,8 +37,8 @@ public class KartaCucumberObjectFactory implements ObjectFactory {
     public synchronized void start() {
         if (kartaDependencyInjector == null) {
             kartaDependencyInjector = KartaDependencyInjector.getInstance();
-            kartaDependencyInjector.mergePropertiesFiles(PropertyUtils.getSystemOrEnvProperty("PROPERTIES_FOLDER", PROPERTIES_FOLDER));
-            ArrayList<String> scanPackages = ParserUtils.convertValue(DataFormat.YAML, kartaDependencyInjector.configurator.getPropertyValue("KartaDependencyInjector", "configurationScanPackages"), arrayListOfStringType);
+            kartaDependencyInjector.mergePropertiesFiles(PropertyUtils.systemProperties.getOrDefault("PROPERTIES_FOLDER", PROPERTIES_FOLDER));
+            ArrayList<String> scanPackages = ParserUtils.convertValue(DataFormat.YAML, kartaDependencyInjector.testProperties.getPropertyValue("KartaDependencyInjector", "configurationScanPackages"), arrayListOfStringType);
             if (scanPackages != null) {
                 kartaDependencyInjector.addBeansFromPackages(scanPackages);
             }
@@ -67,7 +67,7 @@ public class KartaCucumberObjectFactory implements ObjectFactory {
 
             if (instance == null) {
                 instance = aClass.getDeclaredConstructor().newInstance();
-                kartaDependencyInjector.injectIntoObject(instance);
+                kartaDependencyInjector.inject(instance);
                 kartaDependencyInjector.beanRegistry.putForThread(instance);
             }
             return instance;

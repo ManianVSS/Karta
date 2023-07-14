@@ -2,9 +2,9 @@ package org.mvss.karta.samples.stepdefinitions;
 
 import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.KartaDependencyInjector;
 import org.mvss.karta.dependencyinjection.annotations.KartaAutoWired;
 import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
-import org.mvss.karta.dependencyinjection.interfaces.DependencyInjector;
 import org.mvss.karta.framework.annotations.ScenarioFailed;
 import org.mvss.karta.framework.models.result.ScenarioResult;
 import org.mvss.karta.framework.models.test.PreparedScenario;
@@ -29,7 +29,7 @@ public class Hooks {
     private KartaRuntime kartaRuntime;
 
     @KartaAutoWired
-    private DependencyInjector dependencyInjector;
+    private KartaDependencyInjector kartaDependencyInjector;
 
     @PropertyMapping(group = "WebAutomation", value = "webDriverOptions")
     private WebDriverOptions webDriverOptions = new WebDriverOptions();
@@ -50,7 +50,7 @@ public class Hooks {
     @BeforeScenario(Constants.UI)
     public void beforeUIScenarios(String runName, String featureName, PreparedScenario scenario) {
         log.info("@BeforeScenario load web driver " + runName + Constants.SPACE + featureName + Constants.SPACE + scenario.getName());
-        W3SchoolsApp w3SchoolsApp = new W3SchoolsApp(dependencyInjector::injectIntoObject, webDriverOptions);
+        W3SchoolsApp w3SchoolsApp = new W3SchoolsApp(kartaDependencyInjector::inject, webDriverOptions);
         scenario.getContextBeanRegistry().put(W3SchoolsApp.W_3_SCHOOLS_APP, w3SchoolsApp);
     }
 

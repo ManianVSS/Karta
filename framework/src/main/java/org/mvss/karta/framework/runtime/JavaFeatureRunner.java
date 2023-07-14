@@ -49,8 +49,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult> {
     private Consumer<FeatureResult> resultConsumer;
     private FeatureResult result;
 
-    public static StepResult runTestMethod(KartaRuntime kartaRuntime, ArrayList<TestDataSource> testDataSources, Object testCaseObject,
-                                           TestExecutionContext testExecutionContext, Method methodToInvoke) throws Throwable {
+    public static StepResult runTestMethod(KartaRuntime kartaRuntime, ArrayList<TestDataSource> testDataSources, Object testCaseObject, TestExecutionContext testExecutionContext, Method methodToInvoke) throws Throwable {
         Date startTime = new Date();
         StepResult stepResult;
         testExecutionContext.mergeTestData(null, null, testDataSources);
@@ -129,8 +128,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult> {
                     }
                     if (classMethod.isAnnotationPresent(Scenario.class)) {
                         Scenario annotation = classMethod.getAnnotation(Scenario.class);
-                        DataUtils.addItemToTreeMapInSequence(new GenericObjectWithChance<>(classMethod, annotation.probability()), scenarioMethodsMap,
-                                annotation.sequence());
+                        DataUtils.addItemToTreeMapInSequence(new GenericObjectWithChance<>(classMethod, annotation.probability()), scenarioMethodsMap, annotation.sequence());
                     }
                     if (classMethod.isAnnotationPresent(ScenarioTearDown.class)) {
                         ScenarioTearDown annotation = classMethod.getAnnotation(ScenarioTearDown.class);
@@ -169,8 +167,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult> {
                 }
                 eventProcessor.raiseEvent(new JavaFeatureSetupStartEvent(runName, featureName, stepName));
 
-                TestExecutionContext testExecutionContext = new TestExecutionContext(runName, featureName, iterationIndex, Constants.__FEATURE_SETUP__,
-                        stepName, null, variables);
+                TestExecutionContext testExecutionContext = new TestExecutionContext(runName, featureName, iterationIndex, Constants.__FEATURE_SETUP__, stepName, kartaRuntime.getKartaDependencyInjector().testProperties, null, variables);
                 StepResult stepResult = runTestMethod(kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke);
                 stepResult.setStepIndex(stepIndex++);
                 eventProcessor.raiseEvent(new JavaFeatureSetupCompleteEvent(runName, featureName, stepName, stepResult));
@@ -189,8 +186,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult> {
                 }
             }
 
-            ExecutorService iterationExecutionService = new ThreadPoolExecutor(numberOfIterationsInParallel, numberOfIterationsInParallel, 0L,
-                    TimeUnit.MILLISECONDS, new BlockingRunnableQueue(numberOfIterationsInParallel));
+            ExecutorService iterationExecutionService = new ThreadPoolExecutor(numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue(numberOfIterationsInParallel));
 
             for (iterationIndex = 0; (numberOfIterations <= 0) || (iterationIndex < numberOfIterations); iterationIndex++) {
                 ArrayList<Method> scenariosMethodsToRun = new ArrayList<>();
@@ -204,18 +200,13 @@ public class JavaFeatureRunner implements Callable<FeatureResult> {
                             continue;
                         }
                     } else {
-                        scenariosMethodsToRun.addAll(
-                                GenericObjectWithChance.extractObjects(RandomizationUtils.generateNextComposition(random, scenarioMethods)));
+                        scenariosMethodsToRun.addAll(GenericObjectWithChance.extractObjects(RandomizationUtils.generateNextComposition(random, scenarioMethods)));
                     }
                 } else {
                     scenariosMethodsToRun = GenericObjectWithChance.extractObjects(scenarioMethods);
                 }
 
-                JavaIterationRunner iterationRunner = JavaIterationRunner.builder().kartaRuntime(kartaRuntime).testCaseObject(testCaseObject)
-                        .scenarioSetupMethods(scenarioSetupMethods).scenariosMethodsToRun(scenariosMethodsToRun)
-                        .scenarioTearDownMethods(scenarioTearDownMethods).runInfo(runInfo).featureName(featureName)
-                        .featureDescription(featureDescription).iterationIndex(iterationIndex).scenarioIterationIndexMap(scenarioIterationIndexMap)
-                        .variables(DataUtils.cloneMap(variables)).resultConsumer(this::accumulateIterationResult).build();
+                JavaIterationRunner iterationRunner = JavaIterationRunner.builder().kartaRuntime(kartaRuntime).testCaseObject(testCaseObject).scenarioSetupMethods(scenarioSetupMethods).scenariosMethodsToRun(scenariosMethodsToRun).scenarioTearDownMethods(scenarioTearDownMethods).runInfo(runInfo).featureName(featureName).featureDescription(featureDescription).iterationIndex(iterationIndex).scenarioIterationIndexMap(scenarioIterationIndexMap).variables(DataUtils.cloneMap(variables)).resultConsumer(this::accumulateIterationResult).build();
 
                 if (numberOfIterationsInParallel == 1) {
                     iterationRunner.call();
@@ -246,8 +237,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult> {
                 }
                 eventProcessor.raiseEvent(new JavaFeatureTearDownStartEvent(runName, featureName, stepName));
 
-                TestExecutionContext testExecutionContext = new TestExecutionContext(runName, featureName, iterationIndex,
-                        Constants.__FEATURE_TEARDOWN__, stepName, null, variables);
+                TestExecutionContext testExecutionContext = new TestExecutionContext(runName, featureName, iterationIndex, Constants.__FEATURE_TEARDOWN__, stepName, kartaRuntime.getKartaDependencyInjector().testProperties, null, variables);
                 StepResult stepResult = runTestMethod(kartaRuntime, testDataSources, testCaseObject, testExecutionContext, methodToInvoke);
                 stepResult.setStepIndex(stepIndex++);
 

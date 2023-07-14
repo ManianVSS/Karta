@@ -6,7 +6,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.mvss.karta.Constants;
-import org.mvss.karta.dependencyinjection.Configurator;
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.dependencyinjection.enums.DataFormat;
 import org.mvss.karta.dependencyinjection.utils.ClassPathLoaderUtils;
 import org.mvss.karta.dependencyinjection.utils.ParserUtils;
@@ -99,7 +99,7 @@ public class PnPRegistry implements AutoCloseable {
         addPluginConfiguration(null, pluginConfigs);
     }
 
-    public void loadPluginJar(Configurator configurator, File jarFile) throws IOException {
+    public void loadPluginJar(TestProperties testProperties, File jarFile) throws IOException {
         InputStream jarFileInputStream = (jarFile == null) ? ClassPathLoaderUtils.getFileStream(Constants.KARTA_PLUGINS_CONFIG_YAML) : DynamicClassLoader.getClassPathResourceInJarAsStream(jarFile, Constants.KARTA_PLUGINS_CONFIG_YAML);
 
         if (jarFileInputStream == null) {
@@ -110,22 +110,22 @@ public class PnPRegistry implements AutoCloseable {
         ArrayList<PluginConfig> pluginConfigs = ParserUtils.getYamlObjectMapper().readValue(pluginConfigStr, pluginConfigArrayListType);
         addPluginConfiguration(jarFile, pluginConfigs);
 
-        if (configurator != null) {
+        if (testProperties != null) {
             // TODO: Change to plugin properties yaml
             InputStream runtimePropertiesInputStream = (jarFile == null) ? ClassPathLoaderUtils.getFileStream(Constants.KARTA_RUNTIME_PROPERTIES_YAML) : DynamicClassLoader.getClassPathResourceInJarAsStream(jarFile, Constants.KARTA_RUNTIME_PROPERTIES_YAML);
 
             if (runtimePropertiesInputStream != null) {
                 String runtimePropertiesStr = IOUtils.toString(runtimePropertiesInputStream, Charset.defaultCharset());
-                HashMap<String, HashMap<String, Serializable>> runtimeProperties = Configurator.readPropertiesFromString(DataFormat.YAML, runtimePropertiesStr);
-                configurator.mergeProperties(runtimeProperties);
+                HashMap<String, HashMap<String, Serializable>> runtimeProperties = TestProperties.readPropertiesFromString(DataFormat.YAML, runtimePropertiesStr);
+                testProperties.mergeProperties(runtimeProperties);
             }
         }
     }
 
-    public void loadPlugins(Configurator configurator, File pluginsDirectory) {
+    public void loadPlugins(TestProperties testProperties, File pluginsDirectory) {
         for (File jarFile : FileUtils.listFiles(pluginsDirectory, Constants.jarExtension, true)) {
             try {
-                loadPluginJar(configurator, jarFile);
+                loadPluginJar(testProperties, jarFile);
             } catch (Throwable t) {
                 log.error("Plugin failed to load: " + jarFile.getAbsolutePath(), t);
             }

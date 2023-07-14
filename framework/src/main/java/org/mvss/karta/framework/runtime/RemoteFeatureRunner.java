@@ -3,6 +3,7 @@ package org.mvss.karta.framework.runtime;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 import org.mvss.karta.Constants;
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.framework.models.result.FeatureResult;
 import org.mvss.karta.framework.models.run.RunInfo;
 import org.mvss.karta.framework.models.test.TestFeature;
@@ -18,6 +19,7 @@ import java.util.concurrent.Callable;
 @Builder
 public class RemoteFeatureRunner implements Callable<FeatureResult> {
     private RunInfo runInfo;
+    private TestProperties testProperties;
     private TestFeature testFeature;
 
     @Builder.Default
@@ -28,7 +30,7 @@ public class RemoteFeatureRunner implements Callable<FeatureResult> {
     @Override
     public FeatureResult call() {
         try {
-            result = minionToUse.runFeature(runInfo, testFeature);
+            result = minionToUse.runFeature(runInfo, testProperties, testFeature);
             result.processRemoteResults();
         } catch (Throwable t) {
             log.error(Constants.EMPTY_STRING, t);

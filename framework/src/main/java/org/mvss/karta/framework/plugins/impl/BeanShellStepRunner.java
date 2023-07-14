@@ -112,7 +112,7 @@ public class BeanShellStepRunner implements StepRunner {
             String stepMapping = stepHandlerMap.get(stepIdentifier);
             Interpreter interpreter = new Interpreter();
             interpreter.set("__kartaRuntime", kartaRuntime);
-            interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
+            interpreter.set("__dependencyInjector", kartaRuntime.getKartaDependencyInjector());
             interpreter.set("__context", testExecutionContext);
             interpreter.set("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
             interpreter.set("__testStep", testStep);
@@ -168,7 +168,7 @@ public class BeanShellStepRunner implements StepRunner {
             String chaosActionMapping = chaosActionHandlerMap.get(chaosActionName);
             Interpreter interpreter = new Interpreter();
             interpreter.set("__kartaRuntime", kartaRuntime);
-            interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
+            interpreter.set("__dependencyInjector", kartaRuntime.getKartaDependencyInjector());
             interpreter.set("__chaosAction", preparedChaosAction);
             interpreter.set("__context", testExecutionContext);
             interpreter.set("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
@@ -218,7 +218,7 @@ public class BeanShellStepRunner implements StepRunner {
             String conditionMapping = conditionDefinitionMap.get(conditionIdentifier);
             Interpreter interpreter = new Interpreter();
             interpreter.set("__kartaRuntime", kartaRuntime);
-            interpreter.set("__dependencyInjector", kartaRuntime.getDependencyInjector());
+            interpreter.set("__dependencyInjector", kartaRuntime.getKartaDependencyInjector());
             interpreter.set("__context", testExecutionContext);
             interpreter.set("__context_bean_registry", testExecutionContext.getContextBeanRegistry());
             Object resultObject = interpreter.source(conditionMapping);
