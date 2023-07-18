@@ -30,6 +30,9 @@ public class ParserUtils {
     public static final TypeReference<HashMap<String, Serializable>> genericHashMapObjectType = new TypeReference<>() {
     };
 
+    public static final TypeReference<HashMap<String, String>> stringHashMapObjectType = new TypeReference<>() {
+    };
+
     private static final TypeReference<ArrayList<String>> arrayListOfStringType = new TypeReference<>() {
     };
 
@@ -192,8 +195,7 @@ public class ParserUtils {
 
         String contentTrim = content.trim();
 
-        if (StringUtils.startsWithAny(contentTrim, YAML_STR_TO_ESCAPE)
-                || (contentTrim.startsWith("-") && !RegexUtil.isNumeric(contentTrim))) {
+        if (StringUtils.startsWithAny(contentTrim, YAML_STR_TO_ESCAPE) || (contentTrim.startsWith("-") && !RegexUtil.isNumeric(contentTrim))) {
             return yamlObjectMapper.readValue("\"" + content + "\"", valueType);
         }
 
