@@ -15,7 +15,7 @@ public class SystemProperties implements Serializable, PropertiesInterface {
     private HashMap<String, String> systemPropertyMap = new HashMap<>();
 
     public SystemProperties() {
-        System.getenv().forEach((key, value) -> envPropertyMap.put(key.toUpperCase(), value));
+        envPropertyMap.putAll(System.getenv());
         System.getProperties().forEach((key, value) -> systemPropertyMap.put(key.toString(), value.toString()));
     }
 
