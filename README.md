@@ -1,3 +1,5 @@
+![karta.png](karta.png)
+
 # Karta
 
 Karta is a software system test automation framework built ground up for system testing.
