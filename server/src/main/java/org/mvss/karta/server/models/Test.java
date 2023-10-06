@@ -6,7 +6,9 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import lombok.*;
 import org.mvss.karta.framework.models.catalog.TestType;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
+
+import java.io.Serial;
 import java.time.Duration;
 import java.util.ArrayList;
 
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 @Entity
 @Table(indexes = {@Index(columnList = "name"), @Index(columnList = "parent"), @Index(columnList = "parent, name")}, uniqueConstraints = {@UniqueConstraint(columnNames = {"parent", "name"})})
 public class Test extends BaseModel {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @JoinColumn(name = "parent")

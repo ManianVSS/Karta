@@ -3,7 +3,9 @@ package org.mvss.karta.server.models;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import lombok.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
+
+import java.io.Serial;
 import java.util.ArrayList;
 
 @Getter
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 @Entity
 @Table(indexes = {@Index(columnList = "name"), @Index(columnList = "parent"), @Index(columnList = "parent, name")}, uniqueConstraints = {@UniqueConstraint(columnNames = {"parent", "name"})})
 public class TestCategory extends BaseModel {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @JoinColumn(name = "parent")

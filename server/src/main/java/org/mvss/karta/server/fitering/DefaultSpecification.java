@@ -10,7 +10,7 @@ import org.mvss.karta.server.models.BaseModel;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import javax.persistence.criteria.*;
+import jakarta.persistence.criteria.*;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
