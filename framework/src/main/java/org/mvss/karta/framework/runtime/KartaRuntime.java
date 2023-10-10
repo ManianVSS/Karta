@@ -237,6 +237,10 @@ public class KartaRuntime implements AutoCloseable {
         // Initialize Test catalog manager and load test catalog
         /*---------------------------------------------------------------------------------------------------------------------*/
         testCatalogManager = new TestCatalogManager();
+        testCatalogManager.getTestCatalog()
+                .addStepRunner(kartaConfiguration.getDefaultStepRunners())
+                .addFeatureSourceParser(kartaConfiguration.getDefaultFeatureSourceParsers())
+                .addTestDataSources(kartaConfiguration.getDefaultTestDataSources());
         String catalogFileText = ClassPathLoaderUtils.readAllText(Constants.TEST_CATALOG_FILE_NAME);
         TestCategory testCategory = (catalogFileText == null) ? new TestCategory() : yamlObjectMapper.readValue(catalogFileText, TestCategory.class);
         testCatalogManager.mergeWithCatalog(testCategory);

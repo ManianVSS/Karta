@@ -18,6 +18,7 @@ import org.mvss.karta.framework.plugins.impl.*;
 import org.mvss.karta.framework.plugins.impl.kriya.KriyaPlugin;
 import org.mvss.karta.framework.utils.SSLProperties;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ import java.util.HashSet;
 @Builder
 public class KartaConfiguration implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
@@ -176,6 +178,8 @@ public class KartaConfiguration implements Serializable {
         kartaConfiguration.propertyFiles.add(Constants.KARTA_PROPERTIES_YAML);
         kartaConfiguration.propertyFiles.add(Constants.KARTA_PLUGIN_PROPERTIES_YAML);
         kartaConfiguration.propertyFiles.add(Constants.KARTA_TEST_PROPERTIES);
+
+        kartaConfiguration.testCatalogFragmentFiles.add(Constants.TEST_CATALOG_FRAGMENT_FILE_NAME);
 
         kartaConfiguration.sslProperties = new SSLProperties();
 
