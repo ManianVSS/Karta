@@ -145,31 +145,13 @@ public class SimpleWebDriverFactory {
                 break;
 
             case EDGE:
-                EdgeOptions edgeOptions = new EdgeOptions();
-                edgeOptions.setCapability(CapabilityType.SUPPORTS_JAVASCRIPT, true);
-                edgeOptions.setCapability(CapabilityType.ACCEPT_INSECURE_CERTS, true);
-
-                if (webDriverOptions.isHeadless()) {
-                    HashMap<String, Object> options = new HashMap<>();
-                    ArrayList<String> args = new ArrayList<>();
-                    args.add(HEADLESS);
-                    args.add(DISABLE_GPU);
-                    options.put(ARGS, args);
-                    edgeOptions.setCapability(MS_EDGE_OPTIONS, options);
-                }
-
-                edgeOptions.setCapability(MS_EDGE_CHROMIUM, true);
-
-                if (proxy != null) {
-                    edgeOptions.setProxy(proxy);
-                }
+                EdgeOptions edgeOptions = getEdgeOptions(webDriverOptions, proxy);
 
                 webDriver = new EdgeDriver(edgeOptions);
                 break;
 
             case SAFARI:
                 SafariOptions safariOptions = new SafariOptions();
-                safariOptions.setCapability(CapabilityType.SUPPORTS_JAVASCRIPT, true);
                 safariOptions.setCapability(CapabilityType.ACCEPT_INSECURE_CERTS, true);
 
                 if (proxy != null) {
@@ -199,5 +181,26 @@ public class SimpleWebDriverFactory {
         webDriver.manage().timeouts().implicitlyWait(webDriverOptions.getImplicitWaitTime());
 
         return webDriver;
+    }
+
+    private static EdgeOptions getEdgeOptions(WebDriverOptions webDriverOptions, Proxy proxy) {
+        EdgeOptions edgeOptions = new EdgeOptions();
+        edgeOptions.setCapability(CapabilityType.ACCEPT_INSECURE_CERTS, true);
+
+        if (webDriverOptions.isHeadless()) {
+            HashMap<String, Object> options = new HashMap<>();
+            ArrayList<String> args = new ArrayList<>();
+            args.add(HEADLESS);
+            args.add(DISABLE_GPU);
+            options.put(ARGS, args);
+            edgeOptions.setCapability(MS_EDGE_OPTIONS, options);
+        }
+
+        edgeOptions.setCapability(MS_EDGE_CHROMIUM, true);
+
+        if (proxy != null) {
+            edgeOptions.setProxy(proxy);
+        }
+        return edgeOptions;
     }
 }

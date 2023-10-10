@@ -35,11 +35,7 @@ public class SSHUtil implements AutoCloseable {
 
     protected String user;
     protected String pass;
-
-    @Builder.Default
     protected String host = LOCALHOST;
-
-    @Builder.Default
     protected int port = 22;
 
     protected ProxyOptions proxyOptions;

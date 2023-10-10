@@ -3,7 +3,7 @@ package org.mvss.karta.framework.plugins.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
 import lombok.extern.log4j.Log4j2;
-import org.mvss.karta.Constants;
+import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.dependencyinjection.annotations.Initializer;
 import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
 import org.mvss.karta.dependencyinjection.utils.ParserUtils;
@@ -12,8 +12,8 @@ import org.mvss.karta.framework.plugins.TestDataSource;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 @Log4j2
@@ -24,26 +24,40 @@ public class CSVTestDataSourcePlugin implements TestDataSource {
     @PropertyMapping(group = PLUGIN_NAME, value = "csvFileName")
     private String csvFileName = "TestData.csv";
     private boolean initialized = false;
-    private CSVReader csvReader;
-    private String[] headerRecord;
 
     @Override
     public String getPluginName() {
         return PLUGIN_NAME;
     }
 
-    private void resetCSV() throws Throwable {
-        synchronized (writeLock) {
-            File file = new File(csvFileName);
-            FileReader filereader = new FileReader(file);
-            csvReader = new CSVReader(filereader);
-            headerRecord = csvReader.readNext();
+    private final ArrayList<HashMap<String, Serializable>> testDataSet = new ArrayList<>();
+    private volatile int currentIndex = 0;
 
-            if ((headerRecord == null) || (headerRecord.length == 0)) {
-                filereader.close();
-                throw new Exception("CSV file does not have data or headers " + csvFileName);
+    private boolean readCSVData() throws Throwable {
+        if (StringUtils.isNotBlank(csvFileName)) {
+            synchronized (writeLock) {
+                File file = new File(csvFileName);
+                try (FileReader filereader = new FileReader(file)) {
+                    CSVReader csvReader = new CSVReader(filereader);
+                    String[] headerRecord = csvReader.readNext();
+
+                    if ((headerRecord == null) || (headerRecord.length == 0)) {
+                        filereader.close();
+                        throw new Exception("CSV file does not have data or headers " + csvFileName);
+                    }
+
+                    for (String[] nextRecord = csvReader.readNext(); nextRecord != null; nextRecord = csvReader.readNext()) {
+                        HashMap<String, Serializable> testData = new HashMap<>();
+                        for (int j = 0; j < headerRecord.length; j++) {
+                            testData.put(headerRecord[j], objectMapper.readValue(nextRecord[j], Serializable.class));
+                        }
+                        testDataSet.add(testData);
+                    }
+                    return true;
+                }
             }
         }
+        return false;
     }
 
     @Initializer
@@ -54,51 +68,18 @@ public class CSVTestDataSourcePlugin implements TestDataSource {
 
         log.info("Initializing " + PLUGIN_NAME + " plugin");
 
-        resetCSV();
-        initialized = true;
-        return true;
+        return (initialized = readCSVData());
     }
 
     @Override
-    public HashMap<String, Serializable> getData(TestExecutionContext testExecutionContext) {
-        HashMap<String, Serializable> testData = new HashMap<>();
-        try {
-
-            // TODO: retrieve record for the execution step pointer instead of cycling
-
-            String[] nextRecord;
-
-            synchronized (writeLock) {
-                if ((nextRecord = csvReader.readNext()) == null) {
-                    resetCSV();
-                    if ((nextRecord = csvReader.readNext()) == null) {
-                        return testData;
-                    }
-                }
-            }
-
-            for (int i = 0; i < headerRecord.length; i++) {
-                testData.put(headerRecord[i], objectMapper.readValue(nextRecord[i], Serializable.class));
-            }
-
-        } catch (Throwable t) {
-            log.error(Constants.EMPTY_STRING, t);
+    public synchronized HashMap<String, Serializable> getData(TestExecutionContext testExecutionContext) {
+        if (testDataSet.isEmpty()) {
+            return null;
         }
+
+        HashMap<String, Serializable> testData = testDataSet.get(currentIndex);
+        currentIndex = (currentIndex + 1) % testDataSet.size();
         return testData;
-    }
-
-    @Override
-    public void close() {
-        log.info("Closing " + PLUGIN_NAME + " ...");
-
-        if (csvReader != null) {
-            try {
-                csvReader.close();
-                csvReader = null;
-            } catch (IOException ioe) {
-                log.error(ioe);
-            }
-        }
     }
 
 }

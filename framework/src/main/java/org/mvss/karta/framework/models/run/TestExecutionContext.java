@@ -6,6 +6,7 @@ import org.mvss.karta.dependencyinjection.BeanRegistry;
 import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.framework.plugins.TestDataSource;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 @AllArgsConstructor
 @Builder
 public class TestExecutionContext implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private String runName;
@@ -57,7 +59,9 @@ public class TestExecutionContext implements Serializable {
         if (testDataSources != null) {
             for (TestDataSource tds : testDataSources) {
                 HashMap<String, Serializable> testData = tds.getData(this);
-                this.testData.putAll(testData);
+                if (testData != null) {
+                    this.testData.putAll(testData);
+                }
             }
         }
 
