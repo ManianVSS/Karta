@@ -1,8 +1,13 @@
 package org.mvss.karta.dependencyinjection;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
@@ -35,6 +40,7 @@ import java.util.regex.Pattern;
  * @author Manian
  */
 @Log4j2
+@JsonIgnoreProperties("jsonPathContext")
 @SuppressWarnings("unused")
 public class TestProperties implements PropertiesInterface {
     public static final TypeReference<HashMap<String, HashMap<String, Serializable>>> propertiesType = new TypeReference<>() {
@@ -50,8 +56,28 @@ public class TestProperties implements PropertiesInterface {
      * Property store is a mapping of group name to the map of property names to Serializable property values.
      */
     @Getter
-    private final HashMap<String, HashMap<String, Serializable>> propertiesStore = new HashMap<>();
+    private HashMap<String, HashMap<String, Serializable>> propertiesStore = new HashMap<>();
 
+    private transient DocumentContext jsonPathContext;
+
+    public void setPropertiesStore(HashMap<String, HashMap<String, Serializable>> propertiesStore) {
+        this.propertiesStore = propertiesStore;
+        jsonPathContext = JsonPath.parse(propertiesStore);
+    }
+
+    public TestProperties() {
+        Configuration jsonPathConfig = Configuration.defaultConfiguration().addOptions(Option.SUPPRESS_EXCEPTIONS);
+        jsonPathContext = JsonPath.using(jsonPathConfig).parse(propertiesStore);
+    }
+
+    public <T> T getJsonPath(String jsonPath) {
+        return jsonPathContext.read(jsonPath);
+    }
+
+    public TestProperties reloadJsonPathContext() {
+        jsonPathContext = JsonPath.parse(propertiesStore);
+        return this;
+    }
 
     @Override
     public boolean containsKey(String key) {
@@ -158,8 +184,9 @@ public class TestProperties implements PropertiesInterface {
     /**
      * Merges a property store into the TestProperties' property store.
      */
-    public void mergeProperties(HashMap<String, HashMap<String, Serializable>> propertiesToMerge) {
+    public synchronized void mergeProperties(HashMap<String, HashMap<String, Serializable>> propertiesToMerge) {
         mergeProperties(propertiesStore, propertiesToMerge);
+        reloadJsonPathContext();
     }
 
     /**
@@ -294,10 +321,17 @@ public class TestProperties implements PropertiesInterface {
      */
     public void setFieldValue(Object object, Field field, PropertyMapping propertyMapping) {
         try {
-            String propertyGroup = propertyMapping.group();
-            String propertyName = DataUtils.pickString(StringUtils::isNotEmpty, propertyMapping.name(), propertyMapping.value(), field.getName());
+            Serializable propertyValue;
 
-            Serializable propertyValue = getPropertyValue(propertyGroup, propertyName);
+            String jsonPathKey = propertyMapping.jsonPath();
+            if (StringUtils.isNotBlank(jsonPathKey)) {
+                propertyValue = getJsonPath(jsonPathKey);
+            } else {
+                String propertyGroup = propertyMapping.group();
+                String propertyName = DataUtils.pickString(StringUtils::isNotBlank, propertyMapping.name(), propertyMapping.value(), field.getName());
+
+                propertyValue = getPropertyValue(propertyGroup, propertyName);
+            }
             JavaType covertToTypeTo = objectMapper.getTypeFactory().constructType((Object.class == propertyMapping.type()) ? field.getGenericType() : propertyMapping.type());
             setFieldValue(object, field, propertyValue, covertToTypeTo);
         } catch (Throwable t) {

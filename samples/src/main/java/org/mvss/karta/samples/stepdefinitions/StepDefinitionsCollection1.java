@@ -2,6 +2,7 @@ package org.mvss.karta.samples.stepdefinitions;
 
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
+import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.dependencyinjection.annotations.KartaAutoWired;
 import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
 import org.mvss.karta.framework.annotations.*;
@@ -10,6 +11,7 @@ import org.mvss.karta.framework.models.event.GenericTestEvent;
 import org.mvss.karta.framework.models.result.StepResult;
 import org.mvss.karta.framework.models.run.TestExecutionContext;
 import org.mvss.karta.framework.web.PageException;
+import org.mvss.karta.framework.web.WebDriverOptions;
 import org.mvss.karta.samples.pom.w3s.HTMLIntroductionPage;
 import org.mvss.karta.samples.pom.w3s.HomePage;
 import org.mvss.karta.samples.pom.w3s.LearnHTMLHomePage;
@@ -32,8 +34,16 @@ public class StepDefinitionsCollection1 {
     @KartaAutoWired("EmployeeBean")
     private Employee employee;
 
+    @KartaAutoWired
+    private TestProperties testProperties;
+
+    @PropertyMapping(jsonPath = "$.WebAutomation.webDriverOptions")
+    private WebDriverOptions webDriverOptionsFromJsonPath = null;
+
     @ConditionDefinition(value = "the calculator is powered \"\"")
     public boolean is_the_calculator_is_powered_on(@ContextVariable("CalculatorState") String calculatorState, String expectedState) {
+        log.info("***** JSONPath Evaluation Try: " + testProperties.getJsonPath("$.WebAutomation.webDriverOptions.screenSize"));
+        log.info("***** JSONPath Evaluation Try: WebDriverOptions from json path parsing is " + webDriverOptionsFromJsonPath);
         if (StringUtils.isBlank(calculatorState)) {
             return StringUtils.isBlank(expectedState);
         } else if (StringUtils.isBlank(expectedState)) {

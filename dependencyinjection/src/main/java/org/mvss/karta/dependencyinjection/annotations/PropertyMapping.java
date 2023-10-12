@@ -26,6 +26,11 @@ public @interface PropertyMapping {
     String group() default Constants.KARTA;
 
     /**
+     * The json path to parse property from
+     */
+    String jsonPath() default Constants.EMPTY_STRING;
+
+    /**
      * The class type to map the property value.
      */
     Class<?> type() default Object.class;
