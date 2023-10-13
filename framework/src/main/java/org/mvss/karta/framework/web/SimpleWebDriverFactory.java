@@ -36,6 +36,7 @@ public class SimpleWebDriverFactory {
     private static final String WINDOWS = "Windows";
     private static final String OS_NAME = "os.name";
     private static final String EXE = ".exe";
+    public static final String REMOTE_ALLOW_ORIGINS_ALL = "--remote-allow-origins=*";
 
     public static WebDriverOptions DEFAULT_WEB_DRIVER_OPTIONS = new WebDriverOptions();
 
@@ -116,6 +117,7 @@ public class SimpleWebDriverFactory {
                 chromeOptions.addArguments(NO_SANDBOX);
                 chromeOptions.setAcceptInsecureCerts(webDriverOptions.isIgnoreCertificates());
                 chromeOptions.setHeadless(webDriverOptions.isHeadless());
+                chromeOptions.addArguments(REMOTE_ALLOW_ORIGINS_ALL);
 
                 if (webDriverOptions.getAdditionalArguments() != null) {
                     chromeOptions.addArguments(webDriverOptions.getAdditionalArguments());
@@ -146,6 +148,10 @@ public class SimpleWebDriverFactory {
 
             case EDGE:
                 EdgeOptions edgeOptions = getEdgeOptions(webDriverOptions, proxy);
+                edgeOptions.addArguments(NO_SANDBOX);
+                edgeOptions.setAcceptInsecureCerts(webDriverOptions.isIgnoreCertificates());
+                edgeOptions.setHeadless(webDriverOptions.isHeadless());
+                edgeOptions.addArguments(REMOTE_ALLOW_ORIGINS_ALL);
 
                 webDriver = new EdgeDriver(edgeOptions);
                 break;
