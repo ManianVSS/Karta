@@ -43,7 +43,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     private String releaseName;
 
     @PropertyMapping(group = PLUGIN_NAME)
-    private String build;
+    private int build;
 
     @PropertyMapping(group = PLUGIN_NAME)
     private String runName;
@@ -52,7 +52,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     private String dashboardBaseURL;
 
     @PropertyMapping(group = PLUGIN_NAME)
-    private String dashboardUserToken;
+    private String dashboardUserToken="<not provided>";
 
     private Integer releaseId;
     private Integer runId;
