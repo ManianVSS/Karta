@@ -33,7 +33,7 @@ public class ShaniDashboardReliabilityRunPlugin implements TestEventListener {
     private String release = "1.X";
 
     @PropertyMapping(group = PLUGIN_NAME, value = "build")
-    private String build = "XX1";
+    private int build = 1;
 
     @PropertyMapping(group = PLUGIN_NAME, value = "testEnvironmentType")
     private String testEnvironmentType = "ENV_TYPE";

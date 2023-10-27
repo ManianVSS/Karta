@@ -21,6 +21,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     private static final String PLUGIN_NAME = "ShaniDashboardPlugin";
 
     public static final String EXECUTION_API_RELEASES = "/execution/api/releases/";
+    public static final String EXECUTION_API_BUILDS = "/execution/api/builds/";
     public static final String EXECUTION_API_RUNS = "/execution/api/runs/";
     public static final String RELEASE = "release";
     public static final String NAME = "name";
@@ -43,7 +44,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     private String releaseName;
 
     @PropertyMapping(group = PLUGIN_NAME)
-    private int build;
+    private String build;
 
     @PropertyMapping(group = PLUGIN_NAME)
     private String runName;
@@ -52,9 +53,10 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     private String dashboardBaseURL;
 
     @PropertyMapping(group = PLUGIN_NAME)
-    private String dashboardUserToken="<not provided>";
+    private String dashboardUserToken = "<not provided>";
 
     private Integer releaseId;
+    private Integer buildId;
     private Integer runId;
 
     public ShaniDashboardPlugin(String parameter) {
@@ -147,6 +149,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     private synchronized void handleTestRunStarted(TestRunStarted testRunStarted) {
         try {
             releaseId = (Integer) createReleaseIfMissing().get(ID);
+            buildId = (Integer) createBuildIfMissing().get(ID);
             runId = (Integer) createRunIfMissing().get(ID);
         } catch (Exception e) {
             log.error(EXCEPTION_OCCURRED, e);
@@ -163,14 +166,26 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
         }});
     }
 
+    private HashMap<String, Serializable> createBuildIfMissing() throws Exception {
+        return getExistingOrCreateNewEntity(EXECUTION_API_BUILDS, new HashMap<>() {{
+            put(RELEASE, releaseId);
+            put(NAME, build);
+        }}, new HashMap<>() {{
+            put(RELEASE, releaseId);
+            put(NAME, build);
+            put(SUMMARY, build);
+            put(DESCRIPTION, build);
+        }});
+    }
+
     private HashMap<String, Serializable> createRunIfMissing() throws Exception {
         return getExistingOrCreateNewEntity(EXECUTION_API_RUNS, new HashMap<>() {{
             put(RELEASE, releaseId);
             put(NAME, runName);
         }}, new HashMap<>() {{
             put(RELEASE, releaseId);
+            put(BUILD, buildId);
             put(NAME, runName);
-            put(BUILD, build);
         }});
     }
 
@@ -221,6 +236,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     public synchronized void handleTestRunFinished(TestRunFinished testRunFinished) {
         try {
             releaseId = (Integer) createReleaseIfMissing().get(ID);
+            buildId = (Integer) createBuildIfMissing().get(ID);
             HashMap<String, Serializable> run = createRunIfMissing();
             runId = (Integer) run.get(ID);
 
