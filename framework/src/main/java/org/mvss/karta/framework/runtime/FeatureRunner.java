@@ -139,7 +139,7 @@ public class FeatureRunner implements Callable<FeatureResult> {
 
                     if (job.isDaemonProcess()) {
                         DaemonTestJob daemonTestJob = DaemonTestJob.builder().kartaRuntime(kartaRuntime).runInfo(runInfo).featureName(testFeature.getName()).testProperties(testProperties).testJob(job).contextBeanRegistry(contextBeanRegistry).build();
-                        Thread daemonJobThread = new Thread(daemonTestJob);
+                        Thread daemonJobThread = kartaRuntime.getThreadFactory().newThread(daemonTestJob);
                         daemonJobThread.start();
                         daemonJobThreads.add(daemonJobThread);
                     } else if (jobInterval > 0) {
@@ -238,7 +238,7 @@ public class FeatureRunner implements Callable<FeatureResult> {
             ExecutorService iterationExecutionService = null;
 
             if (numberOfIterationsInParallel > 1) {
-                iterationExecutionService = new ThreadPoolExecutor(numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue(numberOfIterationsInParallel));
+                iterationExecutionService = new ThreadPoolExecutor(numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue(numberOfIterationsInParallel), kartaRuntime.getThreadFactory());
             }
 
             Instant startTime = Instant.now();

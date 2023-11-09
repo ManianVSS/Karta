@@ -186,7 +186,7 @@ public class JavaFeatureRunner implements Callable<FeatureResult> {
                 }
             }
 
-            ExecutorService iterationExecutionService = new ThreadPoolExecutor(numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue(numberOfIterationsInParallel));
+            ExecutorService iterationExecutionService = new ThreadPoolExecutor(numberOfIterationsInParallel, numberOfIterationsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue(numberOfIterationsInParallel), kartaRuntime.getThreadFactory());
 
             for (iterationIndex = 0; (numberOfIterations <= 0) || (iterationIndex < numberOfIterations); iterationIndex++) {
                 ArrayList<Method> scenariosMethodsToRun = new ArrayList<>();

@@ -81,7 +81,7 @@ public class IterationRunner implements Callable<HashMap<String, ScenarioResult>
 
             if (runScenarioParallely) {
                 int numberOfScenarios = scenariosToRun.size();
-                scenarioExecutionService = new ThreadPoolExecutor(numberOfScenarios, numberOfScenarios, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue(numberOfScenarios));
+                scenarioExecutionService = new ThreadPoolExecutor(numberOfScenarios, numberOfScenarios, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue(numberOfScenarios), kartaRuntime.getThreadFactory());
             }
 
             for (TestScenario testScenario : scenariosToRun) {

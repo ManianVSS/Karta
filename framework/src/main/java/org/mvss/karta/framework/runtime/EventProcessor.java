@@ -18,6 +18,7 @@ import org.mvss.karta.framework.utils.WaitUtil;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -38,6 +39,12 @@ public class EventProcessor implements AutoCloseable {
     private ExecutorService eventListenerExecutorService = null;
     private BlockingRunnableQueue eventProcessingQueue;
 
+    private final ThreadFactory threadFactory;
+
+    public EventProcessor(ThreadFactory threadFactory) {
+        this.threadFactory = threadFactory;
+    }
+
     public boolean addEventListener(TestEventListener testEventListener) {
         return testEventListeners.add(testEventListener);
     }
@@ -57,7 +64,7 @@ public class EventProcessor implements AutoCloseable {
     public void start() {
         // TODO: Change to thread factory to be able to manage threads.
         eventProcessingQueue = new BlockingRunnableQueue(maxEventQueueSize);
-        eventListenerExecutorService = new ThreadPoolExecutor(numberOfThread, numberOfThread, 0L, TimeUnit.MILLISECONDS, eventProcessingQueue);
+        eventListenerExecutorService = new ThreadPoolExecutor(numberOfThread, numberOfThread, 0L, TimeUnit.MILLISECONDS, eventProcessingQueue, threadFactory);
     }
 
     @Override

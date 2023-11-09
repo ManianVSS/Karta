@@ -8,18 +8,27 @@ import org.mvss.karta.framework.models.test.TestScenario;
 import org.mvss.karta.framework.models.test.TestStep;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @SuppressWarnings({"UnusedAssignment", "ReassignedVariable", "ConstantConditions"})
 public class GherkinUtils {
     public static final List<String> conjunctions = Arrays.asList("Given ", "When ", "Then ", "And ", "But ");
+    public static final String LINE_BREAK = "\n";
+
+    public static final String FEATURE = "Feature:";
+    public static final String AT_THE_RATE = "@";
+    public static final String SCENARIO = "Scenario:";
+    public static final String SCENARIO_OUTLINE = "Scenario Outline:";
+    public static final String BACKGROUND = "Background:";
+    public static final String HASH = "#";
+    public static final String EXAMPLES = "Examples:";
+    public static final String VERTICAL_LINE = "|";
+    public static final String REGEX_VERTICAL_LINE = "[|]";
+
 
     public static TestFeature parseFeatureSource(String sourceCode, ArrayList<String> featureTagList) throws Throwable {
         TestFeature feature = new TestFeature();
-        String[] lines = sourceCode.split("\n");
+        String[] lines = sourceCode.split(LINE_BREAK);
         int linePointer = 0;
 
         boolean featureFound = false;
@@ -28,12 +37,12 @@ public class GherkinUtils {
             String line = lines[linePointer++];
             line = line.trim();
 
-            if (line.startsWith("Feature:")) {
-                feature.setName(line.substring("Feature:".length()).trim());
+            if (line.startsWith(FEATURE)) {
+                feature.setName(line.substring(FEATURE.length()).trim());
                 feature.setDescription(Constants.EMPTY_STRING);
                 featureFound = true;
                 break;
-            } else {
+            } else if (line.stripLeading().startsWith(AT_THE_RATE)) {
 
                 for (String word : line.split(Constants.REGEX_WHITESPACE)) {
                     word = word.trim();
@@ -42,7 +51,7 @@ public class GherkinUtils {
                         continue;
                     }
 
-                    if (word.startsWith("@") && (word.length() > 1)) {
+                    if (word.startsWith(AT_THE_RATE) && (word.length() > 1)) {
                         String tag = word.substring(1).trim();
                         if (featureTagList != null) {
                             featureTagList.add(tag);
@@ -51,6 +60,8 @@ public class GherkinUtils {
                     }
 
                 }
+            } else {
+                throw new Exception("Unexpected sentence: " + line);
             }
         }
 
@@ -62,6 +73,7 @@ public class GherkinUtils {
         boolean isScenarioOutline = false;
         TestScenario testScenario = null;
         ArrayList<TestStep> stepsContainer = null;
+        Stack<ArrayList<TestStep>> stepContainerStack = new Stack<>();
         TestStep currentStep = null;
         boolean inExamples = false;
         boolean inDataTable = false;
@@ -73,17 +85,17 @@ public class GherkinUtils {
             String line = lines[linePointer++];
             line = line.trim();
 
-            if (line.startsWith("|") && inStepScope) {
+            if (line.startsWith(VERTICAL_LINE) && inStepScope) {
                 inStepScope = false;
                 inDataTable = true;
             }
 
             if (inDataTable || inExamples) {
-                if (line.startsWith("|")) {
+                if (line.startsWith(VERTICAL_LINE)) {
                     if (headerList == null) {
                         headerList = new ArrayList<>();
                         testData = new HashMap<>();
-                        for (String item : line.split("[|]")) {
+                        for (String item : line.split(REGEX_VERTICAL_LINE)) {
                             String trimmedItem = item.trim();
                             if (StringUtils.isNotEmpty(trimmedItem)) {
                                 headerList.add(trimmedItem);
@@ -92,7 +104,7 @@ public class GherkinUtils {
                         }
                     } else {
                         int i = 0;
-                        for (String item : line.split("[|]")) {
+                        for (String item : line.split(REGEX_VERTICAL_LINE)) {
                             String trimmedItem = item.trim();
                             if (StringUtils.isNotEmpty(trimmedItem)) {
                                 testData.get(headerList.get(i)).add(trimmedItem);
@@ -135,34 +147,58 @@ public class GherkinUtils {
                 inDataTable = false;
             }
 
-            if (line.startsWith("Scenario:") || line.startsWith("Scenario Outline:")) {
+            if (line.startsWith(SCENARIO) || line.startsWith(SCENARIO_OUTLINE)) {
                 inStepScope = false;
-                isScenarioOutline = line.startsWith("Scenario Outline:");
+                isScenarioOutline = line.startsWith(SCENARIO_OUTLINE);
                 testScenario = new TestScenario();
-                testScenario.setName(line.substring((isScenarioOutline ? "Scenario Outline:" : "Scenario:").length()).trim());
+                testScenario.setName(line.substring((isScenarioOutline ? SCENARIO_OUTLINE : SCENARIO).length()).trim());
                 testScenario.setDescription(Constants.EMPTY_STRING);
                 feature.getTestScenarios().add(testScenario);
+                if (stepsContainer != null) {
+                    stepContainerStack.push(stepsContainer);
+                }
                 stepsContainer = testScenario.getExecutionSteps();
                 scenarioFound = true;
                 continue;
             }
 
-            if (line.startsWith("Background:")) {
+            if (line.startsWith(BACKGROUND)) {
                 inStepScope = false;
                 isScenarioOutline = false;
+                if (stepsContainer != null) {
+                    stepContainerStack.push(stepsContainer);
+                }
                 stepsContainer = feature.getScenarioSetupSteps();
                 continue;
             }
 
-            if (line.startsWith("#")) {
+            if (line.startsWith(HASH)) {
                 continue;
             }
 
-            if (line.startsWith("Examples:")) {
+            if (line.startsWith(EXAMPLES)) {
                 inStepScope = false;
                 inExamples = true;
                 isScenarioOutline = false;
                 continue;
+            }
+
+            if (line.equals("parallel{")) {
+                if (currentStep == null) {
+                    throw new Exception("Can't define parallel steps without a base step");
+                }
+                currentStep.setRunStepsInParallel(true);
+
+                if (stepsContainer != null) {
+                    stepContainerStack.push(stepsContainer);
+                }
+                stepsContainer = currentStep.getSteps();
+            }
+            if (line.equals("}")) {
+                if (stepContainerStack.isEmpty()) {
+                    throw new Exception("Unexpected delimiter for parallel steps");
+                }
+                stepsContainer = stepContainerStack.pop();
             }
 
             boolean stepFound = false;
@@ -180,9 +216,9 @@ public class GherkinUtils {
                 inStepScope = false;
                 isScenarioOutline = false;
                 if (scenarioFound) {
-                    testScenario.setDescription((testScenario.getDescription() + line + "\n").trim());
+                    testScenario.setDescription((testScenario.getDescription() + line + LINE_BREAK).trim());
                 } else {
-                    feature.setDescription((feature.getDescription() + line + "\n").trim());
+                    feature.setDescription((feature.getDescription() + line + LINE_BREAK).trim());
                 }
             }
         }

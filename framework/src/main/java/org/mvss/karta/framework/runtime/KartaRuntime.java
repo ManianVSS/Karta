@@ -47,10 +47,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 @Log4j2
 @AllArgsConstructor
@@ -91,6 +88,9 @@ public class KartaRuntime implements AutoCloseable {
     @Getter
     private RunInfo defaultRunInfo = null;
 
+    @Getter
+    private ThreadFactory threadFactory;
+
     /**
      * Default constructor is reserved for default runtime instance. Use getInstance.
      */
@@ -119,9 +119,9 @@ public class KartaRuntime implements AutoCloseable {
      * Initializes the runtime with the default settings
      */
     public boolean initializeRuntime() throws Throwable {
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         // Initialize karta configuration
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         String configString = ClassPathLoaderUtils.readAllText(Constants.KARTA_CONFIGURATION_YAML);
 
         if (configString == null) {
@@ -164,25 +164,25 @@ public class KartaRuntime implements AutoCloseable {
 
         log.info("Karta configuration after override and expansion is: " + kartaConfiguration);
 
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         //Initialize Dependency Injector
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         kartaDependencyInjector = kartaConfiguration.createDependencyInjector();
 
 
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         // Initialize random
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         random = new Random();
 
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         // Initialize SSL properties
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         SSLUtils.setSslProperties(kartaConfiguration.getSslProperties());
 
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         // TestProperties should be setup before plug-in initialization
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         kartaDependencyInjector.testProperties.mergeProperties(kartaConfiguration.getProperties());
         ArrayList<String> propertiesFileList = kartaConfiguration.getPropertyFiles();
         if (propertiesFileList == null) {
@@ -197,18 +197,23 @@ public class KartaRuntime implements AutoCloseable {
         propertiesFileList.toArray(propertyFilesToLoad);
         kartaDependencyInjector.testProperties.mergePropertiesFiles(propertyFilesToLoad);
 
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
+        // Thread factory initialization
+        /*------------------------------------------------------------------------------------------------------------*/
+        threadFactory = new KartaThreadFactory();
+
+        /*------------------------------------------------------------------------------------------------------------*/
         // Load and enable plug-ins
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         pnpRegistry = new PnPRegistry();
         pnpRegistry.addPluginConfiguration(kartaConfiguration.getPluginConfigurations());
 
         pnpRegistry.enablePlugins(kartaConfiguration.getEnabledPlugins());
 
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         // Initialize event processor
-        /*---------------------------------------------------------------------------------------------------------------------*/
-        eventProcessor = new EventProcessor();
+        /*------------------------------------------------------------------------------------------------------------*/
+        eventProcessor = new EventProcessor(threadFactory);
         kartaDependencyInjector.inject(eventProcessor);
         for (Plugin plugin : pnpRegistry.getEnabledPluginsOfType(TestEventListener.class)) {
             if (!eventProcessor.addEventListener((TestEventListener) plugin)) {
@@ -222,9 +227,9 @@ public class KartaRuntime implements AutoCloseable {
             }
         }
 
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         // Initialize node registry
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         // TODO: Add task pulling worker minions to support minions as clients rather than open server sockets
 
         nodeRegistry = kartaConfiguration.createNodeRegistry();
@@ -233,9 +238,9 @@ public class KartaRuntime implements AutoCloseable {
             addNodes();
         }
 
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         // Initialize Test catalog manager and load test catalog
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         testCatalogManager = new TestCatalogManager();
         testCatalogManager.getTestCatalog()
                 .addStepRunner(kartaConfiguration.getDefaultStepRunners())
@@ -262,25 +267,25 @@ public class KartaRuntime implements AutoCloseable {
         executorServiceManager.addExecutorServiceForGroups(kartaConfiguration.getThreadGroups());
         executorServiceManager.getOrAddExecutorServiceForGroup(Constants.__DEFAULT__, 1);
 
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         // Initialize bean registry
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         kartaDependencyInjector.addBeans(this, kartaConfiguration, testCatalogManager, eventProcessor, nodeRegistry, executorServiceManager, random);
 
         ArrayList<String> packagesToScanBeans = kartaConfiguration.getConfigurationScanPackages();
         if (packagesToScanBeans != null) {
             kartaDependencyInjector.addBeansFromPackages(packagesToScanBeans);
         }
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         // Initialize enabled plug-ins only after all other beans are initialized
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
 
         for (Plugin pluginEntry : pnpRegistry.getEnabledPlugins().values()) {
             initializeObject(pluginEntry);
         }
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         // Start event processor with event listener plug-ins*
-        /*---------------------------------------------------------------------------------------------------------------------*/
+        /*------------------------------------------------------------------------------------------------------------*/
         eventProcessor.start();
 
         defaultRunInfo = RunInfo.builder().runName(Constants.UNNAMED).featureSourceParserPlugins(kartaConfiguration.getDefaultFeatureSourceParsers()).stepRunnerPlugins(kartaConfiguration.getDefaultStepRunners()).testDataSourcePlugins(kartaConfiguration.getDefaultTestDataSources()).build();
@@ -292,6 +297,7 @@ public class KartaRuntime implements AutoCloseable {
 
         // Wait for Plugin registry and cache lookup creation
         testCatalogManager.mergeFeatureFiles(this::featureSourceParserLookup);
+
         return true;
     }
 
@@ -958,7 +964,7 @@ public class KartaRuntime implements AutoCloseable {
             // TODO: Add max validations
             if (numberOfThreadsInParallel > 1) {
                 stepResult = new StepResult();
-                ExecutorService stepExecutorService = new ThreadPoolExecutor(numberOfThreadsInParallel, numberOfThreadsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue(numberOfThreadsInParallel));
+                ExecutorService stepExecutorService = new ThreadPoolExecutor(numberOfThreadsInParallel, numberOfThreadsInParallel, 0L, TimeUnit.MILLISECONDS, new BlockingRunnableQueue(numberOfThreadsInParallel), threadFactory);
 
                 for (int i = 0; i < numberOfThreadsInParallel; i++) {
                     PreparedStepRunner preparedStepRunner = PreparedStepRunner.builder().kartaRuntime(this).runInfo(runInfo).step(step).resultConsumer(stepResult::mergeResults).build();
