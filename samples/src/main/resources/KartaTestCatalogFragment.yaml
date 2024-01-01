@@ -116,14 +116,14 @@ tests:
     numberOfThreads: 5
     sourceArchive: samples.jar
 
-#  - name: WebAutomation
-#    priority: 1
-#    description: Web Automation test
-#    tags:
-#      - UI
-#    featureFileName: featureFiles/UITests/WebAutomation.yaml
-#    numberOfIterations: 10
-#    numberOfThreads: 5
-#    sourceArchive: samples.jar
+  - name: WebAutomation
+    priority: 1
+    description: Web Automation test
+    tags:
+      - UI
+    featureFileName: featureFiles/UITests/WebAutomation.yaml
+    numberOfIterations: 1
+    numberOfThreads: 1
+    sourceArchive: samples.jar
 
 subCategories: [ ]

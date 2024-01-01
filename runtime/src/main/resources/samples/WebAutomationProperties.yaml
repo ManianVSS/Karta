@@ -1,6 +1,6 @@
 WebAutomation:
   webDriverOptions:
-    webDriverLocation: ../chromedriver
+    webDriverLocation: /usr/local/bin/chromedriver
     browser: CHROME
     headless: true
     ignoreCertificates: true

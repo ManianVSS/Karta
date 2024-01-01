@@ -10,7 +10,7 @@ public class HomePage extends AbstractPage {
     @FindBy(xpath = "//a[@title='Home']//i")
     private WebElement logo;
 
-    @FindBy(xpath = "//div[@id='main']//a[contains(text(),'Learn HTML')]")
+    @FindBy(xpath = "/html/body/div[3]/a[1]")
     private WebElement learnHTMLButton;
 
     public HomePage(WebAUT webAUT) throws PageException {

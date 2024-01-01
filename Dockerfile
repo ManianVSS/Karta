@@ -1,9 +1,11 @@
-FROM openjdk:12-alpine
+FROM manianvss/java-chrome-driver:1.0
 
 LABEL maintainer="Manian VSS<manianvss@hotmail.com>"
 
-
 COPY runtime/target/packages/Karta /karta
 ENV KARTA_HOME=/karta
-WORKDIR /karta/bin
-ENTRYPOINT ["sh","KartaServer.sh"]
+WORKDIR /karta/samples
+
+EXPOSE 18080
+
+ENTRYPOINT ["sh","../bin/KartaServer.sh"]
