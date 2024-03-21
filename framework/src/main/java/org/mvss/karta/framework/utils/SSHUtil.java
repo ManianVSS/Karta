@@ -71,8 +71,8 @@ public class SSHUtil implements AutoCloseable {
             } else {
                 session = jsch.getSession(user, host, port);
             }
-            if ((session == null) || (!session.isConnected())) {
-                throw new JSchException("Session is null or not connected even after initialization");
+            if (session == null) {
+                throw new JSchException("Session is null even after initialization");
             }
         }
 
