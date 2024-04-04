@@ -37,23 +37,25 @@ public class CSVTestDataSourcePlugin implements TestDataSource {
         if (StringUtils.isNotBlank(csvFileName)) {
             synchronized (writeLock) {
                 File file = new File(csvFileName);
-                try (FileReader filereader = new FileReader(file)) {
-                    CSVReader csvReader = new CSVReader(filereader);
-                    String[] headerRecord = csvReader.readNext();
 
-                    if ((headerRecord == null) || (headerRecord.length == 0)) {
-                        filereader.close();
-                        throw new Exception("CSV file does not have data or headers " + csvFileName);
-                    }
+                if (file.isFile()) {
+                    try (FileReader filereader = new FileReader(file)) {
+                        CSVReader csvReader = new CSVReader(filereader);
+                        String[] headerRecord = csvReader.readNext();
 
-                    for (String[] nextRecord = csvReader.readNext(); nextRecord != null; nextRecord = csvReader.readNext()) {
-                        HashMap<String, Serializable> testData = new HashMap<>();
-                        for (int j = 0; j < headerRecord.length; j++) {
-                            testData.put(headerRecord[j], objectMapper.readValue(nextRecord[j], Serializable.class));
+                        if ((headerRecord == null) || (headerRecord.length == 0)) {
+                            return false;
                         }
-                        testDataSet.add(testData);
+
+                        for (String[] nextRecord = csvReader.readNext(); nextRecord != null; nextRecord = csvReader.readNext()) {
+                            HashMap<String, Serializable> testData = new HashMap<>();
+                            for (int j = 0; j < headerRecord.length; j++) {
+                                testData.put(headerRecord[j], objectMapper.readValue(nextRecord[j], Serializable.class));
+                            }
+                            testDataSet.add(testData);
+                        }
+                        return true;
                     }
-                    return true;
                 }
             }
         }

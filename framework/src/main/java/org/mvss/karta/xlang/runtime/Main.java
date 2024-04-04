@@ -1,8 +1,10 @@
 package org.mvss.karta.xlang.runtime;
 
 
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.cli.*;
 
+@Log4j2
 public class Main {
 
     public static final String FILE_TO_RUN = "fileToRun";
@@ -38,8 +40,7 @@ public class Main {
             formatter.printHelp(XLANG, options);
             System.exit(-1);
         } catch (Throwable t) {
-            System.err.println("Exception caught while init: " + t.getMessage());
-            t.printStackTrace();
+            log.error("Exception caught while init: ", t);
             formatter.printHelp(XLANG, options);
             System.exit(-2);
         }

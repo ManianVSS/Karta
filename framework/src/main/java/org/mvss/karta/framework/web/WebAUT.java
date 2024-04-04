@@ -21,7 +21,9 @@ public abstract class WebAUT implements AutoCloseable {
         this.dependencyInjector = dependencyInjector;
         this.name = name;
         this.webDriverOptions = webDriverOptions;
-        dependencyInjector.accept(this);
+        if (dependencyInjector != null) {
+            dependencyInjector.accept(this);
+        }
     }
 
     public WebAUT(Consumer<Object> dependencyInjector, String name, WebDriverOptions webDriverOptions, WebDriverWrapper driver) {

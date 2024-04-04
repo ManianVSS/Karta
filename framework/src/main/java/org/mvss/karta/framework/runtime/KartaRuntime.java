@@ -281,7 +281,12 @@ public class KartaRuntime implements AutoCloseable {
         /*------------------------------------------------------------------------------------------------------------*/
 
         for (Plugin pluginEntry : pnpRegistry.getEnabledPlugins().values()) {
-            initializeObject(pluginEntry);
+            try {
+                initializeObject(pluginEntry);
+            } catch (Throwable t) {
+                log.error("Plugin initialization failed for " + pluginEntry.getPluginName(), t);
+                //TODO: Add code to remove failed pluggin.
+            }
         }
         /*------------------------------------------------------------------------------------------------------------*/
         // Start event processor with event listener plug-ins*

@@ -11,7 +11,11 @@ public abstract class AbstractPage implements AutoCloseable {
 
     public AbstractPage(WebAUT webAUT) throws PageException {
         this.webAUT = webAUT;
-        this.webAUT.dependencyInjector.accept(this);
+
+        if (this.webAUT.dependencyInjector != null) {
+            this.webAUT.dependencyInjector.accept(this);
+        }
+        
         this.driver = webAUT.getDriver();
         driver.initElements(this);
 
