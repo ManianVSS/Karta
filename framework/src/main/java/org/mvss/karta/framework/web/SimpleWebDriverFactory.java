@@ -116,9 +116,11 @@ public class SimpleWebDriverFactory {
                 ChromeOptions chromeOptions = new ChromeOptions();
                 chromeOptions.addArguments(NO_SANDBOX);
                 chromeOptions.setAcceptInsecureCerts(webDriverOptions.isIgnoreCertificates());
-                chromeOptions.setHeadless(webDriverOptions.isHeadless());
                 chromeOptions.addArguments(REMOTE_ALLOW_ORIGINS_ALL);
 
+                if (webDriverOptions.isHeadless()) {
+                    chromeOptions.addArguments(HEADLESS);
+                }
                 if (webDriverOptions.getAdditionalArguments() != null) {
                     chromeOptions.addArguments(webDriverOptions.getAdditionalArguments());
                 }
@@ -133,8 +135,10 @@ public class SimpleWebDriverFactory {
             case FIREFOX:
                 FirefoxOptions firefoxOptions = new FirefoxOptions();
                 firefoxOptions.setAcceptInsecureCerts(webDriverOptions.isIgnoreCertificates());
-                firefoxOptions.setHeadless(webDriverOptions.isHeadless());
 
+                if (webDriverOptions.isHeadless()) {
+                    firefoxOptions.addArguments(HEADLESS);
+                }
                 if (webDriverOptions.getAdditionalArguments() != null) {
                     firefoxOptions.addArguments(webDriverOptions.getAdditionalArguments());
                 }
@@ -150,8 +154,11 @@ public class SimpleWebDriverFactory {
                 EdgeOptions edgeOptions = getEdgeOptions(webDriverOptions, proxy);
                 edgeOptions.addArguments(NO_SANDBOX);
                 edgeOptions.setAcceptInsecureCerts(webDriverOptions.isIgnoreCertificates());
-                edgeOptions.setHeadless(webDriverOptions.isHeadless());
                 edgeOptions.addArguments(REMOTE_ALLOW_ORIGINS_ALL);
+
+                if (webDriverOptions.isHeadless()) {
+                    edgeOptions.addArguments(HEADLESS);
+                }
 
                 webDriver = new EdgeDriver(edgeOptions);
                 break;

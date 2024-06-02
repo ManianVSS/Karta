@@ -11,7 +11,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>17</java.version>
+        <java.version>21</java.version>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <project.version>0.1.4</project.version>
@@ -40,6 +40,12 @@
                 <version>${spring.boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+                <!--                <exclusions>-->
+                <!--                    <exclusion>-->
+                <!--                        <groupId>org.seleniumhq.selenium</groupId>-->
+                <!--                        <artifactId>selenium-java</artifactId>-->
+                <!--                    </exclusion>-->
+                <!--                </exclusions>-->
             </dependency>
         </dependencies>
     </dependencyManagement>
