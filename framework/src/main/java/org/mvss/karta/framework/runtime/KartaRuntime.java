@@ -696,7 +696,7 @@ public class KartaRuntime implements AutoCloseable {
                 log.error(errorMsg);
                 return StandardFeatureResults.error(Constants.UNNAMED, errorMsg);
             }
-            TestFeature testFeature = featureParsers.get(0).parseFeatureSource(featureFileSourceString);
+            TestFeature testFeature = featureParsers.getFirst().parseFeatureSource(featureFileSourceString);
 
             return runFeature(runInfo, null, testFeature);
         } catch (Throwable t) {
@@ -904,10 +904,12 @@ public class KartaRuntime implements AutoCloseable {
             if (chaosConfiguration.checkForValidity()) {
                 ArrayList<ChaosAction> chaosActionsToPerform = chaosConfiguration.nextChaosActions(random);
                 // TODO: Handle chaos action being empty
-
                 for (ChaosAction chaosAction : chaosActionsToPerform) {
                     preparedChaosActions.add(getPreparedChaosAction(runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, testProperties, chaosAction, contextBeanRegistry));
                 }
+            } else {
+                log.fatal("Chaos configuration incorrect in the scenario " + preparedScenario);
+                System.exit(5);
             }
         }
         preparedScenario.setChaosActions(preparedChaosActions);

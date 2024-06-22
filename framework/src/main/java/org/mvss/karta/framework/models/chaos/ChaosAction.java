@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.framework.models.randomization.ObjectWithChance;
 import org.mvss.karta.framework.utils.RandomizationUtils;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 @NoArgsConstructor
 @Builder(toBuilder = true)
 public class ChaosAction implements Serializable, ObjectWithChance {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
@@ -73,15 +75,7 @@ public class ChaosAction implements Serializable, ObjectWithChance {
             return false;
         }
 
-        if ((subjects == null) || (subjects.isEmpty())) {
-            return false;
-        } else {
-            for (String subject : subjects) {
-                if (StringUtils.isBlank(subject)) {
-                    return false;
-                }
-            }
-        }
+        // Subjects being null check has been removed as subjects are subjective to chaos action.
 
         return chaos.checkForValidity();
     }

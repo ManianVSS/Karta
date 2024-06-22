@@ -16,9 +16,6 @@ testScenarios:
         - name: the calculator is powered off
           node: Node1
           probability: 1.0
-          subjects:
-            - calculator1
-            - calculator2
           chaos:
             chaosLevel: 50
             chaosUnit: PERCENTAGE
