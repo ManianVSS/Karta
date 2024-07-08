@@ -116,6 +116,14 @@ public class StepDefinitionsCollection1 {
         learnHTMLHomePage.goToW3SchoolsHome();
     }
 
+    @StepDefinition("validate that non existent element is not present in the learn HTML page")
+    public StepResult validate_that_non_existent_element_is_not_present_in_the_learn_HTML_page(@ContextBean(W3SchoolsApp.W_3_SCHOOLS_APP) W3SchoolsApp w3SchoolsApp) {
+        StepResult stepResult = new StepResult();
+        LearnHTMLHomePage learnHTMLHomePage = (LearnHTMLHomePage) w3SchoolsApp.getCurrentPage();
+        stepResult.setSuccessful(learnHTMLHomePage.checkNonExistentElement());
+        return stepResult;
+    }
+
     @StepDefinition("fluent navigation on W3 Schools site is demonstrated")
     public void fluent_navigation_on_w3_schools_site_is_demonstrated(@ContextBean(W3SchoolsApp.W_3_SCHOOLS_APP) W3SchoolsApp w3SchoolsApp)
             throws PageException {

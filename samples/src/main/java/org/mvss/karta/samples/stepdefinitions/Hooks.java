@@ -82,8 +82,8 @@ public class Hooks {
             if (w3SchoolsApp != null) {
                 w3SchoolsApp.close();
             }
-        } catch (Exception e) {
-            log.error("", e);
+        } catch (Throwable e) {
+            log.error("Error occurred while trying to cleanup WebUI Scenario", e);
         }
     }
 

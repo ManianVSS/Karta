@@ -26,6 +26,16 @@ import java.util.Map.Entry;
 @Log4j2
 @SuppressWarnings("unused")
 public class WebDriverWrapper implements AutoCloseable {
+    public static final String XPATH = "xpath";
+    public static final String ID = "id";
+    public static final String CLASS_NAME = "class name";
+    public static final String LINK_TEXT = "link text";
+    public static final String CSS = "css";
+    public static final String CLASS_NAME1 = "className";
+    public static final String LINK_TEXT1 = "linkText";
+    public static final String PARTIAL_LINK_TEXT = "partialLinkText";
+    public static final String TAG_NAME = "tagName";
+
     protected final WebDriverWait wait;
     protected final WebDriverWait waitLonger;
     protected final WebDriverWait negativeWait;
@@ -38,14 +48,20 @@ public class WebDriverWrapper implements AutoCloseable {
         negativeWait = new WebDriverWait(driver, Duration.of(0, ChronoUnit.SECONDS));
     }
 
-    public static byte[] getScreenShot(WebDriver driver) {
+    public byte[] getScreenShot() {
         return ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
     }
 
-    public static void captureScreenShot(WebDriver driver, String prefix) throws IOException {
-        if (driver != null) {
-            FileUtils.writeByteArrayToFile(new File(prefix + Constants.UNDERSCORE + System.currentTimeMillis() + Constants.PNG), WebDriverWrapper.getScreenShot(driver));
-        }
+    public byte[] getScreenShot(WebElement element) {
+        return element.getScreenshotAs(OutputType.BYTES);
+    }
+
+    public void captureScreenShot(String prefix) throws IOException {
+        FileUtils.writeByteArrayToFile(new File(prefix + Constants.UNDERSCORE + System.currentTimeMillis() + Constants.PNG), getScreenShot());
+    }
+
+    public void captureScreenShot(WebElement element, String fileName) throws IOException {
+        FileUtils.writeByteArrayToFile(new File(fileName), getScreenShot(element));
     }
 
     public static void takeSnapshot(WebDriver driver, String fileName) throws IOException {
@@ -168,9 +184,6 @@ public class WebDriverWrapper implements AutoCloseable {
         return driver.getCurrentUrl();
     }
 
-    public byte[] getScreenShot() {
-        return ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
-    }
 
     public void navigateToURL(String URL) {
         driver.get(URL);
@@ -206,8 +219,7 @@ public class WebDriverWrapper implements AutoCloseable {
 
     public boolean isElementUnavailable(WebElement element) {
         try {
-            negativeWaitForObjectToAppear(element);
-            return !element.isDisplayed();
+            return negativeWaitForObjectToAppear(element);
         } catch (Exception e) {
             return true;
         }
@@ -285,35 +297,25 @@ public class WebDriverWrapper implements AutoCloseable {
     }
 
     public WebElement getElementBy(String locatorType, String locator) {
-        switch (locatorType) {
-            case "xpath":
-                return driver.findElement(By.xpath(locator));
-            case "id":
-                return driver.findElement(By.id(locator));
-            case "class name":
-                return driver.findElement(By.className(locator));
-            case "link text":
-                return driver.findElement(By.linkText(locator));
-            case "css":
-                return driver.findElement(By.cssSelector(locator));
-        }
-        return null;
+        return switch (locatorType) {
+            case XPATH -> driver.findElement(By.xpath(locator));
+            case ID -> driver.findElement(By.id(locator));
+            case CLASS_NAME -> driver.findElement(By.className(locator));
+            case LINK_TEXT -> driver.findElement(By.linkText(locator));
+            case CSS -> driver.findElement(By.cssSelector(locator));
+            default -> null;
+        };
     }
 
     public List<WebElement> getElementsBy(String locatorType, String locator) {
-        switch (locatorType) {
-            case "xpath":
-                return driver.findElements(By.xpath(locator));
-            case "id":
-                return driver.findElements(By.id(locator));
-            case "class name":
-                return driver.findElements(By.className(locator));
-            case "link text":
-                return driver.findElements(By.linkText(locator));
-            case "css":
-                return driver.findElements(By.cssSelector(locator));
-        }
-        return null;
+        return switch (locatorType) {
+            case XPATH -> driver.findElements(By.xpath(locator));
+            case ID -> driver.findElements(By.id(locator));
+            case CLASS_NAME -> driver.findElements(By.className(locator));
+            case LINK_TEXT -> driver.findElements(By.linkText(locator));
+            case CSS -> driver.findElements(By.cssSelector(locator));
+            default -> null;
+        };
     }
 
     public WebElement findElementByLocatorString(String locatorString, String locatorType, HashMap<String, String> replaceValuesMap) {
@@ -325,25 +327,25 @@ public class WebDriverWrapper implements AutoCloseable {
             it.remove();
         }
         switch (locatorType) {
-            case "xpath":
+            case XPATH:
                 locator = By.xpath(locatorString);
                 break;
-            case "id":
+            case ID:
                 locator = By.id(locatorString);
                 break;
-            case "className":
+            case CLASS_NAME1:
                 locator = By.className(locatorString);
                 break;
-            case "linkText":
+            case LINK_TEXT1:
                 locator = By.linkText(locatorString);
                 break;
-            case "partialLinkText":
+            case PARTIAL_LINK_TEXT:
                 locator = By.partialLinkText(locatorString);
                 break;
-            case "tagName":
+            case TAG_NAME:
                 locator = By.tagName(locatorString);
                 break;
-            case "css":
+            case CSS:
                 locator = By.cssSelector(locatorString);
                 break;
             default:
@@ -362,10 +364,10 @@ public class WebDriverWrapper implements AutoCloseable {
             it.remove();
         }
         switch (locatorType.toLowerCase()) {
-            case "xpath":
+            case XPATH:
                 locator = By.xpath(xpathVal);
                 break;
-            case "id":
+            case ID:
                 locator = By.id(xpathVal);
                 break;
             default:
@@ -384,10 +386,10 @@ public class WebDriverWrapper implements AutoCloseable {
             it.remove();
         }
         switch (locatorType.toLowerCase()) {
-            case "xpath":
+            case XPATH:
                 locator = By.xpath(xpathVal);
                 break;
-            case "id":
+            case ID:
                 locator = By.id(xpathVal);
                 break;
             default:
@@ -439,8 +441,17 @@ public class WebDriverWrapper implements AutoCloseable {
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(frameLocator));
     }
 
-    public void negativeWaitForObjectToAppear(WebElement element) {
-        negativeWait.until(ExpectedConditions.visibilityOf(element));
+    /**
+     * @param element WebElement to wait for
+     * @return true if element not found instantly else returns false
+     */
+    public boolean negativeWaitForObjectToAppear(WebElement element) {
+        try {
+            negativeWait.until(ExpectedConditions.visibilityOf(element));
+            return false;
+        } catch (TimeoutException runtimeException) {
+            return true;
+        }
     }
 
     public void waitForObjectToDisappear(WebElement element) {

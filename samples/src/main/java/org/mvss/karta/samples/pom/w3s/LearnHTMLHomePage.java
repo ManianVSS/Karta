@@ -16,6 +16,9 @@ public class LearnHTMLHomePage extends AbstractPage {
     @FindBy(xpath = "//a[contains(text(),'HTML Introduction')]")
     private WebElement htmlIntroductionLink;
 
+    @FindBy(id = "****_NonExistentID_****")
+    private WebElement nonExistentElement;
+
     public LearnHTMLHomePage(WebAUT webAUT) throws PageException {
         super(webAUT);
     }
@@ -33,5 +36,9 @@ public class LearnHTMLHomePage extends AbstractPage {
     public HTMLIntroductionPage goToHTMLIntroductionPage() throws PageException {
         driver.clickElement(htmlIntroductionLink);
         return new HTMLIntroductionPage(webAUT);
+    }
+
+    public boolean checkNonExistentElement() {
+        return driver.isElementUnavailable(nonExistentElement);
     }
 }
