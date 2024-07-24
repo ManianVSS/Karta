@@ -80,20 +80,30 @@ public class WebDriverWrapper implements AutoCloseable {
         }
     }
 
-    public WebElement navigateShadowRootsAndLocate(By by, By[] rootBys) {
+    public SearchContext getShadowRootContext(By... rootBys) {
+        SearchContext shadowRootContext = driver;
+        if (rootBys != null) {
+            for (By rootBy : rootBys) {
+                shadowRootContext = shadowRootContext.findElement(rootBy).getShadowRoot();
+            }
+        }
+        return shadowRootContext;
+    }
+
+    public WebElement navigateShadowRootsAndLocate(By by, By... rootBys) {
         if (by == null) {
             return null;
         }
+        SearchContext shadowRootContext = getShadowRootContext(rootBys);
+        return shadowRootContext.findElement(by);
+    }
 
-        WebElement shadowRootElement = null;
-
-        if (rootBys != null) {
-            for (By rootBy : rootBys) {
-                shadowRootElement = expandRootElement((shadowRootElement == null) ? driver.findElement(rootBy) : shadowRootElement.findElement(rootBy));
-            }
+    public List<WebElement> navigateShadowRootsAndLocateElements(By by, By... rootBys) {
+        if (by == null) {
+            return null;
         }
-
-        return (shadowRootElement == null) ? driver.findElement(by) : shadowRootElement.findElement(by);
+        SearchContext shadowRootContext = getShadowRootContext(rootBys);
+        return shadowRootContext.findElements(by);
     }
 
     public By getByFindBy(FindBy findBy) {
@@ -296,27 +306,38 @@ public class WebDriverWrapper implements AutoCloseable {
         return driver.findElements(By.xpath(stringXpath));
     }
 
-    public WebElement getElementBy(String locatorType, String locator) {
-        return switch (locatorType) {
-            case XPATH -> driver.findElement(By.xpath(locator));
-            case ID -> driver.findElement(By.id(locator));
-            case CLASS_NAME -> driver.findElement(By.className(locator));
-            case LINK_TEXT -> driver.findElement(By.linkText(locator));
-            case CSS -> driver.findElement(By.cssSelector(locator));
+    private static By getByLocatorType(String locatorString, String locatorType) {
+        By locator;
+        locator = switch (locatorType) {
+            case XPATH -> By.xpath(locatorString);
+            case ID -> By.id(locatorString);
+            case CLASS_NAME1 -> By.className(locatorString);
+            case LINK_TEXT1 -> By.linkText(locatorString);
+            case PARTIAL_LINK_TEXT -> By.partialLinkText(locatorString);
+            case TAG_NAME -> By.tagName(locatorString);
+            case CSS -> By.cssSelector(locatorString);
             default -> null;
         };
+        return locator;
     }
 
-    public List<WebElement> getElementsBy(String locatorType, String locator) {
-        return switch (locatorType) {
-            case XPATH -> driver.findElements(By.xpath(locator));
-            case ID -> driver.findElements(By.id(locator));
-            case CLASS_NAME -> driver.findElements(By.className(locator));
-            case LINK_TEXT -> driver.findElements(By.linkText(locator));
-            case CSS -> driver.findElements(By.cssSelector(locator));
-            default -> null;
-        };
+
+    public WebElement getElementBy(String locatorType, String locatorString) {
+        By locator = getByLocatorType(locatorString, locatorType);
+        if (locator == null) {
+            return null;
+        }
+        return driver.findElement(locator);
     }
+
+    public List<WebElement> getElementsBy(String locatorType, String locatorString) {
+        By locator = getByLocatorType(locatorString, locatorType);
+        if (locator == null) {
+            return null;
+        }
+        return driver.findElements(locator);
+    }
+
 
     public WebElement findElementByLocatorString(String locatorString, String locatorType, HashMap<String, String> replaceValuesMap) {
         By locator;
@@ -326,75 +347,35 @@ public class WebDriverWrapper implements AutoCloseable {
             locatorString = locatorString.replace(entry.getKey(), entry.getValue().trim());
             it.remove();
         }
-        switch (locatorType) {
-            case XPATH:
-                locator = By.xpath(locatorString);
-                break;
-            case ID:
-                locator = By.id(locatorString);
-                break;
-            case CLASS_NAME1:
-                locator = By.className(locatorString);
-                break;
-            case LINK_TEXT1:
-                locator = By.linkText(locatorString);
-                break;
-            case PARTIAL_LINK_TEXT:
-                locator = By.partialLinkText(locatorString);
-                break;
-            case TAG_NAME:
-                locator = By.tagName(locatorString);
-                break;
-            case CSS:
-                locator = By.cssSelector(locatorString);
-                break;
-            default:
-                return null;
-        }
+        locator = getByLocatorType(locatorString, locatorType);
         waitForLocatorToVisible(locator);
         return driver.findElement(locator);
     }
 
-    public By prepareByLocator(String xpathVal, String locatorType, HashMap<String, String> replaceValuesMap) {
+
+    public By prepareByLocator(String locatorString, String locatorType, HashMap<String, String> replaceValuesMap) {
         By locator;
         Iterator<Entry<String, String>> it = replaceValuesMap.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<String, String> entry = it.next();
-            xpathVal = xpathVal.replace(entry.getKey(), entry.getValue().trim());
+            locatorString = locatorString.replace(entry.getKey(), entry.getValue().trim());
             it.remove();
         }
-        switch (locatorType.toLowerCase()) {
-            case XPATH:
-                locator = By.xpath(xpathVal);
-                break;
-            case ID:
-                locator = By.id(xpathVal);
-                break;
-            default:
-                return null;
-        }
+        locator = getByLocatorType(locatorString, locatorType);
         waitForLocatorToVisible(locator);
         return locator;
     }
 
-    public List<WebElement> prepareWebElementsByLocator(String xpathVal, String locatorType, HashMap<String, String> replaceValuesMap) {
+
+    public List<WebElement> prepareWebElementsByLocator(String locatorString, String locatorType, HashMap<String, String> replaceValuesMap) {
         By locator;
         Iterator<Entry<String, String>> it = replaceValuesMap.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<String, String> entry = it.next();
-            xpathVal = xpathVal.replace(entry.getKey(), entry.getValue().trim());
+            locatorString = locatorString.replace(entry.getKey(), entry.getValue().trim());
             it.remove();
         }
-        switch (locatorType.toLowerCase()) {
-            case XPATH:
-                locator = By.xpath(xpathVal);
-                break;
-            case ID:
-                locator = By.id(xpathVal);
-                break;
-            default:
-                return null;
-        }
+        locator = getByLocatorType(locatorString, locatorType);
         waitForLocatorToVisible(locator);
         return driver.findElements(locator);
     }
