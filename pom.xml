@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mvss</groupId>
     <artifactId>karta</artifactId>
-    <version>0.1.7</version>
+    <version>0.1.8</version>
     <name>Karta</name>
     <description>Karta Test Automation Framework</description>
     <packaging>pom</packaging>
