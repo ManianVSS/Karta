@@ -20,6 +20,7 @@ public class Constants {
     public static final String SPACE = " ";
     public static final String DOUBLE_BACKSLASH = "\\\\";
     public static final String BACKSLASH = "\\";
+    public static final String DOLLAR = "$";
 
     public static final String JAR = "jar";
     public static final String JSON = "json";

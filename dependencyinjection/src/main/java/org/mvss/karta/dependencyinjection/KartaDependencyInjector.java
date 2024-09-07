@@ -105,6 +105,12 @@ public class KartaDependencyInjector implements AutoCloseable {
         }
     }
 
+    public void mergeSystemProperties() {
+        if (testProperties != null) {
+            testProperties.mergeSystemProperties();
+        }
+    }
+
     public void addBean(String name, Object bean) {
         beanRegistry.put(name, bean);
     }

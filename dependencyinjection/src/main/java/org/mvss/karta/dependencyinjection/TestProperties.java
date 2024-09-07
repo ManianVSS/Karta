@@ -19,7 +19,6 @@ import org.mvss.karta.dependencyinjection.utils.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -28,7 +27,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.regex.Pattern;
 
 /**
@@ -71,7 +69,11 @@ public class TestProperties implements PropertiesInterface {
     }
 
     public <T> T getJsonPath(String jsonPath) {
-        return jsonPathContext.read(jsonPath);
+        try {
+            return jsonPathContext.read(jsonPath);
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     public TestProperties reloadJsonPathContext() {
@@ -96,6 +98,10 @@ public class TestProperties implements PropertiesInterface {
             return null;
         }
 
+        if (key.startsWith(Constants.DOLLAR)) {
+            return getJsonPath(key);
+        }
+
         Serializable propertyFromEnvOrSys = systemProperties.get(key);
 
         if (propertyFromEnvOrSys != null) {
@@ -114,78 +120,20 @@ public class TestProperties implements PropertiesInterface {
         return (groupStore == null) ? null : groupStore.get(keyInGroup);
     }
 
-    /**
-     * Merge a properties store into the destination
-     */
-    public static void mergeProperties(HashMap<String, HashMap<String, Serializable>> propertiesStore, HashMap<String, HashMap<String, Serializable>> propertiesToMerge) {
-        if (propertiesToMerge == null) {
-            return;
-        }
-
-        for (String propertyGroupToMerge : propertiesToMerge.keySet()) {
-            if (!propertiesStore.containsKey(propertyGroupToMerge)) {
-                propertiesStore.put(propertyGroupToMerge, new HashMap<>());
-            }
-
-            HashMap<String, Serializable> propertiesStoreGroup = propertiesStore.get(propertyGroupToMerge);
-            HashMap<String, Serializable> propertiesToMergeForGroup = propertiesToMerge.get(propertyGroupToMerge);
-
-            for (String propertyToMerge : propertiesToMergeForGroup.keySet()) {
-                propertiesStoreGroup.put(propertyToMerge, propertiesToMergeForGroup.get(propertyToMerge));
-            }
-        }
-    }
 
     /**
      * Merge a property to a property store based on group and key name
      */
-    public static void mergeProperty(HashMap<String, HashMap<String, Serializable>> propertiesStore, String propertyGroupToMerge, String propertyToMerge, String propertyValue) {
-        if (!propertiesStore.containsKey(propertyGroupToMerge)) {
-            propertiesStore.put(propertyGroupToMerge, new HashMap<>());
-
-            HashMap<String, Serializable> propertiesStoreGroup = propertiesStore.get(propertyGroupToMerge);
-            propertiesStoreGroup.put(propertyToMerge, propertyValue);
-
-        }
+    public synchronized void mergeProperty(String group, String name, Serializable value) {
+        PropertyUtils.mergeProperty(propertiesStore, group, name, value);
+        reloadJsonPathContext();
     }
-
-    /**
-     * Read property store from String based on the data format
-     */
-    public static HashMap<String, HashMap<String, Serializable>> readPropertiesFromString(DataFormat dataFormat, String propertiesDataString) throws IOException {
-        if (dataFormat == DataFormat.PROPERTIES) {
-            try (StringReader stringReader = new StringReader(propertiesDataString)) {
-                Properties properties = new Properties();
-                properties.load(stringReader);
-
-                HashMap<String, HashMap<String, Serializable>> propertiesStore = new HashMap<>();
-
-                for (Object propertyKeyObj : properties.keySet()) {
-                    String propertyKey = (String) propertyKeyObj;
-                    String propertyGroup = Constants.KARTA;
-                    String propertyValue = properties.getProperty(propertyKey);
-
-                    int pivotIndex = propertyKey.indexOf(Constants.DOT);
-                    if (DataUtils.inRange(pivotIndex, 0, propertyKey.length() - 2)) {
-                        propertyGroup = propertyKey.substring(0, pivotIndex);
-                        propertyKey = propertyKey.substring(pivotIndex + 1);
-                    }
-
-                    mergeProperty(propertiesStore, propertyGroup, propertyKey, propertyValue);
-                }
-                return propertiesStore;
-            }
-        }
-
-        return ParserUtils.readValue(dataFormat, propertiesDataString, propertiesType);
-    }
-
 
     /**
      * Merges a property store into the TestProperties' property store.
      */
     public synchronized void mergeProperties(HashMap<String, HashMap<String, Serializable>> propertiesToMerge) {
-        mergeProperties(propertiesStore, propertiesToMerge);
+        PropertyUtils.mergeProperties(propertiesStore, propertiesToMerge);
         reloadJsonPathContext();
     }
 
@@ -195,7 +143,7 @@ public class TestProperties implements PropertiesInterface {
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean mergePropertiesString(DataFormat dataFormat, String propertiesDataString) {
         try {
-            HashMap<String, HashMap<String, Serializable>> propertiesToMerge = readPropertiesFromString(dataFormat, propertiesDataString);
+            HashMap<String, HashMap<String, Serializable>> propertiesToMerge = PropertyUtils.readPropertiesFromString(dataFormat, propertiesDataString);
             mergeProperties(propertiesToMerge);
             return true;
         } catch (IOException e) {
@@ -219,7 +167,7 @@ public class TestProperties implements PropertiesInterface {
                 Path propertyFilePath = Paths.get(propertyFile);
 
                 if (!Files.exists(propertyFilePath)) {
-                    log.warn("Property file " + propertyFile + " does not exist");
+                    log.warn("Property file {} does not exist", propertyFile);
                     continue;
                 }
 
@@ -229,7 +177,7 @@ public class TestProperties implements PropertiesInterface {
 
                         if (propertyFileContents != null) {
                             if (!mergePropertiesString(ParserUtils.getFileDataFormat(propFileInDirectory.getName()), propertyFileContents)) {
-                                log.error("Error while parsing properties from file " + propertyFile);
+                                log.error("Error while parsing properties from file {}", propertyFile);
                                 return false;
                             }
                         }
@@ -241,13 +189,13 @@ public class TestProperties implements PropertiesInterface {
 
                 if (propertyFileContents != null) {
                     if (!mergePropertiesString(ParserUtils.getFileDataFormat(propertyFile), propertyFileContents)) {
-                        log.error("Error while parsing properties from file " + propertyFile);
+                        log.error("Error while parsing properties from file {}", propertyFile);
                         return false;
                     }
                 }
 
             } catch (IOException | URISyntaxException e) {
-                log.error("Error while parsing properties from file " + propertyFile, e);
+                log.error("Error while parsing properties from file {}", propertyFile, e);
                 return false;
             }
         }
@@ -256,20 +204,34 @@ public class TestProperties implements PropertiesInterface {
     }
 
     /**
+     * Merges system properties to the properties store
+     */
+    public void mergeSystemProperties() {
+
+        HashMap<String, HashMap<String, Serializable>> propertiesToMerge = new HashMap<>();
+
+        for (String key : systemProperties.getMergedPropertyMap().keySet()) {
+            String group = Constants.KARTA, keyInGroup = key;
+            int keyLength = key.length();
+            int splitIndex = key.indexOf(Constants.DOT);
+            if (splitIndex != -1) {
+                group = key.substring(0, splitIndex);
+                keyInGroup = key.substring(splitIndex + 1);
+            }
+            PropertyUtils.mergeProperty(propertiesToMerge, group, keyInGroup, ParserUtils.getYamlObjectMapper().convertValue(systemProperties.get(key), Serializable.class));
+        }
+
+        mergeProperties(propertiesToMerge);
+    }
+
+    /**
      * Fetch property value by group name and property name.
      */
     public Serializable getPropertyValue(String group, String name) {
-
-        String keyForEnvOrSys = group + Constants.UNDERSCORE + name;
-        String propertyFromEnvOrSys = systemProperties.get(keyForEnvOrSys.toUpperCase());
-
-        if (propertyFromEnvOrSys != null) {
-            return yamlObjectMapper.convertValue(propertyFromEnvOrSys, Serializable.class);
-        }
-
         HashMap<String, Serializable> groupStore = propertiesStore.get(group);
         return (groupStore == null) ? null : groupStore.get(name);
     }
+
 
     /**
      * Load properties into multiple objects.
@@ -304,9 +266,6 @@ public class TestProperties implements PropertiesInterface {
                 }
             }
         }
-
-        systemProperties.mergeEnvValuesIntoMap(propertyMap);
-
         return propertyMap;
     }
 
@@ -333,9 +292,12 @@ public class TestProperties implements PropertiesInterface {
                 propertyValue = getPropertyValue(propertyGroup, propertyName);
             }
             JavaType covertToTypeTo = objectMapper.getTypeFactory().constructType((Object.class == propertyMapping.type()) ? field.getGenericType() : propertyMapping.type());
-            setFieldValue(object, field, propertyValue, covertToTypeTo);
+
+            if (propertyValue != null) {
+                setFieldValue(object, field, propertyValue, covertToTypeTo);
+            }
         } catch (Throwable t) {
-            log.error("Error setting field: " + field + " value for object: " + object, t);
+            log.error("Error setting field: {} value for object: {}", field, object, t);
         }
     }
 
@@ -358,7 +320,7 @@ public class TestProperties implements PropertiesInterface {
                 }
             }
         } catch (Throwable t) {
-            log.error("Error setting field: " + field + " value: " + propertyValue + " for object: " + object, t);
+            log.error("Error setting field: {} value: {} for object: {}", field, propertyValue, object, t);
         }
     }
 

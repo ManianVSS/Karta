@@ -138,7 +138,7 @@ public class KartaRuntime implements AutoCloseable {
             try {
                 kartaConfiguration = yamlObjectMapper.readValue(configString, KartaConfiguration.class);
             } catch (Exception e) {
-                log.error("Error while reading Karta configuration yaml string " + configString, e);
+                log.error("Error while reading Karta configuration yaml string {}", configString, e);
                 return false;
             }
         }
@@ -147,22 +147,22 @@ public class KartaRuntime implements AutoCloseable {
             kartaConfiguration = KartaConfiguration.getDefaultConfiguration();
         }
 
-        log.debug("Karta configuration loaded as: " + kartaConfiguration);
+        log.debug("Karta configuration loaded as: {}", kartaConfiguration);
         configString = ClassPathLoaderUtils.readAllText(Constants.KARTA_CONFIGURATION_OVERRIDES_YAML);
         if (configString != null) {
             try {
                 KartaConfiguration kartaOverrideConfiguration = yamlObjectMapper.readValue(configString, KartaConfiguration.class);
-                log.debug("Karta configuration override loaded as: " + kartaOverrideConfiguration);
+                log.debug("Karta configuration override loaded as: {}", kartaOverrideConfiguration);
                 kartaConfiguration.overrideConfiguration(kartaOverrideConfiguration);
             } catch (Exception e) {
-                log.error("Error while reading Karta configuration yaml string " + configString, e);
+                log.error("Error while reading Karta configuration yaml string {}", configString, e);
                 return false;
             }
         }
 
         kartaConfiguration.expandSystemAndEnvProperties();
 
-        log.info("Karta configuration after override and expansion is: " + kartaConfiguration);
+        log.info("Karta configuration after override and expansion is: {}", kartaConfiguration);
 
         /*------------------------------------------------------------------------------------------------------------*/
         //Initialize Dependency Injector
@@ -193,9 +193,15 @@ public class KartaRuntime implements AutoCloseable {
             propertiesFileList.add(Constants.KARTA_RUNTIME_PROPERTIES_YAML);
         }
 
+        //Merge all property files into test properties
         String[] propertyFilesToLoad = new String[propertiesFileList.size()];
         propertiesFileList.toArray(propertyFilesToLoad);
-        kartaDependencyInjector.testProperties.mergePropertiesFiles(propertyFilesToLoad);
+        if (!kartaDependencyInjector.testProperties.mergePropertiesFiles(propertyFilesToLoad)) {
+            log.error("Error merging property files");
+        }
+
+        //Finally merge system properties into Test properties
+        kartaDependencyInjector.testProperties.mergeSystemProperties();
 
         /*------------------------------------------------------------------------------------------------------------*/
         // Thread factory initialization
@@ -284,7 +290,7 @@ public class KartaRuntime implements AutoCloseable {
             try {
                 initializeObject(pluginEntry);
             } catch (Throwable t) {
-                log.error("Plugin initialization failed for " + pluginEntry.getPluginName(), t);
+                log.error("Plugin initialization failed for {}", pluginEntry.getPluginName(), t);
                 //TODO: Add code to remove failed pluggin.
             }
         }
@@ -585,7 +591,7 @@ public class KartaRuntime implements AutoCloseable {
                     FeatureSourceParser featureParser = getCapableFeatureSourceParser(featureParsers, featureFileName);
 
                     if (featureParser == null) {
-                        log.error("Failed to get a feature source parser of type: " + runInfoForTest.getFeatureSourceParserPlugins());
+                        log.error("Failed to get a feature source parser of type: {}", runInfoForTest.getFeatureSourceParserPlugins());
                         result.setEndTime(new Date());
                         result.setSuccessful(false);
                         return result;
@@ -593,7 +599,7 @@ public class KartaRuntime implements AutoCloseable {
 
                     ArrayList<StepRunner> stepRunners = getStepRunners(runInfoForTest);
                     if (stepRunners == null) {
-                        log.error("Failed to get a step runners for run: " + runInfo);
+                        log.error("Failed to get a step runners for run: {}", runInfo);
                         result.setEndTime(new Date());
                         result.setSuccessful(false);
                         return result;
@@ -601,7 +607,7 @@ public class KartaRuntime implements AutoCloseable {
 
                     ArrayList<TestDataSource> testDataSources = getTestDataSources(runInfo);
                     if (testDataSources == null) {
-                        log.error("Failed to get test data sources for run: " + runInfo);
+                        log.error("Failed to get test data sources for run: {}", runInfo);
                         result.setEndTime(new Date());
                         result.setSuccessful(false);
                         return result;
@@ -611,7 +617,7 @@ public class KartaRuntime implements AutoCloseable {
 
 
                     if (featureFileName == null) {
-                        log.error("Feature file missing for test: " + test);
+                        log.error("Feature file missing for test: {}", test);
                         continue;
                     }
 
@@ -621,7 +627,7 @@ public class KartaRuntime implements AutoCloseable {
                         featureSourceCode = ClassPathLoaderUtils.readAllText(featureFileName);
 
                         if (featureSourceCode == null) {
-                            log.error("Could not load feature source file " + featureFileName + " from classpath or source archive " + sourceArchive);
+                            log.error("Could not load feature source file {} from classpath or source archive {}", featureFileName, sourceArchive);
                             continue;
                         }
                     } else {
@@ -633,7 +639,7 @@ public class KartaRuntime implements AutoCloseable {
                     }
 
                     if (featureSourceCode == null) {
-                        log.error("Could not load feature file for test " + test);
+                        log.error("Could not load feature file for test {}", test);
                         continue;
                     }
 
@@ -811,7 +817,7 @@ public class KartaRuntime implements AutoCloseable {
                     ObjectGenerationRule ruleToAdd = objectMapper.readValue(objectMapper.writeValueAsString(variableTestDataRuleMap.get(objectKey)), ObjectGenerationRule.class);
 
                     if (!ruleToAdd.validateConfiguration()) {
-                        log.error("Object rule generation failed validation: " + ruleToAdd);
+                        log.error("Object rule generation failed validation: {}", ruleToAdd);
                         continue;
                     }
 
@@ -834,7 +840,7 @@ public class KartaRuntime implements AutoCloseable {
 
         if (nestedSteps == null) {
             if (StringUtils.isBlank(stepIdentifier)) {
-                log.error("Empty step definition identifier for step " + step);
+                log.error("Empty step definition identifier for step {}", step);
             }
 
             StepRunner stepRunner = getCapableStepRunnerForStep(stepRunners, stepIdentifier);
@@ -908,7 +914,7 @@ public class KartaRuntime implements AutoCloseable {
                     preparedChaosActions.add(getPreparedChaosAction(runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, testProperties, chaosAction, contextBeanRegistry));
                 }
             } else {
-                log.fatal("Chaos configuration incorrect in the scenario " + preparedScenario);
+                log.fatal("Chaos configuration incorrect in the scenario {}", preparedScenario);
                 System.exit(5);
             }
         }

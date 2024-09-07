@@ -4,7 +4,6 @@ import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.mvss.karta.Constants;
 import org.mvss.karta.dependencyinjection.KartaDependencyInjector;
-import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.dependencyinjection.annotations.KartaBean;
 import org.mvss.karta.dependencyinjection.utils.DataUtils;
 import org.mvss.karta.dependencyinjection.utils.NullAwareBeanUtilsBean;
@@ -225,7 +224,7 @@ public class KartaConfiguration implements Serializable {
         minionsEnabled = override.minionsEnabled;
         DataUtils.mergeMapInto(override.threadGroups, threadGroups);
         DataUtils.addMissing(configurationScanPackages, override.configurationScanPackages);
-        TestProperties.mergeProperties(properties, override.properties);
+        PropertyUtils.mergeProperties(properties, override.properties);
         detailedReport = override.detailedReport;
     }
 

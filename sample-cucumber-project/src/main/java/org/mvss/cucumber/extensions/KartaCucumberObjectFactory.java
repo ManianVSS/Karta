@@ -12,10 +12,12 @@ import java.util.ArrayList;
 
 @Log4j2
 public class KartaCucumberObjectFactory implements ObjectFactory {
-    public static final String PROPERTIES_FOLDER = "properties";
+    public static final String PROPERTIES_FOLDER = "PROPERTIES_FOLDER";
+    public static final String DEFAULT_PROPERTIES_FOLDER = "properties";
 
     private static final TypeReference<ArrayList<String>> arrayListOfStringType = new TypeReference<>() {
     };
+
 
     private static KartaDependencyInjector kartaDependencyInjector;
 
@@ -37,7 +39,7 @@ public class KartaCucumberObjectFactory implements ObjectFactory {
     public synchronized void start() {
         if (kartaDependencyInjector == null) {
             kartaDependencyInjector = KartaDependencyInjector.getInstance();
-            kartaDependencyInjector.mergePropertiesFiles(PropertyUtils.systemProperties.getOrDefault("PROPERTIES_FOLDER", PROPERTIES_FOLDER));
+            kartaDependencyInjector.mergePropertiesFiles(PropertyUtils.systemProperties.getOrDefault(PROPERTIES_FOLDER, DEFAULT_PROPERTIES_FOLDER));
             ArrayList<String> scanPackages = ParserUtils.convertValue(DataFormat.YAML, kartaDependencyInjector.testProperties.getPropertyValue("KartaDependencyInjector", "configurationScanPackages"), arrayListOfStringType);
             if (scanPackages != null) {
                 kartaDependencyInjector.addBeansFromPackages(scanPackages);
@@ -72,7 +74,7 @@ public class KartaCucumberObjectFactory implements ObjectFactory {
             }
             return instance;
         } catch (Throwable t) {
-            log.error("Error while instantiating and initializing object for class " + aClass);
+            log.error("Error while instantiating and initializing object for class {}", aClass);
         }
         return null;
     }

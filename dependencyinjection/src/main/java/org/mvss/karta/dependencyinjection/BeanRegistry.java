@@ -27,7 +27,7 @@ public class BeanRegistry {
 
     private final HashMap<Thread, HashMap<String, Object>> threadContextBeanMap = new HashMap<>();
 
-    private final HashMap<String, HashMap<String, Object>> namedContextBeanMap = new HashMap<>();
+    private final HashMap<Object, HashMap<String, Object>> objectContextBeanMap = new HashMap<>();
 
     /**
      * Constructor: Add self to the registry with class name.
@@ -41,7 +41,7 @@ public class BeanRegistry {
         if (fromBeanRegistry != null) {
             globalBeans.putAll(fromBeanRegistry.globalBeans);
             threadContextBeanMap.putAll(fromBeanRegistry.threadContextBeanMap);
-            namedContextBeanMap.putAll(fromBeanRegistry.namedContextBeanMap);
+            objectContextBeanMap.putAll(fromBeanRegistry.objectContextBeanMap);
         } else {
             globalBeans.put(BeanRegistry.class.getName(), this);
             initThreadContextRegistry();
@@ -69,14 +69,14 @@ public class BeanRegistry {
     }
 
     /**
-     * Initialize the named context specific registry for context name
+     * Initialize the object context specific registry for context name
      *
-     * @param contextName String
+     * @param context String
      */
-    public synchronized void initNamedContextRegistry(String contextName) {
-        if ((contextName != null) && !namedContextBeanMap.containsKey(contextName)) {
+    public synchronized void initObjectContextRegistry(Object context) {
+        if ((context != null) && !objectContextBeanMap.containsKey(context)) {
             HashMap<String, Object> contextBeanRegistry = new HashMap<>();
-            namedContextBeanMap.put(contextName, contextBeanRegistry);
+            objectContextBeanMap.put(context, contextBeanRegistry);
             contextBeanRegistry.put(BeanRegistry.class.getName(), this);
         }
     }
@@ -84,11 +84,11 @@ public class BeanRegistry {
     /**
      * Close the context registry mapped by the name.
      *
-     * @param contextName Object - Context name
+     * @param context Object - Context name
      * @return HashMap<String, Object> - The objects for the mapped context
      */
-    public synchronized HashMap<String, Object> closeContextRegistry(String contextName) {
-        return namedContextBeanMap.remove(contextName);
+    public synchronized HashMap<String, Object> closeContextRegistry(Object context) {
+        return objectContextBeanMap.remove(context);
     }
 
     /**
@@ -122,7 +122,16 @@ public class BeanRegistry {
     }
 
     public synchronized Object put(ContextType contextType, String contextName, String beanName, Object bean) {
+        if (bean == null) {
+            return null;
+        }
+
         HashMap<String, Object> beanMap = getBeanMap(contextType, contextName);
+
+        if (beanMap == null) {
+            return null;
+        }
+
         return beanMap.put(beanName, bean);
     }
 
@@ -160,6 +169,10 @@ public class BeanRegistry {
 
     public synchronized boolean add(ContextType contextType, String contextName, String beanName, Object bean) {
         HashMap<String, Object> beanMap = getBeanMap(contextType, contextName);
+
+        if (beanMap == null) {
+            return false;
+        }
 
         if (beanMap.containsKey(beanName)) {
             return false;
@@ -216,23 +229,23 @@ public class BeanRegistry {
      * Gets the bean map based on the wiring context type.
      *
      * @param contextType ContextType
-     * @param contextName String
+     * @param context     Object
      * @return HashMap<String, Object>
      */
-    private HashMap<String, Object> getBeanMap(ContextType contextType, String contextName) {
-        switch (contextType) {
-            case NAMED:
-                initNamedContextRegistry(contextName);
-                return namedContextBeanMap.get(DataUtils.pickNonNull(contextName, Constants.EMPTY_STRING));
-
-            case THREAD:
+    private HashMap<String, Object> getBeanMap(ContextType contextType, Object context) {
+        return switch (contextType) {
+            case OBJECT -> {
+                if (context == null)
+                    yield null;
+                initObjectContextRegistry(context);
+                yield objectContextBeanMap.get(context);
+            }
+            case THREAD -> {
                 initThreadContextRegistry();
-                return threadContextBeanMap.get(Thread.currentThread());
-
-            default:
-            case GLOBAL:
-                return globalBeans;
-        }
+                yield threadContextBeanMap.get(Thread.currentThread());
+            }
+            default -> globalBeans;
+        };
     }
 
     /**

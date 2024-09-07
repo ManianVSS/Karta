@@ -81,4 +81,8 @@ public class TestExecutionContext implements Serializable {
             this.testData.putAll(stepTestData);
         }
     }
+
+    public Serializable getProperty(String group, String name) {
+        return (testProperties == null) ? null : testProperties.getPropertyValue(group, name);
+    }
 }

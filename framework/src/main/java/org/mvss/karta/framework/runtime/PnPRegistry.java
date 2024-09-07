@@ -10,6 +10,7 @@ import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.dependencyinjection.enums.DataFormat;
 import org.mvss.karta.dependencyinjection.utils.ClassPathLoaderUtils;
 import org.mvss.karta.dependencyinjection.utils.ParserUtils;
+import org.mvss.karta.dependencyinjection.utils.PropertyUtils;
 import org.mvss.karta.framework.configuration.PluginConfig;
 import org.mvss.karta.framework.plugins.Plugin;
 import org.mvss.karta.framework.utils.DynamicClassLoader;
@@ -48,10 +49,10 @@ public class PnPRegistry implements AutoCloseable {
 
         String pluginName = plugin.getPluginName();
 
-        log.info("Registering plugin " + pluginName);
+        log.info("Registering plugin {}", pluginName);
 
         if (registeredPlugins.containsKey(pluginName)) {
-            log.warn("Plugin already registered: " + pluginName);
+            log.warn("Plugin already registered: {}", pluginName);
             return false;
         }
 
@@ -75,7 +76,7 @@ public class PnPRegistry implements AutoCloseable {
             return false;
         }
 
-        log.debug("Registering plugin from configuration " + pluginConfig);
+        log.debug("Registering plugin from configuration {}", pluginConfig);
         @SuppressWarnings("unchecked") Class<? extends Plugin> pluginClass = (jarFile != null) ? (Class<? extends Plugin>) DynamicClassLoader.loadClass(jarFile, pluginConfig.getClassName()) : (Class<? extends Plugin>) Class.forName(pluginConfig.getClassName());
         Plugin plugin = pluginClass.getDeclaredConstructor().newInstance();
         return registerPlugin(plugin);
@@ -87,7 +88,7 @@ public class PnPRegistry implements AutoCloseable {
                 File evaluatedJarFile = (jarFile == null) ? ((pluginConfig.getJarFile() == null) ? null : new File(pluginConfig.getJarFile())) : jarFile;
 
                 if (!registerPlugin(evaluatedJarFile, pluginConfig)) {
-                    log.error("Plugin registration failed for " + pluginConfig);
+                    log.error("Plugin registration failed for {}", pluginConfig);
                 }
             } catch (Throwable t) {
                 log.error(Constants.EMPTY_STRING, t);
@@ -99,6 +100,7 @@ public class PnPRegistry implements AutoCloseable {
         addPluginConfiguration(null, pluginConfigs);
     }
 
+    @Deprecated
     public void loadPluginJar(TestProperties testProperties, File jarFile) throws IOException {
         InputStream jarFileInputStream = (jarFile == null) ? ClassPathLoaderUtils.getFileStream(Constants.KARTA_PLUGINS_CONFIG_YAML) : DynamicClassLoader.getClassPathResourceInJarAsStream(jarFile, Constants.KARTA_PLUGINS_CONFIG_YAML);
 
@@ -116,18 +118,19 @@ public class PnPRegistry implements AutoCloseable {
 
             if (runtimePropertiesInputStream != null) {
                 String runtimePropertiesStr = IOUtils.toString(runtimePropertiesInputStream, Charset.defaultCharset());
-                HashMap<String, HashMap<String, Serializable>> runtimeProperties = TestProperties.readPropertiesFromString(DataFormat.YAML, runtimePropertiesStr);
+                HashMap<String, HashMap<String, Serializable>> runtimeProperties = PropertyUtils.readPropertiesFromString(DataFormat.YAML, runtimePropertiesStr);
                 testProperties.mergeProperties(runtimeProperties);
             }
         }
     }
 
+    @Deprecated
     public void loadPlugins(TestProperties testProperties, File pluginsDirectory) {
         for (File jarFile : FileUtils.listFiles(pluginsDirectory, Constants.jarExtension, true)) {
             try {
                 loadPluginJar(testProperties, jarFile);
             } catch (Throwable t) {
-                log.error("Plugin failed to load: " + jarFile.getAbsolutePath(), t);
+                log.error("Plugin failed to load: {}", jarFile.getAbsolutePath(), t);
             }
         }
     }
@@ -155,7 +158,7 @@ public class PnPRegistry implements AutoCloseable {
             try {
                 plugin.close();
             } catch (Throwable t) {
-                log.error("Plugin failed to close: " + pluginEntry.getKey(), t);
+                log.error("Plugin failed to close: {}", pluginEntry.getKey(), t);
             }
         }
     }

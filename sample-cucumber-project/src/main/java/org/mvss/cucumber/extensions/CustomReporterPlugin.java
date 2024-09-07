@@ -10,7 +10,7 @@ import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 public class CustomReporterPlugin implements ConcurrentEventListener {
 
     public CustomReporterPlugin(String parameter) {
-        log.info("Plugin parameter passed is " + parameter);
+        log.info("Plugin parameter passed is {}", parameter);
     }
 
     @Override
@@ -39,7 +39,7 @@ public class CustomReporterPlugin implements ConcurrentEventListener {
 
     private void printEvent(Event event) {
         try {
-            log.info("Event of type " + event.getClass() + " occurred:" + ParserUtils.getObjectMapper().writeValueAsString(event));
+            log.info("Event of type {} occurred:{}", event.getClass(), ParserUtils.getObjectMapper().writeValueAsString(event));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
