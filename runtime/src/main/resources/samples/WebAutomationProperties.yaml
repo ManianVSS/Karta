@@ -1,8 +1,10 @@
 WebAutomation:
   webDriverOptions:
-    webDriverLocation: /usr/local/bin/chromedriver
-    browser: CHROME
-    headless: true
+    webDriverLocation: /usr/local/bin/geckodriver
+    browser: FIREFOX
+    serviceArguments: [ '--marionette-port', '2828', '--connect-existing' ]
+    useService: true
+    headless: false
     ignoreCertificates: true
     implicitWaitTime: PT10S
     screenSize:
