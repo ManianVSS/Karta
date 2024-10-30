@@ -32,10 +32,13 @@ public class WebDriverOptions implements Serializable {
     @Builder.Default
     private boolean useService = false;
 
+    private ArrayList<String> serviceArguments;
+
+    @Builder.Default
+    private int servicePort = 4444;
+
     @Builder.Default
     private boolean deleteAllCookies = false;
-
-    private ArrayList<String> serviceArguments;
 
     @Builder.Default
     private boolean headless = false;

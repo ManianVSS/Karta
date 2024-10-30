@@ -157,7 +157,7 @@ public class SimpleWebDriverFactory {
                     if (serviceArgs != null) {
                         args.addAll(serviceArgs);
                     }
-                    ChromeDriverService chromeDriverService = new ChromeDriverService(new File(webDriverOptions.getWebDriverLocation()), 4444, args, System.getenv());
+                    ChromeDriverService chromeDriverService = new ChromeDriverService(new File(webDriverOptions.getWebDriverLocation()), webDriverOptions.getServicePort(), args, System.getenv());
                     webDriver = new ChromeDriver(chromeDriverService, chromeOptions);
                 } else {
                     webDriver = new ChromeDriver(chromeOptions);
@@ -192,7 +192,7 @@ public class SimpleWebDriverFactory {
                     if (serviceArgs != null) {
                         args.addAll(serviceArgs);
                     }
-                    GeckoDriverService geckoDriverService = new GeckoDriverService(new File(webDriverOptions.getWebDriverLocation()), 4444, args, System.getenv());
+                    GeckoDriverService geckoDriverService = new GeckoDriverService(new File(webDriverOptions.getWebDriverLocation()), webDriverOptions.getServicePort(), args, System.getenv());
                     webDriver = new FirefoxDriver(geckoDriverService, firefoxOptions);
                 } else {
                     webDriver = new FirefoxDriver(firefoxOptions);
@@ -226,7 +226,7 @@ public class SimpleWebDriverFactory {
                     if (serviceArgs != null) {
                         args.addAll(serviceArgs);
                     }
-                    EdgeDriverService chromeDriverService = new EdgeDriverService(new File(webDriverOptions.getWebDriverLocation()), 4444, webDriverOptions.getWaitTimeout(), args, System.getenv());
+                    EdgeDriverService chromeDriverService = new EdgeDriverService(new File(webDriverOptions.getWebDriverLocation()), webDriverOptions.getServicePort(), webDriverOptions.getWaitTimeout(), args, System.getenv());
                     webDriver = new EdgeDriver(chromeDriverService, edgeOptions);
                 } else {
                     webDriver = new EdgeDriver(edgeOptions);
@@ -254,7 +254,7 @@ public class SimpleWebDriverFactory {
                     if (serviceArgs != null) {
                         args.addAll(serviceArgs);
                     }
-                    SafariDriverService safariDriverService = new SafariDriverService(new File(webDriverOptions.getWebDriverLocation()), 4444, args, System.getenv());
+                    SafariDriverService safariDriverService = new SafariDriverService(new File(webDriverOptions.getWebDriverLocation()), webDriverOptions.getServicePort(), args, System.getenv());
                     webDriver = new SafariDriver(safariDriverService, safariOptions);
                 } else {
                     webDriver = new SafariDriver(safariOptions);
