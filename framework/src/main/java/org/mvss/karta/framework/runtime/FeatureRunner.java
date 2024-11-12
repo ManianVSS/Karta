@@ -175,45 +175,49 @@ public class FeatureRunner implements Callable<FeatureResult> {
                 stepResult.setStepIndex(setupStepIndex);
                 stepResult.setSuccessful(true);
 
-                PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, testFeature.getTestDataSet(), testProperties, step, contextBeanRegistry);
+                ArrayList<PreparedStep> preparedSteps = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_SETUP__, variables, testFeature.getTestDataSet(), testProperties, step, contextBeanRegistry);
 
-                if (kartaRuntime.shouldStepNeedNotBeRun(runInfo, preparedStep)) {
-                    continue;
-                }
 
-                eventProcessor.raiseEvent(new FeatureSetupStepStartEvent(runName, testFeature, step));
-
-                try {
-                    stepResult = kartaRuntime.runStep(runInfo, preparedStep);
-                    stepResult.setStepIndex(setupStepIndex);
-                } catch (TestFailureException tfe) {
-                    log.error("Exception when running step", tfe);
-                    stepResult.setSuccessful(false);
-                    TestIncident incident = TestIncident.builder().thrownCause(tfe).build();
-                    stepResult.addIncident(incident);
-                } finally {
-                    eventProcessor.raiseEvent(new FeatureSetupStepCompleteEvent(runName, testFeature, step, stepResult));
-
-                    result.getSetupResults().add(new SerializableKVP<>(step.getStep(), stepResult));
-                    result.getIncidents().addAll(stepResult.getIncidents());
-
-                    if (!stepResult.isPassed()) {
-                        result.setSuccessful(false);
-                        deleteJobs();
-
-                        eventProcessor.raiseEvent(new FeatureCompleteEvent(runName, testFeature, result));
-
-                        if (tags != null) {
-                            if (!eventProcessor.featureStop(runName, testFeature, tags)) {
-                                result.setError(true);
-                            }
-                        }
-                        updateResultCallBack();
+                for (PreparedStep preparedStep : preparedSteps) {
+                    if (kartaRuntime.shouldStepNeedNotBeRun(runInfo, preparedStep)) {
+                        continue;
                     }
-                }
 
-                if (!result.isSuccessful()) {
-                    return result;
+                    eventProcessor.raiseEvent(new FeatureSetupStepStartEvent(runName, testFeature, preparedStep));
+
+                    try {
+                        stepResult = kartaRuntime.runStep(runInfo, preparedStep);
+                        stepResult.setStepIndex(setupStepIndex);
+                    } catch (TestFailureException tfe) {
+                        log.error("Exception when running step", tfe);
+                        stepResult.setSuccessful(false);
+                        TestIncident incident = TestIncident.builder().thrownCause(tfe).build();
+                        stepResult.addIncident(incident);
+                    } finally {
+                        eventProcessor.raiseEvent(new FeatureSetupStepCompleteEvent(runName, testFeature, preparedStep, stepResult));
+
+                        result.getSetupResults().add(new SerializableKVP<>(step.getStep(), stepResult));
+                        result.getIncidents().addAll(stepResult.getIncidents());
+
+                        if (!stepResult.isPassed()) {
+                            result.setSuccessful(false);
+                            deleteJobs();
+
+                            eventProcessor.raiseEvent(new FeatureCompleteEvent(runName, testFeature, result));
+
+                            if (tags != null) {
+                                if (!eventProcessor.featureStop(runName, testFeature, tags)) {
+                                    result.setError(true);
+                                }
+                            }
+                            updateResultCallBack();
+                        }
+                    }
+
+
+                    if (!result.isSuccessful()) {
+                        return result;
+                    }
                 }
             }
 
@@ -310,30 +314,32 @@ public class FeatureRunner implements Callable<FeatureResult> {
                 teardownStepIndex++;
                 StepResult stepResult = new StepResult();
                 stepResult.setStepIndex(teardownStepIndex);
-                PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, testFeature.getTestDataSet(), testProperties, step, contextBeanRegistry);
+                ArrayList<PreparedStep> preparedSteps = kartaRuntime.getPreparedStep(runInfo, testFeature.getName(), iterationIndex, Constants.__FEATURE_TEARDOWN__, variables, testFeature.getTestDataSet(), testProperties, step, contextBeanRegistry);
 
-                if (kartaRuntime.shouldStepNeedNotBeRun(runInfo, preparedStep)) {
-                    continue;
-                }
+                for (PreparedStep preparedStep : preparedSteps) {
+                    if (kartaRuntime.shouldStepNeedNotBeRun(runInfo, preparedStep)) {
+                        continue;
+                    }
 
-                eventProcessor.raiseEvent(new FeatureTearDownStepStartEvent(runName, testFeature, step));
+                    eventProcessor.raiseEvent(new FeatureTearDownStepStartEvent(runName, testFeature, preparedStep));
 
-                try {
-                    stepResult = kartaRuntime.runStep(runInfo, preparedStep);
-                    stepResult.setStepIndex(teardownStepIndex);
-                } catch (TestFailureException tfe) {
-                    log.error("Exception when running step", tfe);
-                    stepResult.setSuccessful(false);
-                    TestIncident incident = TestIncident.builder().thrownCause(tfe).build();
-                    stepResult.addIncident(incident);
-                } finally {
-                    eventProcessor.raiseEvent(new FeatureTearDownStepCompleteEvent(runName, testFeature, step, stepResult));
+                    try {
+                        stepResult = kartaRuntime.runStep(runInfo, preparedStep);
+                        stepResult.setStepIndex(teardownStepIndex);
+                    } catch (TestFailureException tfe) {
+                        log.error("Exception when running step", tfe);
+                        stepResult.setSuccessful(false);
+                        TestIncident incident = TestIncident.builder().thrownCause(tfe).build();
+                        stepResult.addIncident(incident);
+                    } finally {
+                        eventProcessor.raiseEvent(new FeatureTearDownStepCompleteEvent(runName, testFeature, preparedStep, stepResult));
 
-                    result.getTearDownResults().add(new SerializableKVP<>(step.getStep(), stepResult));
-                    result.getIncidents().addAll(stepResult.getIncidents());
+                        result.getTearDownResults().add(new SerializableKVP<>(step.getStep(), stepResult));
+                        result.getIncidents().addAll(stepResult.getIncidents());
 
-                    if (!stepResult.isPassed()) {
-                        result.setSuccessful(false);
+                        if (!stepResult.isPassed()) {
+                            result.setSuccessful(false);
+                        }
                     }
                 }
             }

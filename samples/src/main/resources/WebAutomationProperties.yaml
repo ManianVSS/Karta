@@ -2,11 +2,12 @@ WebAutomation:
   webDriverOptions:
     webDriverLocation: /usr/local/bin/geckodriver
     browser: FIREFOX
-    serviceArguments: [ '--marionette-port', '2828', '--connect-existing' ]
-    useService: true
+    #    serviceArguments: [ '--marionette-port', '2828', '--connect-existing' ]
+    #    useService: true
     headless: false
     ignoreCertificates: true
     implicitWaitTime: PT10S
+    resize: true
     screenSize:
       maximized: true
       width: 1920

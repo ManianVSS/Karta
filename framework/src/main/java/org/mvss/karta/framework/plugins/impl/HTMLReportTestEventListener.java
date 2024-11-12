@@ -51,7 +51,23 @@ public class HTMLReportTestEventListener implements TestEventListener {
     private static final String B_FAILED_ITERATIONS_B = "<b>FailedIterations</b>: ";
     private static final String DOT_JSON = ".json";
     private static final String DOT_HTML = ".html";
-    private static final String HTML_HEAD = "<!DOCTYPE html>\r\n" + "<html>\r\n" + "<head>\r\n" + "  <title>%s" + "</title>\r\n" + "<style>\r\n" + "table, th, td {\r\n" + "  border: 1px solid black;\r\n" + "  border-collapse: collapse;\r\n" + "}\r\n" + "th, td {\r\n" + "  padding: 5px;\r\n" + "}\r\n" + "th {\r\n" + "  text-align: left;\r\n" + "}</style></head>\r\n" + "<body>";
+    private static final String HTML_HEAD = """
+            <!DOCTYPE html>\r
+            <html>\r
+            <head>\r
+              <title>%s</title>\r
+            <style>\r
+            table, th, td {\r
+              border: 1px solid black;\r
+              border-collapse: collapse;\r
+            }\r
+            th, td {\r
+              padding: 5px;\r
+            }\r
+            th {\r
+              text-align: left;\r
+            }</style></head>\r
+            <body>""";
     private static final String TH_BGCOLOR_BLUE = "    <th bgcolor=\"blue\">";
     private static final String CLOSE_TH = "</th>\r\n";
     private static final String TIME_TAKEN = "TimeTaken";
@@ -228,7 +244,7 @@ public class HTMLReportTestEventListener implements TestEventListener {
                         FeatureSetupStepCompleteEvent featureSetupStepCompleteEvent = (FeatureSetupStepCompleteEvent) event;
                         featureName = featureSetupStepCompleteEvent.getFeatureName();
                         result = featureSetupStepCompleteEvent.getResult();
-                        stepId = featureSetupStepCompleteEvent.getStep().getStep();
+                        stepId = featureSetupStepCompleteEvent.getStep().getIdentifier();
                     } else if (event instanceof JavaFeatureSetupCompleteEvent) {
                         JavaFeatureSetupCompleteEvent featureSetupStepCompleteEvent = (JavaFeatureSetupCompleteEvent) event;
                         featureName = featureSetupStepCompleteEvent.getFeatureName();
@@ -248,7 +264,7 @@ public class HTMLReportTestEventListener implements TestEventListener {
                         FeatureTearDownStepCompleteEvent featureTearDownStepCompleteEvent = (FeatureTearDownStepCompleteEvent) event;
                         featureName = featureTearDownStepCompleteEvent.getFeatureName();
                         result = featureTearDownStepCompleteEvent.getResult();
-                        stepId = featureTearDownStepCompleteEvent.getStep().getStep();
+                        stepId = featureTearDownStepCompleteEvent.getStep().getIdentifier();
                     } else if (event instanceof JavaFeatureTearDownCompleteEvent) {
                         JavaFeatureTearDownCompleteEvent featureTearDownStepCompleteEvent = (JavaFeatureTearDownCompleteEvent) event;
                         featureName = featureTearDownStepCompleteEvent.getFeatureName();

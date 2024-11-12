@@ -6,8 +6,11 @@ testScenarios:
   - name: W3SchoolsTest
     executionSteps:
       - step: Given the W3Schools site is launched in the browser
-      - step: When Learn HTML button from Home page is clicked
-      - step: And HTML introduction link from Learn HTML Home page is clicked
-      - step: And Learn HTML home link from HTML introduction page is clicked
-      - step: And validate that non existent element is not present in the learn HTML page
-      - step: Then W3 Schools home button from Learn HTML Home page is clicked
+      - step: Group of steps to run in multiple iterations
+        numberOfIterations: 5
+        steps:
+          - step: When Learn HTML button from Home page is clicked
+          - step: And HTML introduction link from Learn HTML Home page is clicked
+          - step: And Learn HTML home link from HTML introduction page is clicked
+          #      - step: And validate that non existent element is not present in the learn HTML page
+          - step: Then W3 Schools home button from Learn HTML Home page is clicked

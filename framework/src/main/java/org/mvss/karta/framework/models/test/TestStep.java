@@ -3,6 +3,7 @@ package org.mvss.karta.framework.models.test;
 import lombok.*;
 import org.mvss.karta.framework.models.randomization.ObjectGenerationRule;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TestStep implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
@@ -58,6 +60,9 @@ public class TestStep implements Serializable {
      */
     @Builder.Default
     private Integer numberOfThreads = 1;
+
+    @Builder.Default
+    private Integer numberOfIterations = 1;
 
     /**
      * The number of times this step should be retried if failed

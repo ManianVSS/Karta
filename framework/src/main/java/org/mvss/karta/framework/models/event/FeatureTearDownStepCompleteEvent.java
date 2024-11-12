@@ -7,8 +7,10 @@ import org.mvss.karta.dependencyinjection.enums.DataFormat;
 import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 import org.mvss.karta.framework.core.StandardEventsTypes;
 import org.mvss.karta.framework.models.result.StepResult;
+import org.mvss.karta.framework.models.test.PreparedStep;
 import org.mvss.karta.framework.models.test.TestFeature;
-import org.mvss.karta.framework.models.test.TestStep;
+
+import java.io.Serial;
 
 @Getter
 @Setter
@@ -16,23 +18,24 @@ import org.mvss.karta.framework.models.test.TestStep;
 @ToString
 @NoArgsConstructor
 public class FeatureTearDownStepCompleteEvent extends FeatureEvent {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public FeatureTearDownStepCompleteEvent(Event event) {
         super(event);
-        parameters.put(Constants.STEP, ParserUtils.convertValue(DataFormat.JSON, parameters.get(Constants.STEP), TestStep.class));
+        parameters.put(Constants.STEP, ParserUtils.convertValue(DataFormat.JSON, parameters.get(Constants.STEP), PreparedStep.class));
         parameters.put(Constants.RESULT, ParserUtils.convertValue(DataFormat.JSON, parameters.get(Constants.RESULT), StepResult.class));
     }
 
-    public FeatureTearDownStepCompleteEvent(String runName, TestFeature feature, TestStep step, StepResult result) {
+    public FeatureTearDownStepCompleteEvent(String runName, TestFeature feature, PreparedStep step, StepResult result) {
         super(StandardEventsTypes.FEATURE_TEARDOWN_STEP_COMPLETE_EVENT, runName, feature);
         this.parameters.put(Constants.STEP, step);
         this.parameters.put(Constants.RESULT, result);
     }
 
     @JsonIgnore
-    public TestStep getStep() {
-        return (TestStep) parameters.get(Constants.STEP);
+    public PreparedStep getStep() {
+        return (PreparedStep) parameters.get(Constants.STEP);
     }
 
     @JsonIgnore

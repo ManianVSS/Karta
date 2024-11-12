@@ -3,6 +3,7 @@ package org.mvss.karta.framework.models.test;
 import lombok.*;
 import org.mvss.karta.framework.models.run.TestExecutionContext;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PreparedStep implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private String gwtConjunction;
@@ -66,4 +68,6 @@ public class PreparedStep implements Serializable {
     @Builder.Default
     private String condition = null;
 
+    @Builder.Default
+    private int iterationIndex = 0;
 }

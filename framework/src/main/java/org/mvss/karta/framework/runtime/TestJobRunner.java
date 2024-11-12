@@ -62,21 +62,24 @@ public class TestJobRunner {
                 } else {
                     long stepIndex = 0;
                     for (TestStep step : steps) {
-                        PreparedStep preparedStep = kartaRuntime.getPreparedStep(runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), testProperties, step, contextBeanRegistry);
-                        if (kartaRuntime.shouldStepNeedNotBeRun(runInfo, preparedStep)) {
-                            continue;
-                        }
+                        ArrayList<PreparedStep> preparedSteps = kartaRuntime.getPreparedStep(runInfo, featureName, iterationIndex, job.getName(), variables, job.getTestDataSet(), testProperties, step, contextBeanRegistry);
 
-                        eventProcessor.raiseEvent(new JobStepStartEvent(runName, featureName, job, iterationIndex, step));
-                        StepResult result = kartaRuntime.runStep(runInfo, preparedStep);
-                        result.setStepIndex(stepIndex++);
-                        eventProcessor.raiseEvent(new JobStepCompleteEvent(runName, featureName, job, iterationIndex, step, result));
+                        for (PreparedStep preparedStep : preparedSteps) {
+                            if (kartaRuntime.shouldStepNeedNotBeRun(runInfo, preparedStep)) {
+                                continue;
+                            }
 
-                        testJobResult.getStepResults().add(new SerializableKVP<>(step.getStep(), result));
-                        if (!result.isPassed()) {
-                            testJobResult.setSuccessful(true);
-                            testJobResult.setEndTime(new Date());
-                            break;
+                            eventProcessor.raiseEvent(new JobStepStartEvent(runName, featureName, job, iterationIndex, step));
+                            StepResult result = kartaRuntime.runStep(runInfo, preparedStep);
+                            result.setStepIndex(stepIndex++);
+                            eventProcessor.raiseEvent(new JobStepCompleteEvent(runName, featureName, job, iterationIndex, step, result));
+
+                            testJobResult.getStepResults().add(new SerializableKVP<>(step.getStep(), result));
+                            if (!result.isPassed()) {
+                                testJobResult.setSuccessful(true);
+                                testJobResult.setEndTime(new Date());
+                                break;
+                            }
                         }
                     }
                 }

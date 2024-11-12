@@ -832,47 +832,51 @@ public class KartaRuntime implements AutoCloseable {
     /**
      * Converts a TestStep into PreparedStep which is ready for execution with execution context and test data merged
      */
-    public PreparedStep getPreparedStep(RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestProperties testProperties, TestStep step, BeanRegistry contextBeanRegistry) throws Throwable {
+    public ArrayList<PreparedStep> getPreparedStep(RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestProperties testProperties, TestStep step, BeanRegistry contextBeanRegistry) throws Throwable {
         ArrayList<StepRunner> stepRunners = getStepRunners(runInfo);
         String stepIdentifier = step.getStep();
 
+        ArrayList<PreparedStep> preparedSteps = new ArrayList<>();
+
         ArrayList<TestStep> nestedSteps = step.getSteps();
+        for (int i = 0; i < step.getNumberOfIterations(); i++) {
+            if (nestedSteps == null) {
+                if (StringUtils.isBlank(stepIdentifier)) {
+                    log.error("Empty step definition identifier for step {}", step);
+                }
 
-        if (nestedSteps == null) {
-            if (StringUtils.isBlank(stepIdentifier)) {
-                log.error("Empty step definition identifier for step {}", step);
+                StepRunner stepRunner = getCapableStepRunnerForStep(stepRunners, stepIdentifier);
+                assert (stepRunner != null);
+                String sanitizedStepIdentifier = stepRunner.sanitizeStepIdentifier(stepIdentifier);
+                TestExecutionContext testExecutionContext = new TestExecutionContext(runInfo.getRunName(), featureName, iterationIndex, scenarioName, sanitizedStepIdentifier, testProperties, null, variables);
+                testExecutionContext.setContextBeanRegistry(contextBeanRegistry);
+
+                HashMap<String, Serializable> mergedTestData = getMergedTestData(step);
+                testExecutionContext.mergeTestData(mergedTestData, DataUtils.mergeMaps(commonTestDataSet, step.getTestDataSet()), getTestDataSources(runInfo));
+
+                preparedSteps.add(PreparedStep.builder().gwtConjunction(step.getGwtConjunction()).identifier(stepIdentifier).testExecutionContext(testExecutionContext).node(step.getNode()).numberOfThreads(step.getNumberOfThreads()).maxRetries(step.getMaxRetries()).condition(step.getCondition()).iterationIndex(i).build());
+            } else {
+                HashMap<String, Serializable> mergedTestData = getMergedTestData(step);
+                TestExecutionContext testExecutionContext = new TestExecutionContext(runInfo.getRunName(), featureName, iterationIndex, scenarioName, stepIdentifier, testProperties, null, variables);
+                testExecutionContext.mergeTestData(mergedTestData, DataUtils.mergeMaps(commonTestDataSet, step.getTestDataSet()), getTestDataSources(runInfo));
+                testExecutionContext.setContextBeanRegistry(contextBeanRegistry);
+
+                PreparedStep preparedStepGroup = PreparedStep.builder().gwtConjunction(step.getGwtConjunction()).identifier(stepIdentifier).testExecutionContext(testExecutionContext).node(step.getNode()).numberOfThreads(step.getNumberOfThreads()).maxRetries(step.getMaxRetries()).iterationIndex(i).build();
+                ArrayList<PreparedStep> nestedPreparedSteps = new ArrayList<>();
+
+                for (TestStep nestedStep : nestedSteps) {
+                    // Pass parent test data set to children.
+                    nestedPreparedSteps.addAll(getPreparedStep(runInfo, featureName, iterationIndex, scenarioName, variables, DataUtils.mergeMaps(commonTestDataSet, step.getTestDataSet()), testProperties, nestedStep, contextBeanRegistry));
+                }
+
+                preparedStepGroup.setSteps(nestedPreparedSteps);
+                Boolean runInParallel = step.getRunStepsInParallel();
+                preparedStepGroup.setRunStepsInParallel(runInParallel != null && runInParallel);
+                preparedStepGroup.setCondition(step.getCondition());
+                preparedSteps.add(preparedStepGroup);
             }
-
-            StepRunner stepRunner = getCapableStepRunnerForStep(stepRunners, stepIdentifier);
-            assert (stepRunner != null);
-            String sanitizedStepIdentifier = stepRunner.sanitizeStepIdentifier(stepIdentifier);
-            TestExecutionContext testExecutionContext = new TestExecutionContext(runInfo.getRunName(), featureName, iterationIndex, scenarioName, sanitizedStepIdentifier, testProperties, null, variables);
-            testExecutionContext.setContextBeanRegistry(contextBeanRegistry);
-
-            HashMap<String, Serializable> mergedTestData = getMergedTestData(step);
-            testExecutionContext.mergeTestData(mergedTestData, DataUtils.mergeMaps(commonTestDataSet, step.getTestDataSet()), getTestDataSources(runInfo));
-
-            return PreparedStep.builder().gwtConjunction(step.getGwtConjunction()).identifier(stepIdentifier).testExecutionContext(testExecutionContext).node(step.getNode()).numberOfThreads(step.getNumberOfThreads()).maxRetries(step.getMaxRetries()).condition(step.getCondition()).build();
-        } else {
-            HashMap<String, Serializable> mergedTestData = getMergedTestData(step);
-            TestExecutionContext testExecutionContext = new TestExecutionContext(runInfo.getRunName(), featureName, iterationIndex, scenarioName, stepIdentifier, testProperties, null, variables);
-            testExecutionContext.mergeTestData(mergedTestData, DataUtils.mergeMaps(commonTestDataSet, step.getTestDataSet()), getTestDataSources(runInfo));
-            testExecutionContext.setContextBeanRegistry(contextBeanRegistry);
-
-            PreparedStep preparedStepGroup = PreparedStep.builder().gwtConjunction(step.getGwtConjunction()).identifier(stepIdentifier).testExecutionContext(testExecutionContext).node(step.getNode()).numberOfThreads(step.getNumberOfThreads()).maxRetries(step.getMaxRetries()).build();
-            ArrayList<PreparedStep> nestedPreparedSteps = new ArrayList<>();
-
-            for (TestStep nestedStep : nestedSteps) {
-                // Pass parent test data set to children.
-                nestedPreparedSteps.add(getPreparedStep(runInfo, featureName, iterationIndex, scenarioName, variables, DataUtils.mergeMaps(commonTestDataSet, step.getTestDataSet()), testProperties, nestedStep, contextBeanRegistry));
-            }
-
-            preparedStepGroup.setSteps(nestedPreparedSteps);
-            Boolean runInParallel = step.getRunStepsInParallel();
-            preparedStepGroup.setRunStepsInParallel(runInParallel != null && runInParallel);
-            preparedStepGroup.setCondition(step.getCondition());
-            return preparedStepGroup;
         }
+        return preparedSteps;
     }
 
     /**
@@ -900,7 +904,7 @@ public class KartaRuntime implements AutoCloseable {
 
         ArrayList<PreparedStep> preparedSetupSteps = new ArrayList<>();
         for (TestStep step : DataUtils.mergeLists(scenarioSetupSteps, testScenario.getSetupSteps())) {
-            preparedSetupSteps.add(getPreparedStep(runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, testProperties, step, contextBeanRegistry));
+            preparedSetupSteps.addAll(getPreparedStep(runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, testProperties, step, contextBeanRegistry));
         }
         preparedScenario.setSetupSteps(preparedSetupSteps);
 
@@ -922,13 +926,13 @@ public class KartaRuntime implements AutoCloseable {
 
         ArrayList<PreparedStep> preparedExecutionSteps = new ArrayList<>();
         for (TestStep step : testScenario.getExecutionSteps()) {
-            preparedExecutionSteps.add(getPreparedStep(runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, testProperties, step, contextBeanRegistry));
+            preparedExecutionSteps.addAll(getPreparedStep(runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, testProperties, step, contextBeanRegistry));
         }
         preparedScenario.setExecutionSteps(preparedExecutionSteps);
 
         ArrayList<PreparedStep> preparedTearDownSteps = new ArrayList<>();
         for (TestStep step : DataUtils.mergeLists(testScenario.getTearDownSteps(), scenarioTearDownSteps)) {
-            preparedTearDownSteps.add(getPreparedStep(runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, testProperties, step, contextBeanRegistry));
+            preparedTearDownSteps.addAll(getPreparedStep(runInfo, featureName, iterationIndex, testScenario.getName(), variables, mergedCommonTestDataSet, testProperties, step, contextBeanRegistry));
         }
         preparedScenario.setTearDownSteps(preparedTearDownSteps);
 
@@ -1004,8 +1008,14 @@ public class KartaRuntime implements AutoCloseable {
     /**
      * Runs a TestStep based on the RunInfo locally or on a remote node and returns the StepResult
      */
-    public StepResult runStep(RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestProperties testProperties, TestStep step, BeanRegistry contextBeanRegistry) throws Throwable {
-        return runStep(runInfo, getPreparedStep(runInfo, featureName, iterationIndex, scenarioName, variables, commonTestDataSet, testProperties, step, contextBeanRegistry));
+    public ArrayList<StepResult> runStep(RunInfo runInfo, String featureName, int iterationIndex, String scenarioName, HashMap<String, Serializable> variables, HashMap<String, ArrayList<Serializable>> commonTestDataSet, TestProperties testProperties, TestStep step, BeanRegistry contextBeanRegistry) throws Throwable {
+
+        ArrayList<StepResult> stepResults = new ArrayList<>();
+
+        for (PreparedStep preparedStep : getPreparedStep(runInfo, featureName, iterationIndex, scenarioName, variables, commonTestDataSet, testProperties, step, contextBeanRegistry)) {
+            stepResults.add(runStep(runInfo, preparedStep));
+        }
+        return stepResults;
     }
 
     /**
