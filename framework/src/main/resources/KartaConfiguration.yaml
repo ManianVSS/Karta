@@ -22,6 +22,9 @@ pluginConfigurations:
   - pluginName: HTMLReportTestEventListener
     className: org.mvss.karta.framework.plugins.impl.HTMLReportTestEventListener
 
+  - pluginName: ShaniDashboardReliabilityRunPlugin
+    className: org.mvss.karta.framework.plugins.impl.ShaniDashboardReliabilityRunPlugin
+
   - pluginName: BeanShellStepRunner
     className: org.mvss.karta.framework.plugins.impl.BeanShellStepRunner
 

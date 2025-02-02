@@ -3,16 +3,21 @@ package org.mvss.cucumber.extensions;
 import io.cucumber.plugin.ConcurrentEventListener;
 import io.cucumber.plugin.event.*;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.FileUtils;
 import org.mvss.karta.dependencyinjection.KartaDependencyInjector;
 import org.mvss.karta.dependencyinjection.TestProperties;
 import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
 import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 import org.mvss.karta.framework.restclient.*;
 
+import java.io.File;
 import java.io.Serializable;
+import java.net.URI;
+import java.nio.charset.Charset;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Log4j2
@@ -58,6 +63,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
     private Integer releaseId;
     private Integer buildId;
     private Integer runId;
+    private Instant runStartedTime;
 
     public ShaniDashboardPlugin(String parameter) {
         log.info("Plugin parameter passed is " + parameter);
@@ -94,7 +100,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
             if (count <= 0) {
                 return null;
             } else {
-                return ParserUtils.getObjectMapper().convertValue(((ArrayList<Serializable>) responseBody.get("results")).get(0), ParserUtils.genericHashMapObjectType);
+                return ParserUtils.getObjectMapper().convertValue(((ArrayList<Serializable>) responseBody.get("results")).getFirst(), ParserUtils.genericHashMapObjectType);
             }
         }
     }
@@ -151,6 +157,7 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
             releaseId = (Integer) createReleaseIfMissing().get(ID);
             buildId = (Integer) createBuildIfMissing().get(ID);
             runId = (Integer) createRunIfMissing().get(ID);
+            runStartedTime = testRunStarted.getInstant();
         } catch (Exception e) {
             log.error(EXCEPTION_OCCURRED, e);
         }
@@ -191,6 +198,14 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
 
     private HashMap<String, Serializable> getOrCreateTestCase(TestCase testCase, Instant startTime) throws Exception {
         String name = testCase.getName();
+        List<String> lines = FileUtils.readLines(new File(testCase.getUri()), Charset.defaultCharset());
+        StringBuilder testCaseDescription = new StringBuilder(lines.get(testCase.getLocation().getLine() - 1));
+        for (int i = testCase.getLocation().getLine(); i < lines.size(); i++) {
+            if (lines.get(i).trim().startsWith("Scenario"))
+                break;
+            testCaseDescription.append("\n").append(lines.get(i));
+        }
+        String finalTestCaseDescription = testCaseDescription.toString().trim();
         return getExistingOrCreateNewEntity(EXECUTION_API_EXECUTION_RECORDS, new HashMap<>() {{
             put(RUN, runId);
             put(NAME, name);
@@ -198,6 +213,8 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
             put(RUN, runId);
             put(NAME, name);
             put(START_TIME, startTime.toString());
+            put(SUMMARY, testCase.getUri());
+            put(DESCRIPTION, finalTestCaseDescription);
         }});
     }
 
@@ -218,6 +235,16 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
         }
     }
 
+    private static void extractID(HashMap<String, Serializable> entity, String objectName) {
+        if (entity.containsKey(objectName)) {
+            Object run_object = entity.get(objectName);
+
+            if (run_object instanceof HashMap) {
+                entity.put(objectName, (Serializable) ((HashMap<?, ?>) run_object).get("id"));
+            }
+        }
+    }
+
     private void handleTestCaseFinished(TestCaseFinished testCaseFinished) {
         try {
             TestCase testCase = testCaseFinished.getTestCase();
@@ -225,6 +252,9 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
             HashMap<String, Serializable> executionRecord = getOrCreateTestCase(testCase, testCaseFinished.getInstant());
             executionRecord.put(STATUS, testCaseFinished.getResult().getStatus() == Status.PASSED ? PASS : FAILED);
             executionRecord.put(END_TIME, testCaseFinished.getInstant().toString());
+
+            extractID(executionRecord, "run");
+
             testCaseMap.put(testCase, executionRecordId);
             executionRecord = updateEntity(EXECUTION_API_EXECUTION_RECORDS + executionRecordId + SLASH, executionRecord);
             log.info("Execution record updated " + executionRecord);
@@ -239,8 +269,10 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
             buildId = (Integer) createBuildIfMissing().get(ID);
             HashMap<String, Serializable> run = createRunIfMissing();
             runId = (Integer) run.get(ID);
-
+            run.put(START_TIME, runStartedTime.toString());
             run.put(END_TIME, testRunFinished.getInstant().toString());
+            extractID(run, "release");
+            extractID(run, "build");
             run = updateEntity(EXECUTION_API_RUNS + runId + SLASH, run);
             log.info("Run record updated " + run);
 
@@ -248,4 +280,5 @@ public class ShaniDashboardPlugin implements ConcurrentEventListener {
             log.error(EXCEPTION_OCCURRED, e);
         }
     }
+
 }

@@ -9,6 +9,7 @@ pluginConfigurations:
 
 enabledPlugins:
   - HTMLReportTestEventListener
+  - ShaniDashboardReliabilityRunPlugin
   - ObjectGenTestDataSource
   - RandomTestDataSource
   - DumpToFileTestEventListener
@@ -60,6 +61,13 @@ properties:
 
   HTMLReportTestEventListener:
     runReportsBaseFolderName: sampleReports
+
+  ShaniDashboardReliabilityRunPlugin:
+    releaseName: V1.0
+    build: My Test Build
+    runName: TestRun2
+    dashboardBaseURL: http://localhost:8000
+    dashboardUserToken: c2301993178ed95039f75a5afea71d695f8bb70a
 
   ObjectGenTestDataSource:
     objectRuleMap:
