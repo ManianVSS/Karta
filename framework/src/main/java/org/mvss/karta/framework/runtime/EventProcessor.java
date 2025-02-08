@@ -30,6 +30,7 @@ public class EventProcessor implements AutoCloseable {
     private final HashSet<TestEventListener> testEventListeners = new HashSet<>();
     @Getter
     @Setter
+    // TODO: Events sent out of order due to multiple threads. Need a fix.
     @PropertyMapping("EventProcessor.numberOfThread")
     private int numberOfThread = 1;
     @Getter

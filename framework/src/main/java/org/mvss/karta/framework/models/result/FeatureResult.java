@@ -53,7 +53,7 @@ public class FeatureResult implements Serializable {
 
     @JsonIgnore
     public boolean isPassed() {
-        return successful && !error;
+        return successful && !error && incidents.isEmpty();
     }
 
     public synchronized void addIterationResult(HashMap<String, ScenarioResult> iterationResults, boolean detailedResults) {

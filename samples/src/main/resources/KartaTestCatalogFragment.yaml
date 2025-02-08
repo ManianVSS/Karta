@@ -126,4 +126,12 @@ tests:
     numberOfThreads: 1
     sourceArchive: samples.jar
 
+  - name: simpletest
+    description: simple test to check dashboard
+    tags:
+      - cycle
+    featureFileName: featureFiles/TestSet1/SampleFeatureFile2.yaml
+    numberOfIterations: 10
+
+
 subCategories: [ ]

@@ -2,12 +2,14 @@ package org.mvss.karta.framework.plugins.impl;
 
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mvss.karta.dependencyinjection.annotations.Initializer;
 import org.mvss.karta.dependencyinjection.annotations.PropertyMapping;
 import org.mvss.karta.dependencyinjection.utils.ParserUtils;
 import org.mvss.karta.framework.core.StandardEventsTypes;
 import org.mvss.karta.framework.models.event.*;
 import org.mvss.karta.framework.models.result.ScenarioResult;
+import org.mvss.karta.framework.models.test.TestIncident;
 import org.mvss.karta.framework.plugins.TestEventListener;
 import org.mvss.karta.framework.restclient.*;
 
@@ -32,6 +34,7 @@ public class ShaniDashboardReliabilityRunPlugin implements TestEventListener {
     public static final String DESCRIPTION = "description";
     public static final String RUN = "run";
     public static final String EXECUTION_API_RELIABILITY_ITERATIONS = "/execution/api/reliability_iterations/";
+    public static final String EXECUTION_API_RELIABILITY_INCIDENTS = "/execution/api/reliability_incidents/";
     public static final String STATUS = "status";
     public static final String PASS = "PASSED";
     public static final String FAILED = "FAILED";
@@ -42,6 +45,7 @@ public class ShaniDashboardReliabilityRunPlugin implements TestEventListener {
     public static final String EXCEPTION_OCCURRED = "Exception occurred: ";
     public static final String TOKEN = "Token";
     public static final String INDEX = "index";
+    public static final String ITERATION = "iteration";
 
     @PropertyMapping(group = PLUGIN_NAME)
     private String releaseName;
@@ -166,7 +170,7 @@ public class ShaniDashboardReliabilityRunPlugin implements TestEventListener {
         }});
     }
 
-    private HashMap<String, Serializable> createRunIfMissing(String runName) throws Exception {
+    private HashMap<String, Serializable> createReliabilityRunIfMissing(String runName) throws Exception {
         return getExistingOrCreateNewEntity(EXECUTION_API_RELIABILITY_RUNS, new HashMap<>() {{
             put(RELEASE, releaseId);
             put(NAME, runName);
@@ -177,22 +181,36 @@ public class ShaniDashboardReliabilityRunPlugin implements TestEventListener {
         }});
     }
 
-    private HashMap<String, Serializable> getOrCreateIteration(long index, Instant startTime) throws Exception {
-        return getExistingOrCreateNewEntity(EXECUTION_API_RELIABILITY_ITERATIONS, new HashMap<>() {{
-            put(RUN, runId);
-            put(INDEX, index);
-        }}, new HashMap<>() {{
-            put(RUN, runId);
-            put(NAME, index);
-            put(START_TIME, startTime.toString());
-        }});
+    private HashMap<String, Serializable> getOrCreateIteration(String name, long index, Instant startTime) throws Exception {
+        if (!scenarioMap.containsKey(name)) {
+            scenarioMap.put(name, new ConcurrentHashMap<>());
+        }
+        ConcurrentHashMap<Long, HashMap<String, Serializable>> scenarioIndexMap = scenarioMap.get(name);
+        if (scenarioIndexMap.containsKey(index)) {
+            return scenarioIndexMap.get(index);
+        } else {
+            HashMap<String, Serializable> createdIteration = getExistingOrCreateNewEntity(EXECUTION_API_RELIABILITY_ITERATIONS, new HashMap<>() {{
+                put(RUN, runId);
+                put(NAME, name);
+                put(INDEX, index);
+            }}, new HashMap<>() {{
+                put(RUN, runId);
+                put(NAME, name);
+                put(INDEX, index);
+                put(START_TIME, startTime.toString());
+            }});
+            ;
+            scenarioIndexMap.put(index, createdIteration);
+            return createdIteration;
+        }
     }
 
-    private Integer getOrCreateIterationId(long index, Instant startTime) throws Exception {
-        return (Integer) getOrCreateIteration(index, startTime).get(ID);
+    private Integer getOrCreateIterationId(String name, long index, Instant startTime) throws Exception {
+        return (Integer) getOrCreateIteration(name, index, startTime).get(ID);
     }
 
-    private final ConcurrentHashMap<Long, Integer> testCaseMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ConcurrentHashMap<Long, HashMap<String, Serializable>>> scenarioMap = new ConcurrentHashMap<>();
+
 
     private static void extractID(HashMap<String, Serializable> entity, String objectName) {
         if (entity.containsKey(objectName)) {
@@ -203,7 +221,6 @@ public class ShaniDashboardReliabilityRunPlugin implements TestEventListener {
             }
         }
     }
-
 
     @Override
     public void processEvent(Event event) {
@@ -218,49 +235,79 @@ public class ShaniDashboardReliabilityRunPlugin implements TestEventListener {
                     RunStartEvent testRunStarted = (RunStartEvent) event;
                     releaseId = (Integer) createReleaseIfMissing().get(ID);
                     buildId = (Integer) createBuildIfMissing().get(ID);
-                    runId = (Integer) createRunIfMissing(runName).get(ID);
+                    runId = (Integer) createReliabilityRunIfMissing(runName).get(ID);
                     runStartedTime = testRunStarted.getTimeOfOccurrence().toInstant();
                     break;
 
                 case StandardEventsTypes.SCENARIO_START_EVENT:
 
                     ScenarioStartEvent scenarioStartEvent = (ScenarioStartEvent) event;
+                    String scenarioStartName = scenarioStartEvent.getScenarioName();
                     long iterationStartNumber = scenarioStartEvent.getIterationNumber();
-                    Integer startedTestId = getOrCreateIterationId(iterationStartNumber, scenarioStartEvent.getTimeOfOccurrence().toInstant());
-                    testCaseMap.put(iterationStartNumber, startedTestId);
+                    Integer startedTestId = getOrCreateIterationId(scenarioStartName, iterationStartNumber, scenarioStartEvent.getTimeOfOccurrence().toInstant());
                     log.info("Iteration created {} for scenario {} for iteration number {}", startedTestId, scenarioStartEvent.getScenarioName(), iterationStartNumber);
                     break;
 
                 case StandardEventsTypes.SCENARIO_COMPLETE_EVENT:
                     ScenarioCompleteEvent scenarioCompleteEvent = (ScenarioCompleteEvent) event;
                     ScenarioResult scenarioResult = scenarioCompleteEvent.getResult();
+                    String scenarioEndName = scenarioCompleteEvent.getScenarioName();
                     long iterationEndNumber = scenarioCompleteEvent.getIterationNumber();
                     Instant instant = scenarioCompleteEvent.getTimeOfOccurrence().toInstant();
-                    Integer completedTestId = testCaseMap.containsKey(iterationEndNumber) ? testCaseMap.get(iterationEndNumber) : getOrCreateIterationId(iterationEndNumber, instant);
-                    HashMap<String, Serializable> executionRecord = getOrCreateIteration(scenarioCompleteEvent.getIterationNumber(), instant);
-                    executionRecord.put(STATUS, scenarioResult.isPassed() ? PASS : FAILED);
-                    executionRecord.put(END_TIME, instant.toString());
 
-                    extractID(executionRecord, "run");
+                    HashMap<String, Serializable> scenarioIterationObj = getOrCreateIteration(scenarioEndName, iterationEndNumber, instant);
+                    Integer completedIterationId = (Integer) scenarioIterationObj.get(ID);
 
-                    testCaseMap.put(iterationEndNumber, completedTestId);
-                    executionRecord = updateEntity(EXECUTION_API_RELIABILITY_ITERATIONS + completedTestId + SLASH, executionRecord);
-                    log.info("Execution record updated {}", executionRecord);
+                    scenarioIterationObj.put(STATUS, scenarioResult.isPassed() ? PASS : FAILED);
+                    scenarioIterationObj.put(END_TIME, instant.toString());
+
+                    extractID(scenarioIterationObj, "run");
+
+                    scenarioIterationObj = updateEntity(EXECUTION_API_RELIABILITY_ITERATIONS + completedIterationId + SLASH, scenarioIterationObj);
+                    log.info("Execution record updated {}", scenarioIterationObj);
                     break;
 
-//                case StandardEventsTypes.TEST_INCIDENT_OCCURRENCE_EVENT:
-//                    response = RestAssured.given(requestSpecBuilder.build()).param("name", runName).param("count", 1).get(subUrlByNameUpdateIncidents);
-//                    if (response.getStatusCode() == 200) {
-//                        log.debug("Incident updated successfully");
-//                    } else {
-//                        log.debug("Failed to update the incident with status code +" + response.getStatusCode());
-//                    }
-//                    break;
+                case StandardEventsTypes.TEST_INCIDENT_OCCURRENCE_EVENT:
+
+                    TestIncidentOccurrenceEvent testIncidentOccurrenceEvent = (TestIncidentOccurrenceEvent) event;
+
+                    String incidentScenarioName = testIncidentOccurrenceEvent.getScenarioName();
+                    long incidentScenarioNumber = testIncidentOccurrenceEvent.getIterationNumber();
+                    Instant incidentInstant = testIncidentOccurrenceEvent.getTimeOfOccurrence().toInstant();
+                    HashMap<String, Serializable> incidentScenarioIteration = getOrCreateIteration(incidentScenarioName, incidentScenarioNumber, incidentInstant);
+
+                    TestIncident testIncident = testIncidentOccurrenceEvent.getIncident();
+
+                    HashMap<String, Serializable> createIncidentObject = createEntity(EXECUTION_API_RELIABILITY_INCIDENTS, new HashMap<>() {{
+                        put(RELEASE, releaseId);
+                        put(BUILD, buildId);
+                        put(RUN, runId);
+                        put(ITERATION, incidentScenarioIteration.get(ID));
+                        String summary = testIncident.getMessage();
+
+                        if (summary.length() > 256) {
+                            summary = summary.substring(0, 256);
+                        }
+
+                        put(SUMMARY, summary);
+                        String description = "Message:" + testIncident.getMessage() + "\nDate: " + testIncident.getTimeOfOccurrence() + "\nTags:" + testIncident.getTags();
+                        if (testIncident.getThrownCause() != null) {
+                            description = description + "\n StackTrace:\n" + ExceptionUtils.getStackTrace(testIncident.getThrownCause());
+                        }
+//                        if (description.length() > 256) {
+//                            description = description.substring(0, 256);
+//                        }
+                        put(DESCRIPTION, description);
+
+                    }});
+
+                    break;
+
                 case StandardEventsTypes.RUN_COMPLETE_EVENT:
                     RunCompleteEvent runCompleteEvent = (RunCompleteEvent) event;
                     releaseId = (Integer) createReleaseIfMissing().get(ID);
                     buildId = (Integer) createBuildIfMissing().get(ID);
-                    HashMap<String, Serializable> run = createRunIfMissing(runName);
+                    HashMap<String, Serializable> run = createReliabilityRunIfMissing(runName);
                     runId = (Integer) run.get(ID);
                     run.put(START_TIME, runStartedTime.toString());
                     run.put(END_TIME, runCompleteEvent.getTimeOfOccurrence().toInstant().toString());

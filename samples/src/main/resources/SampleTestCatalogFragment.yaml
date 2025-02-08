@@ -52,13 +52,21 @@ tests:
     numberOfThreads: 1
     sourceArchive: samples.jar
 
-#  - name: FailureSimulationFeature
-#    description: sample feature file
-#    tags:
-#      - negative
-#    featureFileName: featureFiles/TestSet1/FailureSimulationFeature.yaml
-#    numberOfIterations: 1000
-#    numberOfThreads: 100
+  - name: FailureSimulationFeature
+    description: sample feature file
+    tags:
+      - negative
+      - simpletest
+    featureFileName: featureFiles/TestSet1/FailureSimulationFeature.yaml
+    numberOfIterations: 100
+    numberOfThreads: 10
+
+  - name: simpletest
+    description: simple test to check dashboard
+    tags:
+      - simpletest
+    featureFileName: featureFiles/TestSet1/SampleFeatureFile2.yaml
+    numberOfIterations: 10
 
 
 subCategories: [ ]
